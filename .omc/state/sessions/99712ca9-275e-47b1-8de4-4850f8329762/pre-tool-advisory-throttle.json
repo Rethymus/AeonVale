@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "entries": {
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1783629865692,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1783629814104,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "466399dafa2d20f60587180bad0a07358eb7f2bce724df0ff682f038ad33f5ad": {
+      "last_emitted_at_ms": 1783627826808,
+      "message": "Read multiple files in parallel when possible for faster analysis."
+    },
+    "fbc7c353b9c08c2242f263e94c6bdaa75b44507067c01fde7d3cb63387df5596": {
+      "last_emitted_at_ms": 1783626851004,
+      "message": "Spawning agent: general-purpose (sonnet) | Task: 深挖数值/经济/内容表/测试/路线图"
+    },
+    "a725d9b5c50c47a7cb095c6bab45d1896cbc222cdaed7fd2cdb999b576adfd2d": {
+      "last_emitted_at_ms": 1783626802309,
+      "message": "Spawning agent: general-purpose (opus) | Task: 深挖技术架构与数据模型"
+    },
+    "c3369a20afccb85ce2445eafc97af9d2f43b0a7aa7213e2335dacb30644a7c25": {
+      "last_emitted_at_ms": 1783626760137,
+      "message": "Spawning agent: general-purpose (opus) | Task: 深挖三大核心机制+种田+进阶"
+    },
+    "4212f50b41768ea342e1ec170cf79321baa1aba6b6edc132a5080537c0a0771f": {
+      "last_emitted_at_ms": 1783626714005,
+      "message": "Spawning agent: general-purpose (sonnet) | Task: 深挖叙事与世界观"
+    }
+  },
+  "updated_at": "2026-07-09T20:44:25.692Z"
+}
