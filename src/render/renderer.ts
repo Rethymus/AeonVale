@@ -108,10 +108,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   const hpPct = Math.round((p.hp / p.maxHp) * 100);
   const pp = Math.round(p.pillPoison / MILLI);
   const stageNames = ['凡骨', '淬皮', '锻骨', '通脉', '凝丹', '破丹', '化神', '飞升前夜'];
+  const ev = state.activeEvent ? `　【天象·${state.activeEvent.displayName} ${state.activeEvent.daysLeft}日】` : '';
   layers.hud.text =
     `第 ${state.day} 日 · ${SEASON_CN[state.season] ?? state.season} · 第 ${state.year} 年　|　` +
     `阶段：${stageNames[state.player.stage] ?? state.player.stage}　` +
-    `气血：${hpPct}%　丹毒：${pp}　修为：${Math.floor(p.cultivation / MILLI)}`;
+    `气血：${hpPct}%　丹毒：${pp}　修为：${Math.floor(p.cultivation / MILLI)}${ev}`;
 }
 
 export function setToast(layers: RenderLayers, msg: string): void {

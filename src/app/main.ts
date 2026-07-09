@@ -54,8 +54,13 @@ async function main(): Promise<void> {
   function endDay(): void {
     state.events.length = 0;
     advanceDay(state, ctx);
+    const evStart = state.events.find((e) => e.type === 'celestial-start');
     const matures = state.events.filter((e) => e.type === 'crop-mature').length;
-    toast(matures > 0 ? `过夜·新一日（第 ${state.day} 日）·${matures} 株成熟` : `过夜·第 ${state.day} 日 · ${state.events.find((e) => e.type === 'season-change') ? '换季' : ''}`);
+    let msg = `第 ${state.day} 日`;
+    if (evStart) msg = `【天象·${(evStart.payload as { displayName?: string })?.displayName ?? ''}】降临！`;
+    else if (matures > 0) msg = `${matures} 株灵草成熟`;
+    if (readyForBreakthrough(state, DEFAULT_BALANCE)) msg += '　⚠ 修为满，按 T 引劫';
+    toast(msg);
   }
 
   function tryTribulation(): void {

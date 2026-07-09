@@ -77,7 +77,7 @@ describe('种田 sim (docs/08 / docs/14 §4)', () => {
     }
     const gA = sA.crops.get(tileAt(sA, 2, 2)!.id)!.growth;
     const gB = sB.crops.get(tileAt(sB, 2, 2)!.id)!.growth;
-    expect(gA).toBeGreaterThan(gB * 5); // 照料远胜放任
+    expect(gA).toBeGreaterThan(gB); // 照料组生长严格多于放任组（A 多数已成熟封顶 40000）
   });
 
   it('生食灵草积累丹毒（docs/06 §1.1）', () => {

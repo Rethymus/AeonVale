@@ -85,7 +85,7 @@ export function updateTileQi(tile: Tile, drainMilli: number, params: BalancePara
  * 日终结算：推进所有作物生长 + 灵气/土壤更新 + 玩家状态 + 季节推进（docs/08 §2）。
  * 这是种田的核心推进函数；无头模拟每日调用一次。
  */
-export function applyFarmDayEnd(state: GameState, ctx: SimContext, celestialMod = 1): void {
+export function applyFarmDayEnd(state: GameState, ctx: SimContext, growthMod = 1, qiMod = 1): void {
   const { params, content } = ctx;
   // 1. 作物生长 + 灵气/土壤消耗
   for (const [tileId, crop] of state.crops) {
@@ -95,7 +95,7 @@ export function applyFarmDayEnd(state: GameState, ctx: SimContext, celestialMod 
     if (!herb) continue;
 
     if (crop.growth < herb.growthThreshold) {
-      const delta = growthPerDay(herb, tile, state.season, params, celestialMod);
+      const delta = growthPerDay(herb, tile, state.season, params, growthMod);
       crop.growth = Math.round(crop.growth + delta);
       if (crop.growth >= herb.growthThreshold) {
         crop.growth = herb.growthThreshold;
@@ -115,7 +115,7 @@ export function applyFarmDayEnd(state: GameState, ctx: SimContext, celestialMod 
     }
 
     // 灵气吸收（即使未成熟也吸气，构成负反馈）
-    updateTileQi(tile, herbQiDemand(herb, tile, params), params, 1, celestialMod);
+    updateTileQi(tile, herbQiDemand(herb, tile, params), params, 1, qiMod);
 
     // 土壤肥力消耗
     tile.fertility = Math.max(0, tile.fertility - params.growth.fertilityDrain * MILLI);
@@ -129,7 +129,7 @@ export function applyFarmDayEnd(state: GameState, ctx: SimContext, celestialMod 
   // 2. 空地块灵气自然再生
   for (const tile of state.tiles) {
     if (tile.cropId === null) {
-      updateTileQi(tile, 0, ctx.params, 1, celestialMod);
+      updateTileQi(tile, 0, ctx.params, 1, qiMod);
     }
     // 湿度/日标记重置
     tile.wateredToday = false;

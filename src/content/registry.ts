@@ -3,7 +3,7 @@
  * M1 内联种子内容（对齐 docs/15 §1 首批灵草）；后续里程碑迁移到 content 各子目录下的 JSON 文件 + 热重载。
  * 物品（材料/种子）由灵草表自动派生，避免重复维护。
  */
-import type { ContentRegistry, ItemDef, PillDef, RecipeDef, SpiritHerbDef } from './defs';
+import type { CelestialEventDef, ContentRegistry, ItemDef, PillDef, RecipeDef, SpiritHerbDef } from './defs';
 import { spiritHerbSchema, itemSchema } from './schemas';
 
 /** 灵草原始数据（毫点；对齐 docs/15-content-tables.md §1）。 */
@@ -161,6 +161,16 @@ const RAW_RECIPES: RecipeDef[] = [
   },
 ];
 
+/** 天象事件原始数据（对齐 docs/15 §4 / docs/07）。 */
+const RAW_EVENTS: CelestialEventDef[] = [
+  { id: 'event.qi-tide', displayName: '灵气潮汐', type: 'joy', weight: 10, durationDays: 5, growthMod: 1.5, qiMod: 1.5, desc: '远方大能突破，灵气暴涨，灵草疯长——但也会引来妖兽。' },
+  { id: 'event.spirit-bloom', displayName: '百草丰登', type: 'joy', weight: 8, durationDays: 3, growthMod: 1.3, qiMod: 1.0, desc: '天地灵气充沛，万物向荣。' },
+  { id: 'event.qi-depletion', displayName: '灵气枯竭', type: 'grief', weight: 6, durationDays: 7, growthMod: 0.4, qiMod: 0.4, desc: '天地闭合，灵气断绝，灵草停滞甚至枯萎。靠存粮熬过。' },
+  { id: 'event.bad-harvest', displayName: '灾年', type: 'grief', weight: 6, durationDays: 5, growthMod: 0.5, qiMod: 1.0, desc: '凡间作物歉收，唯有挖残脉或寻一线灵机。' },
+  { id: 'event.demonic-pass', displayName: '魔修过境', type: 'crisis', weight: 5, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '正魔交战波及山谷，农田或毁，但战后或可舔包。' },
+  { id: 'event.wandering-immortal', displayName: '游方散仙至', type: 'opportunity', weight: 4, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '散仙偶至，可换稀有种子或残谱。' },
+];
+
 /** 丹药原始数据（毫点；对齐 docs/15 §3）。 */
 const RAW_PILLS: PillDef[] = [
   {
@@ -242,12 +252,14 @@ export function buildRegistry(): ContentRegistry {
   for (const p of RAW_PILLS) {
     items.set(p.id, { id: p.id, displayName: p.displayName, category: 'pill', stack: p.stack });
   }
+  const events = new Map<string, CelestialEventDef>();
+  for (const e of RAW_EVENTS) events.set(e.id, e);
 
   // schemaHash：内容指纹（docs/11 §3.2）。简化哈希。
   const schemaHash = simpleHash(
-    [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(','),
+    [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(','),
   );
-  return { herbs, items, recipes, pills, seedToHerb, schemaHash };
+  return { herbs, items, recipes, pills, events, seedToHerb, schemaHash };
 }
 
 function simpleHash(s: string): string {

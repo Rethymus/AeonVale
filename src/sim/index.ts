@@ -10,6 +10,7 @@ import type { DayInput, PlayerAction } from './world/input';
 import type { SimContext } from './world/context';
 import { applyAction as applyActionImpl } from './farm/actions';
 import { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herbQiDemand } from './farm/farmSystem';
+import { tickCelestial } from './celestial/celestialSystem';
 import { deriveStreams, type RngStreams } from './world/rng';
 import { DEFAULT_BALANCE, type BalanceParams } from './params';
 import { MILLI } from './world/types';
@@ -53,6 +54,12 @@ function snapshotRng(state: GameState, ctx: SimContext): void {
   }
 }
 
+/** 日终结算：天象推进 + 农场结算（生长/灵气/土壤）。天象调制当日 growth/qi。 */
+function resolveDayEnd(state: GameState, ctx: SimContext): void {
+  const mods = tickCelestial(state, ctx);
+  applyFarmDayEnd(state, ctx, mods.growthMod, mods.qiMod);
+}
+
 /** 即时应用一个玩家动作（渲染层按键响应用）。不清事件、不推进日。 */
 export function applyAction(state: GameState, action: PlayerAction, ctx: SimContext): void {
   applyActionImpl(state, action, ctx);
@@ -63,7 +70,7 @@ export function applyAction(state: GameState, action: PlayerAction, ctx: SimCont
  * 渲染层在白昼用 applyAction 即时操作，按"过夜"键调用本函数推进。
  */
 export function advanceDay(state: GameState, ctx: SimContext): void {
-  applyFarmDayEnd(state, ctx);
+  resolveDayEnd(state, ctx);
   state.player.stamina = ctx.params.player.staminaCap * MILLI; // 次日清晨
   snapshotRng(state, ctx);
 }
@@ -73,7 +80,7 @@ export function simulateDay(state: GameState, input: DayInput, ctx: SimContext):
   clearEvents(state);
   state.player.stamina = ctx.params.player.staminaCap * MILLI; // 当日清晨
   for (const a of input.actions) applyActionImpl(state, a, ctx);
-  applyFarmDayEnd(state, ctx);
+  resolveDayEnd(state, ctx);
   snapshotRng(state, ctx);
   return state.events;
 }

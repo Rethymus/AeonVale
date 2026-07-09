@@ -60,6 +60,7 @@ export interface ContentRegistry {
   items: Map<string, ItemDef>;
   recipes: Map<string, RecipeDef>;
   pills: Map<string, PillDef>;
+  events: Map<string, CelestialEventDef>;
   /** seedId → 灵草（便捷查询） */
   seedToHerb: Map<string, SpiritHerbDef>;
   /** 内容指纹（用于存档版本对齐，docs/11 §3.2 schemaHash） */
@@ -109,4 +110,19 @@ export interface RecipeDef {
   outputPillId: string;
   difficulty: number; // 1..5，影响容差
   reveal: 'known' | 'fragment' | 'emergent';
+}
+
+/** 天象类型（docs/15 §4 / docs/07） */
+export type CelestialType = 'joy' | 'grief' | 'crisis' | 'opportunity';
+
+/** 天象事件定义（docs/15 §4）。周期触发，调制全局灵气/生长（凡人无法改大势）。 */
+export interface CelestialEventDef {
+  id: string;
+  displayName: string;
+  type: CelestialType;
+  weight: number; // 基础权重
+  durationDays: number;
+  growthMod: number; // 灵草生长倍率
+  qiMod: number; // 灵气再生倍率
+  desc: string;
 }

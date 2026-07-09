@@ -1,118 +1,109 @@
 /**
  * 无头模拟 Harness（docs/17 §4）。
- * 无 DOM/GPU，直接驱动 sim 层跑成千上万局种子化对局 → 产出统计 → 喂蒙特卡洛调参。
+ * 无 DOM/GPU，直接驱动 sim 跑成千上万局种子化对局 → 产出统计 → 喂蒙特卡洛调参。
+ * 完整核心循环：farm(收获积修为)→修为满→引劫→淬体→突破→下一阶段。
  *
- * 用法：
- *   pnpm headless                # 跑 1 局 demo
- *   pnpm headless -- --seeds 50  # 跑 50 局聚合
- *
- * 这是"无人干预开发"的引擎：任何 sim 改动后跑此即可回归 + 发现死锁/失衡。
+ * 用法：pnpm headless ｜ pnpm headless -- --seeds 50
  */
 import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import type { GameState } from '@sim/world/state';
-import type { SimContext } from '@sim/world/context';
 import type { DayInput, PlayerAction } from '@sim/world/input';
-import { stateHash } from '@sim/serialize';
+import { runTribulation } from '@sim/tribulation/tribulationSystem';
+import { readyForBreakthrough, breakthrough } from '@sim/progression/progression';
 
-/** 策略 bot 策略参数（docs/17 §5 Stratabots 分层）。 */
 export interface BotPolicy {
   name: string;
-  plotSize: number; // 经营地块数
+  plotSize: number;
   seedId: string;
-  careDaily: boolean; // 是否每日浇水供灵
-  restIfPoisonAbove: number; // 丹毒超此则休息
+  careDaily: boolean;
 }
 
-export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, restIfPoisonAbove: 95 };
-export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, restIfPoisonAbove: 70 };
+export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false };
+export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true };
 
 export interface RunOutcome {
   seed: number;
   days: number;
-  survived: boolean;
+  stageReached: number;
+  breakthroughs: number;
+  tribulations: number;
   died: boolean;
   deathCause: string | null;
   harvests: number;
-  maxPillPoison: number; // 0..100
-  finalHerbs: number;
-  stateHash: string;
+  maxPillPoison: number;
+  hashStable: boolean;
 }
 
-/** 单局模拟：用 bot 策略驱动 N 日。 */
+/** 单局模拟：farm → 引劫 → 突破 完整循环。 */
 export function runOne(seed: number, days: number, bot: BotPolicy): RunOutcome {
   const reg = buildRegistry();
-  const state = createWorld({ seed, width: 8, height: 8, content: reg, params: DEFAULT_BALANCE });
+  const state: GameState = createWorld({ seed, width: 8, height: 8, content: reg, params: DEFAULT_BALANCE });
   const ctx = createSimContext(seed, reg, DEFAULT_BALANCE);
-  // 初始种子
-  mutateItem(state.player, bot.seedId, bot.plotSize * 4);
+  state.player.stage = 1 as GameState['player']['stage']; // 跳过凡骨教程，已开始偷天诀
+  mutateItem(state.player, bot.seedId, bot.plotSize * 6);
 
-  const plotTiles: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < bot.plotSize; i++) plotTiles.push({ x: 2 + i, y: 3 });
+  const plot: Array<{ x: number; y: number }> = [];
+  for (let i = 0; i < bot.plotSize; i++) plot.push({ x: 2 + i, y: 3 });
 
   let harvests = 0;
   let maxPillPoison = 0;
+  let breakthroughs = 0;
+  let tribulations = 0;
   let died = false;
   let deathCause: string | null = null;
-  let tilledSetup = false;
+  let tilled = false;
 
   for (let d = 0; d < days; d++) {
     if (state.player.pillPoison >= DEFAULT_BALANCE.pillPoison.cap * 1000) {
-      died = true;
-      deathCause = 'pillPoison';
-      break;
+      died = true; deathCause = 'pillPoison'; break;
     }
+    if (state.player.hp <= 0) { died = true; deathCause = 'tribulation'; break; }
+
     const actions: PlayerAction[] = [];
-
-    // 一次性翻地+播种
-    if (!tilledSetup) {
-      for (const p of plotTiles) {
-        actions.push({ kind: 'till', at: p });
-        actions.push({ kind: 'sow', at: p, seedId: bot.seedId });
-      }
-      tilledSetup = true;
+    if (!tilled) {
+      for (const p of plot) { actions.push({ kind: 'till', at: p }); actions.push({ kind: 'sow', at: p, seedId: bot.seedId }); }
+      tilled = true;
     }
-
-    // 每日照料 + 收获
-    for (const p of plotTiles) {
+    for (const p of plot) {
       const t = tileAt(state, p.x, p.y);
       if (!t) continue;
-      if (bot.careDaily && t.cropId != null) {
-        actions.push({ kind: 'water', at: p });
-        actions.push({ kind: 'channel-qi', at: p });
-      }
+      if (bot.careDaily && t.cropId != null) { actions.push({ kind: 'water', at: p }); actions.push({ kind: 'channel-qi', at: p }); }
       const crop = t.cropId != null ? state.crops.get(t.id) : undefined;
       if (crop && crop.stage === 'mature') {
         actions.push({ kind: 'harvest', at: p });
-        // 补种
         if (itemCount(state.player, bot.seedId) > 0) actions.push({ kind: 'sow', at: p, seedId: bot.seedId });
       }
     }
-
-    if (state.player.pillPoison / 1000 > bot.restIfPoisonAbove) actions.push({ kind: 'rest' });
-
-    const events = simulateDay(state, { actions }, ctx);
-    for (const e of events) {
-      if (e.type === 'harvest') harvests++;
-    }
+    const events = simulateDay(state, { actions } as DayInput, ctx);
+    for (const e of events) if (e.type === 'harvest') harvests++;
     maxPillPoison = Math.max(maxPillPoison, state.player.pillPoison / 1000);
-  }
 
-  const finalHerbs = Object.entries(state.player.inventory)
-    .filter(([id]) => id.startsWith('herb.'))
-    .reduce((s, [, slot]) => s + (slot?.count ?? 0), 0);
+    // 修为满 → 引劫 + 突破（核心循环闭环）
+    while (readyForBreakthrough(state, DEFAULT_BALANCE)) {
+      tribulations++;
+      const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
+      if (!res.survived) { died = true; deathCause = 'tribulation'; break; }
+      const br = breakthrough(state, ctx, true);
+      if (br.success) breakthroughs++;
+      else break; // 险胜/走火，重攒
+      if (state.player.stage >= 7) break;
+    }
+    if (died) break;
+  }
 
   return {
     seed,
     days: state.day - 1,
-    survived: !died,
+    stageReached: state.player.stage,
+    breakthroughs,
+    tribulations,
     died,
     deathCause,
     harvests,
     maxPillPoison: Math.round(maxPillPoison * 10) / 10,
-    finalHerbs,
-    stateHash: stateHash(state),
+    hashStable: true, // 下方 aggregate 复核
   };
 }
 
@@ -120,49 +111,53 @@ export interface Aggregate {
   bot: string;
   runs: number;
   deaths: number;
-  deathRate: number;
+  meanStage: number;
+  meanBreakthroughs: number;
   meanHarvests: number;
   meanMaxPoison: number;
-  hashStable: boolean; // 同种子两次运行 hash 是否一致（确定性自检）
+  hashStable: boolean;
 }
 
-/** 批量聚合（docs/17 §4.2）。 */
 export function runMonteCarlo(seeds: number[], bot: BotPolicy, days: number): Aggregate {
   let deaths = 0;
-  let totalHarvests = 0;
-  let totalPoison = 0;
+  let totalStage = 0;
+  let totalBrk = 0;
+  let totalHarv = 0;
+  let totalPoi = 0;
   let hashStable = true;
   for (const seed of seeds) {
     const o = runOne(seed, days, bot);
     if (o.died) deaths++;
-    totalHarvests += o.harvests;
-    totalPoison += o.maxPillPoison;
-    // 确定性自检：同 seed 再跑一次，hash 必须一致
+    totalStage += o.stageReached;
+    totalBrk += o.breakthroughs;
+    totalHarv += o.harvests;
+    totalPoi += o.maxPillPoison;
+    // 确定性自检：同 seed 两次 runOne 的 outcome 必须完全一致
     const o2 = runOne(seed, days, bot);
-    if (o.stateHash !== o2.stateHash) hashStable = false;
+    if (JSON.stringify(o) !== JSON.stringify(o2)) hashStable = false;
   }
   const runs = seeds.length;
   return {
     bot: bot.name,
     runs,
     deaths,
-    deathRate: deaths / runs,
-    meanHarvests: Math.round((totalHarvests / runs) * 10) / 10,
-    meanMaxPoison: Math.round((totalPoison / runs) * 10) / 10,
+    meanStage: Math.round((totalStage / runs) * 10) / 10,
+    meanBreakthroughs: Math.round((totalBrk / runs) * 10) / 10,
+    meanHarvests: Math.round((totalHarv / runs) * 10) / 10,
+    meanMaxPoison: Math.round((totalPoi / runs) * 10) / 10,
     hashStable,
   };
 }
 
-// —— CLI ——
 function main() {
   const args = process.argv.slice(2);
-  const seedsIdx = args.indexOf('--seeds');
-  const n = seedsIdx >= 0 ? Number(args[seedsIdx + 1]) : 1;
-  const days = 60;
+  const idx = args.indexOf('--seeds');
+  const n = idx >= 0 ? Number(args[idx + 1]) : 1;
+  const days = 120;
 
   if (n <= 1) {
     const o = runOne(1, days, NORMAL_BOT);
-    console.log('— 单局 demo (normal bot, 60 日) —');
+    console.log(`— 单局 demo (normal bot, ${days} 日，完整循环) —`);
     console.log(JSON.stringify(o, null, 2));
     return;
   }

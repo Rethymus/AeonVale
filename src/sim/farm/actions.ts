@@ -92,6 +92,8 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       state.crops.delete(t.id);
       t.cropId = null;
       t.consecutiveSameCropSeasons += 1;
+      // 偷天诀吸收灵草灵气 → 积累修为（docs/09 §1；farm→progression 耦合）
+      p.cultivation += herb.tier * 5000;
       emit(state, 'harvest', { defId: herb.id });
       return;
     }

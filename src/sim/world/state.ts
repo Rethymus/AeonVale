@@ -13,6 +13,15 @@ import { defaultPlayer } from './player';
 import { deriveStreams, snapshotStreams, type RngState } from './rng';
 import type { ContentRegistry } from '@content/defs';
 
+/** 激活中的天象事件（docs/07 / docs/11 §1.13 CelestialEvent 运行态，简化）。 */
+export interface ActiveCelestialEvent {
+  defId: string;
+  displayName: string;
+  daysLeft: number;
+  growthMod: number;
+  qiMod: number;
+}
+
 export interface GameState {
   readonly version: number;
   masterSeed: number;
@@ -27,6 +36,7 @@ export interface GameState {
   crops: Map<EntityId, CropInstance>; // key = tileId（每格至多一作物）
   player: Player;
   events: GameEvent[]; // 本步产出事件（每步开头清空）
+  activeEvent: ActiveCelestialEvent | null; // 激活中的天象事件
   flags: Set<string>;
   rngSnapshot: Record<string, RngState>; // 各 RNG 流快照（存档/回放）
   nextId: number; // 下一实例 id
@@ -91,6 +101,7 @@ export function createWorld(o: WorldInit): GameState {
     crops: new Map(),
     player,
     events: [],
+    activeEvent: null,
     flags: new Set(),
     rngSnapshot: snapshotStreams(rng),
     nextId: 1,
