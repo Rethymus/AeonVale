@@ -103,7 +103,7 @@ export interface BalanceParams {
 
   /** 突破（docs/09 / 14 §8） */
   breakthrough: {
-    xCap: number[]; // 7 阶修为上限：100/200/400/700/1100/1600/2200
+    xCap: number[]; // 7 阶修为上限（毫点）：100k/200k/400k/700k/1.1M/1.6M/2.2M
     tTribBase: number; // 7 日准备窗（14 P028，R2 日级准备+秒级临战）
     successBase: number; // 0.5
     successPrepBonus: number; // 0.15
@@ -209,7 +209,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
     },
   },
   breakthrough: {
-    xCap: [100, 200, 400, 700, 1100, 1600, 2200],
+    xCap: [100_000, 200_000, 400_000, 700_000, 1_100_000, 1_600_000, 2_200_000],
     tTribBase: 7,
     successBase: 0.5,
     successPrepBonus: 0.15,

@@ -1,16 +1,14 @@
 /**
- * sim 层公共入口：simulateDay（日级种田推进）+ SimContext 构造 + 关键再导出。
+ * sim 层公共入口：simulateDay（日级推进）/ advanceDay（仅日终）/ applyAction（即时动作）+ 再导出。
  *
- * 一个 simulateDay = 一个游戏日：先按序执行玩家动作（翻地/播种/浇水/供灵/收获），
- * 再日终结算（生长/灵气/土壤/体力/丹毒/季节）。纯函数（除对 state 的确定性变更 + 注入 rng）。
- *
- * 天劫的实时 tick 推进（simulateTick）在 M2 引入；M1 以日为粒度（星露谷式）。
+ * 渲染层/app 用 applyAction 即时响应玩家按键、用 advanceDay 在"结束当日"时推进；
+ * 无头/bot 用 simulateDay 一次推进一整日。纯函数（除对 state 的确定性变更 + 注入 rng）。
  */
 import type { GameState } from './world/state';
 import { clearEvents } from './world/state';
-import type { DayInput } from './world/input';
+import type { DayInput, PlayerAction } from './world/input';
 import type { SimContext } from './world/context';
-import { applyAction } from './farm/actions';
+import { applyAction as applyActionImpl } from './farm/actions';
 import { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herbQiDemand } from './farm/farmSystem';
 import { deriveStreams, type RngStreams } from './world/rng';
 import { DEFAULT_BALANCE, type BalanceParams } from './params';
@@ -26,7 +24,7 @@ export function createSimContext(
   return { rng: deriveStreams(seed), params, content };
 }
 
-/** 从已有 state 的 masterSeed 重建 ctx（用于读档后继续，RNG 从快照恢复）。 */
+/** 从已有 state 的 masterSeed 重建 ctx（读档后继续，RNG 从快照恢复）。 */
 export function createSimContextFromState(
   state: GameState,
   content: ContentRegistry,
@@ -34,7 +32,6 @@ export function createSimContextFromState(
 ): SimContext {
   const rng = deriveStreams(state.masterSeed);
   const rs = state.rngSnapshot;
-  // 从存档快照恢复各流推进位置（显式列举，避免索引类型体操）
   rng.world.restore(rs.world ?? 0);
   rng.growth.restore(rs.growth ?? 0);
   rng.lightning.restore(rs.lightning ?? 0);
@@ -45,17 +42,8 @@ export function createSimContextFromState(
   return { rng, params, content };
 }
 
-/**
- * 推进一个游戏日。返回当日产出的事件列表。
- * 这是种田核心推进；无头模拟每日调用一次。
- */
-export function simulateDay(state: GameState, input: DayInput, ctx: SimContext): GameState['events'] {
-  clearEvents(state);
-  // 清晨：体力恢复（过夜语义，docs/08 §1.3）
-  state.player.stamina = ctx.params.player.staminaCap * MILLI;
-  for (const a of input.actions) applyAction(state, a, ctx);
-  applyFarmDayEnd(state, ctx);
-  // 把 RNG 流快照存回 state（便于中途存档）
+/** 把 RNG 流快照存回 state（便于中途存档/回放）。 */
+function snapshotRng(state: GameState, ctx: SimContext): void {
   for (const k of Object.keys(ctx.rng) as (keyof RngStreams)[]) {
     if (k === 'master') continue;
     const stream = ctx.rng[k];
@@ -63,6 +51,30 @@ export function simulateDay(state: GameState, input: DayInput, ctx: SimContext):
       state.rngSnapshot[k] = (stream as unknown as { snapshot(): number }).snapshot();
     }
   }
+}
+
+/** 即时应用一个玩家动作（渲染层按键响应用）。不清事件、不推进日。 */
+export function applyAction(state: GameState, action: PlayerAction, ctx: SimContext): void {
+  applyActionImpl(state, action, ctx);
+}
+
+/**
+ * 结束当日（app 的"过夜"）：日终结算 + 次日清晨体力恢复 + RNG 快照。
+ * 渲染层在白昼用 applyAction 即时操作，按"过夜"键调用本函数推进。
+ */
+export function advanceDay(state: GameState, ctx: SimContext): void {
+  applyFarmDayEnd(state, ctx);
+  state.player.stamina = ctx.params.player.staminaCap * MILLI; // 次日清晨
+  snapshotRng(state, ctx);
+}
+
+/** 无头/bot：一次推进一整日（清晨恢复 → 动作 → 日终结算），返回当日事件。 */
+export function simulateDay(state: GameState, input: DayInput, ctx: SimContext): GameState['events'] {
+  clearEvents(state);
+  state.player.stamina = ctx.params.player.staminaCap * MILLI; // 当日清晨
+  for (const a of input.actions) applyActionImpl(state, a, ctx);
+  applyFarmDayEnd(state, ctx);
+  snapshotRng(state, ctx);
   return state.events;
 }
 
