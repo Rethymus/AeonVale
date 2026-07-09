@@ -58,9 +58,55 @@ export interface ItemDef {
 export interface ContentRegistry {
   herbs: Map<string, SpiritHerbDef>;
   items: Map<string, ItemDef>;
+  recipes: Map<string, RecipeDef>;
+  pills: Map<string, PillDef>;
   /** seedId → 灵草（便捷查询） */
   seedToHerb: Map<string, SpiritHerbDef>;
   /** 内容指纹（用于存档版本对齐，docs/11 §3.2 schemaHash） */
   schemaHash: string;
-  // 后续里程碑扩充：recipes, pills, events, tribulations, arrays
+  // 后续里程碑扩充：events, tribulations, arrays
+}
+
+/** 丹药效果（docs/15 §3） */
+export type PillEffectKind =
+  | 'heal' // 回 HP
+  | 'maxHpUp' // 永久提升 HP 上限
+  | 'lightningWard' // 单次抗雷减伤
+  | 'ironBone' // 整场减伤
+  | 'detox' // 清丹毒
+  | 'temperBoost' // 淬体效率提升
+  | 'madness'; // 走火（副作用）
+
+export interface PillEffect {
+  kind: PillEffectKind;
+  power: number; // 毫点（如 heal 30 → 30000）
+  durationDays?: number;
+}
+
+/** 丹药定义（docs/15 §3 / docs/11 §1.5） */
+export interface PillDef {
+  id: string;
+  displayName: string;
+  tier: Tier;
+  effects: PillEffect[];
+  load: number; // 服用后增加的丹毒（毫点；负=清毒）
+  stack: number;
+}
+
+/** 丹方输入材料 */
+export interface RecipeInput {
+  herbId: string;
+  qty: number;
+}
+
+/** 丹方定义（docs/15 §2 / docs/11 §1.6）。非线性：同料异火出异丹。 */
+export interface RecipeDef {
+  id: string;
+  displayName: string;
+  inputs: RecipeInput[]; // 材料多重集
+  idealHeatRange: [number, number]; // 毫点 0..100000
+  targetProperty: PropertyVector; // 目标药性
+  outputPillId: string;
+  difficulty: number; // 1..5，影响容差
+  reveal: 'known' | 'fragment' | 'emergent';
 }

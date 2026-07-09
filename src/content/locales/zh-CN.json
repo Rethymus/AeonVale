@@ -1,0 +1,45 @@
+{
+  "meta": { "locale": "zh-CN", "displayName": "简体中文" },
+  "ui": {
+    "title": "永恒山谷：大道之歌",
+    "subtitle": "Aeon Vale: Song of the Dao",
+    "tribulation": {
+      "countdown": "天劫倒计时",
+      "incoming": "天劫降临",
+      "waves": "第 {n} 波 / 共 {m} 波"
+    },
+    "hud": {
+      "hp": "气血",
+      "pillPoison": "丹毒",
+      "cultivation": "修为",
+      "qi": "灵气",
+      "stamina": "体力",
+      "day": "第 {n} 日",
+      "season": { "spring": "春", "summer": "夏", "autumn": "秋", "winter": "冬" },
+      "year": "第 {n} 年"
+    },
+    "menu": { "newGame": "新的旅程", "continue": "继续游戏", "settings": "设置", "quit": "退出" },
+    "action": {
+      "till": "翻地",
+      "sow": "播种",
+      "water": "浇水",
+      "channelQi": "供灵",
+      "harvest": "收获",
+      "rest": "静修",
+      "alchemy": "炼丹"
+    }
+  },
+  "event": {
+    "crop-mature": "{name} 成熟了",
+    "crop-withered": "{name} 枯萎了",
+    "season-change": "入{season}",
+    "furnace-explosion": "炸炉！",
+    "lightning-strike": "劫雷落下"
+  },
+  "ending": {
+    "ascension": "白日飞升",
+    "poison-death": "丹毒暴毙",
+    "tribulation-death": "陨于天劫",
+    "madness": "走火入魔"
+  }
+}
