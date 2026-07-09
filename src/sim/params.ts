@@ -110,6 +110,7 @@ export interface BalanceParams {
     successPoisonPenalty: number; // -0.20（14 P030）
     successXSurplus: number; // 0.10
     madnessCap: number; // 100
+    harvestCultivationPerTier: number; // 收获灵草→偷天诀吸收的修为/阶（毫点，docs/09 §1）
   };
 
   /** 天象（docs/07 / 14 §7） */
@@ -216,6 +217,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
     successPoisonPenalty: -0.2,
     successXSurplus: 0.1,
     madnessCap: 100,
+    harvestCultivationPerTier: 5000,
   },
   celestial: { eventGateProbability: 0.25 },
   alchemy: {
