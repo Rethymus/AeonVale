@@ -34,6 +34,16 @@ describe('炼丹 sim (docs/06 / 14 §9)', () => {
     expect(res.outcome).toBe('exploded');
   });
 
+  it('虚衾蕈+太阳髓 相反必炸（极寒×极热）', () => {
+    const { state, ctx } = setup();
+    const res = resolveBrew(
+      state,
+      { materials: [{ herbId: 'herb.voidmantle', qty: 1 }, { herbId: 'herb.solar-pith', qty: 1 }], avgHeatMilli: 50_000 },
+      ctx,
+    );
+    expect(res.outcome).toBe('exploded');
+  });
+
   it('避雷丹方（金雷引+寒髓草）在理想火候出避雷丹', () => {
     const { state, ctx } = setup();
     const res = resolveBrew(

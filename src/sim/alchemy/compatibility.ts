@@ -25,6 +25,7 @@ const RULES: CompatibilityRule[] = [
   // —— 相反（必炸药对，寒热极端对）——
   { a: 'herb.frostmarrow', b: 'herb.emberheart', relation: '相反', modifier: 1 }, // 强寒 × 强热
   { a: 'herb.griefvein', b: 'herb.emberheart', relation: '相反', modifier: 1 }, // 断肠藤寒热同体 × 强热
+  { a: 'herb.voidmantle', b: 'herb.solar-pith', relation: '相反', modifier: 1 }, // 极寒 × 极热
   // —— 相杀（净毒：和合叶解断肠藤毒）——
   { a: 'herb.balmleaf', b: 'herb.griefvein', relation: '相杀', modifier: 0.5 },
   // —— 相须（同属性增效）——
