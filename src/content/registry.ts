@@ -411,6 +411,14 @@ const RAW_PILLS: PillDef[] = [
     load: 15_000,
     stack: 20,
   },
+  {
+    id: 'pill.madness',
+    displayName: '走火丹',
+    tier: 3,
+    effects: [{ kind: 'madness', power: 40 }], // 累积走火值，突破时可能走火入魔（docs/02）
+    load: 6_000,
+    stack: 10,
+  },
 ];
 
 /** 由灵草派生物品（材料 + 种子），减少重复维护。 */

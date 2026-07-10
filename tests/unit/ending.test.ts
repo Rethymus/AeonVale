@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { createWorld, createSimContext, DEFAULT_BALANCE, checkGameEnd } from '@sim';
+import { createWorld, createSimContext, DEFAULT_BALANCE, checkGameEnd, applyPill } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { breakthrough } from '@sim/progression/progression';
+import { mutateItem } from '@sim/world/player';
 import { MILLI } from '@sim/world/types';
 
 function setup(seed = 1, stage = 1) {
@@ -52,5 +53,29 @@ describe('结局系统 (docs/02)', () => {
     state.player.pillPoison = DEFAULT_BALANCE.pillPoison.cap * MILLI;
     checkGameEnd(state, ctx);
     expect(state.ending).toBe(first); // 不被后续覆盖
+  });
+
+  it('走火丹累积走火值 → 突破时走火入魔结局（docs/02）', () => {
+    const { state, ctx } = setup(1, 1);
+    state.player.cultivation = 120_000; // 修为满
+    mutateItem(state.player, 'pill.madness', 3);
+    applyPill(state, 'pill.madness', ctx); // +40 走火
+    applyPill(state, 'pill.madness', ctx); // +40
+    applyPill(state, 'pill.madness', ctx); // +40 → madnessValue=120 > cap(100) → madnessChance=0.6
+    // 多种子找一个走火触发
+    let madness = false;
+    for (let s = 0; s < 30 && !madness; s++) {
+      const { state: st, ctx: c } = setup(s, 1);
+      st.player.cultivation = 120_000;
+      mutateItem(st.player, 'pill.madness', 3);
+      for (let i = 0; i < 3; i++) applyPill(st, 'pill.madness', c);
+      const r = breakthrough(st, c, true);
+      if (r.madness) {
+        expect(st.ending).toBe('madness');
+        expect(st.gameOver).toBe(true);
+        madness = true;
+      }
+    }
+    expect(madness).toBe(true);
   });
 });

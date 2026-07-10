@@ -39,8 +39,11 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
         p.hp = Math.min(p.maxHp, p.hp + eff.power);
         effects.push(`强骨+${eff.power / 1000}上限`);
         break;
+      case 'madness':
+        p.madnessValue += eff.power; // 走火丹：累积走火值，突破时触发走火入魔结局
+        effects.push(`走火+${eff.power}`);
+        break;
       default:
-        // ironBone/temperBoost/madness：M4 扩展
         effects.push(eff.kind);
         break;
     }

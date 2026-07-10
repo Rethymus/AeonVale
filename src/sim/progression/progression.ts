@@ -38,13 +38,13 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
     return { success: false, madness: false, newStage: p.stage };
   }
 
-  // 走火入魔检定
+  // 走火入魔检定（docs/09 §3.3 / docs/02 走火入魔结局）
   const madnessChance = p.madnessValue / (params.breakthrough.madnessCap * 2);
   if (ctx.rng.alchemy.next() < madnessChance) {
+    state.ending = 'madness';
+    state.gameOver = true;
     p.madnessValue = 0;
-    p.cultivation = Math.round(p.cultivation * 0.5); // 修为倒退
-    p.maxHp = Math.max(50_000, p.maxHp - 10_000); // 永久负面
-    emit(state, 'madness', {});
+    emit(state, 'ending', { ending: 'madness' });
     return { success: false, madness: true, newStage: p.stage };
   }
 
