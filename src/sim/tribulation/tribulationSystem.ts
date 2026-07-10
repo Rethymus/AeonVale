@@ -66,6 +66,7 @@ export function runTribulation(
   const bp = ctx.params.lightning.bolt;
   const baseCyan = boltBaseDamage(stage, ctx.params);
   const vChance = violetChance(stage, ctx.params);
+  const ironBone = state.player.ironBoneMitigation ?? 0; // 铁骨整场减伤（旧档无此字段→0，docs/15 §3）
   let rawTempering = 0;
   const hits = { direct: 0, rod: 0, miss: 0, blocked: 0, violet: 0 };
   const rng = ctx.rng.lightning;
@@ -102,8 +103,8 @@ export function runTribulation(
     }
 
     if (onPlayer) {
-      // 避雷护体减伤（docs/06 §7.2，服避雷丹设置，渡劫消耗）
-      let dmg = base * (1 - state.player.wardMitigation);
+      // 避雷护体减伤（docs/06 §7.2，服避雷丹设置，渡劫消耗）+ 铁骨整场减伤（docs/15 §3）
+      let dmg = base * (1 - state.player.wardMitigation) * (1 - ironBone);
       // 擦弹判定：始终消费 rng（保证不同 blockChance 下落点序列一致、可比较）
       const blocked = rng.next() < policy.blockChance;
       if (blocked) {
@@ -135,6 +136,7 @@ export function runTribulation(
   state.player.temperingStack += tempering;
   state.player.wardMitigation = 0; // 护体渡劫后消耗
   state.player.temperBoostMult = 1; // 淬体倍率渡劫后消耗
+  state.player.ironBoneMitigation = 0; // 铁骨减伤渡劫后消耗
   const survived = state.player.hp > 0;
   emit(state, 'tribulation-end', { survived, tempering, hits });
 

@@ -65,6 +65,11 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
         p.temperBoostMult = Math.max(p.temperBoostMult, eff.power);
         effects.push(`淬体×${eff.power}`);
         break;
+      case 'ironBone':
+        // 铁骨丹：整场天劫减伤 power（与避雷护体叠加，取最强，docs/15 §3）
+        p.ironBoneMitigation = Math.max(p.ironBoneMitigation, eff.power);
+        effects.push(`铁骨减伤${Math.round(eff.power * 100)}%`);
+        break;
       default:
         effects.push(eff.kind);
         break;

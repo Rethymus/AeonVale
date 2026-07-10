@@ -377,6 +377,20 @@ const RAW_RECIPES: RecipeDef[] = [
     difficulty: 5,
     reveal: 'fragment', // stage5 + 飞升线（docs/15 §2）
   },
+  {
+    id: 'recipe.iron-bone',
+    displayName: '铁骨丹方',
+    inputs: [
+      { herbId: 'herb.solar-pith', qty: 1 },
+      { herbId: 'herb.emberheart', qty: 2 },
+      { herbId: 'herb.boneash-lily', qty: 1 },
+    ],
+    idealHeatRange: [55_000, 75_000],
+    targetProperty: { cold: 1_000, hot: 6_000, warm: 2_000, neutral: 2_000 }, // docs/15 §2 [1,6,2,2]
+    outputPillId: 'pill.iron-bone',
+    difficulty: 4,
+    reveal: 'fragment', // 残卷 + stage3（docs/15 §2）
+  },
 ];
 
 /** 天象事件原始数据（对齐 docs/15 §4 / docs/07）。 */
@@ -490,6 +504,14 @@ const RAW_PILLS: PillDef[] = [
     load: 12_000,
     stack: 10,
   },
+  {
+    id: 'pill.iron-bone',
+    displayName: '铁骨丹',
+    tier: 4,
+    effects: [{ kind: 'ironBone', power: 0.2 }], // 整场天劫减伤 0.2（docs/15 §3）
+    load: 10_000,
+    stack: 10,
+  },
 ];
 
 /** 由灵草派生物品（材料 + 种子），减少重复维护。 */
@@ -550,7 +572,7 @@ export function buildRegistry(): ContentRegistry {
   const schemaHash = simpleHash(
     [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(',') + '|' + [...arrays.keys()].join(','),
   );
-  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545', '2d0d866a']; // M0–M3（妖兽内丹前）/ M4（飞升丹前）/ M5（高tier丹药前）：新增内容可无损补默认字段继续读取旧档。
+  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545', '2d0d866a', '8650fece']; // M0–M3 / M4（飞升丹前）/ M5（高tier丹药前）/ M5（铁骨丹前）：新增内容可无损补默认字段继续读取旧档。
   return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash, compatibleSchemaHashes };
 }
 

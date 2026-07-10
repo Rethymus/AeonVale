@@ -73,7 +73,7 @@ for (const [id, pill] of reg.pills) {
   if (pill.load < 0) fail(`${id}: load=${pill.load} < 0`);
   if (pill.stack !== undefined && pill.stack <= 0) fail(`${id}: stack=${pill.stack} ≤ 0`);
   for (const eff of pill.effects) {
-    const known = ['heal', 'detox', 'lightningWard', 'maxHpUp', 'madness', 'temperBoost', 'ascend'];
+    const known = ['heal', 'detox', 'lightningWard', 'maxHpUp', 'madness', 'temperBoost', 'ascend', 'ironBone'];
     if (!known.includes(eff.kind)) warn(`${id}: 未知 effect.kind='${eff.kind}'`);
     if ('power' in eff && (eff as { power: number }).power < 0) {
       fail(`${id}: effect.${eff.kind}.power < 0`);

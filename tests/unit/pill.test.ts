@@ -84,6 +84,31 @@ describe('丹药服用 (docs/06 §7.2)', () => {
     expect(state.player.wardMitigation).toBe(0.75);
   });
 
+  it('铁骨丹设置 ironBoneMitigation 0.2（整场减伤，docs/15 §3）', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'pill.iron-bone', 1);
+    applyPill(state, 'pill.iron-bone', ctx);
+    expect(state.player.ironBoneMitigation).toBe(0.2);
+  });
+
+  it('铁骨减伤在天劫中与避雷护体叠加，且渡劫后双双消耗', () => {
+    const reg = buildRegistry();
+    // 同时服避雷丹(0.4) + 铁骨丹(0.2) → 每雷 dmg = base × 0.6 × 0.8
+    const sBoth = createWorld({ seed: 9, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
+    const sNone = createWorld({ seed: 9, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
+    const cBoth = createSimContext(9, reg, DEFAULT_BALANCE);
+    const cNone = createSimContext(9, reg, DEFAULT_BALANCE);
+    mutateItem(sBoth.player, 'pill.ward-basic', 1);
+    mutateItem(sBoth.player, 'pill.iron-bone', 1);
+    applyPill(sBoth, 'pill.ward-basic', cBoth);
+    applyPill(sBoth, 'pill.iron-bone', cBoth);
+    const rBoth = runTribulation(sBoth, { stage: 1, boltCount: 5, policy: { blockChance: 0 }, blastRadius: 100 }, cBoth);
+    const rNone = runTribulation(sNone, { stage: 1, boltCount: 5, policy: { blockChance: 0 }, blastRadius: 100 }, cNone);
+    expect(rBoth.finalHpMilli).toBeGreaterThan(rNone.finalHpMilli); // 减伤后掉血更少
+    expect(sBoth.player.ironBoneMitigation).toBe(0); // 渡劫后消耗
+    expect(sBoth.player.wardMitigation).toBe(0);
+  });
+
   it('temperBoostMult 在天劫中放大淬体且渡劫后消耗', () => {
     const reg = buildRegistry();
     const sBoost = createWorld({ seed: 5, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
