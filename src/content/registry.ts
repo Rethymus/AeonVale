@@ -349,6 +349,34 @@ const RAW_RECIPES: RecipeDef[] = [
     difficulty: 5,
     reveal: 'fragment', // stage5 终局残卷（docs/15 §2）
   },
+  {
+    id: 'recipe.temper-supreme',
+    displayName: '无极淬体方',
+    inputs: [
+      { herbId: 'herb.griefvein', qty: 2 },
+      { herbId: 'herb.boneash-lily', qty: 1 },
+      { herbId: 'herb.violet-ascend', qty: 1 },
+    ],
+    idealHeatRange: [60_000, 80_000],
+    targetProperty: { cold: 6_000, hot: 6_000, warm: 2_000, neutral: 2_000 }, // docs/15 §2 [6,6,2,2]
+    outputPillId: 'pill.temper-supreme',
+    difficulty: 5,
+    reveal: 'fragment', // stage4 残卷（docs/15 §2）
+  },
+  {
+    id: 'recipe.ward-heaven',
+    displayName: '偷天避雷方',
+    inputs: [
+      { herbId: 'herb.ironwill-thorn', qty: 1 },
+      { herbId: 'herb.violet-ascend', qty: 1 },
+      { herbId: 'herb.dao-root', qty: 1 },
+    ],
+    idealHeatRange: [50_000, 70_000],
+    targetProperty: { cold: 5_000, hot: 5_000, warm: 5_000, neutral: 8_000 }, // docs/15 §2 [5,5,5,8]
+    outputPillId: 'pill.ward-heaven',
+    difficulty: 5,
+    reveal: 'fragment', // stage5 + 飞升线（docs/15 §2）
+  },
 ];
 
 /** 天象事件原始数据（对齐 docs/15 §4 / docs/07）。 */
@@ -446,6 +474,22 @@ const RAW_PILLS: PillDef[] = [
     load: 0,
     stack: 5,
   },
+  {
+    id: 'pill.temper-supreme',
+    displayName: '无极淬体丹',
+    tier: 5,
+    effects: [{ kind: 'temperBoost', power: 1.6 }], // 下次天劫淬体效率 ×1.6（docs/15 §3）
+    load: 15_000,
+    stack: 10,
+  },
+  {
+    id: 'pill.ward-heaven',
+    displayName: '偷天避雷丹',
+    tier: 5,
+    effects: [{ kind: 'lightningWard', power: 0.75 }], // 单次抗雷减伤 0.75（docs/15 §3）
+    load: 12_000,
+    stack: 10,
+  },
 ];
 
 /** 由灵草派生物品（材料 + 种子），减少重复维护。 */
@@ -506,7 +550,7 @@ export function buildRegistry(): ContentRegistry {
   const schemaHash = simpleHash(
     [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(',') + '|' + [...arrays.keys()].join(','),
   );
-  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545']; // M0–M3（妖兽内丹前）+ M4（飞升丹前）：新增内容可无损补默认字段继续读取旧档。
+  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545', '2d0d866a']; // M0–M3（妖兽内丹前）/ M4（飞升丹前）/ M5（高tier丹药前）：新增内容可无损补默认字段继续读取旧档。
   return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash, compatibleSchemaHashes };
 }
 

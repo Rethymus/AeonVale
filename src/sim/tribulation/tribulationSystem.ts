@@ -128,11 +128,13 @@ export function runTribulation(
 
   const eff = tp.effBase + tp.effStageSlope * stage; // temperingEff(stage)：后期效率下降
   const finalRatio = state.player.hp / state.player.maxHp;
-  const tempering = Math.round(rawTempering * eff * nearDeathBonus(finalRatio, ctx.params));
+  const tbm = state.player.temperBoostMult ?? 1; // 淬体丹倍率（旧档无此字段→1，docs/15 §3）
+  const tempering = Math.round(rawTempering * eff * nearDeathBonus(finalRatio, ctx.params) * tbm);
 
   state.player.cultivation += tempering;
   state.player.temperingStack += tempering;
   state.player.wardMitigation = 0; // 护体渡劫后消耗
+  state.player.temperBoostMult = 1; // 淬体倍率渡劫后消耗
   const survived = state.player.hp > 0;
   emit(state, 'tribulation-end', { survived, tempering, hits });
 

@@ -20,6 +20,7 @@ export interface Player {
   madnessValue: number; // 走火值（docs/09 §3.3）
   temperingStack: number; // 淬体积淀（毫点）
   wardMitigation: number; // 避雷护体减伤 0..1（服避雷丹设置，渡劫时消耗，docs/06 §7.2）
+  temperBoostMult: number; // 淬体效率倍率（服淬体丹设置，下次天劫淬体 ×此值后消耗，docs/15 §3）
   stamina: number; // 当日体力毫点
   position: Vec2; // 所在瓦片坐标
   facing: Direction;
@@ -39,6 +40,7 @@ export function defaultPlayer(staminaCapMilli: number): Player {
     madnessValue: 0,
     temperingStack: 0,
     wardMitigation: 0,
+    temperBoostMult: 1,
     stamina: staminaCapMilli,
     position: { x: 0, y: 0 },
     facing: 'down',

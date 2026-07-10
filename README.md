@@ -17,7 +17,7 @@
 
 ## 实现进度（M0–M4 已完成 · M5 破立终局进行中）
 
-游戏核心已可玩、可测、确定性可复现（`pnpm dev` 浏览器运行 / `pnpm test` 193 测试全绿 / `pnpm headless` 无头模拟）：
+游戏核心已可玩、可测、确定性可复现（`pnpm dev` 浏览器运行 / `pnpm test` 196 测试全绿 / `pnpm headless` 无头模拟）：
 
 - **确定性核心**：Mulberry32 PRNG + 多流、固定步长、canonicalSerialize + Golden Replay 基础、sim/render 严格解耦（纪律测试强制）。
 - **种田系统**（docs/08）：灵气生长 / 土壤导电性（种田即布防）/ 季节 / 照料 / 翻地播种收获。

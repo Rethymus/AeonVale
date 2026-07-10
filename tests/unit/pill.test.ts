@@ -59,13 +59,43 @@ describe('丹药服用 (docs/06 §7.2)', () => {
     expect(sA.player.wardMitigation).toBe(0); // 渡劫后消耗
   });
 
-  it('temperBoost 效果（default 分支）：applyPill 应用后 effects 含 kind 字符串', () => {
+  it('淬体丹设置 temperBoostMult（下次天劫淬体 ×1.3，docs/15 §3）', () => {
     const { state, ctx } = setup();
     mutateItem(state.player, 'pill.temper', 1);
     const r = applyPill(state, 'pill.temper', ctx);
-    // temperBoost 走 default 分支，不改变 HP/poison 等，effects 字段含 'temperBoost'
     expect(r.applied).toBe(true);
-    expect(r.effects).toContain('temperBoost');
+    expect(state.player.temperBoostMult).toBe(1.3);
+  });
+
+  it('无极淬体丹 temperBoost ×1.6，取最强不叠加', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'pill.temper', 1);
+    applyPill(state, 'pill.temper', ctx); // 先 ×1.3
+    expect(state.player.temperBoostMult).toBe(1.3);
+    mutateItem(state.player, 'pill.temper-supreme', 1);
+    applyPill(state, 'pill.temper-supreme', ctx); // 再 ×1.6 → 取最强
+    expect(state.player.temperBoostMult).toBe(1.6);
+  });
+
+  it('偷天避雷丹设置护体减伤 0.75（终极抗雷，docs/15 §3）', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'pill.ward-heaven', 1);
+    applyPill(state, 'pill.ward-heaven', ctx);
+    expect(state.player.wardMitigation).toBe(0.75);
+  });
+
+  it('temperBoostMult 在天劫中放大淬体且渡劫后消耗', () => {
+    const reg = buildRegistry();
+    const sBoost = createWorld({ seed: 5, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
+    const sBase = createWorld({ seed: 5, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
+    const cBoost = createSimContext(5, reg, DEFAULT_BALANCE);
+    const cBase = createSimContext(5, reg, DEFAULT_BALANCE);
+    mutateItem(sBoost.player, 'pill.temper-supreme', 1);
+    applyPill(sBoost, 'pill.temper-supreme', cBoost); // ×1.6
+    const rBoost = runTribulation(sBoost, { stage: 1, boltCount: 8, policy: { blockChance: 0 } }, cBoost);
+    const rBase = runTribulation(sBase, { stage: 1, boltCount: 8, policy: { blockChance: 0 } }, cBase);
+    expect(rBoost.temperingGainMilli).toBeGreaterThanOrEqual(rBase.temperingGainMilli);
+    expect(sBoost.player.temperBoostMult).toBe(1); // 渡劫后消耗
   });
 
   it('maxHpUp 效果：提升 maxHp 并填满 HP', () => {

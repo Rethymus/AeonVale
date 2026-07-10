@@ -60,6 +60,11 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
           effects.push('飞升前兆（需达飞升前夜）');
         }
         break;
+      case 'temperBoost':
+        // 淬体丹：下次天劫淬体效率 ×power（取最强不叠加，docs/15 §3）
+        p.temperBoostMult = Math.max(p.temperBoostMult, eff.power);
+        effects.push(`淬体×${eff.power}`);
+        break;
       default:
         effects.push(eff.kind);
         break;
