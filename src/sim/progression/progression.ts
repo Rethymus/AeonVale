@@ -36,7 +36,9 @@ export function computePrepScore(state: GameState): number {
   const activeArrays = [...state.arrays.values()].filter((a) => a.active).length;
   const arrayScore = Math.min(activeArrays / MIN_ARRAYS, 1.0);
 
+  // 丹药齐备度：wardMitigation>0（服丹后设置）OR 背包有避雷丹（可在突破前服用）
   const hasWardPill =
+    state.player.wardMitigation > 0 ||
     itemCount(state.player, 'pill.ward-basic') > 0 ||
     itemCount(state.player, 'pill.ward-greater') > 0;
   const pillScore = hasWardPill ? 1.0 : 0.0;
