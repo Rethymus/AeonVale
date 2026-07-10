@@ -163,8 +163,22 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       const crop = state.crops.get(t.id);
       if (crop) {
         const herb = content.herbs.get(crop.defId);
-        const col = crop.stage === 'withered' ? STAGE_COLOR.withered : (herb?.metalAttract ?? 0) > 1 ? 0xb8b8c8 : STAGE_COLOR[crop.stage] ?? 0x4a9a30;
-        g.circle(x + TILE / 2, y + TILE / 2, TILE / 3).fill(col);
+        const cx = x + TILE / 2;
+        const cy = y + TILE / 2;
+        const metal = (herb?.metalAttract ?? 0) > 1;
+        if (crop.stage === 'withered') {
+          // 枯萎：棕色 X（docs/08 §2.4 过熟衰败）
+          g.moveTo(cx - 6, cy - 6).lineTo(cx + 6, cy + 6).moveTo(cx + 6, cy - 6).lineTo(cx - 6, cy + 6).stroke({ width: 2, color: STAGE_COLOR.withered });
+        } else {
+          // 生长渐进：种子(点)→萌芽(小)→生长(中+茎)→成熟(大+金光环，可收获)
+          const col = metal ? 0xb8b8c8 : STAGE_COLOR[crop.stage] ?? 0x4a9a30;
+          const r = crop.stage === 'seed' ? 3 : crop.stage === 'sprout' ? 6 : crop.stage === 'growing' ? 9 : 12;
+          if (crop.stage === 'growing' || crop.stage === 'mature') {
+            g.moveTo(cx, cy + r).lineTo(cx, y + TILE - 3).stroke({ width: 1.5, color: 0x3a6a28 });
+          }
+          g.circle(cx, cy, r).fill(col);
+          if (crop.stage === 'mature') g.circle(cx, cy, r + 3).stroke({ width: 1.5, color: 0xffe066, alpha: 0.75 });
+        }
       }
     }
   }
