@@ -116,6 +116,13 @@ export interface BalanceParams {
   /** 天象（docs/07 / 14 §7） */
   celestial: {
     eventGateProbability: number; // 0.25/日（14 P032，平均 4 日一事件）
+    /** 妖兽潮因果链（docs/07 §3.1 天骄降世 climax：灵气潮汐→灵草疯长成熟→引来妖兽群抢食）。 */
+    beast: {
+      surgeChancePerDay: number; // 灵气潮汐活跃且存在成熟作物时，每日触发妖兽潮的概率（docs/07 BeastSurge 钩子）
+      countMin: number; // 妖兽群最小数量（docs/07 BeastSurgeCount 3–5 下界）
+      countMaxBase: number; // 基础上限：countMax = countMaxBase + stage（随阶段缩放，高阶引更多兽）
+      surgeDurationDays: number; // 妖兽潮最多持续天数（无食可吃则提前退去）
+    };
   };
 
   /** 炼丹（docs/06 / 14 §9） */
@@ -219,7 +226,15 @@ export const DEFAULT_BALANCE: BalanceParams = {
     madnessCap: 100,
     harvestCultivationPerTier: 5000,
   },
-  celestial: { eventGateProbability: 0.25 },
+  celestial: {
+    eventGateProbability: 0.25,
+    beast: {
+      surgeChancePerDay: 0.35, // 潮汐期间约 1/3 概率/日引兽（docs/07 §3.1 climax）
+      countMin: 3,
+      countMaxBase: 5, // countMax = 5 + stage（docs/07 BeastSurgeCount 3–5 随 stage 缩放）
+      surgeDurationDays: 3,
+    },
+  },
   alchemy: {
     explosionThresholdBase: 14,
     explosionThresholdStageSlope: 2,

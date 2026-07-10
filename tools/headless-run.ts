@@ -45,6 +45,10 @@ export interface RunOutcome {
   lowHpTribulationRate: number;
   /** 每次天劫的最终 HP 比例列表（用于调试/分布分析）。 */
   tribulationFinalHpRatios: number[];
+  /** 妖兽潮触发次数（M4 因果链：灵气潮汐→引兽，docs/07 §3.1）。 */
+  beastSurges: number;
+  /** 被妖兽啃食的成熟作物数（M4 妖兽税，影响推进速度）。 */
+  cropsLostToBeasts: number;
 }
 
 /** 单局模拟（完整循环）。params/bot 可注入，用于平衡扫描。 */
@@ -66,6 +70,8 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
   let maxPillPoison = 0;
   let breakthroughs = 0;
   let tribulations = 0;
+  let beastSurges = 0;
+  let cropsLostToBeasts = 0;
   let died = false;
   let deathCause: string | null = null;
   let tilled = false;
@@ -91,7 +97,11 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
       }
     }
     const events = simulateDay(state, { actions } as DayInput, ctx);
-    for (const e of events) if (e.type === 'harvest') harvests++;
+    for (const e of events) {
+      if (e.type === 'harvest') harvests++;
+      else if (e.type === 'beast-surge-start') beastSurges++;
+      else if (e.type === 'beast-eat-crop') cropsLostToBeasts++;
+    }
     maxPillPoison = Math.max(maxPillPoison, state.player.pillPoison / 1000);
 
     while (readyForBreakthrough(state, params)) {
@@ -121,7 +131,7 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
   const lowHpTribulationRate = tribulationFinalHpRatios.length > 0
     ? lowHpCount / tribulationFinalHpRatios.length
     : 0;
-  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10, lowHpTribulationRate: Math.round(lowHpTribulationRate * 100) / 100, tribulationFinalHpRatios };
+  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10, lowHpTribulationRate: Math.round(lowHpTribulationRate * 100) / 100, tribulationFinalHpRatios, beastSurges, cropsLostToBeasts };
 }
 
 export interface Aggregate {

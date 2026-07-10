@@ -11,6 +11,7 @@ import type { SimContext } from './world/context';
 import { applyAction as applyActionImpl } from './farm/actions';
 import { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herbQiDemand } from './farm/farmSystem';
 import { tickCelestial } from './celestial/celestialSystem';
+import { tickBeasts } from './celestial/beastSystem';
 import { deriveStreams, type RngStreams } from './world/rng';
 import { DEFAULT_BALANCE, type BalanceParams } from './params';
 import { MILLI } from './world/types';
@@ -54,10 +55,11 @@ function snapshotRng(state: GameState, ctx: SimContext): void {
   }
 }
 
-/** 日终结算：天象推进 + 农场结算（生长/灵气/土壤）。天象调制当日 growth/qi。 */
+/** 日终结算：天象推进 + 农场结算（生长/灵气/土壤）+ 妖兽潮因果链。天象调制当日 growth/qi。 */
 function resolveDayEnd(state: GameState, ctx: SimContext): void {
   const mods = tickCelestial(state, ctx);
   applyFarmDayEnd(state, ctx, mods.growthMod, mods.qiMod);
+  tickBeasts(state, ctx); // 灵气潮汐→灵草成熟→引来妖兽啃食（docs/07 §3.1 / M4 因果链）
 }
 
 /** 即时应用一个玩家动作（渲染层按键响应用）。不清事件、不推进日。 */
@@ -113,6 +115,7 @@ export { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herb
 export { applyPill } from './alchemy/pillSystem';
 export { brewPills, resolveBrew } from './alchemy/alchemySystem';
 export { placeArray, arrayModifierFor } from './tribulation/arrays';
+export { tickBeasts, qiTideActive } from './celestial/beastSystem';
 export { DEFAULT_BALANCE } from './params';
 export type { BalanceParams } from './params';
 export type { GameState } from './world/state';
