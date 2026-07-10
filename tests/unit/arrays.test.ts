@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { createWorld, createSimContext, DEFAULT_BALANCE, tileAt, placeArray } from '@sim';
 import { tileWeight } from '@sim/tribulation/targeting';
-import { arrayModifierFor } from '@sim/tribulation/arrays';
+import { arrayModifierFor, coveringRodArray } from '@sim/tribulation/arrays';
+import { runTribulation } from '@sim/tribulation/tribulationSystem';
 import { buildRegistry } from '@content/registry';
 import { MILLI } from '@sim/world/types';
 
@@ -47,16 +48,29 @@ describe('阵法系统 (docs/05 §8 种田即布防)', () => {
     expect(arrayModifierFor(state, t.id)).toBeCloseTo(0.3, 5);
   });
 
-  it('阵法序列化往返', () => {
+  it('coveringRodArray 找到覆盖该格的引雷阵', () => {
     const { state, ctx } = setup();
-    const t = tileAt(state, 3, 3)!;
+    const t = tileAt(state, 1, 1)!;
     t.tilled = true;
     state.crops.set(t.id, { id: 1, defId: 'herb.metalpine', tileId: t.id, growth: 0, health: 100_000, stage: 'seed', plantedDay: 1, property: { cold: 0, hot: 0, warm: 0, neutral: 0 }, tempered: false });
     t.cropId = 1;
-    placeArray(state, 'array.lightning-rod', 3, 3, ctx);
-    const before = arrayModifierFor(state, t.id);
-    // 通过 stateHash 往返间接验证（serialize 测试已覆盖往返等价）
-    expect(before).toBe(4.0);
-    expect(state.arrays.size).toBe(1);
+    placeArray(state, 'array.lightning-rod', 1, 1, ctx);
+    expect(coveringRodArray(state, t.id)).toBeDefined();
+    expect(coveringRodArray(state, tileAt(state, 6, 6)!.id)).toBeUndefined();
+  });
+
+  it('引雷阵代接雷时损耗，耗尽则失效（docs/05 §8.1）', () => {
+    const { state, ctx } = setup();
+    const t = tileAt(state, 1, 1)!;
+    t.tilled = true;
+    state.crops.set(t.id, { id: 1, defId: 'herb.metalpine', tileId: t.id, growth: 0, health: 100_000, stage: 'seed', plantedDay: 1, property: { cold: 0, hot: 0, warm: 0, neutral: 0 }, tempered: false });
+    t.cropId = 1;
+    placeArray(state, 'array.lightning-rod', 1, 1, ctx);
+    state.player.position = { x: 6, y: 6 }; // 玩家远离阵法，让雷多落在阵法覆盖区
+    const arr = state.arrays.values().next().value!;
+    const powerBefore = arr.power;
+    runTribulation(state, { stage: 3, boltCount: 40, policy: { blockChance: 0 } }, ctx);
+    // 40 雷中应有部分被阵法代接 → power 下降或已失效
+    expect(arr.power < powerBefore || !arr.active).toBe(true);
   });
 });

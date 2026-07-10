@@ -10,6 +10,7 @@ import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import { pickTarget, chebyshev } from './targeting';
+import { coveringRodArray } from './arrays';
 
 export interface TribulationPolicy {
   blockChance: number; // 完美擦弹概率（玩家技巧，docs/05 §4.4）
@@ -64,7 +65,17 @@ export function runTribulation(
     const tile = pickTarget(state, ctx, rng);
     const onPlayer = chebyshev(tile, state.player.position) <= blastRadius;
     let isRod = false;
-    if (tile.cropId != null) {
+    const rodArr = coveringRodArray(state, tile.id);
+    if (rodArr) {
+      // 引雷阵代接雷：阵法损耗（docs/05 §8.1），耗尽则失效
+      isRod = true;
+      rodArr.power -= 10;
+      if (rodArr.power <= 0) {
+        rodArr.power = 0;
+        rodArr.active = false;
+        emit(state, 'array-depleted', { defId: rodArr.defId });
+      }
+    } else if (tile.cropId != null) {
       const crop = state.crops.get(tile.id); // crops Map 以 tile.id 为键
       if (crop) {
         const herb = ctx.content.herbs.get(crop.defId);

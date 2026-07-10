@@ -17,6 +17,14 @@ export function arrayModifierFor(state: GameState, tileId: number): number {
   return mod;
 }
 
+/** 覆盖该格的激活引雷阵（modifier>1）。用于天劫中"阵法代接雷"判定（docs/05 §8.1）。 */
+export function coveringRodArray(state: GameState, tileId: number): ArrayInstance | undefined {
+  for (const arr of state.arrays.values()) {
+    if (arr.active && arr.modifier > 1 && arr.coverageTileIds.includes(tileId)) return arr;
+  }
+  return undefined;
+}
+
 export interface PlaceResult {
   placed: boolean;
   reason?: string;
