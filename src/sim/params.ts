@@ -99,6 +99,15 @@ export interface BalanceParams {
       perfectBlockWindow: number; // 0.25s
       perfectBlockQualityBonus: number; // 1.5
     };
+    /** 雷型演化（docs/05 §5.2 青雷→紫雷→金雷→诛仙雷）。M5 实现青/紫雷。 */
+    bolt: {
+      violetUnlockStage: number; // 3（docs/05 §5.2：stage3–4 紫雷初现/为主）
+      violetChanceBase: number; // stage=unlock 时的紫雷占比（初现）
+      violetChanceSlope: number; // 每阶增量（stage4 紫雷为主）
+      violetDamageMult: number; // 1.5（docs/05 §5.2）
+      violetTemperingMult: number; // 1.5
+      violetBlastRadius: number; // 2 格（青雷默认 1）
+    };
   };
 
   /** 突破（docs/09 / 14 §8） */
@@ -217,6 +226,14 @@ export const DEFAULT_BALANCE: BalanceParams = {
       exposureRod: 0.25,
       perfectBlockWindow: 0.25,
       perfectBlockQualityBonus: 1.5,
+    },
+    bolt: {
+      violetUnlockStage: 3, // docs/05 §5.2：stage3 紫雷初现
+      violetChanceBase: 0.3, // stage3 紫雷占比 0.3（初现）
+      violetChanceSlope: 0.3, // 每阶 +0.3 → stage4=0.6（紫雷为主）/ stage5=0.9 / stage6+=1.0
+      violetDamageMult: 1.5, // docs/05 §5.2 BoltDamageMult(Violet)
+      violetTemperingMult: 1.5,
+      violetBlastRadius: 2, // 格（青雷=1）
     },
   },
   breakthrough: {

@@ -28,12 +28,20 @@ export interface TribulationResult {
   finalHpMilli: number;
   bolts: number;
   temperingGainMilli: number;
-  hits: { direct: number; rod: number; miss: number; blocked: number };
+  hits: { direct: number; rod: number; miss: number; blocked: number; violet: number };
 }
 
 /** 单雷基值（毫点 HP，docs/14 §6.1 / P017–018）。 */
 export function boltBaseDamage(stage: number, params: SimContext['params']): number {
   return (params.lightning.damage.base + params.lightning.damage.stageSlope * stage) * 1000;
+}
+
+/** stage 对应的紫雷占比（docs/05 §5.2 / params.lightning.bolt）。stage<unlock → 0，否则线性并钳到 [0,1]。 */
+export function violetChance(stage: number, params: SimContext['params']): number {
+  const bp = params.lightning.bolt;
+  if (stage < bp.violetUnlockStage) return 0;
+  const raw = bp.violetChanceBase + bp.violetChanceSlope * (stage - bp.violetUnlockStage);
+  return Math.max(0, Math.min(1, raw));
 }
 
 /** 控血收益系数（倒钟形，docs/14 §6.2 表）。finalHpRatio ∈ [0,1]。 */
@@ -54,14 +62,24 @@ export function runTribulation(
   ctx: SimContext,
 ): TribulationResult {
   const { stage, boltCount, policy } = opts;
-  const blastRadius = opts.blastRadius ?? 1;
   const tp = ctx.params.lightning.tempering;
-  const base = boltBaseDamage(stage, ctx.params);
+  const bp = ctx.params.lightning.bolt;
+  const baseCyan = boltBaseDamage(stage, ctx.params);
+  const vChance = violetChance(stage, ctx.params);
   let rawTempering = 0;
-  const hits = { direct: 0, rod: 0, miss: 0, blocked: 0 };
+  const hits = { direct: 0, rod: 0, miss: 0, blocked: 0, violet: 0 };
   const rng = ctx.rng.lightning;
 
   for (let i = 0; i < boltCount; i++) {
+    // 紫雷判定（docs/05 §5.2）：仅 stage≥unlock 消费 rng，保证 stage1–2 序列不变
+    let isViolet = false;
+    if (vChance > 0) isViolet = rng.next() < vChance;
+    if (isViolet) hits.violet++;
+    const tempMult = isViolet ? bp.violetTemperingMult : 1.0;
+    const typeRadius = isViolet ? bp.violetBlastRadius : 1;
+    const blastRadius = opts.blastRadius ?? typeRadius;
+    const base = baseCyan * (isViolet ? bp.violetDamageMult : 1.0);
+
     const tile = pickTarget(state, ctx, rng);
     const onPlayer = chebyshev(tile, state.player.position) <= blastRadius;
     let isRod = false;
@@ -92,17 +110,17 @@ export function runTribulation(
         // 完美擦弹：伤害 ×0.3，淬体 ×1.5（docs/05 §4.4）
         dmg = dmg * 0.3;
         hits.blocked++;
-        rawTempering += dmg * tp.exposureDirect * tp.perfectBlockQualityBonus;
+        rawTempering += dmg * tp.exposureDirect * tp.perfectBlockQualityBonus * tempMult;
       } else {
         hits.direct++;
-        rawTempering += dmg * tp.exposureDirect;
+        rawTempering += dmg * tp.exposureDirect * tempMult;
       }
       state.player.hp = Math.max(0, state.player.hp - Math.round(dmg));
       if (state.player.hp <= 0) break;
     } else if (isRod) {
       // 避雷草/阵代接：传少量淬体（docs/05 §4.2 RodHit 0.25）
       hits.rod++;
-      rawTempering += base * tp.exposureRod;
+      rawTempering += base * tp.exposureRod * tempMult;
     } else {
       hits.miss++;
     }
