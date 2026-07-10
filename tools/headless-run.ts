@@ -21,6 +21,13 @@ export interface BotPolicy {
 
 export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3, blockChance: 0 };
 export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3, blockChance: 0 };
+/**
+ * 老手 bot：主动控血策略（docs/17 §5.3 / docs/14 §6.2 nearDeathBonus）。
+ * 在天劫前主动让 HP 降至 <25% 以获取 nearDeathBonus 加成，
+ * 同时高擦弹率（blockChance=0.6）保证不被打死。
+ * 目标：veteran bot 触发 finalHP < 25% 天劫比例 ≥ 50%（M3 退出标准）。
+ */
+export const VETERAN_BOT: BotPolicy = { name: 'veteran', plotSize: 5, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 5, blockChance: 0.6 };
 
 export interface RunOutcome {
   seed: number;
@@ -135,7 +142,7 @@ function main() {
   }
   const seeds = Array.from({ length: n }, (_, i) => i + 1);
   console.log(`— 蒙特卡洛批量 (${n} 局 × ${days} 日) —`);
-  for (const bot of [ROOKIE_BOT, NORMAL_BOT]) console.log(JSON.stringify(runMonteCarlo(seeds, bot, days)));
+  for (const bot of [ROOKIE_BOT, NORMAL_BOT, VETERAN_BOT]) console.log(JSON.stringify(runMonteCarlo(seeds, bot, days)));
 }
 
 main();
