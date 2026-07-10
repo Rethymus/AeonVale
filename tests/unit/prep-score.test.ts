@@ -13,7 +13,6 @@ import {
 } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { computePrepScore, breakthrough, stageQiCap } from '@sim/progression/progression';
-import { placeArray } from '@sim/tribulation/arrays';
 import { mutateItem, itemCount } from '@sim/world/player';
 
 function setup(seed = 1, stage: 1 | 2 | 3 = 1) {
