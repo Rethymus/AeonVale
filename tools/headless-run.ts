@@ -42,8 +42,12 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
   state.player.stage = 1 as GameState['player']['stage'];
   mutateItem(state.player, bot.seedId, bot.plotSize * 6);
 
+  // 自适应选地：跳过水域/岩石/金属矿，找可种植的普通地块（地形适应）
   const plot: Array<{ x: number; y: number }> = [];
-  for (let i = 0; i < bot.plotSize; i++) plot.push({ x: 2 + i, y: 3 });
+  for (const t of state.tiles) {
+    if (plot.length >= bot.plotSize) break;
+    if (t.soilType === 'loam' && t.blockType === 'none') plot.push({ x: t.x, y: t.y });
+  }
 
   let harvests = 0;
   let maxPillPoison = 0;
