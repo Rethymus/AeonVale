@@ -9,6 +9,7 @@ import { emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { BalanceParams } from '@sim/params';
 import type { CultivationStage } from '@sim/world/types';
+import { itemCount } from '@sim/world/player';
 
 /** 阶段修为上限（docs/14 §8.1 / 09 §1.1，7 阶 ×1.8）。 */
 export function stageQiCap(stage: CultivationStage, params: BalanceParams): number {
@@ -20,10 +21,34 @@ export function readyForBreakthrough(state: GameState, params: BalanceParams): b
   return state.player.stage >= 1 && state.player.stage <= 6 && state.player.cultivation >= stageQiCap(state.player.stage, params);
 }
 
+/**
+ * 突破准备度评分（docs/09 §3.2 / docs/14 §8.3 prepScore）。
+ *
+ * 阵法完整度（arrayScore）+ 丹药齐备度（pillScore）两轴：
+ *   arrayScore = min(activeArrays / MIN_ARRAYS, 1.0)  阵法数 ≥ MIN_ARRAYS(2) 即满分
+ *   pillScore  = 有避雷丹（ward-basic 或 ward-greater）→ 1.0，无 → 0.0
+ *   prepScore  = 0.4 × arrayScore + 0.6 × pillScore  ∈ [0, 1]
+ *
+ * 这是"种田—炼丹—布阵—渡劫"闭环在数值上的体现：充分准备→更高突破成功率。
+ */
+export function computePrepScore(state: GameState): number {
+  const MIN_ARRAYS = 2;
+  const activeArrays = [...state.arrays.values()].filter((a) => a.active).length;
+  const arrayScore = Math.min(activeArrays / MIN_ARRAYS, 1.0);
+
+  const hasWardPill =
+    itemCount(state.player, 'pill.ward-basic') > 0 ||
+    itemCount(state.player, 'pill.ward-greater') > 0;
+  const pillScore = hasWardPill ? 1.0 : 0.0;
+
+  return 0.4 * arrayScore + 0.6 * pillScore;
+}
+
 export interface BreakthroughResult {
   success: boolean;
   madness: boolean;
   newStage: CultivationStage;
+  prepScore: number; // 本次突破时的准备度（调试/测试用）
 }
 
 /**
@@ -35,7 +60,7 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
   const p = state.player;
   const params = ctx.params;
   if (!readyForBreakthrough(state, params) || !survivedTribulation) {
-    return { success: false, madness: false, newStage: p.stage };
+    return { success: false, madness: false, newStage: p.stage, prepScore: 0 };
   }
 
   // 走火入魔检定（docs/09 §3.3 / docs/02 走火入魔结局）
@@ -45,11 +70,12 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
     state.gameOver = true;
     p.madnessValue = 0;
     emit(state, 'ending', { ending: 'madness' });
-    return { success: false, madness: true, newStage: p.stage };
+    return { success: false, madness: true, newStage: p.stage, prepScore: 0 };
   }
 
-  // 成功率（docs/14 §8.3）
-  const prepScore = 0.5; // 简化：M3 接入阵法完整度/丹药齐备度
+  // 准备度评分（M3：阵法完整度 + 丹药齐备度，docs/09 §3.2 / docs/14 §8.3）
+  const prepScore = computePrepScore(state);
+
   const xSurplus = Math.min(0.3, (p.cultivation - stageQiCap(p.stage, params)) / stageQiCap(p.stage, params));
   let successRate =
     params.breakthrough.successBase +
@@ -62,7 +88,7 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
     // 险胜：留在原阶段，修为折损 30%（可挽回的局部失败，docs/09 §3.3）
     p.cultivation = Math.round(p.cultivation * 0.7);
     emit(state, 'breakthrough-near', { stage: p.stage });
-    return { success: false, madness: false, newStage: p.stage };
+    return { success: false, madness: false, newStage: p.stage, prepScore };
   }
 
   // 突破成功
@@ -81,5 +107,5 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
     state.gameOver = true;
     emit(state, 'ending', { ending: 'ascension' });
   }
-  return { success: true, madness: false, newStage };
+  return { success: true, madness: false, newStage, prepScore };
 }
