@@ -125,6 +125,8 @@ export interface BalanceParams {
   /** 天象（docs/07 / 14 §7） */
   celestial: {
     eventGateProbability: number; // 0.25/日（14 P032，平均 4 日一事件）
+    /** 季节节日（docs/15 §4 节奏层）：日历强制事件；旧档/测试可 enabled:false 关闭（防御读取 ?? false）。 */
+    festivals: { enabled: boolean };
     /** 妖兽潮因果链（docs/07 §3.1 天骄降世 climax：灵气潮汐→灵草疯长成熟→引来妖兽群抢食）。 */
     beast: {
       surgeChancePerDay: number; // 灵气潮汐活跃且存在成熟作物时，每日触发妖兽潮的概率（docs/07 BeastSurge 钩子）
@@ -248,6 +250,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
   },
   celestial: {
     eventGateProbability: 0.25,
+    festivals: { enabled: true }, // 季节节日（docs/15 §4 节奏层）：默认开；旧档/测试缺字段时防御读取为关
     beast: {
       surgeChancePerDay: 0.35, // 潮汐期间约 1/3 概率/日引兽（docs/07 §3.1 climax）
       countMin: 3,

@@ -552,6 +552,11 @@ const RAW_EVENTS: CelestialEventDef[] = [
   { id: 'event.demonic-pass', displayName: '魔修过境', type: 'crisis', weight: 5, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '正魔交战波及山谷，农田或毁，但战后或可舔包。' },
   { id: 'event.wandering-immortal', displayName: '游方散仙至', type: 'opportunity', weight: 4, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '散仙偶至，可换稀有种子或残谱。' },
   { id: 'event.purple-omen', displayName: '紫雷前兆', type: 'crisis', weight: 1, durationDays: 7, growthMod: 1.0, qiMod: 1.0, forced: true, desc: 'stage4 修为圆满，天穹泛紫——紫雷劫倒计时开启，终局线浮现（docs/15 §4）。' },
+  // —— M6 节奏层：四季节日（日历强制，docs/15 §4；forced 排除随机池，seasonal 定日触发）——
+  { id: 'event.spring-festival', displayName: '灵芽节', type: 'joy', weight: 0, durationDays: 2, growthMod: 1.2, qiMod: 1.2, forced: true, seasonal: { season: 'spring', day: 14 }, desc: '仲春之日，万物萌发。灵气与生长小旺，春耕之喜。' },
+  { id: 'event.summer-festival', displayName: '炎阳祭', type: 'joy', weight: 0, durationDays: 2, growthMod: 1.1, qiMod: 1.3, forced: true, seasonal: { season: 'summer', day: 14 }, desc: '仲夏祭典，天地灵气充盈。生长略旺、灵气大涨。' },
+  { id: 'event.autumn-festival', displayName: '金秋会', type: 'joy', weight: 0, durationDays: 2, growthMod: 1.3, qiMod: 1.0, forced: true, seasonal: { season: 'autumn', day: 14 }, desc: '秋收时节，灵草加速成熟。丰收之季。' },
+  { id: 'event.winter-festival', displayName: '寒岁祭', type: 'grief', weight: 0, durationDays: 2, growthMod: 0.9, qiMod: 0.9, forced: true, seasonal: { season: 'winter', day: 28 }, desc: '岁末肃杀，天地闭藏。灵气与生长略衰，宜守不宜攻。' },
 ];
 
 /** 阵法原始数据（docs/05 §8 / docs/15 §5）。 */

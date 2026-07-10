@@ -1,13 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, Rng, selectCelestialEvent } from '@sim';
+import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, Rng, selectCelestialEvent, tickCelestial, type BalanceParams } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { stateHash, deserializeState, serializeState } from '@sim/serialize';
 import type { CelestialEventDef } from '@content/defs';
 
-function setup(seed = 1) {
+const NO_FESTIVAL: BalanceParams = {
+  ...DEFAULT_BALANCE,
+  celestial: { ...DEFAULT_BALANCE.celestial, festivals: { enabled: false } },
+};
+
+function setup(seed = 1, params: BalanceParams = DEFAULT_BALANCE) {
   const reg = buildRegistry();
-  const state = createWorld({ seed, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
-  const ctx = createSimContext(seed, reg, DEFAULT_BALANCE);
+  const state = createWorld({ seed, width: 6, height: 6, content: reg, params });
+  const ctx = createSimContext(seed, reg, params);
   return { state, ctx, reg };
 }
 
@@ -62,7 +67,7 @@ describe('天象奇遇引擎 (docs/07 / 14 §7)', () => {
   });
 
   it('事件有持续天数，到期后自动结束', () => {
-    const { state, ctx } = setup(42);
+    const { state, ctx } = setup(42, NO_FESTIVAL); // 关节日，避免日历事件干扰结束观测
     let startDay = -1;
     let observedActive = 0;
     for (let d = 0; d < 300 && startDay < 0; d++) {
@@ -96,5 +101,31 @@ describe('天象奇遇引擎 (docs/07 / 14 §7)', () => {
       return stateHash(state);
     };
     expect(run(99)).toBe(run(99));
+  });
+
+  it('季节节日按日历强制触发（春·灵芽节，docs/15 §4 节奏层）', () => {
+    const { state, ctx } = setup();
+    state.season = 'spring';
+    state.seasonDay = 14;
+    tickCelestial(state, ctx);
+    expect(state.activeEvent?.defId).toBe('event.spring-festival');
+    expect(state.activeEvent?.growthMod).toBeGreaterThan(1); // 节日增益
+  });
+
+  it('festivals.enabled=false 时节日不触发（旧 fixture / 测试兼容）', () => {
+    const { state, ctx } = setup(1, NO_FESTIVAL);
+    state.season = 'autumn';
+    state.seasonDay = 14; // 金秋会日历日
+    tickCelestial(state, ctx);
+    expect(state.activeEvent?.defId).not.toBe('event.autumn-festival');
+  });
+
+  it('节日与进行中天象互斥（不抢占）', () => {
+    const { state, ctx } = setup();
+    state.season = 'summer';
+    state.seasonDay = 14; // 炎阳祭日
+    state.activeEvent = { defId: 'event.qi-tide', displayName: '灵气潮汐', daysLeft: 3, growthMod: 1.5, qiMod: 1.5 };
+    tickCelestial(state, ctx);
+    expect(state.activeEvent?.defId).toBe('event.qi-tide'); // 未被节日抢占
   });
 });

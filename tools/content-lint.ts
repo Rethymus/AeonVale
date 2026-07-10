@@ -105,7 +105,7 @@ ok(`${reg.recipes.size} 种配方校验完成`);
 // ── 天象表 ────────────────────────────────────────────────────────────────────
 console.log('\n── 天象表（events）──');
 for (const [id, ev] of reg.events) {
-  if (ev.weight <= 0) fail(`${id}: weight=${ev.weight} ≤ 0`);
+  if (!ev.forced && ev.weight <= 0) fail(`${id}: weight=${ev.weight} ≤ 0`); // forced/seasonal 事件不走随机池，权重无意义
   if (ev.durationDays <= 0) fail(`${id}: durationDays=${ev.durationDays} ≤ 0`);
   if (ev.growthMod <= 0) fail(`${id}: growthMod=${ev.growthMod} ≤ 0`);
   if (ev.qiMod <= 0) fail(`${id}: qiMod=${ev.qiMod} ≤ 0`);

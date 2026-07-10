@@ -73,6 +73,28 @@ export function startPurpleOmenIfDue(state: GameState, ctx: SimContext): boolean
   return true;
 }
 
+/**
+ * 季节节日（日历强制，docs/15 §4 节奏层）：每年固定 season/day 触发一次。
+ * 与进行中天象互斥（activeEvent 守卫）；params.celestial.festivals.enabled 缺字段时防御为关（不影响旧 fixture）。
+ */
+export function startSeasonalFestivalIfDue(state: GameState, ctx: SimContext): boolean {
+  if (!ctx.params.celestial.festivals?.enabled) return false;
+  if (state.activeEvent) return false;
+  const due = [...ctx.content.events.values()].find(
+    (e) => e.seasonal && e.seasonal.season === state.season && e.seasonal.day === state.seasonDay,
+  );
+  if (!due) return false;
+  state.activeEvent = {
+    defId: due.id,
+    displayName: due.displayName,
+    daysLeft: due.durationDays,
+    growthMod: due.growthMod,
+    qiMod: due.qiMod,
+  };
+  emit(state, 'celestial-start', { defId: due.id, displayName: due.displayName, type: due.type });
+  return true;
+}
+
 /** 推进天象状态（到期/触发），返回当日调制倍率。 */
 export function tickCelestial(state: GameState, ctx: SimContext): CelestialMods {
   // 1. 到期。紫雷前兆结束当天不立刻抽取普通天象。
@@ -87,6 +109,8 @@ export function tickCelestial(state: GameState, ctx: SimContext): CelestialMods 
   }
   // 1b. 强制天象：stage4 修为满 → 紫雷前兆（仅触发一次，解锁终局线，docs/15 §4）
   startPurpleOmenIfDue(state, ctx);
+  // 1c. 季节节日（日历强制，docs/15 §4 节奏层）；与紫雷前兆/进行中天象互斥
+  startSeasonalFestivalIfDue(state, ctx);
   // 2. 无激活时按门概率抽样触发（docs/14 §7 eventGateProbability）
   if (!purpleOmenExpired && !state.activeEvent && ctx.rng.celestial.chance(ctx.params.celestial.eventGateProbability)) {
     const defs = [...ctx.content.events.values()];
