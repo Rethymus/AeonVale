@@ -115,4 +115,20 @@ describe('种田 sim (docs/08 / docs/14 §4)', () => {
     expect(state.player.hp).toBeGreaterThan(40_000); // 回血了
     expect(state.player.hp).toBeLessThanOrEqual(state.player.maxHp);
   });
+
+  it('程序化地形：地图含水域/岩石等多样性地形（docs/08 §3.3）', () => {
+    const reg = buildRegistry();
+    const s = createWorld({ seed: 7, width: 12, height: 12, content: reg, params: DEFAULT_BALANCE });
+    const soilCounts: Record<string, number> = {};
+    for (const t of s.tiles) soilCounts[t.soilType] = (soilCounts[t.soilType] ?? 0) + 1;
+    expect(soilCounts['loam']).toBeGreaterThan(0);
+    expect(Object.keys(soilCounts).length).toBeGreaterThan(1); // 不止 loam
+  });
+
+  it('同种子 → 同地形（确定性）', () => {
+    const reg = buildRegistry();
+    const a = createWorld({ seed: 99, width: 10, height: 10, content: reg, params: DEFAULT_BALANCE });
+    const b = createWorld({ seed: 99, width: 10, height: 10, content: reg, params: DEFAULT_BALANCE });
+    expect(a.tiles.map((t) => t.soilType)).toEqual(b.tiles.map((t) => t.soilType));
+  });
 });

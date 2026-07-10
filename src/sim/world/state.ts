@@ -81,19 +81,41 @@ export function createWorld(o: WorldInit): GameState {
   const tiles: Tile[] = [];
   for (let y = 0; y < o.height; y++) {
     for (let x = 0; x < o.width; x++) {
+      // 地形生成（docs/08 §3.3）：水域/岩石/金属矿散布，种田即布防的导电性基础
+      // 中心 3×3 保留为可种植的凡人居所
+      const isCenter = Math.abs(x - Math.floor(o.width / 2)) <= 1 && Math.abs(y - Math.floor(o.height / 2)) <= 1;
+      let soilType: Tile['soilType'] = 'loam';
+      let blockType: Tile['blockType'] = 'none';
+      let fertility = o.params.growth.baseTillFertility * MILLI;
+      if (!isCenter) {
+        const r = rng.world.next();
+        if (r < 0.08) {
+          soilType = 'water';
+          blockType = 'water';
+          fertility = 0;
+        } else if (r < 0.13) {
+          soilType = 'rock';
+          blockType = 'rock';
+          fertility = 0;
+        } else if (r < 0.15) {
+          soilType = 'metal-ore'; // 金属矿：强引雷、不可种
+          blockType = 'rock';
+          fertility = 0;
+        }
+      }
       tiles.push({
         id: y * o.width + x,
         x,
         y,
-        soilType: 'loam',
-        fertility: o.params.growth.baseTillFertility * MILLI,
+        soilType,
+        fertility,
         qiDensity: 30 * MILLI, // 起始灵气偏低（凡间地≈死地感，docs/14 §2）
         moisture: 30 * MILLI,
         tilled: false,
         cropId: null,
         wateredToday: false,
         channeledToday: false,
-        blockType: 'none',
+        blockType,
         arrayId: null,
         consecutiveSameCropSeasons: 0,
       });
