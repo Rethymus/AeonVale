@@ -22,6 +22,7 @@
     "coverage": "vitest run --coverage",
     "headless": "tsx tools/headless-run.ts",
     "balance": "tsx tools/balance-scan.ts",
+    "tune": "tsx tools/balance-tune.ts",
     "content:lint": "tsx tools/content-lint.ts"
   },
   "dependencies": {
