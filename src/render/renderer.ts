@@ -41,6 +41,8 @@ export interface RenderLayers {
   toast: Text;
   help: Text;
   ending: Text;
+  inv: Text;
+  showInv: boolean;
 }
 
 const ENDING_CN: Record<string, string> = {
@@ -70,7 +72,7 @@ export function createLayers(app: Application): RenderLayers {
   toast.y = app.screen.height - 56;
   app.stage.addChild(toast);
   const help = new Text({
-    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B/N/M炼丹·H/J/K服丹·R引雷阵·F绝缘阵',
+    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B/N/M炼丹·H/J/K服丹·R引雷阵·F绝缘阵·I背包',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0x9090a0 },
   });
   help.x = 10;
@@ -85,7 +87,15 @@ export function createLayers(app: Application): RenderLayers {
   ending.y = app.screen.height / 2;
   ending.visible = false;
   app.stage.addChild(ending);
-  return { tiles, entities, hud, toast, help, ending };
+  const inv = new Text({
+    text: '',
+    style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8 },
+  });
+  inv.x = app.screen.width - 190;
+  inv.y = 70;
+  inv.visible = false;
+  app.stage.addChild(inv);
+  return { tiles, entities, hud, toast, help, ending, inv, showInv: false };
 }
 
 const SEASON_CN: Record<string, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -109,7 +119,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     }
   }
 
-  // —— 玩家 + 阵眼 ——
+  // —— 玩家 + 阵眼 + 面前格光标 ——
   const e = layers.entities;
   e.clear();
   // 阵眼标记（引雷阵=金、绝缘阵=青）
@@ -122,13 +132,19 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     e.circle(cx, cy, 6).fill(arr.defId === 'array.lightning-rod' ? 0xffe066 : 0x66ddff);
   }
   const p = state.player;
+  // 面前格高亮（操作目标）
+  const fdx = p.facing === 'left' ? -1 : p.facing === 'right' ? 1 : 0;
+  const fdy = p.facing === 'up' ? -1 : p.facing === 'down' ? 1 : 0;
+  const fx = p.position.x + fdx;
+  const fy = p.position.y + fdy;
+  if (fx >= 0 && fy >= 0 && fx < state.width && fy < state.height) {
+    e.rect(OX + fx * TILE, OY + fy * TILE, TILE - 1, TILE - 1).stroke({ width: 2, color: 0xffffff, alpha: 0.7 });
+  }
   const px = OX + p.position.x * TILE + TILE / 2;
   const py = OY + p.position.y * TILE + TILE / 2;
   e.circle(px, py, TILE / 3).fill(0xff5a5a);
   // 朝向指示
-  const dx = p.facing === 'left' ? -1 : p.facing === 'right' ? 1 : 0;
-  const dy = p.facing === 'up' ? -1 : p.facing === 'down' ? 1 : 0;
-  e.circle(px + dx * 10, py + dy * 10, 4).fill(0xffffff);
+  e.circle(px + fdx * 10, py + fdy * 10, 4).fill(0xffffff);
 
   // —— HUD ——
   const hpPct = Math.round((p.hp / p.maxHp) * 100);
@@ -146,10 +162,24 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     layers.entities.visible = false;
     layers.ending.text = `${ENDING_CN[state.ending ?? ''] ?? '终'}\n按 R 重新开始`;
     layers.ending.visible = true;
+    layers.inv.visible = false;
   } else {
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.ending.visible = false;
+    if (layers.showInv) {
+      const lines: string[] = ['—— 背包 ——'];
+      const entries = Object.entries(state.player.inventory);
+      if (entries.length === 0) lines.push('（空）');
+      for (const [id, slot] of entries) {
+        const def = content.items.get(id);
+        lines.push(`${def?.displayName ?? id} ×${slot?.count ?? 0}`);
+      }
+      layers.inv.text = lines.join('\n');
+      layers.inv.visible = true;
+    } else {
+      layers.inv.visible = false;
+    }
   }
 }
 

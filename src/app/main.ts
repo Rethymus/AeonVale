@@ -245,6 +245,10 @@ async function main(): Promise<void> {
         toast(r.placed ? '布设绝缘阵' : r.reason ?? '不可放置');
         break;
       }
+      case 'i':
+        layers.showInv = !layers.showInv;
+        toast(layers.showInv ? '打开背包' : '关闭背包');
+        break;
       default:
         return;
     }
