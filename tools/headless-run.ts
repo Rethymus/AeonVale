@@ -17,17 +17,19 @@ export interface BotPolicy {
   careDaily: boolean;
   tribulationBolts: number; // 引劫基础雷数（+stage）
   blockChance: number;
+  /** true = 每次天劫前注入避雷丹+2激活阵法（模拟炼丹-布阵完整准备，测试 prepScore 闭环） */
+  simulatePrepared: boolean;
 }
 
-export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3, blockChance: 0 };
-export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3, blockChance: 0 };
+export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3, blockChance: 0, simulatePrepared: false };
+export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3, blockChance: 0, simulatePrepared: false };
 /**
- * 老手 bot：主动控血策略（docs/17 §5.3 / docs/14 §6.2 nearDeathBonus）。
- * 在天劫前主动让 HP 降至 <25% 以获取 nearDeathBonus 加成，
- * 同时高擦弹率（blockChance=0.6）保证不被打死。
- * 目标：veteran bot 触发 finalHP < 25% 天劫比例 ≥ 50%（M3 退出标准）。
+ * 老手 bot：炼丹-布阵-渡劫完整准备（docs/17 §5.3 / docs/14 §8.3 prepScore）。
+ * simulatePrepared=true：每次天劫前注入避雷丹+2激活阵法 → prepScore=1.0 → 最高突破成功率。
+ * blockChance=0.6：高擦弹率降低死亡风险，模拟熟练玩家。
+ * 验证目标：veteran 突破率 > normal，prepScore 闭环生效。
  */
-export const VETERAN_BOT: BotPolicy = { name: 'veteran', plotSize: 5, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 5, blockChance: 0.6 };
+export const VETERAN_BOT: BotPolicy = { name: 'veteran', plotSize: 5, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 5, blockChance: 0.6, simulatePrepared: true };
 
 export interface RunOutcome {
   seed: number;
@@ -94,6 +96,14 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
 
     while (readyForBreakthrough(state, params)) {
       tribulations++;
+      // simulatePrepared: 注入避雷丹 + 2激活阵法（模拟炼丹-布阵准备，测试 prepScore 闭环）
+      if (bot.simulatePrepared) {
+        mutateItem(state.player, 'pill.ward-basic', 1);
+        state.player.wardMitigation = 0.4; // 服避雷丹
+        // 注入2个激活阵法（prepScore=1.0）
+        if (!state.arrays.has(9001)) state.arrays.set(9001, { id: 9001, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 0, coverageTileIds: [], power: 100, active: true });
+        if (!state.arrays.has(9002)) state.arrays.set(9002, { id: 9002, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 1, coverageTileIds: [], power: 100, active: true });
+      }
       const res = runTribulation(state, { stage: state.player.stage, boltCount: bot.tribulationBolts + state.player.stage, policy: { blockChance: bot.blockChance } }, ctx);
       // 记录天劫最终 HP 比例（M3 退出标准控血 proxy）
       const hpRatio = res.survived ? res.finalHpMilli / (state.player.maxHp || 1) : 0;
