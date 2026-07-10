@@ -4,7 +4,7 @@
  * 启动：pnpm dev（浏览器打开）。全程中文 UI（C8）。
  */
 import { Application } from 'pixi.js';
-import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, type GameState, type SimContext } from '@sim';
+import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, type GameState, type SimContext } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import { createLayers, drawWorld, setToast, type RenderLayers } from '@render/renderer';
@@ -75,6 +75,11 @@ async function main(): Promise<void> {
     }
     const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
     const br = breakthrough(state, ctx, res.survived);
+    checkGameEnd(state, ctx);
+    if (state.gameOver) {
+      toast(state.ending === 'ascension' ? '白日飞升！' : '陨于天劫');
+      return;
+    }
     if (!res.survived) toast('陨于天劫！');
     else if (br.success) toast(`渡劫成功！突破至 ${state.player.stage} 阶`);
     else toast(`扛过天劫（淬体+${Math.floor(res.temperingGainMilli / 1000)}）`);
@@ -101,6 +106,10 @@ async function main(): Promise<void> {
   }
 
   window.addEventListener('keydown', (ev) => {
+    if (state.gameOver) {
+      if (ev.key === 'r' || ev.key === 'R') location.reload();
+      return;
+    }
     const f = frontTile();
     switch (ev.key) {
       case 'ArrowUp':

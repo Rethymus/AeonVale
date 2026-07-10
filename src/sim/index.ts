@@ -5,7 +5,7 @@
  * 无头/bot 用 simulateDay 一次推进一整日。纯函数（除对 state 的确定性变更 + 注入 rng）。
  */
 import type { GameState } from './world/state';
-import { clearEvents } from './world/state';
+import { clearEvents, emit } from './world/state';
 import type { DayInput, PlayerAction } from './world/input';
 import type { SimContext } from './world/context';
 import { applyAction as applyActionImpl } from './farm/actions';
@@ -63,6 +63,22 @@ function resolveDayEnd(state: GameState, ctx: SimContext): void {
 /** 即时应用一个玩家动作（渲染层按键响应用）。不清事件、不推进日。 */
 export function applyAction(state: GameState, action: PlayerAction, ctx: SimContext): void {
   applyActionImpl(state, action, ctx);
+  checkGameEnd(state, ctx);
+}
+
+/** 死亡检查：HP≤0 → 陨于天劫；丹毒满 → 暴毙。达成则置 gameOver（docs/02 失败态）。 */
+export function checkGameEnd(state: GameState, ctx: SimContext): void {
+  if (state.gameOver) return;
+  const cap = ctx.params.pillPoison.cap * 1000;
+  if (state.player.hp <= 0) {
+    state.ending = 'tribulation-death';
+    state.gameOver = true;
+    emit(state, 'ending', { ending: 'tribulation-death' });
+  } else if (state.player.pillPoison >= cap) {
+    state.ending = 'poison-death';
+    state.gameOver = true;
+    emit(state, 'ending', { ending: 'poison-death' });
+  }
 }
 
 /**
@@ -72,6 +88,7 @@ export function applyAction(state: GameState, action: PlayerAction, ctx: SimCont
 export function advanceDay(state: GameState, ctx: SimContext): void {
   resolveDayEnd(state, ctx);
   state.player.stamina = ctx.params.player.staminaCap * MILLI; // 次日清晨
+  checkGameEnd(state, ctx);
   snapshotRng(state, ctx);
 }
 

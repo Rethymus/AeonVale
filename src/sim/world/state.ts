@@ -50,6 +50,8 @@ export interface GameState {
   events: GameEvent[]; // 本步产出事件（每步开头清空）
   activeEvent: ActiveCelestialEvent | null; // 激活中的天象事件
   flags: Set<string>;
+  ending: string | null; // 结局 id（ascension/poison-death/tribulation-death/madness，docs/02）
+  gameOver: boolean; // 游戏结束（达成结局）
   rngSnapshot: Record<string, RngState>; // 各 RNG 流快照（存档/回放）
   nextId: number; // 下一实例 id
 }
@@ -115,6 +117,8 @@ export function createWorld(o: WorldInit): GameState {
     player,
     events: [],
     activeEvent: null,
+    ending: null,
+    gameOver: false,
     flags: new Set(),
     rngSnapshot: snapshotStreams(rng),
     nextId: 1,

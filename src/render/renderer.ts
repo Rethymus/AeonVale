@@ -40,7 +40,15 @@ export interface RenderLayers {
   hud: Text;
   toast: Text;
   help: Text;
+  ending: Text;
 }
+
+const ENDING_CN: Record<string, string> = {
+  ascension: '白日飞升',
+  'poison-death': '丹毒暴毙',
+  'tribulation-death': '陨于天劫',
+  madness: '走火入魔',
+};
 
 export function createLayers(app: Application): RenderLayers {
   const tiles = new Graphics();
@@ -68,7 +76,16 @@ export function createLayers(app: Application): RenderLayers {
   help.x = 10;
   help.y = app.screen.height - 24;
   app.stage.addChild(help);
-  return { tiles, entities, hud, toast, help };
+  const ending = new Text({
+    text: '',
+    style: { fontFamily: CJK_FONT, fontSize: 52, fill: 0xffe066, align: 'center', stroke: { color: 0x000000, width: 4 } },
+  });
+  ending.anchor.set(0.5);
+  ending.x = app.screen.width / 2;
+  ending.y = app.screen.height / 2;
+  ending.visible = false;
+  app.stage.addChild(ending);
+  return { tiles, entities, hud, toast, help, ending };
 }
 
 const SEASON_CN: Record<string, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -122,6 +139,18 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     `第 ${state.day} 日 · ${SEASON_CN[state.season] ?? state.season} · 第 ${state.year} 年　|　` +
     `阶段：${stageNames[state.player.stage] ?? state.player.stage}　` +
     `气血：${hpPct}%　丹毒：${pp}　修为：${Math.floor(p.cultivation / MILLI)}${ev}`;
+
+  // —— 结局遮罩 ——
+  if (state.gameOver) {
+    layers.tiles.visible = false;
+    layers.entities.visible = false;
+    layers.ending.text = `${ENDING_CN[state.ending ?? ''] ?? '终'}\n按 R 重新开始`;
+    layers.ending.visible = true;
+  } else {
+    layers.tiles.visible = true;
+    layers.entities.visible = true;
+    layers.ending.visible = false;
+  }
 }
 
 export function setToast(layers: RenderLayers, msg: string): void {

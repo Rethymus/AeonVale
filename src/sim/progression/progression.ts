@@ -75,5 +75,11 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
   p.hp = p.maxHp; // 突破回满
   p.pillPoison = Math.round(p.pillPoison * 0.5); // 突破排毒
   emit(state, 'breakthrough', { stage: newStage });
+  // 突破至 stage 7（飞升前夜）→ 达成飞升结局（docs/02 正结局）
+  if (newStage === 7) {
+    state.ending = 'ascension';
+    state.gameOver = true;
+    emit(state, 'ending', { ending: 'ascension' });
+  }
   return { success: true, madness: false, newStage };
 }
