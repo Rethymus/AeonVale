@@ -65,6 +65,7 @@ export function serializeState(state: GameState): unknown {
     height: state.height,
     tiles: state.tiles,
     crops: [...state.crops.entries()],
+    arrays: [...state.arrays.entries()],
     player: { ...p, inventory: p.inventory, flags: [...p.flags].sort() },
     activeEvent: state.activeEvent,
     flags: [...state.flags].sort(),
@@ -82,6 +83,10 @@ export function deserializeState(raw: unknown): GameState {
   for (const [k, v] of (o.crops as [string, unknown][])) {
     crops.set(Number(k), v);
   }
+  const arrays = new Map<number, unknown>();
+  for (const [k, v] of (o.arrays as [string, unknown][])) {
+    arrays.set(Number(k), v);
+  }
   const player = {
     ...playerRaw,
     flags: new Set(playerRaw.flags as string[]),
@@ -98,6 +103,7 @@ export function deserializeState(raw: unknown): GameState {
     height: o.height as number,
     tiles: o.tiles as GameState['tiles'],
     crops: crops as GameState['crops'],
+    arrays: arrays as GameState['arrays'],
     player,
     events: [],
     activeEvent: (o.activeEvent ?? null) as GameState['activeEvent'],

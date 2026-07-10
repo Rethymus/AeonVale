@@ -22,6 +22,17 @@ export interface ActiveCelestialEvent {
   qiMod: number;
 }
 
+/** 阵法实例（docs/05 §8 / docs/11 §1.12 Array）。 */
+export interface ArrayInstance {
+  id: number;
+  defId: string;
+  modifier: number; // 权重倍率（放置时从 def 拷贝，避免 targeting 热路径查 content）
+  coreTileId: number;
+  coverageTileIds: number[];
+  power: number; // 耐久（M4 简化：暂不消耗）
+  active: boolean;
+}
+
 export interface GameState {
   readonly version: number;
   masterSeed: number;
@@ -34,6 +45,7 @@ export interface GameState {
   height: number;
   tiles: Tile[];
   crops: Map<EntityId, CropInstance>; // key = tileId（每格至多一作物）
+  arrays: Map<EntityId, ArrayInstance>; // 阵法实例
   player: Player;
   events: GameEvent[]; // 本步产出事件（每步开头清空）
   activeEvent: ActiveCelestialEvent | null; // 激活中的天象事件
@@ -99,6 +111,7 @@ export function createWorld(o: WorldInit): GameState {
     height: o.height,
     tiles,
     crops: new Map(),
+    arrays: new Map(),
     player,
     events: [],
     activeEvent: null,

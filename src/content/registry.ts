@@ -3,7 +3,7 @@
  * M1 内联种子内容（对齐 docs/15 §1 首批灵草）；后续里程碑迁移到 content 各子目录下的 JSON 文件 + 热重载。
  * 物品（材料/种子）由灵草表自动派生，避免重复维护。
  */
-import type { CelestialEventDef, ContentRegistry, ItemDef, PillDef, RecipeDef, SpiritHerbDef } from './defs';
+import type { ArrayDef, CelestialEventDef, ContentRegistry, ItemDef, PillDef, RecipeDef, SpiritHerbDef } from './defs';
 import { spiritHerbSchema, itemSchema } from './schemas';
 
 /** 灵草原始数据（毫点；对齐 docs/15-content-tables.md §1）。 */
@@ -171,6 +171,12 @@ const RAW_EVENTS: CelestialEventDef[] = [
   { id: 'event.wandering-immortal', displayName: '游方散仙至', type: 'opportunity', weight: 4, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '散仙偶至，可换稀有种子或残谱。' },
 ];
 
+/** 阵法原始数据（docs/05 §8 / docs/15 §5）。 */
+const RAW_ARRAYS: ArrayDef[] = [
+  { id: 'array.lightning-rod', displayName: '引雷阵', type: 'rod', modifier: 4.0, radius: 2, needsMetalCore: true, desc: '以金属性灵草为阵眼，把范围内天雷锁向阵心（种田即布防）。' },
+  { id: 'array.insulation', displayName: '绝缘阵', type: 'insulation', modifier: 0.3, radius: 1, needsMetalCore: false, desc: '绝缘垫层铺设，把范围内天雷排斥开，保护核心药草。' },
+];
+
 /** 丹药原始数据（毫点；对齐 docs/15 §3）。 */
 const RAW_PILLS: PillDef[] = [
   {
@@ -254,12 +260,14 @@ export function buildRegistry(): ContentRegistry {
   }
   const events = new Map<string, CelestialEventDef>();
   for (const e of RAW_EVENTS) events.set(e.id, e);
+  const arrays = new Map<string, ArrayDef>();
+  for (const a of RAW_ARRAYS) arrays.set(a.id, a);
 
   // schemaHash：内容指纹（docs/11 §3.2）。简化哈希。
   const schemaHash = simpleHash(
-    [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(','),
+    [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(',') + '|' + [...arrays.keys()].join(','),
   );
-  return { herbs, items, recipes, pills, events, seedToHerb, schemaHash };
+  return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash };
 }
 
 function simpleHash(s: string): string {

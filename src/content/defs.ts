@@ -61,6 +61,7 @@ export interface ContentRegistry {
   recipes: Map<string, RecipeDef>;
   pills: Map<string, PillDef>;
   events: Map<string, CelestialEventDef>;
+  arrays: Map<string, ArrayDef>;
   /** seedId → 灵草（便捷查询） */
   seedToHerb: Map<string, SpiritHerbDef>;
   /** 内容指纹（用于存档版本对齐，docs/11 §3.2 schemaHash） */
@@ -124,5 +125,16 @@ export interface CelestialEventDef {
   durationDays: number;
   growthMod: number; // 灵草生长倍率
   qiMod: number; // 灵气再生倍率
+  desc: string;
+}
+
+/** 阵法定义（docs/05 §8 / docs/15 §5）。种田即布防：引雷阵吸雷、绝缘阵排雷。 */
+export interface ArrayDef {
+  id: string;
+  displayName: string;
+  type: 'rod' | 'insulation'; // 引雷阵 / 绝缘阵
+  modifier: number; // 权重倍率（引雷 >1 吸引，绝缘 <1 排斥）
+  radius: number; // 覆盖半径（切比雪夫）
+  needsMetalCore: boolean; // 引雷阵需金属性灵草作阵眼
   desc: string;
 }

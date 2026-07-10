@@ -62,7 +62,7 @@ export function createLayers(app: Application): RenderLayers {
   toast.y = app.screen.height - 56;
   app.stage.addChild(toast);
   const help = new Text({
-    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B炼避雷丹·N炼生骨丹·M炼净毒丹·H/J/K服丹',
+    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B/N/M炼丹·H/J/K服丹·R引雷阵·F绝缘阵',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0x9090a0 },
   });
   help.x = 10;
@@ -92,9 +92,18 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     }
   }
 
-  // —— 玩家 ——
+  // —— 玩家 + 阵眼 ——
   const e = layers.entities;
   e.clear();
+  // 阵眼标记（引雷阵=金、绝缘阵=青）
+  for (const arr of state.arrays.values()) {
+    if (!arr.active) continue;
+    const core = state.tiles[arr.coreTileId];
+    if (!core) continue;
+    const cx = OX + core.x * TILE + TILE / 2;
+    const cy = OY + core.y * TILE + TILE / 2;
+    e.circle(cx, cy, 6).fill(arr.defId === 'array.lightning-rod' ? 0xffe066 : 0x66ddff);
+  }
   const p = state.player;
   const px = OX + p.position.x * TILE + TILE / 2;
   const py = OY + p.position.y * TILE + TILE / 2;

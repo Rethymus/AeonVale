@@ -10,6 +10,7 @@ import type { Tile } from '@sim/farm/tile';
 import { SOIL_CONDUCTIVITY } from '@sim/farm/tile';
 import type { Rng } from '@sim/world/rng';
 import type { Vec2 } from '@sim/world/types';
+import { arrayModifierFor } from './arrays';
 
 export function chebyshev(a: Vec2, b: Vec2): number {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
@@ -28,7 +29,7 @@ export function tileWeight(state: GameState, ctx: SimContext, tile: Tile, noise0
     }
   }
   const conductivity = SOIL_CONDUCTIVITY[tile.soilType] ?? 1.0;
-  const arrayMod = 1; // M3：引雷阵/绝缘阵（tile.arrayId → arrayModifier）
+  const arrayMod = arrayModifierFor(state, tile.id); // 引雷阵/绝缘阵（docs/05 §8）
   const d = chebyshev(tile, state.player.position);
   const prox = 1 + tp.playerProximityCoef / (1 + d);
   const center: Vec2 = { x: state.width / 2, y: state.height / 2 };

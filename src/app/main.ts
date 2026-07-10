@@ -4,7 +4,7 @@
  * 启动：pnpm dev（浏览器打开）。全程中文 UI（C8）。
  */
 import { Application } from 'pixi.js';
-import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, type GameState, type SimContext } from '@sim';
+import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, type GameState, type SimContext } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import { createLayers, drawWorld, setToast, type RenderLayers } from '@render/renderer';
@@ -181,6 +181,18 @@ async function main(): Promise<void> {
       case 'k':
         eatById('pill.detox', '净毒丹');
         break;
+      case 'r': {
+        const ft = frontTile();
+        const r = placeArray(state, 'array.lightning-rod', ft.x, ft.y, ctx);
+        toast(r.placed ? '布设引雷阵（金属性草为阵眼）' : r.reason ?? '不可放置');
+        break;
+      }
+      case 'f': {
+        const ft = frontTile();
+        const r = placeArray(state, 'array.insulation', ft.x, ft.y, ctx);
+        toast(r.placed ? '布设绝缘阵' : r.reason ?? '不可放置');
+        break;
+      }
       default:
         return;
     }
