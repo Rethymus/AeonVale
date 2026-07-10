@@ -4,7 +4,8 @@
  * 启动：pnpm dev（浏览器打开）。全程中文 UI（C8）。
  */
 import { Application } from 'pixi.js';
-import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, type GameState, type SimContext } from '@sim';
+import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, type GameState, type SimContext } from '@sim';
+import { saveGame, deserializeState } from '@sim/serialize';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import { createLayers, drawWorld, setToast, type RenderLayers } from '@render/renderer';
@@ -16,18 +17,48 @@ import { AudioEngine } from '@io/audio';
 async function main(): Promise<void> {
   const reg = buildRegistry();
   const SEED = 20260710;
-  const state: GameState = createWorld({ seed: SEED, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
-  const ctx: SimContext = createSimContext(SEED, reg, DEFAULT_BALANCE);
+  const SAVE_KEY = 'aeonvale-save-v1';
 
-  // 初始物资（序章→第一幕过渡）
-  mutateItem(state.player, 'seed.mossling', 12);
-  mutateItem(state.player, 'seed.dewroot', 6);
-  mutateItem(state.player, 'seed.suncap', 4);
-  // 少量灵草供炼丹实验（储物戒残存）
-  mutateItem(state.player, 'herb.metalpine', 2);
-  mutateItem(state.player, 'herb.frostmarrow', 2);
-  mutateItem(state.player, 'herb.emberheart', 2);
-  mutateItem(state.player, 'herb.dewroot', 4);
+  const loadSave = (): GameState | null => {
+    try {
+      const raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      const sg = JSON.parse(raw) as { schemaHash?: string; state?: unknown };
+      if (sg.schemaHash !== reg.schemaHash) return null; // 内容版本不兼容 → 开新档
+      return deserializeState(sg.state) as GameState;
+    } catch {
+      return null;
+    }
+  };
+  const saveState = (s: GameState): void => {
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(saveGame(s, reg.schemaHash)));
+    } catch {
+      /* 存储满/禁用 */
+    }
+  };
+  const clearSave = (): void => {
+    try {
+      localStorage.removeItem(SAVE_KEY);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const loaded = loadSave();
+  const state: GameState = loaded ?? createWorld({ seed: SEED, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+  const ctx: SimContext = loaded ? createSimContextFromState(state, reg, DEFAULT_BALANCE) : createSimContext(SEED, reg, DEFAULT_BALANCE);
+  if (!loaded) {
+    // 初始物资（序章→第一幕过渡）
+    mutateItem(state.player, 'seed.mossling', 12);
+    mutateItem(state.player, 'seed.dewroot', 6);
+    mutateItem(state.player, 'seed.suncap', 4);
+    // 少量灵草供炼丹实验（储物戒残存）
+    mutateItem(state.player, 'herb.metalpine', 2);
+    mutateItem(state.player, 'herb.frostmarrow', 2);
+    mutateItem(state.player, 'herb.emberheart', 2);
+    mutateItem(state.player, 'herb.dewroot', 4);
+  }
 
   const app = new Application();
   await app.init({ width: 960, height: 540, background: 0x10101a, antialias: true });
@@ -218,6 +249,8 @@ async function main(): Promise<void> {
         return;
     }
     ev.preventDefault();
+    if (state.gameOver) clearSave();
+    else saveState(state);
   });
 
   app.ticker.add(() => {
