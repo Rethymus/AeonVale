@@ -66,6 +66,7 @@ async function main(): Promise<void> {
 
   const layers: RenderLayers = createLayers(app);
   const audio = new AudioEngine();
+  let furnaceHeat = 50; // 玩家炉温 0..100
 
   const seedChoices = ['seed.mossling', 'seed.dewroot', 'seed.suncap'];
   let seedIdx = 0;
@@ -133,10 +134,10 @@ async function main(): Promise<void> {
         return;
       }
     }
-    const heat = Math.round((r.idealHeatRange[0] + r.idealHeatRange[1]) / 2);
+    const heat = furnaceHeat * 1000; // 玩家自控炉温（火候解谜）
     const res = brewPills(state, { materials: r.inputs.map((i) => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: heat }, ctx);
     audio.playSfx(res.outcome === 'exploded' ? 'explosion' : 'brew');
-    toast(res.outcome === 'pill' ? `炼成 ${name}` : res.outcome === 'exploded' ? '炸炉！丹毒反噬' : res.outcome === 'flawed' ? '残丹（效减）' : '废丹');
+    toast(res.outcome === 'pill' ? `炼成 ${name}（炉温${furnaceHeat}）` : res.outcome === 'exploded' ? '炸炉！丹毒反噬' : res.outcome === 'flawed' ? '残丹·炉温偏离' : '废丹·火候不当');
   }
 
   function eatById(pillId: string, name: string): void {
@@ -248,6 +249,16 @@ async function main(): Promise<void> {
       case 'i':
         layers.showInv = !layers.showInv;
         toast(layers.showInv ? '打开背包' : '关闭背包');
+        break;
+      case '[':
+        furnaceHeat = Math.max(0, furnaceHeat - 10);
+        layers.furnaceHeat = furnaceHeat;
+        toast(`炉温 ${furnaceHeat}`);
+        break;
+      case ']':
+        furnaceHeat = Math.min(100, furnaceHeat + 10);
+        layers.furnaceHeat = furnaceHeat;
+        toast(`炉温 ${furnaceHeat}`);
         break;
       default:
         return;

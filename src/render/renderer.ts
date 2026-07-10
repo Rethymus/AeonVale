@@ -43,6 +43,7 @@ export interface RenderLayers {
   ending: Text;
   inv: Text;
   showInv: boolean;
+  furnaceHeat: number; // 玩家炉温 0..100（app 设置，HUD 显示）
 }
 
 const ENDING_CN: Record<string, string> = {
@@ -72,7 +73,7 @@ export function createLayers(app: Application): RenderLayers {
   toast.y = app.screen.height - 56;
   app.stage.addChild(toast);
   const help = new Text({
-    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B/N/M炼丹·H/J/K服丹·R引雷阵·F绝缘阵·I背包',
+    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B/N/M炼丹·[/]调炉温·H/J/K服丹·R引雷阵·F绝缘阵·I背包',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0x9090a0 },
   });
   help.x = 10;
@@ -95,7 +96,7 @@ export function createLayers(app: Application): RenderLayers {
   inv.y = 70;
   inv.visible = false;
   app.stage.addChild(inv);
-  return { tiles, entities, hud, toast, help, ending, inv, showInv: false };
+  return { tiles, entities, hud, toast, help, ending, inv, showInv: false, furnaceHeat: 50 };
 }
 
 const SEASON_CN: Record<string, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -154,7 +155,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   layers.hud.text =
     `第 ${state.day} 日 · ${SEASON_CN[state.season] ?? state.season} · 第 ${state.year} 年　|　` +
     `阶段：${stageNames[state.player.stage] ?? state.player.stage}　` +
-    `气血：${hpPct}%　丹毒：${pp}　修为：${Math.floor(p.cultivation / MILLI)}${ev}`;
+    `气血：${hpPct}%　丹毒：${pp}　修为：${Math.floor(p.cultivation / MILLI)}　炉温：${layers.furnaceHeat}${ev}`;
 
   // —— 结局遮罩 ——
   if (state.gameOver) {
