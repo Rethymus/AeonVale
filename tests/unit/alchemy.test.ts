@@ -24,6 +24,16 @@ describe('炼丹 sim (docs/06 / 14 §9)', () => {
     expect(res.hpDamageMilli).toBe(15_000);
   });
 
+  it('断肠藤+赤焰心 相反必炸（寒热同体×强热，新增七情）', () => {
+    const { state, ctx } = setup();
+    const res = resolveBrew(
+      state,
+      { materials: [{ herbId: 'herb.griefvein', qty: 1 }, { herbId: 'herb.emberheart', qty: 1 }], avgHeatMilli: 50_000 },
+      ctx,
+    );
+    expect(res.outcome).toBe('exploded');
+  });
+
   it('避雷丹方（金雷引+寒髓草）在理想火候出避雷丹', () => {
     const { state, ctx } = setup();
     const res = resolveBrew(
