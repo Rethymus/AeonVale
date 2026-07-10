@@ -77,7 +77,7 @@ export function createLayers(app: Application): RenderLayers {
   toast.y = app.screen.height - 56;
   app.stage.addChild(toast);
   const help = new Text({
-    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·G猎妖·B/N/M炼丹·[/]调炉温·H/J/K服丹·E飞升·R引雷阵·F绝缘阵·Q静修·I背包',
+    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1-6选种·回车过夜·T引劫·G猎妖·B/N/M炼丹·[/]调炉温·H/J/K服丹·E飞升·R引雷阵·F绝缘阵·Q静修·I背包',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0x9090a0 },
   });
   help.x = 10;

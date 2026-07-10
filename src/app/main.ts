@@ -53,6 +53,10 @@ async function main(): Promise<void> {
     mutateItem(state.player, 'seed.mossling', 12);
     mutateItem(state.player, 'seed.dewroot', 6);
     mutateItem(state.player, 'seed.suncap', 4);
+    // M6 广度：新增三阶以下凡草种子，立即可种（键 4/5/6 选种）
+    mutateItem(state.player, 'seed.stonegrain', 6);
+    mutateItem(state.player, 'seed.mistfern', 5);
+    mutateItem(state.player, 'seed.sunmoss', 5);
     // 少量灵草供炼丹实验（储物戒残存）
     mutateItem(state.player, 'herb.metalpine', 2);
     mutateItem(state.player, 'herb.frostmarrow', 2);
@@ -68,7 +72,7 @@ async function main(): Promise<void> {
   const audio = new AudioEngine();
   let furnaceHeat = 50; // 玩家炉温 0..100
 
-  const seedChoices = ['seed.mossling', 'seed.dewroot', 'seed.suncap'];
+  const seedChoices = ['seed.mossling', 'seed.dewroot', 'seed.suncap', 'seed.stonegrain', 'seed.mistfern', 'seed.sunmoss'];
   let seedIdx = 0;
 
   /** 玩家面前的格子 */
@@ -217,6 +221,18 @@ async function main(): Promise<void> {
       case '3':
         seedIdx = 2;
         toast('选种：朝阳菇');
+        break;
+      case '4':
+        seedIdx = 3;
+        toast('选种：粟石草');
+        break;
+      case '5':
+        seedIdx = 4;
+        toast('选种：雾蕨');
+        break;
+      case '6':
+        seedIdx = 5;
+        toast('选种：烬阳苔');
         break;
       case 'Enter':
         endDay();
