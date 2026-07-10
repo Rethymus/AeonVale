@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createWorld, createSimContext, DEFAULT_BALANCE } from '@sim';
 import { resolveBrew, brewPills } from '@sim/alchemy/alchemySystem';
+import { hasIncompatibility } from '@sim/alchemy/compatibility';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 
@@ -115,5 +116,17 @@ describe('炼丹 sim (docs/06 / 14 §9)', () => {
     // 单寒髓草 vs 寒髓草+露根草(相须)：后者药性更集中、quality 更高（净毒丹方需露根×2，这里测纯聚合倾向）
     const a = resolveBrew(state, { materials: [{ herbId: 'herb.dewroot', qty: 2 }], avgHeatMilli: 32_000 }, ctx);
     expect(a.quality).toBeGreaterThan(0);
+  });
+
+  it('hasIncompatibility：含相反药对返回 true，无相反返回 false', () => {
+    // frostmarrow + emberheart 是相反药对
+    expect(hasIncompatibility(['herb.frostmarrow', 'herb.emberheart'])).toBe(true);
+    // 单草药或无相反组合
+    expect(hasIncompatibility(['herb.mossling'])).toBe(false);
+    expect(hasIncompatibility(['herb.dewroot', 'herb.suncap'])).toBe(false);
+    // 多草药含一对相反
+    expect(hasIncompatibility(['herb.mossling', 'herb.frostmarrow', 'herb.emberheart'])).toBe(true);
+    // 空列表
+    expect(hasIncompatibility([])).toBe(false);
   });
 });

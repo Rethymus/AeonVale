@@ -58,4 +58,32 @@ describe('丹药服用 (docs/06 §7.2)', () => {
     expect(rA.finalHpMilli).toBeGreaterThanOrEqual(rB.finalHpMilli);
     expect(sA.player.wardMitigation).toBe(0); // 渡劫后消耗
   });
+
+  it('temperBoost 效果（default 分支）：applyPill 应用后 effects 含 kind 字符串', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'pill.temper', 1);
+    const r = applyPill(state, 'pill.temper', ctx);
+    // temperBoost 走 default 分支，不改变 HP/poison 等，effects 字段含 'temperBoost'
+    expect(r.applied).toBe(true);
+    expect(r.effects).toContain('temperBoost');
+  });
+
+  it('maxHpUp 效果：提升 maxHp 并填满 HP', () => {
+    const reg = buildRegistry();
+    // 注入含 maxHpUp 效果的测试丹药
+    reg.pills.set('pill.test-maxhpup', {
+      id: 'pill.test-maxhpup', displayName: '强骨试验丹',
+      tier: 2 as const, effects: [{ kind: 'maxHpUp', power: 20_000 }], load: 0, stack: 5,
+    });
+    reg.items.set('pill.test-maxhpup', { id: 'pill.test-maxhpup', displayName: '强骨试验丹', category: 'pill' as const, stack: 5 });
+    const state = createWorld({ seed: 1, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    const ctx = createSimContext(1, reg, DEFAULT_BALANCE);
+    const maxHpBefore = state.player.maxHp;
+    state.player.hp = state.player.maxHp; // 满血
+    mutateItem(state.player, 'pill.test-maxhpup', 1);
+    const r = applyPill(state, 'pill.test-maxhpup', ctx);
+    expect(r.applied).toBe(true);
+    expect(state.player.maxHp).toBe(maxHpBefore + 20_000); // 上限提升
+    expect(state.player.hp).toBe(state.player.maxHp);      // HP 随上限提升
+  });
 });

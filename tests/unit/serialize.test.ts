@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt } from '@sim';
-import { roundTripEqual, canonicalSerialize, stateHash } from '@sim/serialize';
+import { roundTripEqual, canonicalSerialize, stateHash, saveGame } from '@sim/serialize';
 import { buildRegistry } from '@content/registry';
 import { mutateItem } from '@sim/world/player';
 
@@ -60,5 +60,18 @@ describe('序列化与确定性 (docs/11 §3 / docs/17 §7)', () => {
     };
     expect(run(7)).toBe(run(7));
     expect(run(7)).not.toBe(run(8));
+  });
+
+  it('saveGame 返回有效 SaveGame 结构（formatVersion/gameVersion/schemaHash/state）', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 5, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    const ctx = createSimContext(5, reg, DEFAULT_BALANCE);
+    simulateDay(state, { actions: [] }, ctx);
+    const sg = saveGame(state, 'abc123');
+    expect(sg.formatVersion).toBe(1);
+    expect(sg.gameVersion).toBeTruthy();
+    expect(sg.schemaHash).toBe('abc123');
+    expect(sg.state).toBeTruthy();
+    expect(sg.createdAt).toBe(0); // io 层负责填时间，sim 层恒为 0
   });
 });
