@@ -4,7 +4,7 @@
  * 启动：pnpm dev（浏览器打开）。全程中文 UI（C8）。
  */
 import { Application } from 'pixi.js';
-import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, type GameState, type SimContext } from '@sim';
+import { createWorld, createSimContext, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, type GameState, type SimContext } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import { createLayers, drawWorld, setToast, type RenderLayers } from '@render/renderer';
@@ -22,6 +22,11 @@ async function main(): Promise<void> {
   mutateItem(state.player, 'seed.mossling', 12);
   mutateItem(state.player, 'seed.dewroot', 6);
   mutateItem(state.player, 'seed.suncap', 4);
+  // 少量灵草供炼丹实验（储物戒残存）
+  mutateItem(state.player, 'herb.metalpine', 2);
+  mutateItem(state.player, 'herb.frostmarrow', 2);
+  mutateItem(state.player, 'herb.emberheart', 2);
+  mutateItem(state.player, 'herb.dewroot', 4);
 
   const app = new Application();
   await app.init({ width: 960, height: 540, background: 0x10101a, antialias: true });
@@ -71,8 +76,28 @@ async function main(): Promise<void> {
     const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
     const br = breakthrough(state, ctx, res.survived);
     if (!res.survived) toast('陨于天劫！');
-    else if (br.success) toast(`渡劫成功！突破至 ${state.player.stage + 1 - 1} 阶`);
+    else if (br.success) toast(`渡劫成功！突破至 ${state.player.stage} 阶`);
     else toast(`扛过天劫（淬体+${Math.floor(res.temperingGainMilli / 1000)}）`);
+  }
+
+  /** 按丹方炼丹（理想火候，docs/06；完整火候解谜 UI 待 M4） */
+  function brewById(recipeId: string, name: string): void {
+    const r = ctx.content.recipes.get(recipeId);
+    if (!r) { toast('无此丹方'); return; }
+    for (const inp of r.inputs) {
+      if (itemCount(state.player, inp.herbId) < inp.qty) {
+        toast(`材料不足：${ctx.content.items.get(inp.herbId)?.displayName ?? inp.herbId}`);
+        return;
+      }
+    }
+    const heat = Math.round((r.idealHeatRange[0] + r.idealHeatRange[1]) / 2);
+    const res = brewPills(state, { materials: r.inputs.map((i) => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: heat }, ctx);
+    toast(res.outcome === 'pill' ? `炼成 ${name}` : res.outcome === 'exploded' ? '炸炉！丹毒反噬' : res.outcome === 'flawed' ? '残丹（效减）' : '废丹');
+  }
+
+  function eatById(pillId: string, name: string): void {
+    const r = applyPill(state, pillId, ctx);
+    toast(r.applied ? `服 ${name}：${r.effects.join('，') || '无'}` : `无 ${name}`);
   }
 
   window.addEventListener('keydown', (ev) => {
@@ -137,6 +162,24 @@ async function main(): Promise<void> {
         break;
       case 't':
         tryTribulation();
+        break;
+      case 'b':
+        brewById('recipe.ward-pill', '避雷丹');
+        break;
+      case 'n':
+        brewById('recipe.bone-pill', '生骨丹');
+        break;
+      case 'm':
+        brewById('recipe.detox-pill', '净毒丹');
+        break;
+      case 'h':
+        eatById('pill.ward-basic', '避雷丹');
+        break;
+      case 'j':
+        eatById('pill.bone-basic', '生骨丹');
+        break;
+      case 'k':
+        eatById('pill.detox', '净毒丹');
         break;
       default:
         return;

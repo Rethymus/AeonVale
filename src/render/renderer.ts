@@ -62,7 +62,7 @@ export function createLayers(app: Application): RenderLayers {
   toast.y = app.screen.height - 56;
   app.stage.addChild(toast);
   const help = new Text({
-    text: '方向键移动 · 空格翻地 · Z播种 · X浇水 · C供灵 · V收获 · 1/2选种 · 回车过夜 · T引劫',
+    text: '方向键移动·空格翻地·Z播种·X浇水·C供灵·V收获·1/2/3选种·回车过夜·T引劫·B炼避雷丹·N炼生骨丹·M炼净毒丹·H/J/K服丹',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0x9090a0 },
   });
   help.x = 10;

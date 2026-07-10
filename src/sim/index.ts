@@ -93,6 +93,8 @@ export * from './world/types';
 export type { PlayerAction, DayInput } from './world/input';
 export type { SimContext } from './world/context';
 export { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herbQiDemand, careFactor } from './farm/farmSystem';
+export { applyPill } from './alchemy/pillSystem';
+export { brewPills, resolveBrew } from './alchemy/alchemySystem';
 export { DEFAULT_BALANCE } from './params';
 export type { BalanceParams } from './params';
 export type { GameState } from './world/state';

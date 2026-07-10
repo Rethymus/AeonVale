@@ -73,7 +73,8 @@ export function runTribulation(
     }
 
     if (onPlayer) {
-      let dmg = base;
+      // 避雷护体减伤（docs/06 §7.2，服避雷丹设置，渡劫消耗）
+      let dmg = base * (1 - state.player.wardMitigation);
       // 擦弹判定：始终消费 rng（保证不同 blockChance 下落点序列一致、可比较）
       const blocked = rng.next() < policy.blockChance;
       if (blocked) {
@@ -102,6 +103,7 @@ export function runTribulation(
 
   state.player.cultivation += tempering;
   state.player.temperingStack += tempering;
+  state.player.wardMitigation = 0; // 护体渡劫后消耗
   const survived = state.player.hp > 0;
   emit(state, 'tribulation-end', { survived, tempering, hits });
 
