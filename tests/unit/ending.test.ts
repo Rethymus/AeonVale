@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createWorld, createSimContext, DEFAULT_BALANCE, checkGameEnd, applyPill } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { breakthrough } from '@sim/progression/progression';
-import { mutateItem } from '@sim/world/player';
+import { mutateItem, itemCount } from '@sim/world/player';
 import { MILLI } from '@sim/world/types';
 
 function setup(seed = 1, stage = 1) {
@@ -14,19 +14,37 @@ function setup(seed = 1, stage = 1) {
 }
 
 describe('结局系统 (docs/02)', () => {
-  it('突破至 stage 7 → 飞升结局（通关）', () => {
-    let won = false;
-    for (let s = 0; s < 80 && !won; s++) {
+  it('突破至 stage 7 → 飞升前夜（非自动结局）；服飞升丹才飞升（docs/14 §8.1 / docs/15 §3）', () => {
+    let reached = false;
+    for (let s = 0; s < 80 && !reached; s++) {
       const { state, ctx } = setup(s, 6);
       state.player.cultivation = 1_700_000; // > xCap[5]=1.6M
       const r = breakthrough(state, ctx, true);
       if (r.success && state.player.stage === 7) {
+        // 飞升前夜：达 stage7 但不自动结局，需炼服飞升丹
+        expect(state.ending).toBeNull();
+        expect(state.gameOver).toBe(false);
+        expect(state.events.some((e) => e.type === 'eve-of-ascension')).toBe(true);
+        // 服飞升丹 → 飞升结局（通关）
+        mutateItem(state.player, 'pill.ascend', 1);
+        const res = applyPill(state, 'pill.ascend', ctx);
+        expect(res.applied).toBe(true);
         expect(state.ending).toBe('ascension');
         expect(state.gameOver).toBe(true);
-        won = true;
+        reached = true;
       }
     }
-    expect(won).toBe(true);
+    expect(reached).toBe(true);
+  });
+
+  it('飞升前夜前服飞升丹被拒（不消耗通关道具，docs/15 §3）', () => {
+    const { state, ctx } = setup(1, 5); // stage5，未达飞升前夜（stage7）
+    mutateItem(state.player, 'pill.ascend', 1);
+    const res = applyPill(state, 'pill.ascend', ctx);
+    expect(res.applied).toBe(false); // 拒服
+    expect(itemCount(state.player, 'pill.ascend')).toBe(1); // 通关道具保留
+    expect(state.ending).toBeNull();
+    expect(state.gameOver).toBe(false);
   });
 
   it('HP≤0 → 陨于天劫', () => {

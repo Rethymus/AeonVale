@@ -242,6 +242,9 @@ async function main(): Promise<void> {
       case 'k':
         eatById('pill.detox', '净毒丹');
         break;
+      case 'e':
+        eatById('pill.ascend', '飞升丹'); // 飞升前夜（stage7）服用通关；未达则拒服不消耗（docs/15 §3）
+        break;
       case 'r': {
         const ft = frontTile();
         const r = placeArray(state, 'array.lightning-rod', ft.x, ft.y, ctx);

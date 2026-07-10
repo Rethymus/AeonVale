@@ -335,6 +335,20 @@ const RAW_RECIPES: RecipeDef[] = [
     difficulty: 4,
     reveal: 'fragment',
   },
+  {
+    id: 'recipe.ascend',
+    displayName: '飞升丹方',
+    inputs: [
+      { herbId: 'herb.violet-ascend', qty: 2 },
+      { herbId: 'herb.dao-root', qty: 1 },
+      { herbId: 'herb.boneash-lily', qty: 2 },
+    ],
+    idealHeatRange: [65_000, 85_000],
+    targetProperty: { cold: 4_000, hot: 4_000, warm: 4_000, neutral: 10_000 }, // docs/15 §2 [4,4,4,10]
+    outputPillId: 'pill.ascend',
+    difficulty: 5,
+    reveal: 'fragment', // stage5 终局残卷（docs/15 §2）
+  },
 ];
 
 /** 天象事件原始数据（对齐 docs/15 §4 / docs/07）。 */
@@ -424,6 +438,14 @@ const RAW_PILLS: PillDef[] = [
     load: 6_000,
     stack: 10,
   },
+  {
+    id: 'pill.ascend',
+    displayName: '飞升丹',
+    tier: 5,
+    effects: [{ kind: 'ascend', power: 0 }], // 飞升前夜（stage≥7）服用触发飞升结局（docs/15 §3）
+    load: 0,
+    stack: 5,
+  },
 ];
 
 /** 由灵草派生物品（材料 + 种子），减少重复维护。 */
@@ -484,7 +506,7 @@ export function buildRegistry(): ContentRegistry {
   const schemaHash = simpleHash(
     [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(',') + '|' + [...arrays.keys()].join(','),
   );
-  const compatibleSchemaHashes = ['1eb5f343']; // M0–M3：新增妖兽内丹前的内容指纹，可无损补默认字段继续读取。
+  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545']; // M0–M3（妖兽内丹前）+ M4（飞升丹前）：新增内容可无损补默认字段继续读取旧档。
   return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash, compatibleSchemaHashes };
 }
 

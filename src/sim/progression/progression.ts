@@ -103,11 +103,10 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
   p.hp = p.maxHp; // 突破回满
   p.pillPoison = Math.round(p.pillPoison * 0.5); // 突破排毒
   emit(state, 'breakthrough', { stage: newStage });
-  // 突破至 stage 7（飞升前夜）→ 达成飞升结局（docs/02 正结局）
+  // 突破至 stage 7（飞升前夜）：不再自动飞升——需炼服飞升丹 pill.ascend 才达成飞升结局
+  // （docs/14 §8.1 stage7=飞升前夜 / docs/15 §3 pill.ascend 为飞升结局触发物）
   if (newStage === 7) {
-    state.ending = 'ascension';
-    state.gameOver = true;
-    emit(state, 'ending', { ending: 'ascension' });
+    emit(state, 'eve-of-ascension', { stage: 7 });
   }
   return { success: true, madness: false, newStage, prepScore };
 }

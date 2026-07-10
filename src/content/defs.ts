@@ -79,7 +79,8 @@ export type PillEffectKind =
   | 'ironBone' // 整场减伤
   | 'detox' // 清丹毒
   | 'temperBoost' // 淬体效率提升
-  | 'madness'; // 走火（副作用）
+  | 'madness' // 走火（副作用）
+  | 'ascend'; // 飞升（通关触发物，仅飞升前夜 stage≥7 生效，docs/15 §3）
 
 export interface PillEffect {
   kind: PillEffectKind;

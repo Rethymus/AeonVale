@@ -17,6 +17,12 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
   const p = state.player;
   const pill = ctx.content.pills.get(pillId);
   if (!pill || itemCount(p, pillId) <= 0) return { applied: false, effects: [] };
+
+  // 飞升丹前置：未达飞升前夜（stage≥7）拒服，避免误服浪费通关道具（docs/15 §3 pill.ascend）
+  if (pill.effects.some((e) => e.kind === 'ascend') && p.stage < 7) {
+    return { applied: false, effects: ['飞升前兆（需达飞升前夜 stage7）'] };
+  }
+
   mutateItem(p, pillId, -1);
 
   const effects: string[] = [];
@@ -42,6 +48,17 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
       case 'madness':
         p.madnessValue += eff.power; // 走火丹：累积走火值，突破时触发走火入魔结局
         effects.push(`走火+${eff.power}`);
+        break;
+      case 'ascend':
+        // 飞升丹：仅飞升前夜（stage≥7）服用触发飞升结局（docs/14 §8.1 stage7=飞升前夜 / docs/15 §3）
+        if (p.stage >= 7 && !state.gameOver) {
+          state.ending = 'ascension';
+          state.gameOver = true;
+          emit(state, 'ending', { ending: 'ascension' });
+          effects.push('白日飞升');
+        } else {
+          effects.push('飞升前兆（需达飞升前夜）');
+        }
         break;
       default:
         effects.push(eff.kind);
