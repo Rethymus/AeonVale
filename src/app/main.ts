@@ -250,6 +250,11 @@ async function main(): Promise<void> {
         layers.showInv = !layers.showInv;
         toast(layers.showInv ? '打开背包' : '关闭背包');
         break;
+      case 'q':
+        applyAction(state, { kind: 'rest' }, ctx);
+        audio.playSfx('eat-pill');
+        toast('静修（回血+清毒）');
+        break;
       case '[':
         furnaceHeat = Math.max(0, furnaceHeat - 10);
         layers.furnaceHeat = furnaceHeat;

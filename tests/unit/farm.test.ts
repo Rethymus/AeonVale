@@ -131,4 +131,17 @@ describe('种田 sim (docs/08 / docs/14 §4)', () => {
     const b = createWorld({ seed: 99, width: 10, height: 10, content: reg, params: DEFAULT_BALANCE });
     expect(a.tiles.map((t) => t.soilType)).toEqual(b.tiles.map((t) => t.soilType));
   });
+
+  it('静修：耗体力回血+清毒', () => {
+    const { state, ctx } = setup();
+    state.player.hp = 50_000;
+    state.player.pillPoison = 30_000;
+    const stamBefore = state.player.stamina;
+    simulateDay(state, { actions: [{ kind: 'rest' }] }, ctx);
+    expect(state.player.hp).toBeGreaterThan(50_000); // 回血
+    expect(state.player.pillPoison).toBeLessThan(30_000); // 清毒
+    // 体力消耗在当日清晨重置前已扣（rest 耗 30），但 simulateDay 清晨先重置→动作→日终不再重置
+    // 故 rest 消耗体现在 stamBefore(满) - 30*1000
+    expect(state.player.stamina).toBe(stamBefore - 30 * 1000);
+  });
 });

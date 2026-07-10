@@ -111,6 +111,7 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       return;
     }
     case 'rest': {
+      if (!tryStamina(30)) return; // 静修耗体力（docs/08 §1.3）
       p.hp = Math.min(p.maxHp, p.hp + 10 * MILLI);
       p.pillPoison = Math.max(0, p.pillPoison - ctx.params.pillPoison.restBonusMax * MILLI);
       emit(state, 'rest', {});
