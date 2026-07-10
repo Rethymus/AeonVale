@@ -116,13 +116,20 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
 
     while (readyForBreakthrough(state, params)) {
       tribulations++;
-      // simulatePrepared: 注入避雷丹 + 2激活阵法（模拟炼丹-布阵准备，测试 prepScore 闭环）
+      // simulatePrepared: 模拟炼丹-布阵完整准备（prepScore 闭环 + 紫/青雷 counterplay）
       if (bot.simulatePrepared) {
-        mutateItem(state.player, 'pill.ward-basic', 1);
-        state.player.wardMitigation = 0.4; // 服避雷丹
-        // 注入2个激活阵法（prepScore=1.0）
-        if (!state.arrays.has(9001)) state.arrays.set(9001, { id: 9001, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 0, coverageTileIds: [], power: 100, active: true });
-        if (!state.arrays.has(9002)) state.arrays.set(9002, { id: 9002, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 1, coverageTileIds: [], power: 100, active: true });
+        // veteran = 最强准备：偷天避雷丹(0.75) + 铁骨丹(0.2) 整场减伤（docs/15 §3 终极抗雷组合）
+        mutateItem(state.player, 'pill.ward-heaven', 1); // 入库存：保证渡劫消耗后 prepScore 仍识别（docs/09 §3.2）
+        state.player.wardMitigation = 0.75; // pill.ward-heaven
+        state.player.ironBoneMitigation = 0.2; // pill.iron-bone
+        state.player.hp = state.player.maxHp; // 渡劫前回满 HP（生骨丹/静修；猎妖反击的 HP 损耗需补回，否则空血渡劫必死）
+        // 注入2个激活阵法，覆盖玩家周围（chebyshev≤1）使引雷阵真正引流落向玩家的雷（prepScore=1.0）
+        const pcov: number[] = [];
+        for (const tt of state.tiles) {
+          if (Math.max(Math.abs(tt.x - state.player.position.x), Math.abs(tt.y - state.player.position.y)) <= 1) pcov.push(tt.id);
+        }
+        if (!state.arrays.has(9001)) state.arrays.set(9001, { id: 9001, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: pcov[0] ?? 0, coverageTileIds: pcov, power: 100, active: true });
+        if (!state.arrays.has(9002)) state.arrays.set(9002, { id: 9002, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: pcov[0] ?? 0, coverageTileIds: pcov, power: 100, active: true });
       }
       const res = runTribulation(state, { stage: state.player.stage, boltCount: bot.tribulationBolts + state.player.stage, policy: { blockChance: bot.blockChance } }, ctx);
       // 记录天劫最终 HP 比例（M3 退出标准控血 proxy）

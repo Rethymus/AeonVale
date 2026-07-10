@@ -9,6 +9,7 @@ import { emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { BalanceParams } from '@sim/params';
 import type { CultivationStage } from '@sim/world/types';
+import { MILLI } from '@sim/world/types';
 import { itemCount } from '@sim/world/player';
 
 /** 阶段修为上限（docs/14 §8.1 / 09 §1.1，7 阶 ×1.8）。 */
@@ -40,7 +41,8 @@ export function computePrepScore(state: GameState): number {
   const hasWardPill =
     state.player.wardMitigation > 0 ||
     itemCount(state.player, 'pill.ward-basic') > 0 ||
-    itemCount(state.player, 'pill.ward-greater') > 0;
+    itemCount(state.player, 'pill.ward-greater') > 0 ||
+    itemCount(state.player, 'pill.ward-heaven') > 0;
   const pillScore = hasWardPill ? 1.0 : 0.0;
 
   return 0.4 * arrayScore + 0.6 * pillScore;
@@ -99,7 +101,7 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
   p.stage = newStage;
   p.cultivation = Math.round((p.cultivation - oldCap) * 0.3); // 溢出保留 30%
   p.temperingStack = 0;
-  p.maxHp = params.player.stageMaxHp[newStage - 1] ?? p.maxHp;
+  p.maxHp = (params.player.stageMaxHp[newStage - 1] ?? 100) * MILLI; // 阶段 maxHP（点→毫点；docs/14 §8.1）
   p.hp = p.maxHp; // 突破回满
   p.pillPoison = Math.round(p.pillPoison * 0.5); // 突破排毒
   emit(state, 'breakthrough', { stage: newStage });

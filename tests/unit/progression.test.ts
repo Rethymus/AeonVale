@@ -50,7 +50,7 @@ describe('进阶系统 (docs/09 / 14 §8)', () => {
       r = breakthrough(st, c, true);
       if (r!.success) {
         expect(st.player.stage).toBe(2);
-        expect(st.player.maxHp).toBe(DEFAULT_BALANCE.player.stageMaxHp[1]);
+        expect(st.player.maxHp).toBe((DEFAULT_BALANCE.player.stageMaxHp[1] ?? 110) * MILLI); // 点→毫点（docs/14 §8.1）
         expect(st.player.hp).toBe(st.player.maxHp);
         expect(st.player.pillPoison).toBe(20_000); // 减半
         expect(st.player.cultivation).toBeLessThan(50_000); // 溢出保留后小
