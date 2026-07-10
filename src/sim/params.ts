@@ -231,7 +231,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
       violetUnlockStage: 3, // docs/05 §5.2：stage3 紫雷初现
       violetChanceBase: 0.3, // stage3 紫雷占比 0.3（初现）
       violetChanceSlope: 0.3, // 每阶 +0.3 → stage4=0.6（紫雷为主）/ stage5=0.9 / stage6+=1.0
-      violetDamageMult: 1.5, // docs/05 §5.2 BoltDamageMult(Violet)
+      violetDamageMult: 1.16, // M5 调参（docs/18 §7.3 终局劝退）：1.5→1.16。辅助代理 veteran∈[0.75,0.85] 达标、normal 落在 0.30 临界；原值 1.5 见 docs/05 §5.2 / 14 §8
       violetTemperingMult: 1.5,
       violetBlastRadius: 2, // 格（青雷=1）
     },

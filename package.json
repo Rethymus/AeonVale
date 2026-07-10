@@ -19,8 +19,13 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:fast": "vitest run tests/unit tests/property",
+    "test:replay": "vitest run tests/replay",
+    "replay:update": "tsx tools/update-golden-replay.ts",
     "coverage": "vitest run --coverage",
     "headless": "tsx tools/headless-run.ts",
+    "m5:check": "tsx tools/m5-certify.ts --profile pr --fail-on structural",
+    "m5:report": "tsx tools/m5-certify.ts --profile local --fail-on never",
+    "m5:certify": "tsx tools/m5-certify.ts --profile nightly --fail-on targets",
     "balance": "tsx tools/balance-scan.ts",
     "tune": "tsx tools/balance-tune.ts",
     "content:lint": "tsx tools/content-lint.ts"

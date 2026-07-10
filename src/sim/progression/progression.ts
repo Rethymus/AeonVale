@@ -19,7 +19,10 @@ export function stageQiCap(stage: CultivationStage, params: BalanceParams): numb
 
 /** 是否修为满、可触发天劫→突破（docs/05 §1.1）。 */
 export function readyForBreakthrough(state: GameState, params: BalanceParams): boolean {
-  return state.player.stage >= 1 && state.player.stage <= 6 && state.player.cultivation >= stageQiCap(state.player.stage, params);
+  const { stage, cultivation } = state.player;
+  if (stage < 1 || stage > 6 || cultivation < stageQiCap(stage, params)) return false;
+  if (stage !== 4) return true;
+  return state.flags.has('purple-omen-fired') && state.activeEvent?.defId !== 'event.purple-omen';
 }
 
 /**

@@ -4,7 +4,7 @@
  * 启动：pnpm dev（浏览器打开）。全程中文 UI（C8）。
  */
 import { Application } from 'pixi.js';
-import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, type GameState, type SimContext } from '@sim';
+import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, applyAction, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, type GameState, type SimContext } from '@sim';
 import { saveGame, deserializeState } from '@sim/serialize';
 import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
@@ -107,6 +107,10 @@ async function main(): Promise<void> {
   }
 
   function tryTribulation(): void {
+    if (startPurpleOmenIfDue(state, ctx) || state.activeEvent?.defId === 'event.purple-omen') {
+      toast('紫雷前兆未散，七日后方可引劫');
+      return;
+    }
     if (!readyForBreakthrough(state, DEFAULT_BALANCE)) {
       toast('修为未满，不可引劫');
       return;

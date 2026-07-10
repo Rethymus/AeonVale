@@ -1,209 +1,352 @@
 /**
- * 无头模拟 Harness（docs/17 §4）。完整核心循环：farm→引劫→淬体→突破。
- * 用法：pnpm headless ｜ pnpm headless -- --seeds 50
+ * 无头模拟 Harness（docs/17 §4）。核心 smoke 循环与 M5 assisted campaign proxy 共用同一确定性引擎。
+ *
+ * M5 proxy 会明确记录所有合成的渡劫/飞升辅助；其结果不是自然玩家通关率。
  */
 import { fileURLToPath } from 'node:url';
-import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt, type BalanceParams } from '@sim';
+import {
+  applyPill,
+  checkGameEnd,
+  createSimContext,
+  createWorld,
+  DEFAULT_BALANCE,
+  simulateDay,
+  tileAt,
+  type BalanceParams,
+} from '@sim';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import type { GameState } from '@sim/world/state';
 import type { DayInput, PlayerAction } from '@sim/world/input';
 import { runTribulation } from '@sim/tribulation/tribulationSystem';
-import { readyForBreakthrough, breakthrough } from '@sim/progression/progression';
+import { breakthrough, readyForBreakthrough, stageQiCap } from '@sim/progression/progression';
+
+export type PreparationProfile = 'none' | 'basic-assisted' | 'expert-assisted';
+export type AscensionProfile = 'none' | 'pill-assisted-at-stage7';
+export type ProgressionProfile = 'natural' | 'cap-assisted';
+export type RunEndReason = 'ascended' | 'tribulation-death' | 'poison-death' | 'madness' | 'other-ending' | 'timeout';
 
 export interface BotPolicy {
   name: string;
   plotSize: number;
   seedId: string;
   careDaily: boolean;
-  tribulationBolts: number; // 引劫基础雷数（+stage）
+  tribulationBolts: number;
   blockChance: number;
-  /** true = 每次天劫前注入避雷丹+2激活阵法（模拟炼丹-布阵完整准备，测试 prepScore 闭环） */
-  simulatePrepared: boolean;
-  /** 妖兽潮活跃时是否主动猎妖（承担体力/HP 成本换内丹）。 */
   huntBeasts: boolean;
+  preparationProfile: PreparationProfile;
+  ascensionProfile: AscensionProfile;
+  progressionProfile: ProgressionProfile;
 }
 
-export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3, blockChance: 0, simulatePrepared: false, huntBeasts: false };
-export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3, blockChance: 0, simulatePrepared: false, huntBeasts: true };
-/**
- * 老手 bot：炼丹-布阵-渡劫完整准备（docs/17 §5.3 / docs/14 §8.3 prepScore）。
- * simulatePrepared=true：每次天劫前注入避雷丹+2激活阵法 → prepScore=1.0 → 最高突破成功率。
- * blockChance=0.6：高擦弹率降低死亡风险，模拟熟练玩家。
- * 验证目标：veteran 突破率 > normal，prepScore 闭环生效。
- */
-export const VETERAN_BOT: BotPolicy = { name: 'veteran', plotSize: 5, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 5, blockChance: 0.6, simulatePrepared: true, huntBeasts: true };
+export const ROOKIE_BOT: BotPolicy = {
+  name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3,
+  blockChance: 0, huntBeasts: false, preparationProfile: 'none', ascensionProfile: 'none', progressionProfile: 'natural',
+};
+export const NORMAL_BOT: BotPolicy = {
+  name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3,
+  blockChance: 0, huntBeasts: true, preparationProfile: 'none', ascensionProfile: 'none', progressionProfile: 'natural',
+};
+/** M5 normal proxy：显式注入资源门槛与基础渡劫准备，不能作为自然玩家行为解释。 */
+export const M5_NORMAL_PROXY_BOT: BotPolicy = {
+  ...NORMAL_BOT,
+  name: 'normal',
+  preparationProfile: 'basic-assisted',
+  ascensionProfile: 'pill-assisted-at-stage7',
+  progressionProfile: 'cap-assisted',
+};
+/** M5 veteran proxy：更高擦弹率与基础辅助准备，目标是与 normal 拉开但不无敌。 */
+export const M5_VETERAN_PROXY_BOT: BotPolicy = {
+  ...M5_NORMAL_PROXY_BOT,
+  name: 'veteran',
+  plotSize: 5,
+  tribulationBolts: 5,
+  blockChance: 0.52,
+};
+/** @deprecated Use M5_VETERAN_PROXY_BOT for assisted campaign certification. */
+export const VETERAN_BOT = M5_VETERAN_PROXY_BOT;
+
+export interface SyntheticAssistance {
+  preparationEvents: number;
+  ascensionPillsGranted: number;
+  progressionCapsGranted: number;
+  healedMilli: number;
+  itemsGranted: Record<string, number>;
+  arraysGranted: number;
+}
+
+export interface TribulationAttempt {
+  stage: number;
+  bolts: number;
+  violetBolts: number;
+  survived: boolean;
+  finalHpRatio: number;
+  temperingGainMilli: number;
+}
+
+export interface PurpleOmenTrace {
+  encountered: boolean;
+  triggeredDay: number | null;
+  expiredDay: number | null;
+  blockedBreakthroughDays: number;
+  deadlocked: boolean;
+  deadlockReason: string | null;
+}
 
 export interface RunOutcome {
   seed: number;
-  days: number;
+  days: number; // 兼容旧调用；等同 simulatedDays
+  simulatedDays: number;
+  maxDays: number;
   stageReached: number;
   breakthroughs: number;
   tribulations: number;
   died: boolean;
   deathCause: string | null;
+  endReason: RunEndReason;
+  ascended: boolean;
+  ascensionDay: number | null;
   harvests: number;
   maxPillPoison: number;
-  /** 天劫中最终 HP < 25% maxHp 的比例（M3 退出标准：veteran ≥ 50%）。 */
   lowHpTribulationRate: number;
-  /** 每次天劫的最终 HP 比例列表（用于调试/分布分析）。 */
   tribulationFinalHpRatios: number[];
-  /** 妖兽潮触发次数（M4 因果链：灵气潮汐→引兽，docs/07 §3.1）。 */
+  tribulationAttempts: TribulationAttempt[];
+  purpleOmen: PurpleOmenTrace;
+  assistance: SyntheticAssistance;
   beastSurges: number;
-  /** 被妖兽啃食的成熟作物数（M4 妖兽税，影响推进速度）。 */
   cropsLostToBeasts: number;
-  /** 妖兽退去遗留的妖兽内丹数（M4 舔包机，docs/07 §3.3）。 */
   beastCoresLooted: number;
 }
 
-/** 单局模拟（完整循环）。params/bot 可注入，用于平衡扫描。 */
-export function runOne(seed: number, days: number, bot: BotPolicy, params: BalanceParams = DEFAULT_BALANCE): RunOutcome {
+export interface RunConfig {
+  maxDays: number;
+  stopOnGameOver?: boolean;
+}
+
+function emptyAssistance(): SyntheticAssistance {
+  return { preparationEvents: 0, ascensionPillsGranted: 0, progressionCapsGranted: 0, healedMilli: 0, itemsGranted: {}, arraysGranted: 0 };
+}
+
+function grant(state: GameState, assistance: SyntheticAssistance, itemId: string, count: number): boolean {
+  const granted = mutateItem(state.player, itemId, count);
+  if (granted) {
+    assistance.itemsGranted[itemId] = (assistance.itemsGranted[itemId] ?? 0) + count;
+  }
+  return granted;
+}
+
+function prepareTribulation(state: GameState, bot: BotPolicy, assistance: SyntheticAssistance, ctx: Parameters<typeof applyPill>[2]): void {
+  if (bot.preparationProfile === 'none') return;
+  assistance.preparationEvents++;
+  const pillId = bot.preparationProfile === 'expert-assisted' ? 'pill.ward-heaven' : 'pill.ward-greater';
+  if (!grant(state, assistance, pillId, 1) || !applyPill(state, pillId, ctx).applied) return;
+  if (bot.preparationProfile === 'expert-assisted') state.player.ironBoneMitigation = 0.2;
+  const before = state.player.hp;
+  state.player.hp = state.player.maxHp;
+  assistance.healedMilli += state.player.hp - before;
+  const coverage = state.tiles
+    .filter((t) => Math.max(Math.abs(t.x - state.player.position.x), Math.abs(t.y - state.player.position.y)) <= 1)
+    .map((t) => t.id);
+  const ids = bot.preparationProfile === 'expert-assisted' ? [9001, 9002] : [9001];
+  for (const id of ids) {
+    const existing = state.arrays.get(id);
+    if (!existing || !existing.active || existing.power <= 0) {
+      state.arrays.set(id, { id, defId: 'array.lightning-rod', modifier: 4, coreTileId: coverage[0] ?? 0, coverageTileIds: coverage, power: 100, active: true });
+      assistance.arraysGranted++;
+    }
+  }
+}
+
+function classifyEnd(state: GameState): RunEndReason | null {
+  if (!state.gameOver) return null;
+  if (state.ending === 'ascension') return 'ascended';
+  if (state.ending === 'tribulation-death') return 'tribulation-death';
+  if (state.ending === 'poison-death') return 'poison-death';
+  if (state.ending === 'madness') return 'madness';
+  return 'other-ending';
+}
+
+/** 单局确定性模拟。M5 运行需显式选用较长 maxDays；duration 单位始终为 game-days。 */
+export function runSimulation(seed: number, bot: BotPolicy, params: BalanceParams = DEFAULT_BALANCE, config: RunConfig): RunOutcome {
   const reg = buildRegistry();
   const state: GameState = createWorld({ seed, width: 8, height: 8, content: reg, params });
   const ctx = createSimContext(seed, reg, params);
   state.player.stage = 1 as GameState['player']['stage'];
   mutateItem(state.player, bot.seedId, bot.plotSize * 6);
 
-  // 自适应选地：跳过水域/岩石/金属矿，找可种植的普通地块（地形适应）
   const plot: Array<{ x: number; y: number }> = [];
-  for (const t of state.tiles) {
+  for (const tile of state.tiles) {
     if (plot.length >= bot.plotSize) break;
-    if (t.soilType === 'loam' && t.blockType === 'none') plot.push({ x: t.x, y: t.y });
+    if (tile.soilType === 'loam' && tile.blockType === 'none') plot.push({ x: tile.x, y: tile.y });
   }
 
   let harvests = 0;
   let maxPillPoison = 0;
   let breakthroughs = 0;
-  let tribulations = 0;
   let beastSurges = 0;
   let cropsLostToBeasts = 0;
   let beastCoresLooted = 0;
-  let died = false;
-  let deathCause: string | null = null;
   let tilled = false;
-  const tribulationFinalHpRatios: number[] = [];
+  let ascensionDay: number | null = null;
+  let endReason: RunEndReason = 'timeout';
+  const attempts: TribulationAttempt[] = [];
+  const finalHpRatios: number[] = [];
+  const assistance = emptyAssistance();
+  const purpleOmen: PurpleOmenTrace = { encountered: false, triggeredDay: null, expiredDay: null, blockedBreakthroughDays: 0, deadlocked: false, deadlockReason: null };
 
-  for (let d = 0; d < days; d++) {
-    if (state.player.pillPoison >= params.pillPoison.cap * 1000) { died = true; deathCause = 'pillPoison'; break; }
-    if (state.player.hp <= 0) { died = true; deathCause = 'tribulation'; break; }
-
+  for (let d = 0; d < config.maxDays; d++) {
+    const priorOmen = state.activeEvent?.defId === 'event.purple-omen';
     const actions: PlayerAction[] = [];
-    if (bot.huntBeasts && state.beastSurge && state.player.hp > params.celestial.beast.huntDamage * 1000) {
-      actions.push({ kind: 'hunt-beast' });
-    }
+    if (bot.huntBeasts && state.beastSurge && state.player.hp > params.celestial.beast.huntDamage * 1000) actions.push({ kind: 'hunt-beast' });
     if (!tilled) {
-      for (const p of plot) { actions.push({ kind: 'till', at: p }); actions.push({ kind: 'sow', at: p, seedId: bot.seedId }); }
+      for (const p of plot) {
+        actions.push({ kind: 'till', at: p });
+        actions.push({ kind: 'sow', at: p, seedId: bot.seedId });
+      }
       tilled = true;
     }
     for (const p of plot) {
-      const t = tileAt(state, p.x, p.y);
-      if (!t) continue;
-      if (bot.careDaily && t.cropId != null) { actions.push({ kind: 'water', at: p }); actions.push({ kind: 'channel-qi', at: p }); }
-      const crop = t.cropId != null ? state.crops.get(t.id) : undefined;
-      if (crop && crop.stage === 'mature') {
+      const tile = tileAt(state, p.x, p.y);
+      if (!tile) continue;
+      if (bot.careDaily && tile.cropId != null) actions.push({ kind: 'water', at: p }, { kind: 'channel-qi', at: p });
+      const crop = tile.cropId != null ? state.crops.get(tile.id) : undefined;
+      if (crop?.stage === 'mature') {
         actions.push({ kind: 'harvest', at: p });
         if (itemCount(state.player, bot.seedId) > 0) actions.push({ kind: 'sow', at: p, seedId: bot.seedId });
       }
     }
     const events = simulateDay(state, { actions } as DayInput, ctx);
-    for (const e of events) {
-      if (e.type === 'harvest') harvests++;
-      else if (e.type === 'beast-surge-start') beastSurges++;
-      else if (e.type === 'beast-eat-crop') cropsLostToBeasts++;
-      else if (e.type === 'beast-loot') beastCoresLooted += (e.payload as { cores: number }).cores;
+    for (const event of events) {
+      if (event.type === 'harvest') harvests++;
+      else if (event.type === 'beast-surge-start') beastSurges++;
+      else if (event.type === 'beast-eat-crop') cropsLostToBeasts++;
+      else if (event.type === 'beast-loot') beastCoresLooted += (event.payload as { cores: number }).cores;
     }
     maxPillPoison = Math.max(maxPillPoison, state.player.pillPoison / 1000);
 
-    while (readyForBreakthrough(state, params)) {
-      tribulations++;
-      // simulatePrepared: 模拟炼丹-布阵完整准备（prepScore 闭环 + 紫/青雷 counterplay）
-      if (bot.simulatePrepared) {
-        // veteran = 最强准备：偷天避雷丹(0.75) + 铁骨丹(0.2) 整场减伤（docs/15 §3 终极抗雷组合）
-        mutateItem(state.player, 'pill.ward-heaven', 1); // 入库存：保证渡劫消耗后 prepScore 仍识别（docs/09 §3.2）
-        state.player.wardMitigation = 0.75; // pill.ward-heaven
-        state.player.ironBoneMitigation = 0.2; // pill.iron-bone
-        state.player.hp = state.player.maxHp; // 渡劫前回满 HP（生骨丹/静修；猎妖反击的 HP 损耗需补回，否则空血渡劫必死）
-        // 注入2个激活阵法，覆盖玩家周围（chebyshev≤1）使引雷阵真正引流落向玩家的雷（prepScore=1.0）
-        const pcov: number[] = [];
-        for (const tt of state.tiles) {
-          if (Math.max(Math.abs(tt.x - state.player.position.x), Math.abs(tt.y - state.player.position.y)) <= 1) pcov.push(tt.id);
-        }
-        if (!state.arrays.has(9001)) state.arrays.set(9001, { id: 9001, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: pcov[0] ?? 0, coverageTileIds: pcov, power: 100, active: true });
-        if (!state.arrays.has(9002)) state.arrays.set(9002, { id: 9002, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: pcov[0] ?? 0, coverageTileIds: pcov, power: 100, active: true });
-      }
-      const res = runTribulation(state, { stage: state.player.stage, boltCount: bot.tribulationBolts + state.player.stage, policy: { blockChance: bot.blockChance } }, ctx);
-      // 记录天劫最终 HP 比例（M3 退出标准控血 proxy）
-      const hpRatio = res.survived ? res.finalHpMilli / (state.player.maxHp || 1) : 0;
-      tribulationFinalHpRatios.push(hpRatio);
-      if (!res.survived) { died = true; deathCause = 'tribulation'; break; }
-      const br = breakthrough(state, ctx, true);
-      if (br.success) breakthroughs++;
-      else break;
-      if (state.player.stage >= 7) break;
+    const omenActive = state.activeEvent?.defId === 'event.purple-omen';
+    if (omenActive && !purpleOmen.encountered) {
+      purpleOmen.encountered = true;
+      purpleOmen.triggeredDay = state.day;
     }
-    if (died) break;
+    if (priorOmen && !omenActive) purpleOmen.expiredDay = state.day;
+    if (omenActive && state.player.stage === 4 && state.player.cultivation >= params.breakthrough.xCap[3]!) purpleOmen.blockedBreakthroughDays++;
+
+    // M5 proxy 仅跳过长期种田资源门槛；真实前兆、天劫、突破和飞升结局仍由 sim 系统处理。
+    if (bot.progressionProfile === 'cap-assisted' && state.player.stage >= 1 && state.player.stage <= 6 && !omenActive) {
+      const cap = stageQiCap(state.player.stage, params);
+      if (state.player.cultivation < cap) {
+        state.player.cultivation = cap;
+        assistance.progressionCapsGranted++;
+      }
+    }
+
+    while (readyForBreakthrough(state, params) && !state.gameOver) {
+      prepareTribulation(state, bot, assistance, ctx);
+      const stage = state.player.stage;
+      const result = runTribulation(state, { stage, boltCount: bot.tribulationBolts + stage, policy: { blockChance: bot.blockChance } }, ctx);
+      const ratio = result.survived ? result.finalHpMilli / (state.player.maxHp || 1) : 0;
+      finalHpRatios.push(ratio);
+      attempts.push({ stage, bolts: result.bolts, violetBolts: result.hits.violet, survived: result.survived, finalHpRatio: ratio, temperingGainMilli: result.temperingGainMilli });
+      checkGameEnd(state, ctx);
+      if (!result.survived || state.gameOver) break;
+      if (breakthrough(state, ctx, true).success) breakthroughs++;
+      else break;
+    }
+
+    if (state.player.stage >= 7 && bot.ascensionProfile === 'pill-assisted-at-stage7' && !state.gameOver) {
+      grant(state, assistance, 'pill.ascend', 1);
+      assistance.ascensionPillsGranted++;
+      applyPill(state, 'pill.ascend', ctx);
+      if (state.ending === 'ascension') ascensionDay = state.day - 1;
+    }
+    const classified = classifyEnd(state);
+    if (classified && (config.stopOnGameOver ?? true)) { endReason = classified; break; }
   }
 
-  const lowHpCount = tribulationFinalHpRatios.filter((r) => r < 0.25).length;
-  const lowHpTribulationRate = tribulationFinalHpRatios.length > 0
-    ? lowHpCount / tribulationFinalHpRatios.length
-    : 0;
-  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10, lowHpTribulationRate: Math.round(lowHpTribulationRate * 100) / 100, tribulationFinalHpRatios, beastSurges, cropsLostToBeasts, beastCoresLooted };
+  if (purpleOmen.encountered && purpleOmen.expiredDay === null && !state.gameOver && state.day > (purpleOmen.triggeredDay ?? state.day) + 7) {
+    purpleOmen.deadlocked = true;
+    purpleOmen.deadlockReason = 'omen did not expire after seven day-end ticks';
+  }
+    if (purpleOmen.expiredDay !== null && state.player.stage === 4 && state.player.cultivation >= params.breakthrough.xCap[3]! && !readyForBreakthrough(state, params) && !state.gameOver) {
+    purpleOmen.deadlocked = true;
+    purpleOmen.deadlockReason = 'stage4 eligibility was not restored after omen expiry';
+  }
+
+  const lowHpCount = finalHpRatios.filter((ratio) => ratio < 0.25).length;
+  const ascended = state.ending === 'ascension';
+  const died = state.ending === 'tribulation-death' || state.ending === 'poison-death';
+  if (ascended) endReason = 'ascended';
+  else if (classifyEnd(state)) endReason = classifyEnd(state)!;
+  return {
+    seed,
+    days: state.day - 1,
+    simulatedDays: state.day - 1,
+    maxDays: config.maxDays,
+    stageReached: state.player.stage,
+    breakthroughs,
+    tribulations: attempts.length,
+    died,
+    deathCause: died ? state.ending : null,
+    endReason,
+    ascended,
+    ascensionDay,
+    harvests,
+    maxPillPoison: Math.round(maxPillPoison * 10) / 10,
+    lowHpTribulationRate: finalHpRatios.length ? Math.round((lowHpCount / finalHpRatios.length) * 100) / 100 : 0,
+    tribulationFinalHpRatios: finalHpRatios,
+    tribulationAttempts: attempts,
+    purpleOmen,
+    assistance,
+    beastSurges,
+    cropsLostToBeasts,
+    beastCoresLooted,
+  };
+}
+
+/** 旧调用兼容：固定日数 smoke/proxy。 */
+export function runOne(seed: number, days: number, bot: BotPolicy, params: BalanceParams = DEFAULT_BALANCE): RunOutcome {
+  return runSimulation(seed, bot, params, { maxDays: days });
 }
 
 export interface Aggregate {
   bot: string; runs: number; deaths: number; deathRate: number;
   meanStage: number; meanBreakthroughs: number; meanHarvests: number; meanMaxPoison: number;
-  /** 平均妖兽潮次数（M4 因果链压力）。 */
-  meanBeastSurges: number;
-  /** 平均被妖兽啃食作物数（M4 妖兽税）。 */
-  meanCropsLostToBeasts: number;
-  /** 平均妖兽内丹掉落数（M4 舔包收益）。 */
-  meanBeastCoresLooted: number;
-  hashStable: boolean;
+  meanBeastSurges: number; meanCropsLostToBeasts: number; meanBeastCoresLooted: number; hashStable: boolean;
 }
 
 export function runMonteCarlo(seeds: number[], bot: BotPolicy, days: number, params: BalanceParams = DEFAULT_BALANCE): Aggregate {
-  if (seeds.length === 0) throw new RangeError('runMonteCarlo requires at least one seed');
-  let deaths = 0, totalStage = 0, totalBrk = 0, totalHarv = 0, totalPoi = 0;
-  let totalBeastSurges = 0, totalCropsLostToBeasts = 0, totalBeastCoresLooted = 0;
+  if (!seeds.length) throw new RangeError('runMonteCarlo requires at least one seed');
+  let deaths = 0, stages = 0, breakthroughs = 0, harvests = 0, poison = 0, surges = 0, losses = 0, cores = 0;
   let hashStable = true;
   for (const seed of seeds) {
-    const o = runOne(seed, days, bot, params);
-    if (o.died) deaths++;
-    totalStage += o.stageReached; totalBrk += o.breakthroughs; totalHarv += o.harvests; totalPoi += o.maxPillPoison;
-    totalBeastSurges += o.beastSurges; totalCropsLostToBeasts += o.cropsLostToBeasts; totalBeastCoresLooted += o.beastCoresLooted;
-    const o2 = runOne(seed, days, bot, params);
-    if (JSON.stringify(o) !== JSON.stringify(o2)) hashStable = false;
+    const one = runOne(seed, days, bot, params);
+    const two = runOne(seed, days, bot, params);
+    if (JSON.stringify(one) !== JSON.stringify(two)) hashStable = false;
+    deaths += Number(one.died); stages += one.stageReached; breakthroughs += one.breakthroughs; harvests += one.harvests; poison += one.maxPillPoison;
+    surges += one.beastSurges; losses += one.cropsLostToBeasts; cores += one.beastCoresLooted;
   }
-  const runs = seeds.length;
+  const n = seeds.length;
   return {
-    bot: bot.name, runs, deaths, deathRate: deaths / runs,
-    meanStage: Math.round((totalStage / runs) * 100) / 100,
-    meanBreakthroughs: Math.round((totalBrk / runs) * 100) / 100,
-    meanHarvests: Math.round((totalHarv / runs) * 10) / 10,
-    meanMaxPoison: Math.round((totalPoi / runs) * 10) / 10,
-    meanBeastSurges: Math.round((totalBeastSurges / runs) * 100) / 100,
-    meanCropsLostToBeasts: Math.round((totalCropsLostToBeasts / runs) * 100) / 100,
-    meanBeastCoresLooted: Math.round((totalBeastCoresLooted / runs) * 100) / 100,
-    hashStable,
+    bot: bot.name, runs: n, deaths, deathRate: deaths / n,
+    meanStage: Math.round((stages / n) * 100) / 100, meanBreakthroughs: Math.round((breakthroughs / n) * 100) / 100,
+    meanHarvests: Math.round((harvests / n) * 10) / 10, meanMaxPoison: Math.round((poison / n) * 10) / 10,
+    meanBeastSurges: Math.round((surges / n) * 100) / 100, meanCropsLostToBeasts: Math.round((losses / n) * 100) / 100,
+    meanBeastCoresLooted: Math.round((cores / n) * 100) / 100, hashStable,
   };
 }
 
-function main() {
+function main(): void {
   const args = process.argv.slice(2);
-  const idx = args.indexOf('--seeds');
-  const n = idx >= 0 ? Number(args[idx + 1]) : 1;
+  const index = args.indexOf('--seeds');
+  const count = index >= 0 ? Number(args[index + 1]) : 1;
   const days = 120;
-  if (n <= 1) {
-    const o = runOne(1, days, NORMAL_BOT);
-    console.log(`— 单局 demo (normal bot, ${days} 日) —`);
-    console.log(JSON.stringify(o, null, 2));
-    return;
+  if (count <= 1) console.log(JSON.stringify(runOne(1, days, NORMAL_BOT), null, 2));
+  else {
+    const seeds = Array.from({ length: count }, (_, i) => i + 1);
+    console.log(`— 蒙特卡洛批量 (${count} 局 × ${days} game-days) —`);
+    for (const bot of [ROOKIE_BOT, NORMAL_BOT, VETERAN_BOT]) console.log(JSON.stringify(runMonteCarlo(seeds, bot, days)));
   }
-  const seeds = Array.from({ length: n }, (_, i) => i + 1);
-  console.log(`— 蒙特卡洛批量 (${n} 局 × ${days} 日) —`);
-  for (const bot of [ROOKIE_BOT, NORMAL_BOT, VETERAN_BOT]) console.log(JSON.stringify(runMonteCarlo(seeds, bot, days)));
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

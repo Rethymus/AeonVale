@@ -10,6 +10,7 @@ import { emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { CelestialEventDef } from '@content/defs';
 import type { Rng } from '@sim/world/rng';
+import { stageQiCap } from '@sim/progression/progression';
 
 const REPEAT_PENALTY = 0.4;
 
@@ -28,7 +29,8 @@ export function selectCelestialEvent(
       throw new Error(`selectCelestialEvent: invalid weight for ${def.id}`);
     }
   }
-  const weighted = defs
+  const pool = defs.filter((d) => !d.forced); // 强制(forced)事件不走随机抽样（docs/15 §4）
+  const weighted = pool
     .map((def) => {
       let isRecent = false;
       for (let i = recentStart; i < recentEventIds.length; i++) {
@@ -46,18 +48,47 @@ export interface CelestialMods {
   active: ActiveCelestialEvent | null;
 }
 
+/**
+ * 在四阶修为达到上限时启动一次紫雷前兆；可中断普通天象，但不会重启已存在的前兆。
+ * 返回本次是否启动，供即时引劫入口阻止绕过七日预警。
+ */
+export function startPurpleOmenIfDue(state: GameState, ctx: SimContext): boolean {
+  if (state.flags.has('purple-omen-fired') || state.player.stage !== 4 || state.player.cultivation < stageQiCap(4, ctx.params)) {
+    return false;
+  }
+
+  const def = ctx.content.events.get('event.purple-omen');
+  if (!def || state.activeEvent?.defId === def.id) return false;
+
+  if (state.activeEvent) emit(state, 'celestial-end', { defId: state.activeEvent.defId });
+  state.activeEvent = {
+    defId: def.id,
+    displayName: def.displayName,
+    daysLeft: def.durationDays,
+    growthMod: def.growthMod,
+    qiMod: def.qiMod,
+  };
+  state.flags.add('purple-omen-fired');
+  emit(state, 'celestial-start', { defId: def.id, displayName: def.displayName, type: def.type });
+  return true;
+}
+
 /** 推进天象状态（到期/触发），返回当日调制倍率。 */
 export function tickCelestial(state: GameState, ctx: SimContext): CelestialMods {
-  // 1. 到期
+  // 1. 到期。紫雷前兆结束当天不立刻抽取普通天象。
+  let purpleOmenExpired = false;
   if (state.activeEvent) {
     state.activeEvent.daysLeft -= 1;
     if (state.activeEvent.daysLeft <= 0) {
+      purpleOmenExpired = state.activeEvent.defId === 'event.purple-omen';
       emit(state, 'celestial-end', { defId: state.activeEvent.defId });
       state.activeEvent = null;
     }
   }
+  // 1b. 强制天象：stage4 修为满 → 紫雷前兆（仅触发一次，解锁终局线，docs/15 §4）
+  startPurpleOmenIfDue(state, ctx);
   // 2. 无激活时按门概率抽样触发（docs/14 §7 eventGateProbability）
-  if (!state.activeEvent && ctx.rng.celestial.chance(ctx.params.celestial.eventGateProbability)) {
+  if (!purpleOmenExpired && !state.activeEvent && ctx.rng.celestial.chance(ctx.params.celestial.eventGateProbability)) {
     const defs = [...ctx.content.events.values()];
     const pick = selectCelestialEvent(defs, state.recentCelestialEventIds, ctx.rng.celestial);
     if (pick) {

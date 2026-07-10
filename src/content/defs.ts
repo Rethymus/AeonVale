@@ -129,6 +129,7 @@ export interface CelestialEventDef {
   growthMod: number; // 灵草生长倍率
   qiMod: number; // 灵气再生倍率
   desc: string;
+  forced?: boolean; // 强制触发（条件满足时跳过随机抽样，docs/15 §4 purple-omen）
 }
 
 /** 阵法定义（docs/05 §8 / docs/15 §5）。种田即布防：引雷阵吸雷、绝缘阵排雷。 */

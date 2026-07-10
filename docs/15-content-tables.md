@@ -119,7 +119,7 @@
 | `event.forgotten-tomb` | 古修遗冢 | 机 | stage≥3 | 3 | 1 次 | 残冢现→探索得法宝/残谱 | 战利品高风险高回报 | 备足生骨丹 |
 | `event.dao-whisper` | 大道低语 | 喜 | stage≥4, `P<30` | 3 | 即时 | 清明悟道→修为 +50 | `X += 50` | 突破前祈祷触发 |
 | `event.blood-moon` | 血月 | 危 | stage≥4 | 4 | 1 夜 | 妖兽狂化 + 走火风险升 | 走火累积 ×2 | 静守不炼丹 |
-| `event.purple-omen` | 紫雷前兆 | 危 | stage4 满 X | 1（强制） | 7 日 | 紫雷劫倒计时开启 | 解锁终局线 | 全力备丹布阵 |
+| `event.purple-omen` | 紫雷前兆 | 危 | stage4，X ≥ StageQiCap(4) | 1（强制） | 7 日 | 紫雷劫倒计时开启 | 解锁终局线 | 全力备丹布阵 |
 | `event.kindling-flame` | 炉心焰 | 机 | stage≥2 | 5 | 3 日 | 地火涌→炼丹火候易控 | `heatTolerance +10` | 趁机炼高难丹方 |
 
 > **权重校验**（14 §7）：所有 `baseWeight` 在 `eventGateProbability=0.25` 闸下，模拟应产出"平均 4 日一事件，喜悲危机大致 3:3:3:1"。`event.purple-omen` 为强制触发（gate 满即 weight=∞），不走日常抽样。**[待与 07 对齐：因果链细化]**

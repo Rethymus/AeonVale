@@ -162,6 +162,16 @@ function runMonteCarlo(params, botSet, N, targetMetrics):
 
 ---
 
+## 4.4 M5 assisted campaign proxy（当前实现）
+
+`pnpm m5:check` 使用固定 64 种子对 normal/veteran 运行长周期 **assisted campaign proxy**：它必须走真实的紫雷前兆、突破与 `pill.ascend` 结局路径，并报告 Wilson 95% 区间、紫雷机械死锁、超时和辅助资源使用量。该 proxy 明确记录为合成资源辅助（阶段修为、渡劫准备、stage7 飞升丹），**不是自然内容获取或真实玩家通关率**。
+
+- PR：只阻断结构回归（无飞升、veteran 低于 normal、紫雷死锁或非确定性）。
+- 夜间：`pnpm m5:certify` 以 1,000 个独立 holdout 种子评估 M5 的 normal/veteran 代理通过率区间。
+- 时长单位固定为 `game-days`，并以 timeout horizon 计算 restricted mean；18–25 真人小时仍待 M6 人类 playtest 校准，不能由日数直接换算。
+
+---
+
 ## 5. 策略 Bot 分层（Stratabots 式）
 
 > 参考 Horn et al. (2018) [Stratabots](https://pmc.ncbi.nlm.nih.gov/articles/PMC6319931/)：用不同技能水平的自动玩家模型，模拟真实玩家 cohort 的通过率分布，发现难度死角。
@@ -263,9 +273,11 @@ function runMonteCarlo(params, botSet, N, targetMetrics):
 
 ### 7.1 Golden Replay 库
 
-- 每次发布，固定一组"黄金种子"（覆盖里程碑场景：首劫、stage3 淬体、紫雷劫等），记录其**完整事件流**。
-- CI 上重放：相同 `(seed, θ, bot)` → 事件流必须**逐条相等**。
-- 任何不等 → 确定性漂移（浮点迭代顺序、未注入 PRNG、隐式时序）。**立即失败，阻塞合并**。
+- Fixture 存放于 `tests/replay/fixtures/*.replay.json`，schema/harness 位于 `tests/replay/schema.ts` 与 `tests/replay/harness.ts`。
+- 每个 fixture 固化完整 `BalanceParams` 快照、种子、世界尺寸、初始库存、逐日动作、逐步完整事件流与 `stateHash`，避免测试随 `DEFAULT_BALANCE` 漂移后自我更新。
+- 核心农场 fixture 将 `celestial.eventGateProbability` 与 `celestial.beast.surgeChancePerDay` 置为 `0`，隔离天象/妖兽随机链，并在指定步骤执行 `serializeState` → `deserializeState` → `createSimContextFromState` 后验证余下回放逐步一致。
+- CI 独立运行 `pnpm test:replay`；任何事件或状态哈希差异立即失败并阻塞合并。测试只读 fixture，不会隐式重写 golden。
+- 只有明确接受行为变化时，开发者才可在本地运行 `pnpm replay:update -- --fixture <path>` 或 `pnpm replay:update -- --all`。更新器检测到 `CI` 环境变量时拒绝运行，更新后的 JSON diff 必须随代码审查。
 
 ### 7.2 漂移定位
 

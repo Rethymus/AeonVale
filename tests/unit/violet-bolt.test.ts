@@ -1,6 +1,6 @@
 /**
  * 紫雷 VioletBolt 单元测试（docs/05 §5.2 / M5）。
- * 雷型演化：stage≥3 紫雷初现（BlastRadius=2，伤害/淬体 ×1.5）；stage4 紫雷为主。
+ * 雷型演化：stage≥3 紫雷初现（BlastRadius=2，伤害×1.16/淬体×1.5）；stage4 紫雷为主。
  * 确定性（C3）：紫雷判定走 ctx.rng.lightning 流，仅 stage≥unlock 消费 rng（stage1–2 序列不变）。
  */
 import { describe, it, expect } from 'vitest';
@@ -28,7 +28,7 @@ describe('紫雷 VioletBolt（docs/05 §5.2 / M5）', () => {
     expect(violetChance(7, DEFAULT_BALANCE)).toBe(1);
   });
 
-  it('紫雷伤害 ×1.5、淬体更高（强制全紫 vs 全青，同 stage/seed/单雷）', () => {
+  it('紫雷伤害 ×1.16、淬体更高（强制全紫 vs 全青，同 stage/seed/单雷）', () => {
     const cyanP = withBolt({ violetUnlockStage: 99 }); // 永不解锁 → 全青雷
     const violetP = withBolt({ violetUnlockStage: 1, violetChanceBase: 1.0 }); // 必紫雷
     const seed = 42;
@@ -50,9 +50,9 @@ describe('紫雷 VioletBolt（docs/05 §5.2 / M5）', () => {
     expect(rV.hits.violet).toBe(1);
     const violetHpLoss = hpBeforeV - rV.finalHpMilli;
 
-    // 紫雷伤害精确 ×1.5（docs/05 §5.2 BoltDamageMult）
-    expect(violetHpLoss).toBe(Math.round(cyanHpLoss * 1.5));
-    // 紫雷淬体更高（dmg×1.5 且 tempMult×1.5，叠加更低 HP→更高近死加成）
+    // 紫雷伤害精确 ×1.16（M5 调参：docs/05 §5.2 原值 1.5 → 1.16，docs/18 §7.3 终局劝退）
+    expect(violetHpLoss).toBe(Math.round(cyanHpLoss * 1.16));
+    // 紫雷淬体更高（dmg×1.16 且 tempMult×1.5，叠加更低 HP→更高近死加成）
     expect(rV.temperingGainMilli).toBeGreaterThan(rC.temperingGainMilli);
   });
 

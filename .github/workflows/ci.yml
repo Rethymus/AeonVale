@@ -6,6 +6,23 @@ on:
   pull_request:
 
 jobs:
+  golden-replay:
+    name: Golden Replay hard gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Replay fixtures
+        run: pnpm test:replay
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -29,3 +46,5 @@ jobs:
         run: pnpm content:lint
       - name: Headless smoke
         run: pnpm headless -- --seeds 5
+      - name: M5 structural proxy certification
+        run: pnpm m5:check

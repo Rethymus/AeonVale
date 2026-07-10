@@ -335,13 +335,13 @@ WaveCount(stage) = clamp(1 + floor(stage/2), 1, 5)
 | 出现阶段 | 雷类型 | 特性 |
 |---------|--------|------|
 | Stage 1–2 | `CyanBolt` 青雷 | 标准，单格 BlastRadius=1 |
-| Stage 3–4 | `VioletBolt` 紫雷 | BlastRadius=2，伤害 ×1.5，淬体 ×1.5 |
+| Stage 3–4 | `VioletBolt` 紫雷 | BlastRadius=2，伤害 ×1.16，淬体 ×1.5（伤害原 ×1.5，M5 调参降至 ×1.16，见下注） |
 | Stage 5–6 | `GoldBolt` 金雷 | 穿透绝缘阵（InsulationReduction 减半） |
 | Stage 7+ (终局) | `DharmaBolt` 诛仙雷 | 追踪玩家（PlayerProximity ×3），必须靠阵法硬接 |
 | 终极紫雷劫池 | `PurpleTribulationPool` | 见 §6 |
 
 - `【可调参数】BoltTypeUnlock(stage)` —— 每种雷解锁的阶段（数据驱动表）。
-- `【可调参数】BoltDamageMult(boltType)` —— 各雷伤害倍率（默认 Cyan=1.0, Violet=1.5, Gold=1.8, Dharma=2.5）。
+- `【可调参数】BoltDamageMult(boltType)` —— 各雷伤害倍率（默认 Cyan=1.0, Violet=1.16, Gold=1.8, Dharma=2.5；Violet 原 1.5，M5 调参 `docs/18 §7.3` 降至 1.16）。
 - `【可调参数】BlastRadius(boltType)` —— 爆炸半径（默认 1/2/2/2 格）。
 
 ### 5.3 数量与节奏

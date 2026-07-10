@@ -245,7 +245,9 @@ pnpm + Vite ─── dev server (HMR) ─── 浏览器预览
 | `pnpm test` | Vitest 单元 + 属性测试 |
 | `pnpm test:watch` | watch 模式 |
 | `pnpm test:headless` | 无头长时模拟（10k+ tick） |
-| `pnpm test:replay` | 跑全部 replay fixture |
+| `pnpm test:replay` | 只读运行全部 `tests/replay/fixtures/*.replay.json` 硬门禁 |
+| `pnpm replay:update -- --fixture <path>` | 明确更新单个 replay fixture（CI 禁止） |
+| `pnpm replay:update -- --all` | 明确更新全部 replay fixture（CI 禁止） |
 | `pnpm test:balance` | 蒙特卡洛平衡回归（夜间，CPU 密集） |
 | `pnpm content:lint` | 内容表 schema + 跨引用校验 |
 | `pnpm content:hot` | 监听内容表改动，触发热重载 |

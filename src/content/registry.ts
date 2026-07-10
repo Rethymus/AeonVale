@@ -401,6 +401,7 @@ const RAW_EVENTS: CelestialEventDef[] = [
   { id: 'event.bad-harvest', displayName: '灾年', type: 'grief', weight: 6, durationDays: 5, growthMod: 0.5, qiMod: 1.0, desc: '凡间作物歉收，唯有挖残脉或寻一线灵机。' },
   { id: 'event.demonic-pass', displayName: '魔修过境', type: 'crisis', weight: 5, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '正魔交战波及山谷，农田或毁，但战后或可舔包。' },
   { id: 'event.wandering-immortal', displayName: '游方散仙至', type: 'opportunity', weight: 4, durationDays: 1, growthMod: 1.0, qiMod: 1.0, desc: '散仙偶至，可换稀有种子或残谱。' },
+  { id: 'event.purple-omen', displayName: '紫雷前兆', type: 'crisis', weight: 1, durationDays: 7, growthMod: 1.0, qiMod: 1.0, forced: true, desc: 'stage4 修为圆满，天穹泛紫——紫雷劫倒计时开启，终局线浮现（docs/15 §4）。' },
 ];
 
 /** 阵法原始数据（docs/05 §8 / docs/15 §5）。 */
@@ -572,7 +573,7 @@ export function buildRegistry(): ContentRegistry {
   const schemaHash = simpleHash(
     [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(',') + '|' + [...arrays.keys()].join(','),
   );
-  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545', '2d0d866a', '8650fece']; // M0–M3 / M4（飞升丹前）/ M5（高tier丹药前）/ M5（铁骨丹前）：新增内容可无损补默认字段继续读取旧档。
+  const compatibleSchemaHashes = ['1eb5f343', 'c7b88545', '2d0d866a', '8650fece', 'e20ed1b']; // M0–M3 / M4（飞升丹前）/ M5（高tier丹药前/铁骨丹前/紫雷前兆前）：新增内容可无损补默认字段继续读取旧档。
   return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash, compatibleSchemaHashes };
 }
 
