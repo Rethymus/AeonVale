@@ -137,8 +137,9 @@ export function applyFarmDayEnd(state: GameState, ctx: SimContext, growthMod = 1
     tile.moisture = Math.max(0, tile.moisture - 10 * MILLI);
   }
 
-  // 3. 玩家日终：丹毒衰减（体力在清晨重置，见 simulateDay；docs/06 §1.2 / 14 §3.2）
+  // 3. 玩家日终：过夜休养回血 + 丹毒衰减（体力在清晨重置，见 simulateDay；docs/06 §1.2 / 14 §3.2）
   const p = state.player;
+  p.hp = Math.min(p.maxHp, p.hp + Math.round(p.maxHp * 0.05)); // 过夜回 5% 气血
   p.pillPoison = Math.max(0, p.pillPoison - ctx.params.pillPoison.decayBase * MILLI);
 
   // 4. 时间推进

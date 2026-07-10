@@ -106,4 +106,13 @@ describe('种田 sim (docs/08 / docs/14 §4)', () => {
     simulateDay(state, { actions: [] }, ctx);
     expect(state.player.stamina).toBe(DEFAULT_BALANCE.player.staminaCap * 1000);
   });
+
+  it('过夜休养回血 5%（docs/08 生存性）', () => {
+    const { state, ctx } = setup();
+    state.player.hp = 40_000; // 40%
+    state.player.maxHp = 100_000;
+    simulateDay(state, { actions: [] }, ctx);
+    expect(state.player.hp).toBeGreaterThan(40_000); // 回血了
+    expect(state.player.hp).toBeLessThanOrEqual(state.player.maxHp);
+  });
 });
