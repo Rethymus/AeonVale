@@ -212,7 +212,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
   breakthrough: {
     xCap: [100_000, 200_000, 400_000, 700_000, 1_100_000, 1_600_000, 2_200_000],
     tTribBase: 7,
-    successBase: 0.5,
+    successBase: 0.6, // 调参器自动发现：0.6 比 0.5 更贴目标（stage 1.88→2.00, fitness −1.55→−1.30）
     successPrepBonus: 0.15,
     successPoisonPenalty: -0.2,
     successXSurplus: 0.1,
