@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { createWorld, createSimContext, simulateDay, DEFAULT_BALANCE, type BalanceParams } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { MILLI } from '@sim/world/types';
-import { mutateItem } from '@sim/world/player';
+import { mutateItem, itemCount } from '@sim/world/player';
 import type { GameState } from '@sim/world/state';
 import type { ContentRegistry } from '@content/defs';
 
@@ -117,5 +117,21 @@ describe('天象因果链：灵气潮汐→妖兽潮 (docs/07 §3.1 / M4 退出�
     // 推进至妖兽潮必然结束（duration=1）
     for (let d = 0; d < 5; d++) simulateDay(state, { actions: [] }, ctx);
     expect(state.beastSurge).toBeNull(); // 无残留
+  });
+
+  it('潮汐引兽后必须主动猎妖才获得内丹（风险-收益闭环，docs/07 §3.4.3）', () => {
+    const P = beastParams({ surgeChancePerDay: 1.0, surgeDurationDays: 3, countMin: 3, countMaxBase: 3, huntDamage: 1, huntStaminaCost: 1, lootChancePerBeast: 1.0 });
+    const { state, ctx, reg } = setup(13, P);
+    state.player.stage = 0 as 0;
+    state.activeEvent = QI_TIDE;
+    injectMatureCrops(state, reg, 4);
+    const start = simulateDay(state, { actions: [] }, ctx).map((e) => e.type);
+    expect(start).toContain('beast-surge-start');
+    expect(itemCount(state.player, 'item.beast-core')).toBe(0);
+
+    const hunted = simulateDay(state, { actions: [{ kind: 'hunt-beast' }] }, ctx).map((e) => e.type);
+    expect(hunted).toContain('beast-hunted');
+    expect(hunted).toContain('beast-loot');
+    expect(itemCount(state.player, 'item.beast-core')).toBe(1);
   });
 });

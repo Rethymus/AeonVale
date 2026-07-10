@@ -12,6 +12,7 @@ export type PlayerAction =
   | { kind: 'water'; at: Vec2 }
   | { kind: 'channel-qi'; at: Vec2 }
   | { kind: 'harvest'; at: Vec2 }
+  | { kind: 'hunt-beast' } // 主动猎杀一只妖兽：耗体力并承受反击，成功后才有内丹（docs/07 §3.4.3）
   | { kind: 'eat-raw'; herbDefId: string } // 生食灵草（积丹毒，docs/06 §1）
   | { kind: 'rest' }; // 静室休息（清毒/回体）
 

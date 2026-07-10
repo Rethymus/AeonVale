@@ -6,7 +6,7 @@
 import { Application } from 'pixi.js';
 import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, applyAction, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, type GameState, type SimContext } from '@sim';
 import { saveGame, deserializeState } from '@sim/serialize';
-import { buildRegistry } from '@content/registry';
+import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
 import { createLayers, drawWorld, setToast, type RenderLayers } from '@render/renderer';
 import { runTribulation } from '@sim/tribulation/tribulationSystem';
@@ -24,7 +24,7 @@ async function main(): Promise<void> {
       const raw = localStorage.getItem(SAVE_KEY);
       if (!raw) return null;
       const sg = JSON.parse(raw) as { schemaHash?: string; state?: unknown };
-      if (sg.schemaHash !== reg.schemaHash) return null; // 内容版本不兼容 → 开新档
+      if (!isSchemaHashCompatible(reg, sg.schemaHash) || !sg.state) return null;
       return deserializeState(sg.state) as GameState;
     } catch {
       return null;
@@ -94,9 +94,13 @@ async function main(): Promise<void> {
     state.events.length = 0;
     advanceDay(state, ctx);
     const evStart = state.events.find((e) => e.type === 'celestial-start');
+    const loot = state.events.find((e) => e.type === 'beast-loot');
+    const hunted = state.events.find((e) => e.type === 'beast-hunted');
     const matures = state.events.filter((e) => e.type === 'crop-mature').length;
     let msg = `第 ${state.day} 日`;
-    if (evStart) msg = `【天象·${(evStart.payload as { displayName?: string })?.displayName ?? ''}】降临！`;
+    if (loot) msg = `猎妖得内丹 ×${(loot.payload as { cores?: number })?.cores ?? 0}`;
+    else if (hunted) msg = '猎妖成功，未得内丹';
+    else if (evStart) msg = `【天象·${(evStart.payload as { displayName?: string })?.displayName ?? ''}】降临！`;
     else if (matures > 0) msg = `${matures} 株灵草成熟`;
     if (readyForBreakthrough(state, DEFAULT_BALANCE)) msg += '　⚠ 修为满，按 T 引劫';
     toast(msg);
@@ -215,6 +219,10 @@ async function main(): Promise<void> {
         break;
       case 't':
         tryTribulation();
+        break;
+      case 'g':
+        applyAction(state, { kind: 'hunt-beast' }, ctx);
+        toast(state.beastSurge ? '主动猎妖：承受反击' : '附近无妖兽潮');
         break;
       case 'b':
         brewById('recipe.ward-pill', '避雷丹');

@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE } from '@sim';
+import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, Rng, selectCelestialEvent } from '@sim';
 import { buildRegistry } from '@content/registry';
-import { stateHash } from '@sim/serialize';
+import { stateHash, deserializeState, serializeState } from '@sim/serialize';
+import type { CelestialEventDef } from '@content/defs';
 
 function setup(seed = 1) {
   const reg = buildRegistry();
@@ -10,7 +11,46 @@ function setup(seed = 1) {
   return { state, ctx, reg };
 }
 
+function event(id: string, weight: number): CelestialEventDef {
+  return { id, displayName: id, type: 'joy', weight, durationDays: 1, growthMod: 1, qiMod: 1, desc: '' };
+}
+
 describe('天象奇遇引擎 (docs/07 / 14 §7)', () => {
+  it('纯权重抽样忽略零权重，并对相同 RNG 状态保持确定性', () => {
+    const defs = [event('zero', 0), event('left', 1), event('right', 3)];
+    const run = () => {
+      const rng = new Rng(17);
+      return Array.from({ length: 50 }, () => selectCelestialEvent(defs, [], rng)?.id);
+    };
+    expect(run()).toEqual(run());
+    expect(run()).not.toContain('zero');
+    expect(selectCelestialEvent([event('zero', 0)], [], new Rng(1))).toBeNull();
+  });
+
+  it('近三次重复事件应用 ×0.4 权重惩罚，三次外历史不影响选择', () => {
+    const defs = [event('recent', 10), event('other', 10)];
+    const seed = 12;
+    const base = selectCelestialEvent(defs, [], new Rng(seed))?.id;
+    const recent = selectCelestialEvent(defs, ['recent'], new Rng(seed))?.id;
+    const stale = selectCelestialEvent(defs, ['recent', 'x', 'y', 'z'], new Rng(seed))?.id;
+    expect(base).toBe('recent');
+    expect(recent).toBe('other');
+    expect(stale).toBe(base);
+  });
+
+  it('最近天象历史可存档往返，旧存档缺字段时回退为空', () => {
+    const { state } = setup();
+    state.recentCelestialEventIds = ['event.qi-tide', 'event.bad-year'];
+    expect(deserializeState(serializeState(state)).recentCelestialEventIds).toEqual(state.recentCelestialEventIds);
+
+    const raw = serializeState(state) as Record<string, unknown>;
+    delete raw.recentCelestialEventIds;
+    expect(deserializeState(raw).recentCelestialEventIds).toEqual([]);
+
+    raw.recentCelestialEventIds = 'malformed';
+    expect(deserializeState(raw).recentCelestialEventIds).toEqual([]);
+  });
+
   it('长时间模拟会触发至少一次天象事件', () => {
     const { state, ctx } = setup(7);
     let triggered = false;

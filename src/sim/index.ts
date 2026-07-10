@@ -116,6 +116,7 @@ export { applyPill } from './alchemy/pillSystem';
 export { brewPills, resolveBrew } from './alchemy/alchemySystem';
 export { placeArray, arrayModifierFor } from './tribulation/arrays';
 export { tickBeasts, qiTideActive } from './celestial/beastSystem';
+export { selectCelestialEvent, tickCelestial } from './celestial/celestialSystem';
 export { DEFAULT_BALANCE } from './params';
 export type { BalanceParams } from './params';
 export type { GameState } from './world/state';

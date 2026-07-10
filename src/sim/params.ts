@@ -122,6 +122,9 @@ export interface BalanceParams {
       countMin: number; // 妖兽群最小数量（docs/07 BeastSurgeCount 3–5 下界）
       countMaxBase: number; // 基础上限：countMax = countMaxBase + stage（随阶段缩放，高阶引更多兽）
       surgeDurationDays: number; // 妖兽潮最多持续天数（无食可吃则提前退去）
+      huntStaminaCost: number; // 主动猎妖体力消耗
+      huntDamage: number; // 每次猎妖承受的反击伤害（HP 点）
+      lootChancePerBeast: number; // 主动猎杀每只妖兽遗留内丹的概率（docs/07 §3.4.3）
     };
   };
 
@@ -233,6 +236,9 @@ export const DEFAULT_BALANCE: BalanceParams = {
       countMin: 3,
       countMaxBase: 5, // countMax = 5 + stage（docs/07 BeastSurgeCount 3–5 随 stage 缩放）
       surgeDurationDays: 3,
+      huntStaminaCost: 20,
+      huntDamage: 8,
+      lootChancePerBeast: 0.3, // 主动猎杀时约 30%/只遗留内丹（docs/07 §3.4.3）
     },
   },
   alchemy: {

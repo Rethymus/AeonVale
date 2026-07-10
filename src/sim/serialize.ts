@@ -68,6 +68,7 @@ export function serializeState(state: GameState): unknown {
     arrays: [...state.arrays.entries()],
     player: { ...p, inventory: p.inventory, flags: [...p.flags].sort() },
     activeEvent: state.activeEvent,
+    recentCelestialEventIds: state.recentCelestialEventIds,
     beastSurge: state.beastSurge,
     ending: state.ending,
     gameOver: state.gameOver,
@@ -94,6 +95,9 @@ export function deserializeState(raw: unknown): GameState {
     ...playerRaw,
     flags: new Set(playerRaw.flags as string[]),
   } as GameState['player'];
+  const recentHistory = Array.isArray(o.recentCelestialEventIds)
+    ? o.recentCelestialEventIds.filter((id): id is string => typeof id === 'string').slice(-3)
+    : [];
   return {
     version: o.version as number,
     masterSeed: o.masterSeed as number,
@@ -110,6 +114,7 @@ export function deserializeState(raw: unknown): GameState {
     player,
     events: [],
     activeEvent: (o.activeEvent ?? null) as GameState['activeEvent'],
+    recentCelestialEventIds: recentHistory,
     beastSurge: (o.beastSurge ?? null) as GameState['beastSurge'],
     ending: (o.ending ?? null) as GameState['ending'],
     gameOver: Boolean(o.gameOver),

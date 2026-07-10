@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt } from '@sim';
 import { roundTripEqual, canonicalSerialize, stateHash, saveGame } from '@sim/serialize';
-import { buildRegistry } from '@content/registry';
+import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { mutateItem } from '@sim/world/player';
 
 describe('序列化与确定性 (docs/11 §3 / docs/17 §7)', () => {
@@ -60,6 +60,13 @@ describe('序列化与确定性 (docs/11 §3 / docs/17 §7)', () => {
     };
     expect(run(7)).toBe(run(7));
     expect(run(7)).not.toBe(run(8));
+  });
+
+  it('新增可选内容兼容旧 schemaHash，未知指纹仍拒绝', () => {
+    const reg = buildRegistry();
+    expect(isSchemaHashCompatible(reg, reg.schemaHash)).toBe(true);
+    expect(isSchemaHashCompatible(reg, '1eb5f343')).toBe(true);
+    expect(isSchemaHashCompatible(reg, 'unknown')).toBe(false);
   });
 
   it('saveGame 返回有效 SaveGame 结构（formatVersion/gameVersion/schemaHash/state）', () => {

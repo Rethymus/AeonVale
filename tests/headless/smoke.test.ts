@@ -7,7 +7,7 @@
  * - rookie/normal bot 存活率在预期区间（docs/17 §5.3）
  */
 import { describe, it, expect } from 'vitest';
-import { runOne, ROOKIE_BOT, NORMAL_BOT, VETERAN_BOT, type RunOutcome } from '../../tools/headless-run';
+import { runOne, runMonteCarlo, ROOKIE_BOT, NORMAL_BOT, VETERAN_BOT, type RunOutcome } from '../../tools/headless-run';
 import { DEFAULT_BALANCE } from '@sim';
 
 const SMOKE_SEEDS = Array.from({ length: 10 }, (_, i) => i + 1);
@@ -67,6 +67,22 @@ describe('无头模拟烟雾测试 (docs/17 §4)', () => {
       expect(typeof r.died).toBe('boolean');
       expect(Number.isFinite(r.stageReached)).toBe(true);
     }
+  });
+
+  it('runMonteCarlo 聚合妖兽风险-收益指标且保持确定', () => {
+    const seeds = [1, 2, 3, 4];
+    const a = runMonteCarlo(seeds, NORMAL_BOT, SMOKE_DAYS);
+    expect(a.hashStable).toBe(true);
+    expect(a.meanBeastSurges).toBeGreaterThanOrEqual(0);
+    expect(a.meanCropsLostToBeasts).toBeGreaterThanOrEqual(0);
+    expect(a.meanBeastCoresLooted).toBeGreaterThanOrEqual(0);
+    expect(Number.isFinite(a.meanBeastSurges)).toBe(true);
+    expect(Number.isFinite(a.meanCropsLostToBeasts)).toBe(true);
+    expect(Number.isFinite(a.meanBeastCoresLooted)).toBe(true);
+  });
+
+  it('runMonteCarlo 拒绝空种子集', () => {
+    expect(() => runMonteCarlo([], NORMAL_BOT, SMOKE_DAYS)).toThrow(RangeError);
   });
 
   it('参数变化影响模拟结果（平衡扫描健全性）', () => {

@@ -66,6 +66,8 @@ export interface ContentRegistry {
   seedToHerb: Map<string, SpiritHerbDef>;
   /** 内容指纹（用于存档版本对齐，docs/11 §3.2 schemaHash） */
   schemaHash: string;
+  /** 可无损迁移到当前内容表的旧指纹。 */
+  compatibleSchemaHashes: readonly string[];
   // 后续里程碑扩充：events, tribulations, arrays
 }
 

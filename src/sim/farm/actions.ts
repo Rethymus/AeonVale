@@ -97,6 +97,26 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       emit(state, 'harvest', { defId: herb.id });
       return;
     }
+    case 'hunt-beast': {
+      const surge = state.beastSurge;
+      const cfg = params.celestial.beast;
+      if (!surge || surge.beastsRemaining <= 0 || !tryStamina(cfg.huntStaminaCost)) return;
+      p.hp = Math.max(0, p.hp - cfg.huntDamage * MILLI);
+      surge.beastsRemaining -= 1;
+      let coreDropped = false;
+      const coreDef = ctx.content.items.get('item.beast-core');
+      const rolledCore = ctx.rng.drop.chance(cfg.lootChancePerBeast);
+      if (rolledCore && coreDef && itemCount(p, coreDef.id) < coreDef.stack) {
+        coreDropped = mutateItem(p, coreDef.id, 1);
+        if (coreDropped) emit(state, 'beast-loot', { cores: 1, itemId: coreDef.id });
+      }
+      emit(state, 'beast-hunted', { beastsRemaining: surge.beastsRemaining, damage: cfg.huntDamage, coreDropped });
+      if (surge.beastsRemaining <= 0) {
+        emit(state, 'beast-surge-end', { beastsRemaining: 0, hunted: true });
+        state.beastSurge = null;
+      }
+      return;
+    }
     case 'eat-raw': {
       const herb = ctx.content.herbs.get(a.herbDefId);
       if (!herb || itemCount(p, a.herbDefId) <= 0) return;

@@ -10,6 +10,7 @@
  * - 啃食：妖兽群停留至到时，每日啃食 min(妖兽数, 成熟作物) 株（摧毁作物 + 清空地块）。
  *   妖兽数在潮期间恒定（不因吃饱而离去），使 surgeDurationDays 成为有意义的威胁旋钮。
  * - 退去：surgeDurationDays 到时（即便仍有作物）或某日无食可吃（妖兽不空守空田）。
+ *   被动退去无内丹；内丹仅由玩家主动猎妖获得（docs/07 §3.4.3）。
  *
  * 确定性（C3）：触发与计数均走 ctx.rng.beast 流；无 Math.random / 无 IO / 无渲染。
  */
@@ -50,7 +51,7 @@ export function tickBeasts(state: GameState, ctx: SimContext): BeastSurge | null
       emit(state, 'beast-eat-crop', { defId, tileId });
     }
     bs.daysLeft -= 1;
-    // 退去：到时（daysLeft≤0）或今日无食可吃（妖兽不空守空田）
+    // 退去：到时（daysLeft≤0）或今日无食可吃（妖兽不空守空田）。被动退去不授予猎妖战利品。
     if (bs.daysLeft <= 0 || prey.length === 0) {
       emit(state, 'beast-surge-end', { beastsRemaining: bs.beastsRemaining });
       state.beastSurge = null;

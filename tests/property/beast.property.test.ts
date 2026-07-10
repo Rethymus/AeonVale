@@ -8,9 +8,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import fc from 'fast-check';
-import { createWorld, createSimContext, tickBeasts, DEFAULT_BALANCE, type BalanceParams } from '@sim';
+import { createWorld, createSimContext, tickBeasts, applyAction, DEFAULT_BALANCE, type BalanceParams } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { MILLI } from '@sim/world/types';
+import { itemCount } from '@sim/world/player';
 import type { GameState } from '@sim/world/state';
 import type { ContentRegistry } from '@content/defs';
 import type { CultivationStage } from '@sim/world/types';
@@ -35,7 +36,8 @@ function injectMature(state: GameState, reg: ContentRegistry, tileId: number, de
     id: tileId, defId, tileId, growth: herb.growthThreshold, health: 100 * MILLI,
     stage: 'mature', plantedDay: state.day, property: herb.baseProperty, tempered: false,
   });
-  state.tiles[tileId].cropId = tileId;
+  const tile = state.tiles[tileId];
+  if (tile) tile.cropId = tileId;
 }
 
 describe('PBT-BEAST: 妖兽潮不变式 (docs/07 §3.1 / M4)', () => {
@@ -135,6 +137,28 @@ describe('PBT-BEAST: 妖兽潮不变式 (docs/07 §3.1 / M4)', () => {
           }
           expect(totalEaten).toBeLessThanOrEqual(cropCount); // 不凭空多啃
           expect(state.beastSurge).toBeNull(); // 最终必然退去
+        },
+      ),
+    );
+  });
+
+  it('PBT-BEAST-05: 主动猎妖掉落数 ∈ [0, 击杀数] 且确定', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: 100_000 }),
+        fc.integer({ min: 1, max: 5 }),
+        (seed, beasts) => {
+          const P = beastParams({ huntDamage: 0, huntStaminaCost: 0, lootChancePerBeast: 0.5 });
+          const run = () => {
+            const { state, ctx } = makeState(seed, 1, P, reg);
+            state.beastSurge = { beastsRemaining: beasts, daysLeft: 9 };
+            for (let i = 0; i < beasts; i++) applyAction(state, { kind: 'hunt-beast' }, ctx);
+            return itemCount(state.player, 'item.beast-core');
+          };
+          const cores = run();
+          expect(cores).toBeGreaterThanOrEqual(0);
+          expect(cores).toBeLessThanOrEqual(beasts);
+          expect(run()).toBe(cores);
         },
       ),
     );

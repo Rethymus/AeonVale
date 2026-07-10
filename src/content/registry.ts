@@ -353,6 +353,11 @@ const RAW_ARRAYS: ArrayDef[] = [
   { id: 'array.insulation', displayName: '绝缘阵', type: 'insulation', modifier: 0.3, radius: 1, needsMetalCore: false, desc: '绝缘垫层铺设，把范围内天雷排斥开，保护核心药草。' },
 ];
 
+/** 独立物品（非灵草派生）：妖兽战利品等（docs/07 §3.3 舔包 / §3.4.3 雷兽内丹）。 */
+const RAW_STANDALONE_ITEMS: ItemDef[] = [
+  { id: 'item.beast-core', displayName: '妖兽内丹', category: 'material', stack: 5, description: '妖兽退去后遗留的内丹，蕴含狂暴灵气，强力炼丹材料（docs/07 §3.4.3）。' },
+];
+
 /** 丹药原始数据（毫点；对齐 docs/15 §3）。 */
 const RAW_PILLS: PillDef[] = [
   {
@@ -470,12 +475,21 @@ export function buildRegistry(): ContentRegistry {
   for (const e of RAW_EVENTS) events.set(e.id, e);
   const arrays = new Map<string, ArrayDef>();
   for (const a of RAW_ARRAYS) arrays.set(a.id, a);
+  for (const it of RAW_STANDALONE_ITEMS) {
+    const parsed = itemSchema.parse(it);
+    items.set(parsed.id, parsed as ItemDef);
+  }
 
   // schemaHash：内容指纹（docs/11 §3.2）。简化哈希。
   const schemaHash = simpleHash(
     [...herbs.keys()].join(',') + '|' + [...items.keys()].join(',') + '|' + [...recipes.keys()].join(',') + '|' + [...events.keys()].join(',') + '|' + [...arrays.keys()].join(','),
   );
-  return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash };
+  const compatibleSchemaHashes = ['1eb5f343']; // M0–M3：新增妖兽内丹前的内容指纹，可无损补默认字段继续读取。
+  return { herbs, items, recipes, pills, events, arrays, seedToHerb, schemaHash, compatibleSchemaHashes };
+}
+
+export function isSchemaHashCompatible(registry: ContentRegistry, savedHash: string | undefined): boolean {
+  return savedHash === registry.schemaHash || registry.compatibleSchemaHashes.includes(savedHash ?? '');
 }
 
 function simpleHash(s: string): string {

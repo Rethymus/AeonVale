@@ -28,7 +28,7 @@ export interface ActiveCelestialEvent {
  * 确定性：触发与啃食均走 ctx.rng.beast 流。
  */
 export interface BeastSurge {
-  beastsRemaining: number; // 仍在田间抢食的妖兽数（吃饱即离去，逐日递减）
+  beastsRemaining: number; // 本次妖兽潮规模（潮期间恒定，用于每日啃食上限与退去时战利品结算）
   daysLeft: number; // 妖兽潮剩余天数（到 0 强制退去）
 }
 
@@ -59,6 +59,7 @@ export interface GameState {
   player: Player;
   events: GameEvent[]; // 本步产出事件（每步开头清空）
   activeEvent: ActiveCelestialEvent | null; // 激活中的天象事件
+  recentCelestialEventIds: string[]; // 最近 3 次天象，用于重复事件权重惩罚（docs/14 §7）
   beastSurge: BeastSurge | null; // 激活中的妖兽潮（docs/07 §3.1 climax）
   flags: Set<string>;
   ending: string | null; // 结局 id（ascension/poison-death/tribulation-death/madness，docs/02）
@@ -150,6 +151,7 @@ export function createWorld(o: WorldInit): GameState {
     player,
     events: [],
     activeEvent: null,
+    recentCelestialEventIds: [],
     beastSurge: null,
     ending: null,
     gameOver: false,

@@ -2,6 +2,7 @@
  * 无头模拟 Harness（docs/17 §4）。完整核心循环：farm→引劫→淬体→突破。
  * 用法：pnpm headless ｜ pnpm headless -- --seeds 50
  */
+import { fileURLToPath } from 'node:url';
 import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt, type BalanceParams } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { mutateItem, itemCount } from '@sim/world/player';
@@ -19,17 +20,19 @@ export interface BotPolicy {
   blockChance: number;
   /** true = 每次天劫前注入避雷丹+2激活阵法（模拟炼丹-布阵完整准备，测试 prepScore 闭环） */
   simulatePrepared: boolean;
+  /** 妖兽潮活跃时是否主动猎妖（承担体力/HP 成本换内丹）。 */
+  huntBeasts: boolean;
 }
 
-export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3, blockChance: 0, simulatePrepared: false };
-export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3, blockChance: 0, simulatePrepared: false };
+export const ROOKIE_BOT: BotPolicy = { name: 'rookie', plotSize: 1, seedId: 'seed.mossling', careDaily: false, tribulationBolts: 3, blockChance: 0, simulatePrepared: false, huntBeasts: false };
+export const NORMAL_BOT: BotPolicy = { name: 'normal', plotSize: 3, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 3, blockChance: 0, simulatePrepared: false, huntBeasts: true };
 /**
  * 老手 bot：炼丹-布阵-渡劫完整准备（docs/17 §5.3 / docs/14 §8.3 prepScore）。
  * simulatePrepared=true：每次天劫前注入避雷丹+2激活阵法 → prepScore=1.0 → 最高突破成功率。
  * blockChance=0.6：高擦弹率降低死亡风险，模拟熟练玩家。
  * 验证目标：veteran 突破率 > normal，prepScore 闭环生效。
  */
-export const VETERAN_BOT: BotPolicy = { name: 'veteran', plotSize: 5, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 5, blockChance: 0.6, simulatePrepared: true };
+export const VETERAN_BOT: BotPolicy = { name: 'veteran', plotSize: 5, seedId: 'seed.mossling', careDaily: true, tribulationBolts: 5, blockChance: 0.6, simulatePrepared: true, huntBeasts: true };
 
 export interface RunOutcome {
   seed: number;
@@ -49,6 +52,8 @@ export interface RunOutcome {
   beastSurges: number;
   /** 被妖兽啃食的成熟作物数（M4 妖兽税，影响推进速度）。 */
   cropsLostToBeasts: number;
+  /** 妖兽退去遗留的妖兽内丹数（M4 舔包机，docs/07 §3.3）。 */
+  beastCoresLooted: number;
 }
 
 /** 单局模拟（完整循环）。params/bot 可注入，用于平衡扫描。 */
@@ -72,6 +77,7 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
   let tribulations = 0;
   let beastSurges = 0;
   let cropsLostToBeasts = 0;
+  let beastCoresLooted = 0;
   let died = false;
   let deathCause: string | null = null;
   let tilled = false;
@@ -82,6 +88,9 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
     if (state.player.hp <= 0) { died = true; deathCause = 'tribulation'; break; }
 
     const actions: PlayerAction[] = [];
+    if (bot.huntBeasts && state.beastSurge && state.player.hp > params.celestial.beast.huntDamage * 1000) {
+      actions.push({ kind: 'hunt-beast' });
+    }
     if (!tilled) {
       for (const p of plot) { actions.push({ kind: 'till', at: p }); actions.push({ kind: 'sow', at: p, seedId: bot.seedId }); }
       tilled = true;
@@ -101,6 +110,7 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
       if (e.type === 'harvest') harvests++;
       else if (e.type === 'beast-surge-start') beastSurges++;
       else if (e.type === 'beast-eat-crop') cropsLostToBeasts++;
+      else if (e.type === 'beast-loot') beastCoresLooted += (e.payload as { cores: number }).cores;
     }
     maxPillPoison = Math.max(maxPillPoison, state.player.pillPoison / 1000);
 
@@ -131,22 +141,31 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
   const lowHpTribulationRate = tribulationFinalHpRatios.length > 0
     ? lowHpCount / tribulationFinalHpRatios.length
     : 0;
-  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10, lowHpTribulationRate: Math.round(lowHpTribulationRate * 100) / 100, tribulationFinalHpRatios, beastSurges, cropsLostToBeasts };
+  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10, lowHpTribulationRate: Math.round(lowHpTribulationRate * 100) / 100, tribulationFinalHpRatios, beastSurges, cropsLostToBeasts, beastCoresLooted };
 }
 
 export interface Aggregate {
   bot: string; runs: number; deaths: number; deathRate: number;
   meanStage: number; meanBreakthroughs: number; meanHarvests: number; meanMaxPoison: number;
+  /** 平均妖兽潮次数（M4 因果链压力）。 */
+  meanBeastSurges: number;
+  /** 平均被妖兽啃食作物数（M4 妖兽税）。 */
+  meanCropsLostToBeasts: number;
+  /** 平均妖兽内丹掉落数（M4 舔包收益）。 */
+  meanBeastCoresLooted: number;
   hashStable: boolean;
 }
 
 export function runMonteCarlo(seeds: number[], bot: BotPolicy, days: number, params: BalanceParams = DEFAULT_BALANCE): Aggregate {
+  if (seeds.length === 0) throw new RangeError('runMonteCarlo requires at least one seed');
   let deaths = 0, totalStage = 0, totalBrk = 0, totalHarv = 0, totalPoi = 0;
+  let totalBeastSurges = 0, totalCropsLostToBeasts = 0, totalBeastCoresLooted = 0;
   let hashStable = true;
   for (const seed of seeds) {
     const o = runOne(seed, days, bot, params);
     if (o.died) deaths++;
     totalStage += o.stageReached; totalBrk += o.breakthroughs; totalHarv += o.harvests; totalPoi += o.maxPillPoison;
+    totalBeastSurges += o.beastSurges; totalCropsLostToBeasts += o.cropsLostToBeasts; totalBeastCoresLooted += o.beastCoresLooted;
     const o2 = runOne(seed, days, bot, params);
     if (JSON.stringify(o) !== JSON.stringify(o2)) hashStable = false;
   }
@@ -157,6 +176,9 @@ export function runMonteCarlo(seeds: number[], bot: BotPolicy, days: number, par
     meanBreakthroughs: Math.round((totalBrk / runs) * 100) / 100,
     meanHarvests: Math.round((totalHarv / runs) * 10) / 10,
     meanMaxPoison: Math.round((totalPoi / runs) * 10) / 10,
+    meanBeastSurges: Math.round((totalBeastSurges / runs) * 100) / 100,
+    meanCropsLostToBeasts: Math.round((totalCropsLostToBeasts / runs) * 100) / 100,
+    meanBeastCoresLooted: Math.round((totalBeastCoresLooted / runs) * 100) / 100,
     hashStable,
   };
 }
@@ -177,4 +199,4 @@ function main() {
   for (const bot of [ROOKIE_BOT, NORMAL_BOT, VETERAN_BOT]) console.log(JSON.stringify(runMonteCarlo(seeds, bot, days)));
 }
 
-main();
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

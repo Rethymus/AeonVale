@@ -4,9 +4,10 @@
  * 因果链：event.qi-tide 活跃 + 成熟作物 → 引兽 → 啃食 → 退去。
  */
 import { describe, it, expect } from 'vitest';
-import { createWorld, createSimContext, tickBeasts, DEFAULT_BALANCE, type BalanceParams } from '@sim';
+import { createWorld, createSimContext, tickBeasts, applyAction, DEFAULT_BALANCE, type BalanceParams } from '@sim';
 import { buildRegistry } from '@content/registry';
 import { MILLI } from '@sim/world/types';
+import { itemCount } from '@sim/world/player';
 import type { GameState } from '@sim/world/state';
 import type { ContentRegistry } from '@content/defs';
 
@@ -30,7 +31,8 @@ function injectMature(state: GameState, reg: ContentRegistry, tileId: number, de
     id: tileId, defId, tileId, growth: herb.growthThreshold, health: 100 * MILLI,
     stage: 'mature', plantedDay: state.day, property: herb.baseProperty, tempered: false,
   });
-  state.tiles[tileId].cropId = tileId;
+  const tile = state.tiles[tileId];
+  if (tile) tile.cropId = tileId;
 }
 
 function countEvents(state: GameState, type: string): number {
@@ -122,5 +124,71 @@ describe('妖兽潮系统 tickBeasts (docs/07 §3.1 / M4)', () => {
       return { count: surge!.beastsRemaining, cropsLeft: state.crops.size };
     };
     expect(JSON.stringify(run(5))).toBe(JSON.stringify(run(5)));
+  });
+});
+
+describe('主动猎妖战利品（docs/07 §3.4.3）', () => {
+  it('被动退去无内丹，主动猎妖承担代价后才掉落', () => {
+    const P = beastParams({ huntStaminaCost: 20, huntDamage: 8, lootChancePerBeast: 1.0 });
+    const { state, ctx } = setup(7, P);
+    state.beastSurge = { beastsRemaining: 2, daysLeft: 2 };
+    const hpBefore = state.player.hp;
+    const staminaBefore = state.player.stamina;
+    applyAction(state, { kind: 'hunt-beast' }, ctx);
+    expect(state.beastSurge?.beastsRemaining).toBe(1);
+    expect(state.player.hp).toBe(hpBefore - 8 * MILLI);
+    expect(state.player.stamina).toBe(staminaBefore - 20 * MILLI);
+    expect(itemCount(state.player, 'item.beast-core')).toBe(1);
+    expect(countEvents(state, 'beast-loot')).toBe(1);
+
+    tickBeasts(state, ctx); // 最后一只被动退去，不追加猎妖奖励
+    expect(state.beastSurge).toBeNull();
+    expect(itemCount(state.player, 'item.beast-core')).toBe(1);
+  });
+
+  it('lootChancePerBeast=0 → 猎妖成功但无掉落', () => {
+    const { state, ctx } = setup(7, beastParams({ lootChancePerBeast: 0 }));
+    state.beastSurge = { beastsRemaining: 1, daysLeft: 2 };
+    applyAction(state, { kind: 'hunt-beast' }, ctx);
+    expect(state.beastSurge).toBeNull();
+    expect(itemCount(state.player, 'item.beast-core')).toBe(0);
+    expect(countEvents(state, 'beast-loot')).toBe(0);
+    expect(countEvents(state, 'beast-hunted')).toBe(1);
+  });
+
+  it('掉落确定且每次猎妖至多一颗', () => {
+    const run = (seed: number) => {
+      const { state, ctx } = setup(seed, beastParams({ lootChancePerBeast: 0.5 }));
+      state.beastSurge = { beastsRemaining: 5, daysLeft: 9 };
+      for (let i = 0; i < 5; i++) {
+        state.player.stamina = 100 * MILLI;
+        state.player.hp = state.player.maxHp;
+        applyAction(state, { kind: 'hunt-beast' }, ctx);
+      }
+      return itemCount(state.player, 'item.beast-core');
+    };
+    const cores = run(3);
+    expect(cores).toBeGreaterThanOrEqual(0);
+    expect(cores).toBeLessThanOrEqual(5);
+    expect(run(3)).toBe(cores);
+  });
+
+  it('背包满且无内丹格时不虚报掉落', () => {
+    const { state, ctx } = setup(7, beastParams({ lootChancePerBeast: 1 }));
+    state.beastSurge = { beastsRemaining: 1, daysLeft: 2 };
+    state.player.inventoryCapacity = 1;
+    state.player.inventory['item.compost'] = { itemId: 'item.compost', count: 1 };
+    applyAction(state, { kind: 'hunt-beast' }, ctx);
+    expect(itemCount(state.player, 'item.beast-core')).toBe(0);
+    expect(countEvents(state, 'beast-loot')).toBe(0);
+  });
+
+  it('内丹达到 stack=5 后不再超堆', () => {
+    const { state, ctx } = setup(7, beastParams({ huntDamage: 0, huntStaminaCost: 0, lootChancePerBeast: 1 }));
+    state.beastSurge = { beastsRemaining: 2, daysLeft: 3 };
+    state.player.inventory['item.beast-core'] = { itemId: 'item.beast-core', count: 5 };
+    applyAction(state, { kind: 'hunt-beast' }, ctx);
+    expect(itemCount(state.player, 'item.beast-core')).toBe(5);
+    expect(countEvents(state, 'beast-loot')).toBe(0);
   });
 });
