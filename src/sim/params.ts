@@ -190,7 +190,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
     },
     damage: {
       base: 12,
-      stageSlope: 8,
+      stageSlope: 10, // 调参器发现：8→10 使终局HP更低→近死淬体加成更高→推进更快（death 仍 0）
       arrayReductionRedirect: 0.6,
       pillMitigationWard: 0.4,
       terrainAmplifyWater: 1.3,
