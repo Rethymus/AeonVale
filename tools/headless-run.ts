@@ -39,6 +39,10 @@ export interface RunOutcome {
   deathCause: string | null;
   harvests: number;
   maxPillPoison: number;
+  /** 天劫中最终 HP < 25% maxHp 的比例（M3 退出标准：veteran ≥ 50%）。 */
+  lowHpTribulationRate: number;
+  /** 每次天劫的最终 HP 比例列表（用于调试/分布分析）。 */
+  tribulationFinalHpRatios: number[];
 }
 
 /** 单局模拟（完整循环）。params/bot 可注入，用于平衡扫描。 */
@@ -63,6 +67,7 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
   let died = false;
   let deathCause: string | null = null;
   let tilled = false;
+  const tribulationFinalHpRatios: number[] = [];
 
   for (let d = 0; d < days; d++) {
     if (state.player.pillPoison >= params.pillPoison.cap * 1000) { died = true; deathCause = 'pillPoison'; break; }
@@ -90,6 +95,9 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
     while (readyForBreakthrough(state, params)) {
       tribulations++;
       const res = runTribulation(state, { stage: state.player.stage, boltCount: bot.tribulationBolts + state.player.stage, policy: { blockChance: bot.blockChance } }, ctx);
+      // 记录天劫最终 HP 比例（M3 退出标准控血 proxy）
+      const hpRatio = res.survived ? res.finalHpMilli / (state.player.maxHp || 1) : 0;
+      tribulationFinalHpRatios.push(hpRatio);
       if (!res.survived) { died = true; deathCause = 'tribulation'; break; }
       const br = breakthrough(state, ctx, true);
       if (br.success) breakthroughs++;
@@ -99,7 +107,11 @@ export function runOne(seed: number, days: number, bot: BotPolicy, params: Balan
     if (died) break;
   }
 
-  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10 };
+  const lowHpCount = tribulationFinalHpRatios.filter((r) => r < 0.25).length;
+  const lowHpTribulationRate = tribulationFinalHpRatios.length > 0
+    ? lowHpCount / tribulationFinalHpRatios.length
+    : 0;
+  return { seed, days: state.day - 1, stageReached: state.player.stage, breakthroughs, tribulations, died, deathCause, harvests, maxPillPoison: Math.round(maxPillPoison * 10) / 10, lowHpTribulationRate: Math.round(lowHpTribulationRate * 100) / 100, tribulationFinalHpRatios };
 }
 
 export interface Aggregate {
