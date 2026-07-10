@@ -11,6 +11,7 @@ import { createLayers, drawWorld, setToast, type RenderLayers } from '@render/re
 import { runTribulation } from '@sim/tribulation/tribulationSystem';
 import { readyForBreakthrough, breakthrough } from '@sim/progression/progression';
 import type { Direction } from '@sim/world/types';
+import { AudioEngine } from '@io/audio';
 
 async function main(): Promise<void> {
   const reg = buildRegistry();
@@ -33,6 +34,7 @@ async function main(): Promise<void> {
   document.body.appendChild(app.canvas);
 
   const layers: RenderLayers = createLayers(app);
+  const audio = new AudioEngine();
 
   const seedChoices = ['seed.mossling', 'seed.dewroot', 'seed.suncap'];
   let seedIdx = 0;
@@ -74,15 +76,20 @@ async function main(): Promise<void> {
       return;
     }
     const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
+    audio.playSfx('tribulation');
     const br = breakthrough(state, ctx, res.survived);
     checkGameEnd(state, ctx);
     if (state.gameOver) {
+      audio.playSfx(state.ending === 'ascension' ? 'ending' : 'explosion');
+      audio.setBgmMode('off');
       toast(state.ending === 'ascension' ? '白日飞升！' : '陨于天劫');
       return;
     }
     if (!res.survived) toast('陨于天劫！');
-    else if (br.success) toast(`渡劫成功！突破至 ${state.player.stage} 阶`);
-    else toast(`扛过天劫（淬体+${Math.floor(res.temperingGainMilli / 1000)}）`);
+    else if (br.success) {
+      audio.playSfx('breakthrough');
+      toast(`渡劫成功！突破至 ${state.player.stage} 阶`);
+    } else toast(`扛过天劫（淬体+${Math.floor(res.temperingGainMilli / 1000)}）`);
   }
 
   /** 按丹方炼丹（理想火候，docs/06；完整火候解谜 UI 待 M4） */
@@ -97,15 +104,19 @@ async function main(): Promise<void> {
     }
     const heat = Math.round((r.idealHeatRange[0] + r.idealHeatRange[1]) / 2);
     const res = brewPills(state, { materials: r.inputs.map((i) => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: heat }, ctx);
+    audio.playSfx(res.outcome === 'exploded' ? 'explosion' : 'brew');
     toast(res.outcome === 'pill' ? `炼成 ${name}` : res.outcome === 'exploded' ? '炸炉！丹毒反噬' : res.outcome === 'flawed' ? '残丹（效减）' : '废丹');
   }
 
   function eatById(pillId: string, name: string): void {
     const r = applyPill(state, pillId, ctx);
+    if (r.applied) audio.playSfx('eat-pill');
     toast(r.applied ? `服 ${name}：${r.effects.join('，') || '无'}` : `无 ${name}`);
   }
 
   window.addEventListener('keydown', (ev) => {
+    audio.init();
+    audio.resume();
     if (state.gameOver) {
       if (ev.key === 'r' || ev.key === 'R') location.reload();
       return;
@@ -152,6 +163,7 @@ async function main(): Promise<void> {
         break;
       case 'v': // 收获
         applyAction(state, { kind: 'harvest', at: f }, ctx);
+        audio.playSfx('harvest');
         toast('收获');
         break;
       case '1':
@@ -210,6 +222,9 @@ async function main(): Promise<void> {
 
   app.ticker.add(() => {
     drawWorld(layers, state, reg);
+    // BGM 慢/急切换（docs/10 §10.2）：修为满引劫在即→急，否则→慢
+    const mode = state.gameOver ? 'off' : readyForBreakthrough(state, DEFAULT_BALANCE) ? 'tense' : 'calm';
+    audio.setBgmMode(mode);
   });
 
   toast('欢迎来到 永恒山谷。种田以炼丹，炼丹以渡劫。');
