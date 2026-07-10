@@ -25,5 +25,7 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+      - name: Content lint
+        run: pnpm content:lint
       - name: Headless smoke
         run: pnpm headless -- --seeds 5
