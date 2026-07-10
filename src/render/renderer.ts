@@ -6,6 +6,8 @@ import { Application, Graphics, Text } from 'pixi.js';
 import type { GameState } from '@sim/world/state';
 import type { ContentRegistry } from '@content/defs';
 import { MILLI } from '@sim/world/types';
+import { stageQiCap } from '@sim/progression/progression';
+import { DEFAULT_BALANCE } from '@sim/params';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷，docs/10 §13.2） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -42,6 +44,8 @@ export interface RenderLayers {
   help: Text;
   ending: Text;
   inv: Text;
+  bars: Graphics;
+  barLabels: Text[];
   showInv: boolean;
   furnaceHeat: number; // 玩家炉温 0..100（app 设置，HUD 显示）
 }
@@ -96,10 +100,55 @@ export function createLayers(app: Application): RenderLayers {
   inv.y = 70;
   inv.visible = false;
   app.stage.addChild(inv);
-  return { tiles, entities, hud, toast, help, ending, inv, showInv: false, furnaceHeat: 50 };
+  const bars = new Graphics();
+  app.stage.addChild(bars);
+  const barLabels = ['气血', '丹毒', '修为', '体力'].map((label, i) => {
+    const t = new Text({ text: label, style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xb0b0c8 } });
+    t.x = 12 + i * 152;
+    t.y = 26;
+    app.stage.addChild(t);
+    return t;
+  });
+  return { tiles, entities, hud, toast, help, ending, inv, bars, barLabels, showInv: false, furnaceHeat: 50 };
 }
 
 const SEASON_CN: Record<string, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
+
+/** 画一根水平条（背景 + 填充 + 描边）。pct 钳到 [0,1]。 */
+function drawBar(g: Graphics, x: number, y: number, w: number, h: number, pct: number, fill: number): void {
+  g.rect(x, y, w, h).fill({ color: 0x1a1a22, alpha: 0.9 });
+  const fw = Math.max(0, Math.min(1, pct)) * (w - 2);
+  if (fw > 0) g.rect(x + 1, y + 1, fw, h - 2).fill(fill);
+  g.rect(x, y, w, h).stroke({ width: 1, color: 0x3a3a44 });
+}
+
+const INV_GROUPS: Array<{ prefix: string; title: string }> = [
+  { prefix: 'seed.', title: '种子' },
+  { prefix: 'herb.', title: '灵草' },
+  { prefix: 'pill.', title: '丹药' },
+  { prefix: 'item.', title: '杂物' },
+];
+
+/** 背包按类目分组渲染（种子/灵草/丹药/杂物/其他）。 */
+function renderInventory(state: GameState, content: ContentRegistry): string {
+  const entries = Object.entries(state.player.inventory).filter(([, s]) => s && s.count > 0);
+  if (entries.length === 0) return '—— 背包 ——\n（空）';
+  const lines: string[] = ['—— 背包 ——'];
+  const grouped = new Map<string, Array<[string, number]>>();
+  const others: Array<[string, number]> = [];
+  for (const [id, slot] of entries) {
+    const name = content.items.get(id)?.displayName ?? id;
+    const grp = INV_GROUPS.find((g) => id.startsWith(g.prefix));
+    if (grp) (grouped.get(grp.title) ?? grouped.set(grp.title, []).get(grp.title)!).push([name, slot.count]);
+    else others.push([name, slot.count]);
+  }
+  for (const g of INV_GROUPS) {
+    const arr = grouped.get(g.title);
+    if (arr) lines.push(`[${g.title}]`, ...arr.map(([n, c]) => `  ${n} ×${c}`));
+  }
+  if (others.length) lines.push('[其他]', ...others.map(([n, c]) => `  ${n} ×${c}`));
+  return lines.join('\n');
+}
 
 export function drawWorld(layers: RenderLayers, state: GameState, content: ContentRegistry): void {
   // —— 瓦片 + 作物 ——
@@ -147,36 +196,54 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   // 朝向指示
   e.circle(px + fdx * 10, py + fdy * 10, 4).fill(0xffffff);
 
-  // —— HUD ——
-  const hpPct = Math.round((p.hp / p.maxHp) * 100);
+  // —— HUD：状态文字 + 图形条（气血/丹毒/修为/体力）——
+  const bg = layers.bars;
+  bg.clear();
+  const hpRatio = Math.max(0, p.hp / p.maxHp);
+  const hpPct = Math.round(hpRatio * 100);
   const pp = Math.round(p.pillPoison / MILLI);
+  const poisonCap = DEFAULT_BALANCE.pillPoison.cap; // 100
+  const poisonPct = Math.min(1, p.pillPoison / (poisonCap * MILLI));
+  const staCap = DEFAULT_BALANCE.player.staminaCap * MILLI;
+  const staPct = Math.max(0, Math.min(1, p.stamina / staCap));
   const stageNames = ['凡骨', '淬皮', '锻骨', '通脉', '凝丹', '破丹', '化神', '飞升前夜'];
+  // 修为进度：当前阶段修为 / 该阶段修为上限（stage≥7 飞升前夜无后续突破→满条）
+  const cultPct = p.stage >= 7 ? 1 : Math.min(1, p.cultivation / stageQiCap(p.stage, DEFAULT_BALANCE));
+  // 控血走钢丝（docs/14 §6.2）：HP<20% 黄警，<10% 红警（险死区是核心张力）
+  const hpColor = hpRatio > 0.5 ? 0x4ade80 : hpRatio > 0.2 ? 0xffe066 : 0xff5a5a;
+  const poisonColor = poisonPct > 0.7 ? 0xff3030 : poisonPct > 0.4 ? 0xff8a3a : 0x9a7a3a;
+  const BAR_W = 120, BAR_H = 11, BAR_X0 = 12, BAR_DX = 152, BAR_Y = 42;
+  drawBar(bg, BAR_X0, BAR_Y, BAR_W, BAR_H, hpRatio, hpColor);
+  drawBar(bg, BAR_X0 + BAR_DX, BAR_Y, BAR_W, BAR_H, poisonPct, poisonColor);
+  drawBar(bg, BAR_X0 + 2 * BAR_DX, BAR_Y, BAR_W, BAR_H, cultPct, 0x66ddff);
+  drawBar(bg, BAR_X0 + 3 * BAR_DX, BAR_Y, BAR_W, BAR_H, staPct, 0x7ac050);
+  layers.barLabels[0]!.text = `气血 ${hpPct}%`;
+  layers.barLabels[1]!.text = `丹毒 ${pp}`;
+  layers.barLabels[2]!.text = `修为 ${Math.round(cultPct * 100)}%`;
+  layers.barLabels[3]!.text = `体力 ${Math.round(staPct * 100)}%`;
   const ev = state.activeEvent ? `　【天象·${state.activeEvent.displayName} ${state.activeEvent.daysLeft}日】` : '';
+  const surge = state.beastSurge ? `　⚠妖兽潮 ${state.beastSurge.daysLeft}日` : '';
   layers.hud.text =
     `第 ${state.day} 日 · ${SEASON_CN[state.season] ?? state.season} · 第 ${state.year} 年　|　` +
-    `阶段：${stageNames[state.player.stage] ?? state.player.stage}　` +
-    `气血：${hpPct}%　丹毒：${pp}　修为：${Math.floor(p.cultivation / MILLI)}　炉温：${layers.furnaceHeat}${ev}`;
+    `阶段：${stageNames[state.player.stage] ?? state.player.stage}　炉温：${layers.furnaceHeat}${ev}${surge}`;
 
   // —— 结局遮罩 ——
   if (state.gameOver) {
     layers.tiles.visible = false;
     layers.entities.visible = false;
+    layers.bars.visible = false;
+    for (const lbl of layers.barLabels) lbl.visible = false;
     layers.ending.text = `${ENDING_CN[state.ending ?? ''] ?? '终'}\n按 R 重新开始`;
     layers.ending.visible = true;
     layers.inv.visible = false;
   } else {
     layers.tiles.visible = true;
     layers.entities.visible = true;
+    layers.bars.visible = true;
+    for (const lbl of layers.barLabels) lbl.visible = true;
     layers.ending.visible = false;
     if (layers.showInv) {
-      const lines: string[] = ['—— 背包 ——'];
-      const entries = Object.entries(state.player.inventory);
-      if (entries.length === 0) lines.push('（空）');
-      for (const [id, slot] of entries) {
-        const def = content.items.get(id);
-        lines.push(`${def?.displayName ?? id} ×${slot?.count ?? 0}`);
-      }
-      layers.inv.text = lines.join('\n');
+      layers.inv.text = renderInventory(state, content);
       layers.inv.visible = true;
     } else {
       layers.inv.visible = false;
