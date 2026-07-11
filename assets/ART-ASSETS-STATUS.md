@@ -1,7 +1,7 @@
 # 美术资产状态与交接（Art Asset Status & Handoff）
 
 > 对应 docs/13 §1.1「必须手绘 vs 可程序化」分级。本文记录哪些美术资产已由代码/外部工具闭环、哪些仍阻塞、以及解锁步骤。
-> 维护者与后续 Agent 据此决定下一步。最后更新：T0–T3 资产管线轮次 + 结局 CG 生成轮次。
+> 维护者与后续 Agent 据此决定下一步。最后更新：T0–T3 资产管线轮次 + 结局 CG 生成轮次 + 角色精灵 AI 多重审核轮次。
 
 ---
 
@@ -16,7 +16,7 @@
 | SFX（雷/炸炉/收获/突破/UI…） | §4.3 程序化合成 | ✅ 既有 | `src/io/audio.ts`（11 种 SFX） |
 | BGM（calm/tense 情绪曲线） | §4.3 程序化合成 | ✅ v1 既有 | `audio.ts` calm pad / tense 脉冲；**质量升级可选** |
 | 结局 CG（飞升/寿尽/暴毙水墨） | §1.3 AI 例外 | ✅ 已完成 | gpt-image-2 生成 3 张 1024px 水墨图，AI-Generated 留痕（3 测） |
-| 角色精灵（玩家/NPC/妖兽） | §1.1 手绘像素 | ⛔ 阻塞 | 见下「阻塞项」 |
+| 角色精灵（玩家/NPC/妖兽） | 用户授权 AI + 多重审核 | ✅ 已完成 | 5 张 32×32（player/游方散修/采药女/阵匠/守田兽），gpt-image-2 经四重审核放行（5 测） |
 
 ---
 
@@ -28,12 +28,20 @@
 - manifest 以 `license=AI-Generated` + `source`（模型/端点/motif/提示词）留痕——§1.3 唯一允许 AI 图直接进游戏的类别。
 - **可选后续**：AI 图未做 16 色调色板统一；如需更强风格一致，可用 Pillow 做一次调色板量化（非阻塞）。
 
-### 2. 角色精灵（玩家 + 3 NPC + 妖兽，~15 张 32×32+）
-- **为何阻塞**：docs/13 §1.1 列为「必须手绘」（叙事载体，需性格）；AI 像素图被 §1.3 挡在游戏外（风格不一+版权）。
-- **解锁步骤**：
-  1. itch.io 取 CC0/CC-BY farming/xianxia 像素包 → Aseprite 重映射到 16 色调色板 → `assets/sprites/` → manifest `sprites` 登记（license/source 必填，§4.4 禁令）。
-  2. 或人工 Aseprite 绘制。
-- **接入**：renderer 用 `getSprite(AssetId)` 取 `SpritePixels` → `toRgba` → PIXI 纹理（与灵草精灵同一通路）。
+### 2. 角色精灵 — ✅ 已完成（精灵生成轮次）
+- player / 游方散修 / 采药女 / 阵匠老陆 / 守田兽 共 5 张 32×32，gpt-image-2 生成后降采样+量化入库（`assets/sprites/`）。
+- **用户授权**：AI 用于角色精灵，覆盖 docs/13 §1.3 的 AI 限制；前提是**必须过自动化多重审核**（见下「AI 资产多重审核闸门」）。
+- `tools/gen-sprite.mjs`（精准 prompt，调研模板，密钥走 `CG_API_KEY`）单 id 生成；`tools/review-ai-art.py` 量化+审核。
+- **已知**：阵匠的 smith 专属特征（皮围裙/罗盘）在 32px 下偏弱，但仍为可读人形；如需更强辨识可后续按需重生成。
+
+### AI 资产多重审核闸门（用户指令：AI 可用，须过审核）
+任何 AI 生成资产入库前须**全部通过**以下阶段（`tools/review-ai-art.py` + 视觉判定）：
+1. **fmt** — PNG 合法 + 尺寸符合类（sprite 精确 32×32；cg 大尺寸）。
+2. **palette** — Lab ΔE 贴合 16 色调色板（sprite 量化后 mean ΔE≈0；cg 仅记录）。
+3. **content** — 不透明率/唯一色数/单色洪泛检测，剔除废生成。
+4. **vision** — 视觉语义审核（主体正确、无 AI 伪影、32px 下可读）；本环境用 `analyze_image`（zai MCP 401 不可用）。
+5. **provenance** — `license=AI-Generated` + `source`（模型/端点/motif）+ `checksum` 由 manifest schema 强制。
+- 前沿量化管线（调研落地）：去背景 → 预乘 alpha → 高斯 σ0.8 → **LANCZOS** 降采样 → 取消预乘 → alpha 二值化 → **Lab 最近邻**贴 16 色（**不抖动**）→ 中值去噪 → 连通域去孤立点。
 
 ### 3. BGM 质量升级（可选，非阻塞）
 - 现状：`audio.ts` 已合成 calm/tense 双模式 + 11 种 SFX，docs/13 §4.3 程序化路径已落地，**首版可直接发布**。
