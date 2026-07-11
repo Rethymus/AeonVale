@@ -5,25 +5,25 @@
       "id": "cg.ending-ascension",
       "path": "cg/cg.ending-ascension.png",
       "type": "png",
-      "checksum": "1b7cda9b0919df755f628c5bb26d0ba485240f950230ca47fa87671d1bd5acc4",
+      "checksum": "fb7b6722462d4a81c73d13019372334f9bf5fd2ccab402209f4e1b9a55cc95cc",
       "license": "AI-Generated",
-      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=ascension 飞升离界; ink-wash xianxia (tools/gen-cg.mjs)"
+      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=ascension 飞升离界; ink-wash xianxia (tools/gen-cg.mjs)；T8 去AI味重生(水墨 sumi-e prompt)"
     },
     {
       "id": "cg.ending-lifespan-death",
       "path": "cg/cg.ending-lifespan-death.png",
       "type": "png",
-      "checksum": "a74f8a464406d7d71f2249b8530414fb63643b2cbf997da8e9558e73e69cc13b",
+      "checksum": "27349532154c87ed963cd07433de6a6c099525b5cc7fe391a7ea538b2f36408b",
       "license": "AI-Generated",
-      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=lifespan-death 寿尽归田; ink-wash xianxia (tools/gen-cg.mjs)"
+      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=lifespan-death 寿尽归田; ink-wash xianxia (tools/gen-cg.mjs)；T8 去AI味重生(水墨 sumi-e prompt)"
     },
     {
       "id": "cg.ending-poison-death",
       "path": "cg/cg.ending-poison-death.png",
       "type": "png",
-      "checksum": "722481268bed08c29f68eb8e91d318cded55f14c9adc531695ab9392d0ee23ed",
+      "checksum": "2efd32ad3318694e78e540a458b554ffae27fb3ab02722b3f05aa1f5f79c52bf",
       "license": "AI-Generated",
-      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=poison-death 丹毒暴毙; ink-wash xianxia (tools/gen-cg.mjs)"
+      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=poison-death 丹毒暴毙; ink-wash xianxia (tools/gen-cg.mjs)；T8 去AI味重生(水墨 sumi-e prompt)"
     },
     {
       "id": "sprite.player",

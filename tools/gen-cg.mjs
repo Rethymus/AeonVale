@@ -24,13 +24,17 @@ if (!KEY) {
   process.exit(1);
 }
 
-const OUT = resolve(import.meta.dirname, '..', 'assets', 'cg');
+const OUT = process.env.CG_OUT ? resolve(process.env.CG_OUT) : resolve(import.meta.dirname, '..', 'assets', 'cg');
 mkdirSync(OUT, { recursive: true });
 
 const STYLE =
-  'Traditional Chinese ink wash painting (水墨画), minimalist with vast negative space (留白), ' +
-  'muted ink tones limited to a restrained palette of ink-black, paper-cream, moss-green, ' +
-  'cinnabar red, gilt gold and pale purple, xianxia cultivation aesthetic, no text, no signature, no watermark';
+  'Authentic traditional Chinese sumi-e ink wash painting (水墨画/文人画), hand-painted with ' +
+  'visible brush strokes and ink gradation, rough xuan (rice) paper grain texture, vast empty ' +
+  'negative space (计白当黑/留白), monochrome ink tones with only sparse cinnabar-red and pale gold ' +
+  'accents, calligraphic spontaneous brushwork, matte flat finish, crude amateur literati painter, ' +
+  'no smooth gradient, no bloom, no glow, no sheen, no plastic, no digital painting, no airbrush, ' +
+  'no cinematic lighting, no volumetric light, no 3D render, no photorealism, no over-detail, ' +
+  'no text, no signature, no watermark';
 
 /** 与代码 ending 对齐：src 中 'ascension' / 'lifespan-death' / 'poison-death'。 */
 const CGS = [
@@ -90,8 +94,14 @@ async function genOne(prompt) {
   return null;
 }
 
+const ONLY = process.argv[2];
+const LIST = ONLY ? CGS.filter((c) => c.id === ONLY) : CGS;
+if (ONLY && !LIST.length) {
+  console.error('未知 cg id：' + CGS.map((c) => c.id).join(', '));
+  process.exit(1);
+}
 const results = [];
-for (const cg of CGS) {
+for (const cg of LIST) {
   console.log(`生成 ${cg.id} ...`);
   const buf = await genOne(cg.prompt);
   if (!buf) {
