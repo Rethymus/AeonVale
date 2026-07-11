@@ -25,10 +25,12 @@ if (!KEY) {
 }
 
 const TAIL =
-  ', full-body centered, single character, 16-color limited palette, flat cel shading, ' +
-  'clean dark outline, no anti-aliasing, no gradient, no blur, no photorealistic, ' +
-  'no cast shadow, no ground shadow, no background scenery, no mixels, ' +
-  'transparent background, 16-bit RPG game sprite style, simple clean shapes, minimal detail';
+  ', full-body centered, single character, hand-drawn 32x32 pixel sprite, NES/SNES era, ' +
+  '16-color limited palette, matte flat opaque fills, flat cel shading, hard 1px pixel edges, ' +
+  'single top-left light source, clean dark outline, no anti-aliasing, no gradient, no blur, ' +
+  'no photorealistic, no cast shadow, no ground shadow, no background scenery, no mixels, ' +
+  'no bloom, no glow, no soft shading, no volumetric lighting, no 3D render, no CGI, ' +
+  'transparent background, crude amateur 16-bit RPG aesthetic, simple clean shapes, minimal detail';
 
 const SPRITES = {
   player: 'Pixel art game sprite, a young Chinese mortal body-cultivator (体修) in simple coarse hemp robes, ' +
@@ -44,10 +46,12 @@ const SPRITES = {
 };
 
 const ICON_TAIL =
-  ', centered single object, square composition, 16-color limited palette, flat cel shading, ' +
-  'clean dark outline, no anti-aliasing, no gradient, no blur, no photorealistic, ' +
-  'no cast shadow, no ground shadow, no background scenery, no mixels, ' +
-  'transparent background, 16-bit RPG item icon style, simple clean shapes, minimal detail';
+  ', centered single object, square composition, hand-drawn 32x32 pixel icon, NES/SNES era, ' +
+  '16-color limited palette, matte flat opaque fills, flat cel shading, hard 1px pixel edges, ' +
+  'single top-left light source, clean dark outline, no anti-aliasing, no gradient, no blur, ' +
+  'no photorealistic, no cast shadow, no ground shadow, no background scenery, no mixels, ' +
+  'no bloom, no glow, no soft shading, no reflections, no caustics, no studio lighting, no 3D render, ' +
+  'transparent background, crude amateur 16-bit RPG item icon aesthetic, simple clean shapes, minimal detail';
 
 // 高频物品/丹药图标（id 对齐 src/content/registry.ts）。经济取舍：只做最常出现在背包/快捷栏的。
 const ICONS = {
@@ -61,10 +65,25 @@ const ICONS = {
   'icon.pill.ascend': 'Pixel art game item icon, a radiant golden medicinal pill with soft halo light, ornate ascension pill' + ICON_TAIL,
 };
 
+const FAC_TAIL =
+  ', front view, centered single structure, orthogonal no perspective, hand-drawn 32x32 pixel sprite, ' +
+  'NES/SNES era, 16-color limited palette, matte flat opaque fills, flat cel shading, hard 1px pixel edges, ' +
+  'single top-left light source, clean dark outline, no anti-aliasing, no gradient, no blur, ' +
+  'no photorealistic, no cast shadow, no ground shadow, no background scenery, no mixels, ' +
+  'no bloom, no glow, no soft shading, no atmospheric perspective, no haze, no fog, no 3D render, ' +
+  'transparent background, crude amateur 16-bit RPG facility aesthetic, simple clean shapes, minimal detail';
+
+// 设施精灵（对齐 src/sim/world/state.ts FacilityKind，真实存在、renderer 现画简笔）。
+const FACILITIES = {
+  'facility.drying-rack': 'Pixel art game facility sprite, a rustic wooden herb-drying rack with a few hanging herb bundles' + FAC_TAIL,
+  'facility.sealing-cabinet': 'Pixel art game facility sprite, a tall wooden spiritual storage cabinet with a round paper talisman seal on the door' + FAC_TAIL,
+  'facility.talisman-furnace': 'Pixel art game facility sprite, a round bronze alchemy furnace with glowing rune fire at the mouth, small pill furnace' + FAC_TAIL,
+};
+
 const id = process.argv[2];
-const prompt = SPRITES[id] ?? ICONS[id];
+const prompt = SPRITES[id] ?? ICONS[id] ?? FACILITIES[id];
 if (!prompt) {
-  console.error('未知 id。sprite：' + Object.keys(SPRITES).join(', ') + ' | icon：' + Object.keys(ICONS).join(', '));
+  console.error('未知 id。sprite：' + Object.keys(SPRITES).join(', ') + ' | icon：' + Object.keys(ICONS).join(', ') + ' | facility：' + Object.keys(FACILITIES).join(', '));
   process.exit(1);
 }
 

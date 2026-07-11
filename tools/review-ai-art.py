@@ -101,8 +101,9 @@ def review(path, cls, motif, palette_max_d):
         idx = nearest_palette_indices(opaque_rgb)
         bins = np.bincount(idx, minlength=len(PALETTE))
         top_ratio = float(bins.max() / opaque_n)
+        colors_used = int((bins > 0).sum())
     else:
-        mean_d, top_ratio = 999.0, 0.0
+        mean_d, top_ratio, colors_used = 999.0, 0.0, 0
 
     if cls == 'sprite':
         content_ok = (0.05 <= opaque_ratio <= 0.95) and unique >= 3 and top_ratio < 0.98
@@ -118,6 +119,9 @@ def review(path, cls, motif, palette_max_d):
                     'note': '量化后应≈0' if cls == 'sprite' else 'CG 自然色，仅记录'},
         'content': {'pass': content_ok, 'opaque_ratio': round(opaque_ratio, 3),
                     'unique_colors': unique, 'top_color_ratio': round(top_ratio, 3)},
+        'deai': {'pass': (colors_used <= 10) if cls == 'sprite' else True,
+                 'colors_used': colors_used,
+                 'note': '调色板用色数（sprite ≤10 为佳；多为渐变式 AI 味；CG 仅记录）'},
     }
     return {'asset': path, 'class': cls, 'motif': motif,
             'pass': all(s['pass'] for s in stages.values()), 'stages': stages,
@@ -154,7 +158,7 @@ def remove_background(arr_rgba, tol):
     return arr_rgba
 
 
-def quantize(inp, outp, w, h, bg_tol, sigma):
+def quantize(inp, outp, w, h, bg_tol, sigma, max_colors=8, posterize_levels=5):
     img = Image.open(inp).convert('RGBA')
     rgba = np.asarray(img, dtype=np.uint8)
     rgba = remove_background(rgba, bg_tol)
@@ -178,43 +182,60 @@ def quantize(inp, outp, w, h, bg_tol, sigma):
     rgb_lin = np.clip(rgb_lin, 0, 255)
     alpha_bin = (sarr[:, :, 3] >= 128).astype(np.uint8) * 255
 
+    # de-AI：亮度分级 posterize（压掉 AI 式平滑渐变带，调研 §2.3）
+    if posterize_levels > 1:
+        step = 255.0 / (posterize_levels - 1)
+        rgb_lin = np.round(rgb_lin / step) * step
+        rgb_lin = np.clip(rgb_lin, 0, 255)
+
     # Lab 最近邻贴 16 色（不抖动）
     flat = rgb_lin.reshape(-1, 3)
     idx = nearest_palette_indices(flat)
-    # reshape 顺序与 flat 行优先一致：h×w×3
+    remap = np.arange(len(PALETTE))  # 默认恒等；限色时改写
+
+    # de-AI：限色到 top-K（默认 8，调研 §2.1）——低频色并入 top-K 的 Lab 最近邻，更扁更"拙"
+    if 0 < max_colors < len(PALETTE):
+        bins = np.bincount(idx, minlength=len(PALETTE))
+        top = np.argsort(bins)[::-1][:max_colors]
+        keep = np.zeros(len(PALETTE), dtype=bool)
+        keep[top] = True
+        top_lab = _PAL_LAB[top]
+        for c in range(len(PALETTE)):
+            if not keep[c]:
+                remap[c] = top[int(np.argmin(np.linalg.norm(_PAL_LAB[c] - top_lab, axis=1)))]
+        idx = remap[idx]
     out_rgb = _PAL_RGB[idx].reshape(h, w, 3).astype(np.uint8)
 
-    # 中值去噪（按通道）
+    # 中值去噪（按通道）+ 限色重贴
     out_img = Image.fromarray(out_rgb, 'RGB').filter(ImageFilter.MedianFilter(size=3))
     out_rgb = np.asarray(out_img)
-    flat = out_rgb.reshape(-1, 3).astype(float)
-    idx2 = nearest_palette_indices(flat)
+    idx2 = nearest_palette_indices(out_rgb.reshape(-1, 3).astype(float))
+    idx2 = remap[idx2]
     out_rgb = _PAL_RGB[idx2].reshape(h, w, 3).astype(np.uint8)
 
-    # 连通域去孤立噪点（< min_size 的不透明小色块并入背景）
+    # 连通域去噪（<3 的透明洞填实；孤立 <3 不透明块去除；调研 §2.4 小色块合并）
     opaque = alpha_bin > 0
     inv = ~opaque
-    lab, n = ndimage.label(inv)
+    lab_, n = ndimage.label(inv)
     if n:
-        sizes = ndimage.sum(np.ones_like(inv), lab, range(1, n + 1))
-        small_holes = np.isin(lab, np.where(sizes < 2)[0] + 1)  # <2 像素的透明洞 → 填为不透明
+        sizes = ndimage.sum(np.ones_like(inv), lab_, range(1, n + 1))
+        small_holes = np.isin(lab_, np.where(sizes < 3)[0] + 1)
         opaque = opaque | small_holes
-    # 不透明像素的孤立单点 → 去除
     lab2, n2 = ndimage.label(opaque)
     if n2:
         sizes2 = ndimage.sum(np.ones_like(opaque), lab2, range(1, n2 + 1))
-        stray = np.isin(lab2, np.where(sizes2 < 2)[0] + 1)
+        stray = np.isin(lab2, np.where(sizes2 < 3)[0] + 1)
         opaque = opaque & ~stray
     alpha_final = opaque.astype(np.uint8) * 255
 
-    # 组装 RGBA（透明像素清零）+ 最终再贴一次色板
+    # 组装 RGBA（透明清零）+ 最终再贴色板（限色后）
     final = np.zeros((h, w, 4), dtype=np.uint8)
-    op_mask = opaque
     final_rgb = out_rgb.copy()
-    final_rgb[~op_mask] = 0
-    flat3 = final_rgb[op_mask].astype(float).reshape(-1, 3)
-    idx3 = nearest_palette_indices(flat3)
-    final_rgb[op_mask] = _PAL_RGB[idx3].astype(np.uint8)
+    final_rgb[~opaque] = 0
+    if opaque.any():
+        flat3 = final_rgb[opaque].astype(float).reshape(-1, 3)
+        idx3 = remap[nearest_palette_indices(flat3)]
+        final_rgb[opaque] = _PAL_RGB[idx3].astype(np.uint8)
     final[:, :, :3] = final_rgb
     final[:, :, 3] = alpha_final
 
@@ -239,10 +260,12 @@ def main():
         print(json.dumps(review(path, cls, motif, palette_max_d), ensure_ascii=False, indent=2))
     elif cmd == 'quantize':
         inp, outp, w, h = args[1], args[2], int(args[3]), int(args[4])
-        bg_tol, sigma = 44.0, 0.8
+        bg_tol, sigma, max_colors, posterize_levels = 44.0, 0.8, 8, 5
         if '--bg-tol' in args: bg_tol = float(args[args.index('--bg-tol') + 1])
         if '--sigma' in args: sigma = float(args[args.index('--sigma') + 1])
-        quantize(inp, outp, w, h, bg_tol, sigma)
+        if '--max-colors' in args: max_colors = int(args[args.index('--max-colors') + 1])
+        if '--posterize' in args: posterize_levels = int(args[args.index('--posterize') + 1])
+        quantize(inp, outp, w, h, bg_tol, sigma, max_colors, posterize_levels)
     else:
         print(f'未知子命令: {cmd}', file=sys.stderr); sys.exit(2)
 
