@@ -43,10 +43,28 @@ const SPRITES = {
     'with jade-green crystal spikes along its back, quadruped side view facing right' + TAIL,
 };
 
+const ICON_TAIL =
+  ', centered single object, square composition, 16-color limited palette, flat cel shading, ' +
+  'clean dark outline, no anti-aliasing, no gradient, no blur, no photorealistic, ' +
+  'no cast shadow, no ground shadow, no background scenery, no mixels, ' +
+  'transparent background, 16-bit RPG item icon style, simple clean shapes, minimal detail';
+
+// 高频物品/丹药图标（id 对齐 src/content/registry.ts）。经济取舍：只做最常出现在背包/快捷栏的。
+const ICONS = {
+  'icon.item.spirit-stone': 'Pixel art game item icon, a glowing translucent spirit stone gem, cyan-jade faceted, emitting soft qi light' + ICON_TAIL,
+  'icon.item.beast-core': 'Pixel art game item icon, a swirling beast-core orb, dark crimson with golden veins, mystical demonic energy' + ICON_TAIL,
+  'icon.item.spirit-compost': 'Pixel art game item icon, a small burlap pouch overflowing with glowing green-tinged spiritual compost soil' + ICON_TAIL,
+  'icon.item.rust-hoe': 'Pixel art game item icon, a rusty iron farming hoe with wooden handle, weathered, side view' + ICON_TAIL,
+  'icon.item.sickle': 'Pixel art game item icon, a curved steel harvesting sickle with wooden grip, side view' + ICON_TAIL,
+  'icon.item.water-pail': 'Pixel art game item icon, a wooden water pail bucket with glowing spiritual water inside, rope handle' + ICON_TAIL,
+  'icon.pill.ward-basic': 'Pixel art game item icon, a single round medicinal pill with pale cyan-blue glaze, lightning-ward pill' + ICON_TAIL,
+  'icon.pill.ascend': 'Pixel art game item icon, a radiant golden medicinal pill with soft halo light, ornate ascension pill' + ICON_TAIL,
+};
+
 const id = process.argv[2];
-const prompt = SPRITES[id];
+const prompt = SPRITES[id] ?? ICONS[id];
 if (!prompt) {
-  console.error('未知 sprite id。可选：' + Object.keys(SPRITES).join(', '));
+  console.error('未知 id。sprite：' + Object.keys(SPRITES).join(', ') + ' | icon：' + Object.keys(ICONS).join(', '));
   process.exit(1);
 }
 
