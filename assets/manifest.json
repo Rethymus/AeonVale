@@ -2,6 +2,15 @@
   "version": 1,
   "sprites": [],
   "audio": [],
-  "fonts": [],
+  "fonts": [
+    {
+      "id": "font.lxgw-wenkai",
+      "path": "fonts/lxgw-wenkai-regular.subset.woff2",
+      "type": "woff2",
+      "checksum": "4ea57e5e370e6e5da9d606554e6f32f3991d12c1d3e07503b4c948b3aeb3ea2b",
+      "license": "OFL-1.1",
+      "source": "https://github.com/lxgw/LxgwWenKai (v1.522, LXGWWenKai-Regular，按游戏用字子集化)"
+    }
+  ],
   "shaders": []
 }
