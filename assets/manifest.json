@@ -128,6 +128,30 @@
       "checksum": "c25858c60d57d325cfcc177f6bfbd4ac799dd295f23947950f72b2c41d1d9a6c",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=飞升丹; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)"
+    },
+    {
+      "id": "facility.drying-rack",
+      "path": "facilities/drying-rack.png",
+      "type": "png",
+      "checksum": "bd4ad1aa14a9ebdc4e02e143f0e1f918c1ba672bf5fb8b373fc04bd9001009a7",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=晁晒架 drying-rack; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
+    },
+    {
+      "id": "facility.sealing-cabinet",
+      "path": "facilities/sealing-cabinet.png",
+      "type": "png",
+      "checksum": "ecaf3c334acccd8334f096b442074b7a8a32d62881c7752c164e5585c7d9b7e5",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=封存柜 sealing-cabinet; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
+    },
+    {
+      "id": "facility.talisman-furnace",
+      "path": "facilities/talisman-furnace.png",
+      "type": "png",
+      "checksum": "b4458886c155061e6df73e16a75b9439142b2c66563a667102cd87e67d90425f",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=符炉 talisman-furnace; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
     }
   ],
   "audio": [],

@@ -13,7 +13,7 @@ import { validateManifest, type AssetManifest } from '../../src/io/assets';
 const manifest: AssetManifest = validateManifest(
   JSON.parse(readFileSync(resolve('assets/manifest.json'), 'utf-8')),
 );
-const sprites = manifest.sprites.filter((e) => e.id.startsWith('sprite.') || e.id.startsWith('icon.'));
+const sprites = manifest.sprites.filter((e) => e.id.startsWith('sprite.') || e.id.startsWith('icon.') || e.id.startsWith('facility.'));
 
 describe('图像资产完整性（角色精灵 + 物品图标）', () => {
   it('若已登记精灵/图标条目，则进入完整性锁定', () => {
