@@ -1,7 +1,7 @@
 # 美术资产状态与交接（Art Asset Status & Handoff）
 
 > 对应 docs/13 §1.1「必须手绘 vs 可程序化」分级。本文记录哪些美术资产已由代码/外部工具闭环、哪些仍阻塞、以及解锁步骤。
-> 维护者与后续 Agent 据此决定下一步。最后更新：T0–T3 资产管线轮次。
+> 维护者与后续 Agent 据此决定下一步。最后更新：T0–T3 资产管线轮次 + 结局 CG 生成轮次。
 
 ---
 
@@ -15,20 +15,18 @@
 | 灵草/物品精灵 | §1.1 程序化优先 | ✅ 生成器完成 | `src/render/sprites.ts` + `palette.ts`（12 测），**待 renderer 接入** |
 | SFX（雷/炸炉/收获/突破/UI…） | §4.3 程序化合成 | ✅ 既有 | `src/io/audio.ts`（11 种 SFX） |
 | BGM（calm/tense 情绪曲线） | §4.3 程序化合成 | ✅ v1 既有 | `audio.ts` calm pad / tense 脉冲；**质量升级可选** |
-| 结局 CG（飞升/暴毙水墨） | §1.3 AI 例外 / 手绘 | ⛔ 阻塞 | 见下「阻塞项」 |
+| 结局 CG（飞升/寿尽/暴毙水墨） | §1.3 AI 例外 | ✅ 已完成 | gpt-image-2 生成 3 张 1024px 水墨图，AI-Generated 留痕（3 测） |
 | 角色精灵（玩家/NPC/妖兽） | §1.1 手绘像素 | ⛔ 阻塞 | 见下「阻塞项」 |
 
 ---
 
 ## 阻塞项（需外部资源，无法纯代码完成）
 
-### 1. 结局 CG（飞升 / 暴毙 / 走火入魔，3–5 张水墨静态图）
-- **为何阻塞**：纯代码程序化难以产出有情绪的叙事插画；需 AI 图像生成（API key）或人工作画。
-- **文档边界**：docs/13 §1.3 **唯一允许 AI 生成图直接进游戏**的类别（须统一滤镜/调色板后入库）。
-- **解锁步骤**（任一）：
-  1. **AI 路线**：用 NightCafe Ink Wash / PromeAI Wuxia 等生成 1280×720 水墨图 → 在 Aseprite/PS 统一到 `src/render/palette.ts` 16 色 + 滤镜 → 放 `assets/cg/` → 在 `assets/manifest.json` 的 `sprites` 数组登记（id 如 `cg.ending-ascension`，license 字段记 "AI-generated, 公有领域/自有"，source 记工具与提示词）。
-  2. **手绘路线**：人工水墨/像素创作 → 同上登记。
-- **预留 AssetId**：`cg.ending-ascension`、`cg.ending-lifespan-death`、`cg.ending-possession`（仅约定，manifest 暂无条目——无文件不能造假 checksum）。
+### 1. 结局 CG — ✅ 已完成（CG 生成轮次）
+- ascension / lifespan-death / poison-death 三结局水墨图，由 gpt-image-2 经中转站生成（1024×1024），对应代码 ending 取值。
+- `tools/gen-cg.mjs` 调用中转站 `/v1/images/generations`（最小 body；密钥只走 `CG_API_KEY` 环境变量，绝不入库）。
+- manifest 以 `license=AI-Generated` + `source`（模型/端点/motif/提示词）留痕——§1.3 唯一允许 AI 图直接进游戏的类别。
+- **可选后续**：AI 图未做 16 色调色板统一；如需更强风格一致，可用 Pillow 做一次调色板量化（非阻塞）。
 
 ### 2. 角色精灵（玩家 + 3 NPC + 妖兽，~15 张 32×32+）
 - **为何阻塞**：docs/13 §1.1 列为「必须手绘」（叙事载体，需性格）；AI 像素图被 §1.3 挡在游戏外（风格不一+版权）。
@@ -54,6 +52,6 @@
 ---
 
 ## 版权与管线纪律（docs/13 §4.4 禁令）
-- 任何资产入库前，`assets/manifest.json` 必须为该条目记 `license`（仅 OFL/MIT/Apache/CC0/CC-BY，schema 强制）+ `source` + `checksum`(SHA-256)。
+- 任何资产入库前，`assets/manifest.json` 必须为该条目记 `license`（schema 允许 OFL/MIT/Apache/CC0/CC-BY/CC-BY-NC/AI-Generated）+ `source` + `checksum`(SHA-256)。
 - 完整字体不入库（用 `tools/subset-font.mjs` 子集化）；AI 生成图除结局 CG 外不进游戏（§1.3）。
 - 来源不明资产禁止入库。
