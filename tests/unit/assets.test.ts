@@ -43,8 +43,10 @@ describe('资产 manifest 校验', () => {
     expect(m.fonts[0]?.id).toBe('font.test');
   });
 
-  it('拒绝不允许的许可（CC-BY-NC 污染）', () => {
-    expect(() => validateManifest(manifest([entry({ license: 'CC-BY-NC-4.0' as never })]))).toThrow();
+  it('允许项目自有原创资产使用 CC-BY-NC-4.0', () => {
+    expect(validateManifest(manifest([entry({ license: 'CC-BY-NC-4.0' })])).fonts[0]?.license).toBe(
+      'CC-BY-NC-4.0',
+    );
   });
 
   it('拒绝非 SHA-256 checksum', () => {
@@ -56,8 +58,15 @@ describe('资产 manifest 校验', () => {
     expect(() => validateManifest(manifest([entry({ source: '' })]))).toThrow();
   });
 
-  it('允许 CC0 / CC-BY / MIT / Apache', () => {
-    for (const license of ['CC0-1.0', 'CC-BY-4.0', 'MIT', 'Apache-2.0'] as const) {
+  it('允许白名单内许可', () => {
+    for (const license of [
+      'CC0-1.0',
+      'CC-BY-4.0',
+      'CC-BY-NC-4.0',
+      'MIT',
+      'Apache-2.0',
+      'AI-Generated',
+    ] as const) {
       expect(validateManifest(manifest([entry({ id: `x.${license}`, license })])).fonts[0]?.license).toBe(license);
     }
   });

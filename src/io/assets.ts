@@ -10,7 +10,12 @@
  */
 import { z } from 'zod';
 
-/** 允许的资产许可（docs/13 §4.4：仅 OFL/MIT/Apache 与 CC0/CC-BY；排除 NC 以免污染代码侧资产）。 */
+/**
+ * 允许的资产许可。
+ * 第三方资产仍以 OFL/MIT/Apache/CC0/CC-BY 为主；
+ * 项目自有原创内容可按仓库 `CONTENT-LICENSE.md` 使用 CC-BY-NC-4.0；
+ * 'AI-Generated' 用于 docs/13 §1.3 的结局 CG 例外场景，provenance 记在 source（模型/提示词）。
+ */
 export const ALLOWED_ASSET_LICENSES = [
   'OFL-1.1',
   'MIT',
@@ -18,6 +23,8 @@ export const ALLOWED_ASSET_LICENSES = [
   'CC0-1.0',
   'CC-BY-4.0',
   'CC-BY-SA-4.0',
+  'CC-BY-NC-4.0',
+  'AI-Generated',
 ] as const;
 
 /** 允许的资产文件类型（docs/13 §5.1 AssetEntry.type）。 */
