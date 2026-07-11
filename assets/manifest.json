@@ -1,6 +1,31 @@
 {
   "version": 1,
-  "sprites": [],
+  "sprites": [
+    {
+      "id": "cg.ending-ascension",
+      "path": "cg/cg.ending-ascension.png",
+      "type": "png",
+      "checksum": "1b7cda9b0919df755f628c5bb26d0ba485240f950230ca47fa87671d1bd5acc4",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=ending-ascension 飞升离界; ink-wash xianxia prompt (tools/gen-cg.mjs)"
+    },
+    {
+      "id": "cg.ending-lifespan-death",
+      "path": "cg/cg.ending-lifespan-death.png",
+      "type": "png",
+      "checksum": "a74f8a464406d7d71f2249b8530414fb63643b2cbf997da8e9558e73e69cc13b",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=ending-lifespan-death 寿尽归田; ink-wash xianxia prompt (tools/gen-cg.mjs)"
+    },
+    {
+      "id": "cg.ending-poison-death",
+      "path": "cg/cg.ending-poison-death.png",
+      "type": "png",
+      "checksum": "722481268bed08c29f68eb8e91d318cded55f14c9adc531695ab9392d0ee23ed",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); docs/13 §1.3 结局 CG 例外; motif=ending-poison-death 丹毒暴毙; ink-wash xianxia prompt (tools/gen-cg.mjs)"
+    }
+  ],
   "audio": [],
   "fonts": [
     {
