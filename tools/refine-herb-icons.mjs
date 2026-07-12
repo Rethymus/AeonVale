@@ -19,7 +19,7 @@ const BASE = process.env.CG_API_BASE ?? 'https://fast.qianxing.us.ci/v1';
 const MODEL = process.env.CG_MODEL ?? 'gpt-image-2';
 if (!KEY) { console.error('请设置 CG_API_KEY'); process.exit(1); }
 
-const IN = '/tmp/herb-bake-256';
+const IN = process.env.CG_IN ?? '/tmp/herb-bake-256';
 const OUT = '/tmp/herb-refined';
 mkdirSync(OUT, { recursive: true });
 

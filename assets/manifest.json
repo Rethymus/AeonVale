@@ -461,9 +461,9 @@
       "id": "icon.herb.mistfern",
       "path": "icons/herb.mistfern.png",
       "type": "png",
-      "checksum": "28542d425069b58fffc1c5f728cb9472b4d34fa05b39fc16f72f12538dd450d2",
-      "license": "CC-BY-NC-4.0",
-      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+      "checksum": "b17583f8f9974560aa8d111962b3530987e327e921d29d96928c1717d7b2bd77",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (retry 成功)"
     },
     {
       "id": "icon.herb.mossling",
