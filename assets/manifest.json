@@ -360,6 +360,198 @@
       "checksum": "c91a194fc82a9ff1ed6067211d7489ae9d58ed15c31c8c3c62288d5be4f79a51",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=暖棚; 对齐 locations.ts"
+    },
+    {
+      "id": "icon.herb.balmleaf",
+      "path": "icons/herb.balmleaf.png",
+      "type": "png",
+      "checksum": "deeb9fcc223c56ad215124f6c02977733dfefac27d16f411b8c5490c5143e59a",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.boneash-lily",
+      "path": "icons/herb.boneash-lily.png",
+      "type": "png",
+      "checksum": "9bd897b9f918240cf2900f12015071fe601fd751a3d101c29cddedd69999bb3e",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.dao-root",
+      "path": "icons/herb.dao-root.png",
+      "type": "png",
+      "checksum": "26223b4cad951685a376055460764f791a9cc93e51d053af48ea55ed1891de6e",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.dewroot",
+      "path": "icons/herb.dewroot.png",
+      "type": "png",
+      "checksum": "14cf1f86ad208e6f1043fa932c78eff5fd63ce3f53f9d627911d315b44f15414",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.emberheart",
+      "path": "icons/herb.emberheart.png",
+      "type": "png",
+      "checksum": "35568dc4ad438da221eca7686bcfa1663dfab08fc39921887588ff5f62256c3d",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.embermoss",
+      "path": "icons/herb.embermoss.png",
+      "type": "png",
+      "checksum": "3c6bb52c941079c3b99c7a39e8387815dd336ea7b8c4e0890acd6edfda34f961",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.frostmarrow",
+      "path": "icons/herb.frostmarrow.png",
+      "type": "png",
+      "checksum": "b80dd964895dde30e9b9efee44443aed3194480d6ea74c4498660fe48e163960",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.fulgurseed",
+      "path": "icons/herb.fulgurseed.png",
+      "type": "png",
+      "checksum": "83a468859d3a4dd604cb35eac1da247dac2bb4cd8e1b7e81457fc21733a29112",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.griefvein",
+      "path": "icons/herb.griefvein.png",
+      "type": "png",
+      "checksum": "bc8850153c8826294453a0f65fe5fe301a64da475a93950baacb4bfafb78f5fe",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.ironwill-thorn",
+      "path": "icons/herb.ironwill-thorn.png",
+      "type": "png",
+      "checksum": "db1384d9cee27e74100a1f8f14bc2ca16f542dfd23c2b251cd62991965038a1f",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.jadewing",
+      "path": "icons/herb.jadewing.png",
+      "type": "png",
+      "checksum": "e84658c0c76487cd46a2bfdb97b587a82b6529e082fbb13c703927e5dcbc65a5",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.metalpine",
+      "path": "icons/herb.metalpine.png",
+      "type": "png",
+      "checksum": "d0a80c1f1a9d813fae25c1c9e3ad1cc38bee363c2f34dc19bd82170f587861ab",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.mistfern",
+      "path": "icons/herb.mistfern.png",
+      "type": "png",
+      "checksum": "28542d425069b58fffc1c5f728cb9472b4d34fa05b39fc16f72f12538dd450d2",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+    },
+    {
+      "id": "icon.herb.mossling",
+      "path": "icons/herb.mossling.png",
+      "type": "png",
+      "checksum": "9a7f4c9cf157021a51687f4151b649e90df397e147925effeb89e622faf6055c",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.plumeweed",
+      "path": "icons/herb.plumeweed.png",
+      "type": "png",
+      "checksum": "dfb2ebca3660ca7258a812dd151efbf7d2b5368e3b9bd940db1d9d2679b0045c",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.silentbell",
+      "path": "icons/herb.silentbell.png",
+      "type": "png",
+      "checksum": "21a9d36515a3ceb3deb0ea1c7816f3c2078da6776e27e64523b4afaa5729f693",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+    },
+    {
+      "id": "icon.herb.solar-pith",
+      "path": "icons/herb.solar-pith.png",
+      "type": "png",
+      "checksum": "b674f75095ce1a0dea23648799d34fc42a39de69ded1a7a60ee107778d85cb68",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+    },
+    {
+      "id": "icon.herb.stonegrain",
+      "path": "icons/herb.stonegrain.png",
+      "type": "png",
+      "checksum": "0915be2fa65443a321dfb3ea0697fb5c162a20d83f7da70c6ceab1daee453123",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+    },
+    {
+      "id": "icon.herb.suncap",
+      "path": "icons/herb.suncap.png",
+      "type": "png",
+      "checksum": "c759b350b6b00502cc7329a6ab86521ffee7fda225f0fbc153938c80dcb33dab",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+    },
+    {
+      "id": "icon.herb.sunmoss",
+      "path": "icons/herb.sunmoss.png",
+      "type": "png",
+      "checksum": "df22481680f90a09edf15d02d8cb0c764f2dd7c3b36cb1084a619292d263c3ec",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.thunderreed",
+      "path": "icons/herb.thunderreed.png",
+      "type": "png",
+      "checksum": "5b8695e9c65f11e4b1c75c2aea5e4e06db2612b1769b234aa8ff549299adc0bf",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.tidegrass",
+      "path": "icons/herb.tidegrass.png",
+      "type": "png",
+      "checksum": "b84327b83c23983dfe8b8afcf9176d3b1e26e93a1623675e6434488adf1f5b5a",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.violet-ascend",
+      "path": "icons/herb.violet-ascend.png",
+      "type": "png",
+      "checksum": "de551e2aef5389b03eec25f581e9c0cb099c5726fbcb528a579818bf15ded2e9",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.herb.voidmantle",
+      "path": "icons/herb.voidmantle.png",
+      "type": "png",
+      "checksum": "33a6678aa21024c92c2cdf3c197ffd9ab312fa23ed6c8d02e1e65d26460b9324",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
     }
   ],
   "audio": [],
