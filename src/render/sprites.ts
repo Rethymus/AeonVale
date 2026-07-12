@@ -131,6 +131,49 @@ export function generateHerbSprite(options: HerbSpriteOptions): SpritePixels {
 }
 
 /**
+ * 程序化种子图标：椭圆种子体（元素色）+ 高光 + 顶端小芽。32×32 调色板索引。
+ * 与灵草图标同生成器家族，确定性（hash(id)→mulberry32），palette-perfect（无需去 AI 味）。
+ * 低频资产，用纯程序化（不叠 AI 精修，省付费调用）。
+ */
+export interface SeedSpriteOptions {
+  id: string;
+  element?: string;
+}
+
+export function generateSeedSprite(options: SeedSpriteOptions): SpritePixels {
+  const size = SPRITE_SIZE;
+  const data = new Uint8Array(size * size);
+  const rng = mulberry32(hashId(options.id));
+  const elem = ELEMENT_COLOR[options.element ?? ''] ?? 7;
+  const set = (x: number, y: number, idx: number) => {
+    if (x >= 0 && x < size && y >= 0 && y < size) data[y * size + x] = idx;
+  };
+  const cx = size >> 1;
+  const cy = (size >> 1) + 2;
+  const w = 3 + Math.floor(rng() * 3); // 3-5
+  const h = 5 + Math.floor(rng() * 3); // 5-7
+  const inBody = (dx: number, dy: number) => (dx * dx) / (w * w) + (dy * dy) / (h * h) <= 1;
+  // 种子体：椭圆，元素色
+  for (let dy = -h; dy <= h; dy++) {
+    for (let dx = -w; dx <= w; dx++) {
+      if (inBody(dx, dy)) set(cx + dx, cy + dy, elem);
+    }
+  }
+  // 斑点（per-id 随机位置，墨色）——拉大区分度，避免不同种子撞图
+  const spots = 1 + Math.floor(rng() * 3); // 1-3 斑
+  for (let i = 0; i < spots; i++) {
+    const sx = Math.floor(rng() * (2 * w - 1)) - (w - 1);
+    const sy = Math.floor(rng() * (2 * h - 1)) - (h - 1);
+    if (inBody(sx, sy)) set(cx + sx, cy + sy, 2);
+  }
+  set(cx - 1, cy - h + 3, 10); // 月白高光
+  // 顶端小芽：苔青，长度 per-id
+  const sprout = 1 + Math.floor(rng() * 2);
+  for (let s = 0; s <= sprout; s++) set(cx, cy - h - 1 - s, 4);
+  return { width: size, height: size, data };
+}
+
+/**
  * AssetId → 精灵像素 索引（docs/13 §5.4 间接引用：render 层不直接 import 文件）。
  * 程序化精灵在启动时 register；未来手绘资产替换时，只改此处映射，不改消费方。
  */

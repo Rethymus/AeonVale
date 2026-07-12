@@ -10,6 +10,7 @@ import {
 } from '../../src/render/palette';
 import {
   generateHerbSprite,
+  generateSeedSprite,
   registerSprite,
   getSprite,
   clearSprites,
@@ -87,6 +88,28 @@ describe('程序化灵草精灵生成', () => {
   it('高品阶带鎏金(7)点缀', () => {
     const s = generateHerbSprite({ id: 'herb.rare', tier: 7 });
     expect(s.data.includes(7)).toBe(true);
+  });
+});
+
+describe('程序化种子图标生成', () => {
+  it('确定性：同 id → 逐字节相等', () => {
+    const a = generateSeedSprite({ id: 'seed.frostmarrow', element: 'cold' });
+    const b = generateSeedSprite({ id: 'seed.frostmarrow', element: 'cold' });
+    expect(a.data).toEqual(b.data);
+    expect(a.data.length).toBe(SPRITE_SIZE * SPRITE_SIZE);
+  });
+
+  it('所有像素合法调色板索引', () => {
+    const s = generateSeedSprite({ id: 'seed.dewroot', element: 'cold' });
+    for (const v of s.data) expect(isPaletteIndex(v)).toBe(true);
+  });
+
+  it('非空 + 不同 id 产生不同种子（避免撞图）', () => {
+    const a = generateSeedSprite({ id: 'seed.alpha' });
+    const b = generateSeedSprite({ id: 'seed.beta' });
+    const nz = (p: { data: Uint8Array }) => p.data.filter((v) => v !== 0).length;
+    expect(nz(a)).toBeGreaterThan(8);
+    expect(a.data).not.toEqual(b.data);
   });
 });
 

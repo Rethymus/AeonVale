@@ -552,6 +552,198 @@
       "checksum": "33a6678aa21024c92c2cdf3c197ffd9ab312fa23ed6c8d02e1e65d26460b9324",
       "license": "AI-Generated",
       "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+    },
+    {
+      "id": "icon.seed.mossling",
+      "path": "icons/seed.mossling.png",
+      "type": "png",
+      "checksum": "e4690faab259045e4c66bb295eadba620772d1c2cc16862b650bdb301f8ffe5a",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.dewroot",
+      "path": "icons/seed.dewroot.png",
+      "type": "png",
+      "checksum": "30d0493fe617a4e00bf6d1ad7d386223cb4eaee29cc020a86740e2830574d295",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.suncap",
+      "path": "icons/seed.suncap.png",
+      "type": "png",
+      "checksum": "00ef43318897b664657ff737081bd5310252f0fbeb92b9b95550a9828518f2c9",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+    },
+    {
+      "id": "icon.seed.frostmarrow",
+      "path": "icons/seed.frostmarrow.png",
+      "type": "png",
+      "checksum": "954c2f98db377a0fa65fa9b65cda310958c0fed3eff6378760f77f747d47d996",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.emberheart",
+      "path": "icons/seed.emberheart.png",
+      "type": "png",
+      "checksum": "2efe2c7d18f8ad7d7f8ae98b66d6c5ce2f6d254173146a2a3546ea5d9ce651cc",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+    },
+    {
+      "id": "icon.seed.metalpine",
+      "path": "icons/seed.metalpine.png",
+      "type": "png",
+      "checksum": "59ed4ebad0d1c7271eb6fd7b5deaf96b8719d253b00c658f88b5acef150dbcf4",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.balmleaf",
+      "path": "icons/seed.balmleaf.png",
+      "type": "png",
+      "checksum": "167a46bf237ad49b8dabf5adda96e0b955ea905e05567f4b19a826c248c7b0e9",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.thunderreed",
+      "path": "icons/seed.thunderreed.png",
+      "type": "png",
+      "checksum": "34c11584c0d82d49d0c9bbe9509346bf59db389715b141ad76cecfe960595f22",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.griefvein",
+      "path": "icons/seed.griefvein.png",
+      "type": "png",
+      "checksum": "3c09948a9d36bd603978d18ba6419f924e973b97608548db54e50005c658b876",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.ironwill-thorn",
+      "path": "icons/seed.ironwill-thorn.png",
+      "type": "png",
+      "checksum": "9cb9b0b397e46158cc21bda5e61d529f3e75a9b3803b25bd51c132c69ba982c5",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.boneash-lily",
+      "path": "icons/seed.boneash-lily.png",
+      "type": "png",
+      "checksum": "c366f9708e1219fbd4ad58ef735cf926efde9b15c77995bc3f4512ee7c3c2e99",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.violet-ascend",
+      "path": "icons/seed.violet-ascend.png",
+      "type": "png",
+      "checksum": "2053e4ff2f67af653c7360a9655b774d5c5f5cec1c9b2ffb7753f3a12bf1e6d1",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.silentbell",
+      "path": "icons/seed.silentbell.png",
+      "type": "png",
+      "checksum": "9447f497faccd1a57d931440310b5481a9863bb7ef780ef5f5db047da6cdfde9",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.voidmantle",
+      "path": "icons/seed.voidmantle.png",
+      "type": "png",
+      "checksum": "353223ff7e9fe66010816c96f70685be207a8f73ad46b2d2e872a1aaae8f06cb",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.solar-pith",
+      "path": "icons/seed.solar-pith.png",
+      "type": "png",
+      "checksum": "cb650231b6f79bdd2b1cfff814e7d9cec0934d9ee865ce7726aa27cbf05c1dca",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+    },
+    {
+      "id": "icon.seed.dao-root",
+      "path": "icons/seed.dao-root.png",
+      "type": "png",
+      "checksum": "ed2b9c61fc1eaaee861f77171cf6700cdc203ac2f83175ec63847b7e8531e932",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.stonegrain",
+      "path": "icons/seed.stonegrain.png",
+      "type": "png",
+      "checksum": "1afc2981cdc57d591976754ef662ab69c7f772d153869595b241dbb0af961bef",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.mistfern",
+      "path": "icons/seed.mistfern.png",
+      "type": "png",
+      "checksum": "db94dcfa0e176a93792d4c6f09992061326d08d9736ca26df6821218e01bbd9c",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.sunmoss",
+      "path": "icons/seed.sunmoss.png",
+      "type": "png",
+      "checksum": "3576f9da67e52c6fb989bfd42fad2862f21f5738bcb862cd2dcfc72c836c6fed",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+    },
+    {
+      "id": "icon.seed.plumeweed",
+      "path": "icons/seed.plumeweed.png",
+      "type": "png",
+      "checksum": "d772cb9c90e3689f7ce8918373790b031bd8aa4173d212a298a52a3314995716",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=warm"
+    },
+    {
+      "id": "icon.seed.tidegrass",
+      "path": "icons/seed.tidegrass.png",
+      "type": "png",
+      "checksum": "2884d4f95ec1aa42b1da4559c5687a4611afd0349e93bc4da08cddac48774a93",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+    },
+    {
+      "id": "icon.seed.embermoss",
+      "path": "icons/seed.embermoss.png",
+      "type": "png",
+      "checksum": "a22c62f1aad9478f57208d9fa3596ee15d5f33bcf924a99b5e4fe6111b7308fb",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+    },
+    {
+      "id": "icon.seed.jadewing",
+      "path": "icons/seed.jadewing.png",
+      "type": "png",
+      "checksum": "50994b779359abbf08cd9e439cabee0358830a9362fdb8ef6e159a8f40f6cca5",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "icon.seed.fulgurseed",
+      "path": "icons/seed.fulgurseed.png",
+      "type": "png",
+      "checksum": "5f61d4bff593f578a624bbf44faa482879051ed0e240f84f16af906e999efc42",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
     }
   ],
   "audio": [],

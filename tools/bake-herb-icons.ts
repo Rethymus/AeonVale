@@ -13,7 +13,7 @@
  * 许可：CC-BY-NC-4.0（项目原创程序化内容，非 AI）。
  */
 import { buildRegistry } from '../src/content/registry';
-import { generateHerbSprite, toRgba, SPRITE_SIZE } from '../src/render/sprites';
+import { generateHerbSprite, generateSeedSprite, toRgba, SPRITE_SIZE } from '../src/render/sprites';
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -37,6 +37,10 @@ for (const [id, h] of reg.herbs) {
   const path = `/tmp/bake-${id}.rgba`;
   writeFileSync(path, Buffer.from(rgba));
   rows.push(`${id}|${h.tier}|${elem}|${path}`);
+  // 同步烘焙种子（seedId），元素沿用灵草主属性；纯程序化（低频，不叠 AI 精修）
+  const seedPath = `/tmp/bake-${h.seedId}.rgba`;
+  writeFileSync(seedPath, Buffer.from(toRgba(generateSeedSprite({ id: h.seedId, element: elem }))));
+  rows.push(`${h.seedId}|${h.tier}|${elem}|${seedPath}`);
 }
 for (const r of rows) console.log(r);
 console.log(`baked ${rows.length} herbs (raw RGBA, ${SPRITE_SIZE}x${SPRITE_SIZE})`);
