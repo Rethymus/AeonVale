@@ -200,6 +200,46 @@
       "checksum": "5265e0a94a92657d1052a5cff111f0d5708847c12f09585d429168020c0837c9",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=破损法宝; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.bone-basic",
+      "path": "icons/pill.bone-basic.png",
+      "type": "png",
+      "checksum": "190c790048d0814a36e9e7c42985668f312d160022e7622786b97f155856452e",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=生骨丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.madness",
+      "path": "icons/pill.madness.png",
+      "type": "png",
+      "checksum": "ba4c85e647b95e7d02622c44d6ab00e4dd3b134dec70bc7836a026970a084cb6",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=走火丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.neutral-pearl",
+      "path": "icons/pill.neutral-pearl.png",
+      "type": "png",
+      "checksum": "c321576bd35366db86c40e8c061b43334acab371093c6e9669b233015b78a5d4",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=太一珠; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.item.dried-herb",
+      "path": "icons/item.dried-herb.png",
+      "type": "png",
+      "checksum": "69781260434308e8cbfda15ef4e21c24dd86a59f58da9585e1dc7d33cf83ca51",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=晾晒灵草; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.item.sealed-herb",
+      "path": "icons/item.sealed-herb.png",
+      "type": "png",
+      "checksum": "f5e1a99aec832ed48e48e24f8049a0076ff8986f9d5b1d4fbdded849d9888340",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=封藏灵草; 用户授权 AI 用于物品图标"
     }
   ],
   "audio": [],

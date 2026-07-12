@@ -69,6 +69,12 @@ const ICONS = {
   'icon.item.array-core': 'Pixel art game item icon, a small rune-inscribed octagonal array core stone glowing faint cyan' + ICON_TAIL,
   'icon.item.recipe-fragment': 'Pixel art game item icon, a torn yellowed paper scroll fragment with faded ink runes' + ICON_TAIL,
   'icon.item.broken-talisman': 'Pixel art game item icon, a cracked broken bronze talisman charm fragment with a faint glyph' + ICON_TAIL,
+  'icon.pill.bone-basic': 'Pixel art game item icon, a single round medicinal pill, bone-white with a marrow-red core, bone-generating pill' + ICON_TAIL,
+  'icon.pill.madness': 'Pixel art game item icon, a single round medicinal pill, dark purple-black swirling, qi-deviation pill' + ICON_TAIL,
+  'icon.pill.neutral-pearl': 'Pixel art game item icon, a single round lustrous pearl, pale iridescent white, neutral tai-yi pearl' + ICON_TAIL,
+  'icon.pill.ward-greater': 'Pixel art game item icon, a single round medicinal pill, deep blue-violet glaze with crackle, greater lightning-ward pill' + ICON_TAIL,
+  'icon.item.dried-herb': 'Pixel art game item icon, a small bundle of dried herb sprigs tied with twine, desiccated medicinal herbs' + ICON_TAIL,
+  'icon.item.sealed-herb': 'Pixel art game item icon, a sealed paper-wrapped packet of preserved spiritual herbs with a talisman stamp' + ICON_TAIL,
 };
 
 const FAC_TAIL =
