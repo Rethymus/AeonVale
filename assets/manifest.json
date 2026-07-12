@@ -328,6 +328,38 @@
       "checksum": "53efebc12ed1daf71424282339920f2c617fcb066b8d42940c9f87ae4f018065",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=矿石坡; 对齐 locations.ts，地点目录 UI 用"
+    },
+    {
+      "id": "loc.festival-ground",
+      "path": "locations/festival-ground.png",
+      "type": "png",
+      "checksum": "7449728ddb7b218a40974c5d766cfab56d09a634e5e36ba1504d4cb264b1190e",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=节日会场; 对齐 locations.ts"
+    },
+    {
+      "id": "loc.valley-outskirts",
+      "path": "locations/valley-outskirts.png",
+      "type": "png",
+      "checksum": "72f456974a858e0a86f971bd5987a2b6e8c11b5bd36fdaab4078c676d19253dd",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=山谷野外; 对齐 locations.ts"
+    },
+    {
+      "id": "loc.array-shed",
+      "path": "locations/array-shed.png",
+      "type": "png",
+      "checksum": "95770ec1c3aa9473f8dc1772708554a23b4e91a9e5bcafcd033ac39690376b24",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵器棚; 对齐 locations.ts"
+    },
+    {
+      "id": "loc.greenhouse",
+      "path": "locations/greenhouse.png",
+      "type": "png",
+      "checksum": "c91a194fc82a9ff1ed6067211d7489ae9d58ed15c31c8c3c62288d5be4f79a51",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=暖棚; 对齐 locations.ts"
     }
   ],
   "audio": [],

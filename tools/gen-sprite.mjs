@@ -111,6 +111,10 @@ const LOCATIONS = {
   'loc.tea-shed': 'Pixel art location icon, a small roadside tea shed with a thatched roof and a wooden bench, old tea pavilion' + LOC_TAIL,
   'loc.spirit-vein': 'Pixel art location icon, a glowing spirit vein cave entrance with cyan qi mist, spiritual vein' + LOC_TAIL,
   'loc.ore-slope': 'Pixel art location icon, a rocky ore-laden slope with glinting mineral veins, mining slope' + LOC_TAIL,
+  'loc.festival-ground': 'Pixel art location icon, a festive fairground with colorful banners and red lanterns strung between posts, festival grounds' + LOC_TAIL,
+  'loc.valley-outskirts': 'Pixel art location icon, a wild mountain valley wilderness edge with sparse pine trees and a dirt path' + LOC_TAIL,
+  'loc.array-shed': 'Pixel art location icon, a small workshop shed with array-crafting tools and a glowing rune-inscribed core on a bench, array smithy' + LOC_TAIL,
+  'loc.greenhouse': 'Pixel art location icon, a small glass-paneled spiritual greenhouse with glowing herb sprouts visible inside' + LOC_TAIL,
 };
 
 const id = process.argv[2];
