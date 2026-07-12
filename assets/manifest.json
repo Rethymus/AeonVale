@@ -280,6 +280,54 @@
       "checksum": "dfb5cf1ef4cfedeb5574da54165836eacc403fa7bffdd77793b88266b25f2413",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=大避雷丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "loc.farmstead",
+      "path": "locations/farmstead.png",
+      "type": "png",
+      "checksum": "2e18ba7e48e8aabbe64a916002c72dcd018dcb7a9fee6a9387f6f867bb5eb6c3",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=农庄; 对齐 locations.ts，地点目录 UI 用"
+    },
+    {
+      "id": "loc.valley-market",
+      "path": "locations/valley-market.png",
+      "type": "png",
+      "checksum": "6b1389b162cd7b5b0d1e4f3cdc27ebadc251d93a9d390771bcf1433e2f821a08",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=山谷集市; 对齐 locations.ts，地点目录 UI 用"
+    },
+    {
+      "id": "loc.ruin-gate",
+      "path": "locations/ruin-gate.png",
+      "type": "png",
+      "checksum": "6f5ca4d6d8d155df142bc49192be9dfc6301b4abf3e4d06781cb57c1430327b5",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=遗迹门口; 对齐 locations.ts，地点目录 UI 用"
+    },
+    {
+      "id": "loc.tea-shed",
+      "path": "locations/tea-shed.png",
+      "type": "png",
+      "checksum": "d16dc8f26eba6879b9996fdd24bea618964812b3d4f58f691ac995fb6f398a77",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=旧茶棚; 对齐 locations.ts，地点目录 UI 用"
+    },
+    {
+      "id": "loc.spirit-vein",
+      "path": "locations/spirit-vein.png",
+      "type": "png",
+      "checksum": "a3387c73907c6bc3e2ac44969959a2859f675f8a2f77e5db8a38c537186bc8a9",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=残脉入口; 对齐 locations.ts，地点目录 UI 用"
+    },
+    {
+      "id": "loc.ore-slope",
+      "path": "locations/ore-slope.png",
+      "type": "png",
+      "checksum": "53efebc12ed1daf71424282339920f2c617fcb066b8d42940c9f87ae4f018065",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=矿石坡; 对齐 locations.ts，地点目录 UI 用"
     }
   ],
   "audio": [],

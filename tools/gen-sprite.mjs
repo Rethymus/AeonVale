@@ -96,10 +96,27 @@ const FACILITIES = {
   'facility.talisman-furnace': 'Pixel art game facility sprite, a round bronze alchemy furnace with glowing rune fire at the mouth, small pill furnace' + FAC_TAIL,
 };
 
+const LOC_TAIL =
+  ', single focal structure, simple location scene icon, 16-color limited palette, matte flat opaque fills, ' +
+  'flat cel shading, hard 1px pixel edges, single top-left light source, clean dark outline, ' +
+  'no anti-aliasing, no gradient, no blur, no photorealistic, no cast shadow, no background scenery, no mixels, ' +
+  'no bloom, no glow, no soft shading, no atmospheric perspective, no 3D render, ' +
+  'transparent background, crude amateur 16-bit RPG map icon aesthetic, simple clean shapes, minimal detail';
+
+// 地点图标（对齐 src/sim/world/locations.ts，地点目录 UI 用）。
+const LOCATIONS = {
+  'loc.farmstead': 'Pixel art location icon, a small Chinese rustic farmstead with a wooden hut and a fenced herb plot' + LOC_TAIL,
+  'loc.valley-market': 'Pixel art location icon, a small rustic market stall with hanging wares and a cloth awning, mountain valley market' + LOC_TAIL,
+  'loc.ruin-gate': 'Pixel art location icon, an ancient crumbling stone gateway arch with old carved runes, ruin entrance' + LOC_TAIL,
+  'loc.tea-shed': 'Pixel art location icon, a small roadside tea shed with a thatched roof and a wooden bench, old tea pavilion' + LOC_TAIL,
+  'loc.spirit-vein': 'Pixel art location icon, a glowing spirit vein cave entrance with cyan qi mist, spiritual vein' + LOC_TAIL,
+  'loc.ore-slope': 'Pixel art location icon, a rocky ore-laden slope with glinting mineral veins, mining slope' + LOC_TAIL,
+};
+
 const id = process.argv[2];
-const prompt = SPRITES[id] ?? ICONS[id] ?? FACILITIES[id];
+const prompt = SPRITES[id] ?? ICONS[id] ?? FACILITIES[id] ?? LOCATIONS[id];
 if (!prompt) {
-  console.error('未知 id。sprite：' + Object.keys(SPRITES).join(', ') + ' | icon：' + Object.keys(ICONS).join(', ') + ' | facility：' + Object.keys(FACILITIES).join(', '));
+  console.error('未知 id。sprite/icon/facility/loc 见源码字典');
   process.exit(1);
 }
 
