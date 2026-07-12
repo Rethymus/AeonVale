@@ -768,6 +768,54 @@
       "checksum": "cb77f124c8ff5e02363da6b28aac321319cd4e4071a80ecd734ae2be33068f2c",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=晾晒架旁; 对齐 locations.ts"
+    },
+    {
+      "id": "sprite.npc.market-merchant",
+      "path": "sprites/npc.market-merchant.png",
+      "type": "png",
+      "checksum": "821d48e840447b7dc40c6fa32097cda9cd3f4f3575da6f9ee22a977f8218f1ba",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=市集商人 market-merchant; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+    },
+    {
+      "id": "sprite.npc.tea-shed-elder",
+      "path": "sprites/npc.tea-shed-elder.png",
+      "type": "png",
+      "checksum": "0be59b7921f7f1b34d1ebd852bbc1b2bd5f7fec9ed184a593af9ba77beecfa10",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=茶棚老者 tea-shed-elder; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+    },
+    {
+      "id": "sprite.npc.processing-artisan",
+      "path": "sprites/npc.processing-artisan.png",
+      "type": "png",
+      "checksum": "be790e7638e590a10b73f63b7657e3b7df6eca217b28d6f4633ea911e7ce3a03",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=加工匠人 processing-artisan; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+    },
+    {
+      "id": "sprite.npc.patrol-guard",
+      "path": "sprites/npc.patrol-guard.png",
+      "type": "png",
+      "checksum": "417a0d4e158aad68720d5bea6f8338097a066283d2497fe4692661eae231eae5",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=镇守巡检 patrol-guard; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+    },
+    {
+      "id": "sprite.guard-beast-boar",
+      "path": "sprites/guard-beast-boar.png",
+      "type": "png",
+      "checksum": "8070f8ac5a4f8967e8a7c7f019f84860f2142d792d89b22c7a5d825c76a03f2d",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=野猪守兽 guard-beast-boar 变体; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+    },
+    {
+      "id": "sprite.guard-beast-wolf",
+      "path": "sprites/guard-beast-wolf.png",
+      "type": "png",
+      "checksum": "56f38e39191b25706d47d7c77d558434b1dcb7279d975bdb29afebe8e725ddc7",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=灵狼守兽 guard-beast-wolf 变体; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
     }
   ],
   "audio": [],

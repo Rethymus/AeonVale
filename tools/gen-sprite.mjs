@@ -43,6 +43,12 @@ const SPRITES = {
     'gray beard, goggles on forehead, holding a rune-inscribed bronze compass' + TAIL,
   'guard-beast': 'Pixel art game sprite, a small sturdy guardian beast, a hybrid of boar and badger ' +
     'with jade-green crystal spikes along its back, quadruped side view facing right' + TAIL,
+  'npc.market-merchant': 'Pixel art game sprite, a shrewd Chinese market merchant in a richly colored robe, holding a coin pouch, confident stance' + TAIL,
+  'npc.tea-shed-elder': 'Pixel art game sprite, a wise elderly tea-house keeper with a long white beard, holding a teapot, relaxed' + TAIL,
+  'npc.processing-artisan': 'Pixel art game sprite, a sturdy craftsman in a leather apron at a processing yard, holding a bundle of dried herbs' + TAIL,
+  'npc.patrol-guard': 'Pixel art game sprite, a vigilant patrol guard in leather armor holding a wooden spear, stern expression' + TAIL,
+  'guard-beast-boar': 'Pixel art game sprite, a small sturdy tusked boar guardian beast with bristly dark fur, quadruped side view facing right' + TAIL,
+  'guard-beast-wolf': 'Pixel art game sprite, a small sleek wolf guardian beast with jade-green spirit fur markings, quadruped side view facing right' + TAIL,
 };
 
 const ICON_TAIL =
