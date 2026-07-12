@@ -848,6 +848,78 @@
       "checksum": "46ee1263cb89ccb431bdc445c57e5e76c1d0ba0a804b044c3c45eea66ef2a2bd",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵眼 array-eye; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+    },
+    {
+      "id": "tile.loam",
+      "path": "tiles/loam.png",
+      "type": "png",
+      "checksum": "01ed65cfdc502a8fc629d738e241600a040ab2e80b14e211de1a5f8b7e72a922",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.wet-loam",
+      "path": "tiles/wet-loam.png",
+      "type": "png",
+      "checksum": "9fdc7f29ebaaf3fbc40d5bb3bd345f8a8dd6524c1c600d449168d72e46135e29",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.dry-sand",
+      "path": "tiles/dry-sand.png",
+      "type": "png",
+      "checksum": "55e517858e2beb955c464018cca3fb33a9ea03b0877a687ab04ff36e75323d4d",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.insulated",
+      "path": "tiles/insulated.png",
+      "type": "png",
+      "checksum": "35342c7f918259ff70c4903ac76ad018893d15438fe4ee8c30c950c694971375",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.scorched",
+      "path": "tiles/scorched.png",
+      "type": "png",
+      "checksum": "9236874afc593aed5a3d8fe474e80b477a46c23fa818c086b7a3dc9964bb940b",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.spirit-loam",
+      "path": "tiles/spirit-loam.png",
+      "type": "png",
+      "checksum": "ae2a09ee748974c7cd248d93c621956077f2d3d54ea9d2fbf178fc655e907cba",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.rock",
+      "path": "tiles/rock.png",
+      "type": "png",
+      "checksum": "8a234dfc5e80ccfc8f3f35556453a0ecb469f3966220318be22ca5d446dce1d1",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.water",
+      "path": "tiles/water.png",
+      "type": "png",
+      "checksum": "0eae85563f21c43e9cb27b1f905edfb9e629f4a26f030d7d9181982d4e0176f3",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
+    },
+    {
+      "id": "tile.metal-ore",
+      "path": "tiles/metal-ore.png",
+      "type": "png",
+      "checksum": "caf42a516fcb95827d13541995fff0be0be6042cbb3fe45237f50ce66b676b80",
+      "license": "CC-BY-NC-4.0",
+      "source": "procedural bake-tile-textures.py (正弦和无缝噪声, docs/13 §1.2), 非 AI"
     }
   ],
   "audio": [],
