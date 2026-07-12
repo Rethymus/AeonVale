@@ -115,6 +115,9 @@ const LOCATIONS = {
   'loc.valley-outskirts': 'Pixel art location icon, a wild mountain valley wilderness edge with sparse pine trees and a dirt path' + LOC_TAIL,
   'loc.array-shed': 'Pixel art location icon, a small workshop shed with array-crafting tools and a glowing rune-inscribed core on a bench, array smithy' + LOC_TAIL,
   'loc.greenhouse': 'Pixel art location icon, a small glass-paneled spiritual greenhouse with glowing herb sprouts visible inside' + LOC_TAIL,
+  'loc.herb-plot': 'Pixel art location icon, a tended herb garden plot with neat rows of small glowing herb sprouts in raised soil beds' + LOC_TAIL,
+  'loc.creek-field': 'Pixel art location icon, a creekside herb field with a small stream edge and lush herb rows' + LOC_TAIL,
+  'loc.drying-yard': 'Pixel art location icon, a farm drying yard with wooden racks hung with bundled herbs drying in the sun' + LOC_TAIL,
 };
 
 const id = process.argv[2];

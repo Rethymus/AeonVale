@@ -744,6 +744,30 @@
       "checksum": "5f61d4bff593f578a624bbf44faa482879051ed0e240f84f16af906e999efc42",
       "license": "CC-BY-NC-4.0",
       "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+    },
+    {
+      "id": "loc.herb-plot",
+      "path": "locations/herb-plot.png",
+      "type": "png",
+      "checksum": "7c6144e5ae0d36a74d968f38fa1b803e0fe22922876a91288e954463b29d446b",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=露根药圃; 对齐 locations.ts"
+    },
+    {
+      "id": "loc.creek-field",
+      "path": "locations/creek-field.png",
+      "type": "png",
+      "checksum": "08673e727b7ab307c44af56a3b157e00fca03d4644340005f32ed02ae4fd841e",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=溪边药田; 对齐 locations.ts"
+    },
+    {
+      "id": "loc.drying-yard",
+      "path": "locations/drying-yard.png",
+      "type": "png",
+      "checksum": "cb77f124c8ff5e02363da6b28aac321319cd4e4071a80ecd734ae2be33068f2c",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=晾晒架旁; 对齐 locations.ts"
     }
   ],
   "audio": [],
