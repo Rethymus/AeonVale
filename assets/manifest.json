@@ -29,9 +29,9 @@
       "id": "sprite.player",
       "path": "sprites/player.png",
       "type": "png",
-      "checksum": "fa7a55195b40638c61d3a87e6ccc90294a45cdc14999dcb75a0a3cd383db6cc3",
+      "checksum": "073978d199e96771c844765dc818a7f502e5176bfd83676a05bd658ff7440c9e",
       "license": "AI-Generated",
-      "source": "gpt-image-2 via relay; 经多重审核放行（review-ai-art.py 量化+审核 + 视觉判定）; motif=player 体修凡人; 用户授权 AI 用于角色精灵；T8 去AI味重量化(posterize+8色)"
+      "source": "gpt-image-2 via relay; 经多重审核放行（review-ai-art.py 量化+审核 + 视觉判定）; motif=player 体修凡人; 用户授权 AI 用于角色精灵；T8 去AI味重生(de-AI prompt 重新生成)"
     },
     {
       "id": "sprite.npc.wandering-cultivator",
