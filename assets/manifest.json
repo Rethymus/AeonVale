@@ -816,6 +816,38 @@
       "checksum": "56f38e39191b25706d47d7c77d558434b1dcb7279d975bdb29afebe8e725ddc7",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=灵狼守兽 guard-beast-wolf 变体; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+    },
+    {
+      "id": "facility.storage-chest",
+      "path": "facilities/storage-chest.png",
+      "type": "png",
+      "checksum": "32a47779495d670426b1736525bd628b145173243bd7ae484ddefe0b1f5c6fc7",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=仓储容器 storage-chest; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+    },
+    {
+      "id": "facility.shipping-bin",
+      "path": "facilities/shipping-bin.png",
+      "type": "png",
+      "checksum": "ba77d6031f3dacad873cb7ae44a862e1aacffbfd40db49b673241ef2031ef3ad",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=出货箱 shipping-bin; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+    },
+    {
+      "id": "facility.array-flag",
+      "path": "facilities/array-flag.png",
+      "type": "png",
+      "checksum": "637a18a24b2f633a7f48d4a0160a1eb64a48780302f6480ef0086d4a77c3e9eb",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵旗 array-flag; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+    },
+    {
+      "id": "facility.array-eye",
+      "path": "facilities/array-eye.png",
+      "type": "png",
+      "checksum": "46ee1263cb89ccb431bdc445c57e5e76c1d0ba0a804b044c3c45eea66ef2a2bd",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵眼 array-eye; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
     }
   ],
   "audio": [],

@@ -100,6 +100,10 @@ const FACILITIES = {
   'facility.drying-rack': 'Pixel art game facility sprite, a rustic wooden herb-drying rack with a few hanging herb bundles' + FAC_TAIL,
   'facility.sealing-cabinet': 'Pixel art game facility sprite, a tall wooden spiritual storage cabinet with a round paper talisman seal on the door' + FAC_TAIL,
   'facility.talisman-furnace': 'Pixel art game facility sprite, a round bronze alchemy furnace with glowing rune fire at the mouth, small pill furnace' + FAC_TAIL,
+  'facility.storage-chest': 'Pixel art game facility sprite, a sturdy wooden storage chest with iron bands and a padlock, farm storage chest' + FAC_TAIL,
+  'facility.shipping-bin': 'Pixel art game facility sprite, a wooden shipping bin crate with a slanted lid for selling goods, farm shipping box' + FAC_TAIL,
+  'facility.array-flag': 'Pixel art game facility sprite, a tall array-crafting flag banner on a pole with a glowing rune sigil, array marker' + FAC_TAIL,
+  'facility.array-eye': 'Pixel art game facility sprite, a glowing octagonal array-eye rune stone set flat in the ground, array core' + FAC_TAIL,
 };
 
 const LOC_TAIL =
