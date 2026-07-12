@@ -240,6 +240,46 @@
       "checksum": "f5e1a99aec832ed48e48e24f8049a0076ff8986f9d5b1d4fbdded849d9888340",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=封藏灵草; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.cold-mud",
+      "path": "icons/pill.cold-mud.png",
+      "type": "png",
+      "checksum": "0f407221e9775976923c643925e03ca5d1eccd90cd6d72dc568ce2538b872d95",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=寒泥丸; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.deep-detox",
+      "path": "icons/pill.deep-detox.png",
+      "type": "png",
+      "checksum": "58403cc4f67d7838cbb708408e2138c024871b2329545bad8755545ed89247c0",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=涤髓丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.temper-supreme",
+      "path": "icons/pill.temper-supreme.png",
+      "type": "png",
+      "checksum": "9027ba34a75efea5fdf8f60a714c730c7ddd58db25d2e86e06de81a6ef7e632d",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=无极淬体丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.ward-heaven",
+      "path": "icons/pill.ward-heaven.png",
+      "type": "png",
+      "checksum": "494a1855a462689560d82d3538ce15c45934044ca24d0d0302fde4f268e6259e",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=偷天避雷丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.ward-greater",
+      "path": "icons/pill.ward-greater.png",
+      "type": "png",
+      "checksum": "dfb5cf1ef4cfedeb5574da54165836eacc403fa7bffdd77793b88266b25f2413",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=大避雷丹; 用户授权 AI 用于物品图标"
     }
   ],
   "audio": [],

@@ -72,9 +72,13 @@ const ICONS = {
   'icon.pill.bone-basic': 'Pixel art game item icon, a single round medicinal pill, bone-white with a marrow-red core, bone-generating pill' + ICON_TAIL,
   'icon.pill.madness': 'Pixel art game item icon, a single round medicinal pill, dark purple-black swirling, qi-deviation pill' + ICON_TAIL,
   'icon.pill.neutral-pearl': 'Pixel art game item icon, a single round lustrous pearl, pale iridescent white, neutral tai-yi pearl' + ICON_TAIL,
-  'icon.pill.ward-greater': 'Pixel art game item icon, a single round medicinal pill, deep blue-violet glaze with crackle, greater lightning-ward pill' + ICON_TAIL,
+  'icon.pill.ward-greater': 'Pixel art game item icon, a single round medicinal pill, deep blue-violet glaze with bright white highlight rim and dark crackle lines, strong tonal contrast, greater lightning-ward pill' + ICON_TAIL,
   'icon.item.dried-herb': 'Pixel art game item icon, a small bundle of dried herb sprigs tied with twine, desiccated medicinal herbs' + ICON_TAIL,
   'icon.item.sealed-herb': 'Pixel art game item icon, a sealed paper-wrapped packet of preserved spiritual herbs with a talisman stamp' + ICON_TAIL,
+  'icon.pill.cold-mud': 'Pixel art game item icon, a single round medicinal pill, pale frost-blue mud-caked surface with dark speckles, cold-mud pill' + ICON_TAIL,
+  'icon.pill.deep-detox': 'Pixel art game item icon, a single round medicinal pill, deep emerald green glaze with bright golden veins, deep-detox pill' + ICON_TAIL,
+  'icon.pill.temper-supreme': 'Pixel art game item icon, a single round medicinal pill, dark crimson with bright gold crackle lines, supreme tempering pill' + ICON_TAIL,
+  'icon.pill.ward-heaven': 'Pixel art game item icon, a single round medicinal pill, deep violet with bright silver lightning crackle, heaven-stealing ward pill' + ICON_TAIL,
 };
 
 const FAC_TAIL =
