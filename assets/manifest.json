@@ -485,33 +485,33 @@
       "id": "icon.herb.silentbell",
       "path": "icons/herb.silentbell.png",
       "type": "png",
-      "checksum": "21a9d36515a3ceb3deb0ea1c7816f3c2078da6776e27e64523b4afaa5729f693",
-      "license": "CC-BY-NC-4.0",
-      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+      "checksum": "1567db1a51a504765a566e7fac4161957a47b8a99a7bf500d996158b2c7fe9a7",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
     },
     {
       "id": "icon.herb.solar-pith",
       "path": "icons/herb.solar-pith.png",
       "type": "png",
-      "checksum": "b674f75095ce1a0dea23648799d34fc42a39de69ded1a7a60ee107778d85cb68",
-      "license": "CC-BY-NC-4.0",
-      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+      "checksum": "059303e393196fac0addb00e145638216e5d31b7fcecb660752b1b33f0b9bf3b",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
     },
     {
       "id": "icon.herb.stonegrain",
       "path": "icons/herb.stonegrain.png",
       "type": "png",
-      "checksum": "0915be2fa65443a321dfb3ea0697fb5c162a20d83f7da70c6ceab1daee453123",
-      "license": "CC-BY-NC-4.0",
-      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+      "checksum": "9dafc46da94311738a4bec5293080e7d16c465d8765af55f3d07c8d3ae86f571",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
     },
     {
       "id": "icon.herb.suncap",
       "path": "icons/herb.suncap.png",
       "type": "png",
-      "checksum": "c759b350b6b00502cc7329a6ab86521ffee7fda225f0fbc153938c80dcb33dab",
-      "license": "CC-BY-NC-4.0",
-      "source": "procedural sprites.ts generateHerbSprite, no AI (refine 失败回退纯烘焙)"
+      "checksum": "fc43059665db01845bb206c3d234f26100a825bc4234583dafadd184b03d111b",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
     },
     {
       "id": "icon.herb.sunmoss",
