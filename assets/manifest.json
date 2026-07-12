@@ -152,6 +152,54 @@
       "checksum": "b4458886c155061e6df73e16a75b9439142b2c66563a667102cd87e67d90425f",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=符炉 talisman-furnace; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
+    },
+    {
+      "id": "icon.pill.iron-bone",
+      "path": "icons/pill.iron-bone.png",
+      "type": "png",
+      "checksum": "ee42772e81bf3128c6a9cfa763067e6bc80cbcdab10ab646b83839d7bd2559aa",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=铁骨丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.temper",
+      "path": "icons/pill.temper.png",
+      "type": "png",
+      "checksum": "8ab7db1b84d84faf8745cf2160e43deb9bfd9a483851c4f897647ebd5c773d6a",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=淬体丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.pill.detox",
+      "path": "icons/pill.detox.png",
+      "type": "png",
+      "checksum": "7949cedb6befb3b5820d991bddbfd943e02d3087971f794279c4780c01c82741",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=净毒丹; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.item.array-core",
+      "path": "icons/item.array-core.png",
+      "type": "png",
+      "checksum": "f73521376da31e49808df24370244c557ab25f6efafbdcfb2aa686f9192f2ea8",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵核; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.item.recipe-fragment",
+      "path": "icons/item.recipe-fragment.png",
+      "type": "png",
+      "checksum": "88987bc34d527559e3520ce44d20fd776b37bf353cfb70ba6567619d773c5edc",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=残卷; 用户授权 AI 用于物品图标"
+    },
+    {
+      "id": "icon.item.broken-talisman",
+      "path": "icons/item.broken-talisman.png",
+      "type": "png",
+      "checksum": "5265e0a94a92657d1052a5cff111f0d5708847c12f09585d429168020c0837c9",
+      "license": "AI-Generated",
+      "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=破损法宝; 用户授权 AI 用于物品图标"
     }
   ],
   "audio": [],

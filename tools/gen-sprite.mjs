@@ -63,6 +63,12 @@ const ICONS = {
   'icon.item.water-pail': 'Pixel art game item icon, a wooden water pail bucket with glowing spiritual water inside, rope handle' + ICON_TAIL,
   'icon.pill.ward-basic': 'Pixel art game item icon, a single round medicinal pill with pale cyan-blue glaze, lightning-ward pill' + ICON_TAIL,
   'icon.pill.ascend': 'Pixel art game item icon, a radiant golden medicinal pill with soft halo light, ornate ascension pill' + ICON_TAIL,
+  'icon.pill.iron-bone': 'Pixel art game item icon, a single round medicinal pill, bone-white with golden flecks, iron-bone pill' + ICON_TAIL,
+  'icon.pill.temper': 'Pixel art game item icon, a single round medicinal pill, deep crimson glaze, body-tempering pill' + ICON_TAIL,
+  'icon.pill.detox': 'Pixel art game item icon, a single round medicinal pill, pale jade-green glaze, detox pill' + ICON_TAIL,
+  'icon.item.array-core': 'Pixel art game item icon, a small rune-inscribed octagonal array core stone glowing faint cyan' + ICON_TAIL,
+  'icon.item.recipe-fragment': 'Pixel art game item icon, a torn yellowed paper scroll fragment with faded ink runes' + ICON_TAIL,
+  'icon.item.broken-talisman': 'Pixel art game item icon, a cracked broken bronze talisman charm fragment with a faint glyph' + ICON_TAIL,
 };
 
 const FAC_TAIL =
