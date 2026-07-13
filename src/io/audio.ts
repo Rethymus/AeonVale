@@ -98,46 +98,81 @@ export class AudioEngine {
         [392, 523, 659, 784].forEach((f, i) => this.tone(f, 0.4, 0.3, now + i * 0.15, 'sine'));
         break;
       case 'warn': {
-        // 雷预警：高频嘶声渐强（highpass noise + gain ramp up）
+        // 雷预警：highpass noise 渐强 + WaveShaper 软削波 + exp 频率扫频（FXive 雷模型）
         if (!this.noise) break;
-        const ws = ctx.createBufferSource();
-        ws.buffer = this.noise;
-        const wf = ctx.createBiquadFilter();
-        wf.type = 'highpass';
-        wf.frequency.value = 2000;
+        const ws = ctx.createBufferSource(); ws.buffer = this.noise; ws.loop = true;
+        const hpf = ctx.createBiquadFilter(); hpf.type = 'highpass';
+        hpf.frequency.setValueAtTime(2000, now);
+        hpf.frequency.exponentialRampToValueAtTime(6000, now + 0.8);
+        const shaper = ctx.createWaveShaper();
+        const sc = new Float32Array(1024);
+        for (let si = 0; si < 1024; si++) sc[si] = Math.tanh(((si / 1023) * 2 - 1) * 2);
+        shaper.curve = sc;
         const wg = ctx.createGain();
-        wg.gain.setValueAtTime(0, now);
-        wg.gain.linearRampToValueAtTime(0.14, now + 0.3);
-        wg.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
-        ws.connect(wf); wf.connect(wg); wg.connect(master);
-        ws.start(now); ws.stop(now + 0.5);
+        wg.gain.setValueAtTime(0.0001, now);
+        wg.gain.linearRampToValueAtTime(0.3, now + 0.8);
+        wg.gain.linearRampToValueAtTime(0.3, now + 0.95);
+        wg.gain.linearRampToValueAtTime(0, now + 1.0);
+        ws.connect(hpf); hpf.connect(shaper); shaper.connect(wg); wg.connect(master);
+        ws.start(now); ws.stop(now + 1.0);
         break;
       }
-      case 'hurt':
-        // 玩家受伤：低频闷击（双音 thud）
-        this.tone(90, 0.12, 0.4, now, 'sine');
-        this.tone(60, 0.15, 0.3, now, 'triangle');
+      case 'hurt': {
+        // 玩家受伤：sub thud(sine 65Hz + detune jitter) + 噪声闷层（业界冲击配方）
+        const detune = (Math.random() - 0.5) * 60;
+        const sub = ctx.createOscillator(); sub.type = 'sine'; sub.frequency.value = 65; sub.detune.value = detune;
+        const subEnv = ctx.createGain();
+        subEnv.gain.setValueAtTime(0, now);
+        subEnv.gain.linearRampToValueAtTime(0.5, now + 0.005);
+        subEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+        sub.connect(subEnv); subEnv.connect(master);
+        sub.start(now); sub.stop(now + 0.3);
+        this.noiseBurst(0.08, 0.3, 200, now);
         break;
-      case 'beast-spawn':
-        // 妖兽出现：不和谐低吼（detuned sawtooth + 噪声共振）
-        this.tone(50, 0.35, 0.3, now, 'sawtooth');
-        this.tone(53, 0.35, 0.25, now, 'sawtooth');
-        this.noiseBurst(0.3, 0.15, 250, now);
+      }
+      case 'beast-spawn': {
+        // 妖兽出现：3 detuned saws + bandpass Q=6 喉腔共振 + LFO 吼叫颤 + ConvolverNode 程序化 IR 洞穴感
+        const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 180; bp.Q.value = 6;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = 10;
+        const lfoGain = ctx.createGain(); lfoGain.gain.value = 60;
+        lfo.connect(lfoGain); lfoGain.connect(bp.frequency);
+        const env = ctx.createGain();
+        env.gain.setValueAtTime(0, now);
+        env.gain.linearRampToValueAtTime(0.22, now + 0.08);
+        env.gain.linearRampToValueAtTime(0.22, now + 0.68);
+        env.gain.linearRampToValueAtTime(0, now + 1.08);
+        for (const det of [-15, 0, 15]) {
+          const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = 80; o.detune.value = det;
+          o.connect(bp); o.start(now); o.stop(now + 1.1);
+        }
+        // 程序化 IR（零文件依赖，指数衰减噪声 → 洞穴感）
+        const irLen = Math.floor(ctx.sampleRate * 0.3);
+        const irBuf = ctx.createBuffer(1, irLen, ctx.sampleRate);
+        const irData = irBuf.getChannelData(0);
+        for (let ii = 0; ii < irLen; ii++) irData[ii] = (Math.random() * 2 - 1) * Math.exp(-3 * ii / irLen);
+        const conv = ctx.createConvolver(); conv.buffer = irBuf;
+        bp.connect(conv); conv.connect(env); env.connect(master);
+        lfo.start(now); lfo.stop(now + 1.1);
         break;
+      }
       case 'season': {
-        // 季节变化：风声渐变（lowpass sweep noise）
+        // 季节变化：bandpass 风声 + LIO 阵风（hexshift wind 模型）
         if (!this.noise) break;
-        const ss = ctx.createBufferSource();
-        ss.buffer = this.noise;
-        const sf = ctx.createBiquadFilter();
-        sf.type = 'lowpass';
-        sf.frequency.setValueAtTime(800, now);
-        sf.frequency.linearRampToValueAtTime(300, now + 0.8);
+        const ss = ctx.createBufferSource(); ss.buffer = this.noise; ss.loop = true;
+        const bpf = ctx.createBiquadFilter(); bpf.type = 'bandpass'; bpf.Q.value = 2;
+        bpf.frequency.setValueAtTime(500, now);
+        bpf.frequency.linearRampToValueAtTime(300, now + 1.0);
+        const slfo = ctx.createOscillator(); slfo.frequency.value = 0.2;
+        const slfoG = ctx.createGain(); slfoG.gain.value = 150;
+        slfo.connect(slfoG); slfoG.connect(bpf.frequency);
         const sg = ctx.createGain();
-        sg.gain.setValueAtTime(0.07, now);
-        sg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
-        ss.connect(sf); sf.connect(sg); sg.connect(master);
-        ss.start(now); ss.stop(now + 1.0);
+        sg.gain.setValueAtTime(0, now);
+        sg.gain.linearRampToValueAtTime(0.1, now + 0.5);
+        sg.gain.linearRampToValueAtTime(0.1, now + 1.2);
+        sg.gain.linearRampToValueAtTime(0, now + 1.5);
+        ss.connect(bpf); bpf.connect(sg); sg.connect(master);
+        ss.start(now); ss.stop(now + 1.5);
+        slfo.start(now); slfo.stop(now + 1.5);
         break;
       }
       case 'ui':
