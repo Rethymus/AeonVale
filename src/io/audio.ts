@@ -16,7 +16,11 @@ export type SfxId =
   | 'breakthrough'
   | 'eat-pill'
   | 'ui'
-  | 'ending';
+  | 'ending'
+  | 'warn'
+  | 'hurt'
+  | 'beast-spawn'
+  | 'season';
 export type BgmMode = 'calm' | 'tense' | 'off';
 
 export class AudioEngine {
@@ -93,6 +97,49 @@ export class AudioEngine {
       case 'ending':
         [392, 523, 659, 784].forEach((f, i) => this.tone(f, 0.4, 0.3, now + i * 0.15, 'sine'));
         break;
+      case 'warn': {
+        // 雷预警：高频嘶声渐强（highpass noise + gain ramp up）
+        if (!this.noise) break;
+        const ws = ctx.createBufferSource();
+        ws.buffer = this.noise;
+        const wf = ctx.createBiquadFilter();
+        wf.type = 'highpass';
+        wf.frequency.value = 2000;
+        const wg = ctx.createGain();
+        wg.gain.setValueAtTime(0, now);
+        wg.gain.linearRampToValueAtTime(0.14, now + 0.3);
+        wg.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+        ws.connect(wf); wf.connect(wg); wg.connect(master);
+        ws.start(now); ws.stop(now + 0.5);
+        break;
+      }
+      case 'hurt':
+        // 玩家受伤：低频闷击（双音 thud）
+        this.tone(90, 0.12, 0.4, now, 'sine');
+        this.tone(60, 0.15, 0.3, now, 'triangle');
+        break;
+      case 'beast-spawn':
+        // 妖兽出现：不和谐低吼（detuned sawtooth + 噪声共振）
+        this.tone(50, 0.35, 0.3, now, 'sawtooth');
+        this.tone(53, 0.35, 0.25, now, 'sawtooth');
+        this.noiseBurst(0.3, 0.15, 250, now);
+        break;
+      case 'season': {
+        // 季节变化：风声渐变（lowpass sweep noise）
+        if (!this.noise) break;
+        const ss = ctx.createBufferSource();
+        ss.buffer = this.noise;
+        const sf = ctx.createBiquadFilter();
+        sf.type = 'lowpass';
+        sf.frequency.setValueAtTime(800, now);
+        sf.frequency.linearRampToValueAtTime(300, now + 0.8);
+        const sg = ctx.createGain();
+        sg.gain.setValueAtTime(0.07, now);
+        sg.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+        ss.connect(sf); sf.connect(sg); sg.connect(master);
+        ss.start(now); ss.stop(now + 1.0);
+        break;
+      }
       case 'ui':
       default:
         this.tone(660, 0.05, 0.15, now, 'square');
