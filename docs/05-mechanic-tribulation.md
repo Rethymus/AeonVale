@@ -24,34 +24,60 @@
 
 ---
 
-## 1. 倒计时触发 (Tribulation Countdown Trigger)
+## 1. 主动引劫与倒计时触发 (Tribulation Invocation & Countdown Trigger)
 
-### 1.1 触发条件
+### 1.1 核心触发：玩家主动引劫
 
-天劫不是随机事件，而是**功法进度的必然结果**。当玩家当前阶段的 `StageQi`（阶段修为/灵力值，见 `09-progression-system.md`）积累到阶段上限 `StageQiCap(stage)` 时，**强制触发**天劫倒计时。
+天劫不是随机事件，而是《偷天换劫诀》雷劫炼体的主动选择。玩家在体魄、丹药、阵法和阶段淬体进度达到阈值后，可执行 `InvokeTribulation`：消耗引雷丹、阵眼材料或残卷诀印，向天道发出"我在逆天"的僭越信号，引来雷劫。
 
 ```
-trigger: StageQi >= StageQiCap(currentStage)
-         AND not already in Tribulation
+InvokeTribulationAllowed:
+  StageQi >= InvokeMinRatio(stage) * StageQiCap(currentStage)
+  AND BodyFoundation >= BodyFoundationMin(stage)
+  AND hasTribulationCatalyst(stage)
+  AND not already in Tribulation
 ```
 
-`StageQi` 来源：劫雷淬体（主要）、稀有丹药（次要）、灵脉共鸣（微弱）。详见 §4.2 与 `09-progression-system.md`。
+`StageQi` 在本文中沿用内部字段名，语义是**阶段肉身淬炼进度**，不是灵修灵力。来源：劫雷淬体（主要）、淬体丹药（次要）、基础训练/灵脉共鸣（微弱）。详见 §4.2 与 `09-progression-system.md`。
 
-### 1.2 倒计时时长规则
+主动引劫的收益与风险（漏斗体质视角，详见 `03` §2.2.1）：
+- **收益**：天劫雷能**永久封堵漏勺漏洞**（焊死裂缝）——每扛过一次，漏失率下降、净留存上升，体修变强。玩家可在 HP、丹药、阵法、天气最合适时开劫；也可在大限逼近前主动搏命。
+- **风险**：准备不足时雷劫收益低（漏洞封堵少）、死亡率高（漏勺碎裂 = 死）；每次主动引劫增加 `HeavenDebt` / `DaoAttention`，推动终局清算。
+- **精神内核**：这不是被动等天罚，而是"我命由我不由天"的玩法化表达。
 
-修为满的瞬间，屏幕正上方出现天劫倒计时 UI（见 §2）。倒计时基础时长随阶段递增，让玩家有越来越长的布防准备期（也越来越多雷要处理）：
+### 1.2 被动催讨：阶段满与天道因果账
+
+主动引劫是常态，但玩家不能无限拖延。当以下条件出现时，天道会进入催讨式倒计时：
+
+```
+ForcedCountdownTrigger:
+  StageQi >= StageQiCap(currentStage)
+  OR HeavenDebt >= DebtForceThreshold(stage)
+  OR LifespanLimitRemaining <= LifespanPressureWindow
+```
+
+叙事上，这不是"普通突破自动考试"，而是天道发现有僭越者长期欠账，开始主动清算。它保留不可控压力，防止玩家只囤资源不冒险。
+
+### 1.3 倒计时时长规则
+
+主动引劫或被动催讨触发后，屏幕正上方出现天劫倒计时 UI（见 §2）。倒计时分为两层：
+
+1. **日级准备窗**：以 `T_trib(stage)`（游戏日）计算，给玩家完整种田/炼丹/布阵周期。此值以 `14-game-balance-and-math.md` 为单一真源。
+2. **秒级临战倒计时**：准备窗最后一日归零后，进入实时 `MM:SS` 压迫倒计时，随后硬切入塔防生存。
+
+临战倒计时基础时长随阶段递增，让玩家有短暂的最终调整期（但不能替代前面的日级准备）：
 
 ```
 CountdownSeconds(stage) = BaseCountdown + StageStep * (stage - 1)
 ```
 
-- `【可调参数】BaseCountdown`（默认 90 s）—— 第一阶天劫准备时长。
-- `【可调参数】StageStep`（默认 30 s /阶）—— 每升一阶增加的准备时长。
+- `【可调参数】BaseCountdown`（默认 90 s）—— 第一阶临战最后倒计时。
+- `【可调参数】StageStep`（默认 30 s /阶）—— 每升一阶增加的临战倒计时。
 - `【可调参数】MaxCountdown`（默认 360 s）—— 上限，防止后期过长。
 
-> 设计理由：低阶时玩家阵法/丹药不足，给较短倒计时制造紧迫感但雷少；高阶时玩家工具丰富，给长倒计时让塔防布阵有策略深度。
+> 设计理由：日级准备窗承载种田、炼丹、布阵的慢节奏；秒级临战倒计时制造“天劫真要来了”的压迫感。低阶雷少但准备短，高阶工具丰富且准备更长，最后仍用实时切换保留不可控张力。该裁定见 `20` R2。
 
-### 1.3 倒计时期间的天象干预（提前/推迟）
+### 1.4 倒计时期间的天象干预（提前/推迟）
 
 倒计时**默认不可主动取消**（凡人无法拒绝天道），但**动态天象**可以扰动它（见 `07-mechanic-celestial-events.md`）：
 
@@ -70,13 +96,15 @@ clamp(EffectiveDeltat, 0.2, 3.0)   // 不允许完全停滞或瞬触发
 - `【可调参数】DelayFactor`（默认 0.25）—— 灾年期间倒计时减速比例。
 - `【可调参数】MaxDelay`（默认 60 s）—— 单次倒计时累计推迟上限。
 
-### 1.4 玩家主动触发（"提前引劫"）
+### 1.5 提前引劫与低准备搏命
 
-进阶玩法：玩家可在修为未满时，消耗特定丹药（`引雷丹`）或主动激发阵法，**提前触发天劫**。收益：在状态最佳时渡劫、跳过等待；风险：`StageQi` 未满，淬体收益基数低（见 §4.3）。这是高玩技巧，新手默认等满。
+进阶玩法：玩家可在 `StageQi` 未满但体魄和材料达标时提前引劫。收益：跳过等待、抢在灾年/大限/敌袭前突破；风险：淬体收益基数低（见 §4.3），且更容易重伤。这是体修路线的高风险技巧，不再是附属选项。
 
 ```
 manual_trigger_allowed: stage >= 2   // 第一阶教学强制走完正常流程
 ```
+
+第一阶教学例外：主角需先完成基础苦练与首劫资格（`09` §2.3），再进行第一次主动引劫。
 
 ---
 
@@ -92,7 +120,7 @@ manual_trigger_allowed: stage >= 2   // 第一阶教学强制走完正常流程
 
 ### 2.2 模式切换：从种田到塔防（关键设计决策）
 
-倒计时归零的瞬间，进入 `TribulationPhase`。**模式切换协议**（建议，需主创拍板，见开放问题 Q1）：
+倒计时归零的瞬间，进入 `TribulationPhase`。**模式切换协议**（已裁定，见 `20` D-07）：
 
 采用 **"硬切换 + 短定格"** 而非"时间冻结"：
 
@@ -133,17 +161,17 @@ Candidates = { tile | tile in FarmGrid AND tile.Strikeable }
 对每个候选格 `t`，计算权重 `W(t)`：
 
 ```
-W(t) = [ Conductivity(t) 
-         + MetalAttraction(t) 
-         + ArrayModifier(t) 
-         + PlayerProximity(t) 
-         + EpicenterBias(t) ]
+W(t) = Conductivity(t)
+       * MetalAttraction(t)
+       * ArrayModifier(t)
+       * PlayerProximity(t)
+       * EpicenterBias(t)
        * RandomJitter(t, rng)
 ```
 
 各项语义：
 
-**(a) `Conductivity(t)` —— 地形基础导电性**
+**(a) `Conductivity(t)` —— 地形基础导电倍率**
 来自 `08-farming-system.md` §5 地块导电表。例：
 
 | 地块类型 | Conductivity | 说明 |
@@ -156,11 +184,11 @@ W(t) = [ Conductivity(t)
 | 岩石地面 | 0.3 | 弱导电 |
 | 绝缘垫层（玩家铺设） | 0.1 | 几乎不导电 |
 
-**(b) `MetalAttraction(t)` —— 金属性灵草避雷吸引**
+**(b) `MetalAttraction(t)` —— 金属性灵草避雷吸引倍率**
 遍历以 `t` 为中心、半径 `RodRadius` 内所有金属性灵草（`MetalAttr` tag），按距离衰减累加：
 
 ```
-MetalAttraction(t) = Σ_{herb h in RodRadius(t)} h.MetalPower * falloff(dist(t, h))
+MetalAttraction(t) = 1 + Σ_{herb h in RodRadius(t)} h.MetalPower * falloff(dist(t, h))
 falloff(d) = max(0, 1 - d/RodRadius)   // 线性衰减
 ```
 
@@ -185,7 +213,7 @@ ArrayModifier(t) = Π_{arrays A covering t} A.Modifier
 天道要劈的是渡劫者本人，所以玩家位置有基础吸引力，随距离衰减：
 
 ```
-PlayerProximity(t) = PlayerBaseAttraction * falloff(dist(t, player))
+PlayerProximity(t) = 1 + PlayerBaseAttraction * falloff(dist(t, player))
 ```
 
 - `【可调参数】PlayerBaseAttraction`（默认 1.5）—— 玩家自身格的额外吸引权重。
@@ -195,7 +223,7 @@ PlayerProximity(t) = PlayerBaseAttraction * falloff(dist(t, player))
 雷倾向于劈在农庄核心区（玩家通常把核心药草种在中心）：
 
 ```
-EpicenterBias(t) = EpicenterWeight * (1 - dist(t, FarmCenter)/MapDiagonal)
+EpicenterBias(t) = 1 + EpicenterWeight * (1 - dist(t, FarmCenter)/MapDiagonal)
 ```
 
 - `【可调参数】EpicenterWeight`（默认 0.5）—— 中心偏置强度。
@@ -208,10 +236,12 @@ EpicenterBias(t) = EpicenterWeight * (1 - dist(t, FarmCenter)/MapDiagonal)
 ### 3.3 采样与权重归一化
 
 ```
-W(t) = max(0, W(t))                        // 防负
+W(t) = max(0, W(t))                        // 各乘子规范化为非负倍率
 prob(t) = W(t) / Σ_{t' in Candidates} W(t') 
 chosen = sample(Candidates, prob, rng)     // 用同一 PRNG
 ```
+
+> 对齐说明：总权重采用乘性合成，`Conductivity` 直接使用 `08` 的 0.1–1.8 倍率语义；阵法、玩家吸引、中心偏置均为倍率项。裁定见 `20` R4/R5，数值收口见 `14` §5。
 
 如果所有 `W(t)` 都被绝缘阵压到 0（玩家完美布防——几乎不可能），则 fallback：劈向最近的阵法边界格（"阵法被击穿"），并对该阵法造成结构损伤。
 
@@ -257,20 +287,27 @@ TelegraphSeconds(stage) = clamp(BaseTelegraph - stage * TelegraphDecay,
 ### 4.2 淬体收益公式
 
 ```
-TemperingGain = BaseTempering * ExposureCoeff * StageMultiplier * QualityBonus
+TemperingGain = damageActuallyTaken
+                 * ExposureCoeff
+                 * temperingEff(stage)
+                 * nearDeathBonus(finalHP)
+                 * QualityBonus
 ```
 
-- `【可调参数】BaseTempering`（默认 10）—— 一次满额淬体的基础值（单位：`StageQi` 点数）。
+- `damageActuallyTaken` —— 玩家实际承受的伤害，是“以雷淬体”的基数；阵法代接但玩家未受伤时只给少量传导收益。
 - `ExposureCoeff`（暴露系数，见下表）—— 命中类型决定。
-- `StageMultiplier` —— 高阶雷淬体更多（见 `09-progression-system.md`）。
+- `temperingEff(stage) = 1.1 − 0.1×stage` —— 高阶每点伤害换更少修为，防止后期刷血量，见 `14` §6.2 / `20` R3。
+- `nearDeathBonus(finalHP)` —— 低血幸存奖励，见 `14` §6.2。
 - `QualityBonus` —— 擦弹/完美抵挡加成（见 §4.4）。
 
 | 命中类型 | ExposureCoeff |
 |---------|--------------|
 | DirectHit | 1.0 |
 | InsulatedHit | 0.5 |
-| RodHit | 0.25（金属性草/阵"代你挨"也能传少量淬体——叙事：雷气沿阵传到你身上） |
+| RodHit | 0.25（金属性草/阵"代你挨"时，以阵法传导伤害等效值计算少量淬体——叙事：雷气沿阵传到你身上） |
 | Miss | 0 |
+
+> 对齐说明：早期 `BaseTempering × StageMultiplier` 固定基数已废弃，统一采用 `14` 的伤害比例制，并保留本机制的 `ExposureCoeff` / `QualityBonus`。裁定见 `20` R10。
 
 ### 4.3 伤害公式
 
@@ -282,7 +319,6 @@ Damage = bolt.baseDamage(stage) * (1 - InsulationReduction)   // baseDamage(stag
 ```
 
 - 单雷基值 `bolt.baseDamage(stage) = 12 + 8×stage`（stage1=20 … stage7=68；HP 基 100）。**单一真源见 `14` §6.1 / P017–P018**（早期固定 35 已废弃，见 `20` R9）。
-- `StageMultiplier` —— 见 §5。
 - `InsulationReduction` —— 来自绝缘阵 / 绝缘垫层（0–0.8）。
 - `WardPillReduction` —— 来自 `避雷丹` buff（0–0.6，见 `06-mechanic-alchemy.md`）。
 - `DistanceFactor` —— 距爆心比例：直接命中=1.0，边缘擦边=0.4。
@@ -380,11 +416,11 @@ StrikeInterval(stage) = max(MinInterval, BaseInterval - stage * IntervalDecay)
 
 ### 7.1 一击必杀保护 (One-Shot Immunity, OSI)
 
-凡骨极脆，第一阶教学时若玩家没布阵/没嗑丹，一道青雷（35 伤）对 100 HP 就是 1/3，但仍可承受。真正风险在 stage 2+。`OneShotProtection`（§4.3）在 stage ≤ 2 时保证玩家至少留 1 血活口一次（每阶冷却一次）。这避免"开局即死"的劝退。
+凡骨极脆，第一阶教学时若玩家没布阵/没嗑丹，一道青雷按 `bolt.baseDamage(1)=20` 计算，对 100 HP 是 1/5，仍可承受。真正风险在 stage 2+ 的连续雷、紫雷与控血失误。`OneShotProtection`（§4.3）在 stage ≤ 2 时保证玩家至少留 1 血活口一次（每阶冷却一次）。这避免"开局即死"的劝退。
 
 ### 7.2 未布阵 / 农田为空
 
-- 完全没阵法、没金属性草：雷完全按 `Conductivity + PlayerProximity + EpicenterBias` 劈，大概率直劈玩家或农田中心 → 高伤害高淬体。教学关会强制玩家在倒计时内至少放一个避雷草。
+- 完全没阵法、没金属性草：雷主要按 `Conductivity × PlayerProximity × EpicenterBias` 劈，大概率直劈玩家或农田中心 → 高伤害高淬体。教学关会强制玩家在倒计时内至少放一个避雷草。
 - 农田为空（刚收获完）：`MetalAttraction = 0`，雷更集中劈玩家和建筑。叙事："灵气散尽，雷直取渡劫者"。
 
 ### 7.3 同格多次受击
@@ -500,7 +536,8 @@ function runTribulation(stage, worldSeed, farmGrid, player):
 | `BaseTelegraph` | 2.5 | s | 第一阶预兆时长 |
 | `TelegraphDecay` | 0.2 | s/阶 | 每阶缩窄的预兆 |
 | `MinTelegraph` | 1.0 | s | 最短预兆 |
-| `BaseTempering` | 10 | StageQi | 满额淬体基础值 |
+| `temperingEff(stage)` | `1.1 − 0.1×stage` | 倍率 | 高阶淬体收益递减，见 14 P022/P023 |
+| `nearDeathBonus(finalHP)` | 见 14 §6.2 | 倍率 | 低血幸存淬体奖励 |
 | `bolt.baseDamage(stage)` | `12 + 8×stage` | HP | 单雷基值（见 14 P017/018，R9） |
 | `PerfectBlockWindow` | 0.25 | s | 擦弹容错窗口 |
 | `PerfectBlockQualityBonus` | 1.5 | 倍率 | 擦弹淬体加成 |
@@ -516,12 +553,12 @@ function runTribulation(stage, worldSeed, farmGrid, player):
 
 ---
 
-## 11. 开放问题（需主创拍板）
+## 11. 已裁定问题（Decision Links）
 
-- **Q1**：模式切换是否完全冻结时间？本文建议"硬切换 + 1.5 s 定格"，不允许玩家在定格内重布阵。若主创希望更宽松，可改为"定格期间允许移动阵眼但不许新种"。
-- **Q2**：擦弹 (PerfectBlock) 是否保留？这是高玩核心技巧但实现/教学成本高。若取消，可改为"站在绝缘阵内自动减伤但不加淬体"。
-- **Q3**：一击必杀保护 (OSI) 在哪一阶取消？本文默认 stage ≤ 2。若主创追求更硬核，可取消 OSI 或全阶保留。
-- **Q4**：玩家死亡是 Game Over 还是软重置？见 `09-progression-system.md` §7，强烈影响节奏。
+- **D-07**：模式切换采用 1.5 s 硬定格，不允许重布阵。
+- **D-06**：擦弹 (PerfectBlock) 保留，作为高玩控血技巧。
+- **D-10**：一击必杀保护仅 stage ≤ 2 生效。
+- **D-03**：死亡采用混合制 C，损失 50% 流动资产并保留知识资产；不回档、不允许 save-scum。
 
 ---
 
