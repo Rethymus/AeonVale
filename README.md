@@ -116,13 +116,28 @@ GitHub Pages 启用并部署后，用真实公开地址复跑最低试玩 smoke�
 pnpm test:browser:pages
 ```
 
+如果真实 Pages smoke 失败，先运行只读诊断区分是部署漂移、线上旧 bundle、GitHub Action 状态，还是当前代码的首屏布局问题；该命令只读取本地 Git、GitHub Actions 和真实 Pages URL，不提交、不推送、不部署、不修改远端设置：
+
+```bash
+pnpm portfolio:pages-diagnose
+pnpm portfolio:pages-diagnose -- --json
+```
+
+等待远端 CI 或 Pages 部署时，先用只读 watch 汇总状态，避免把等待 Action 变成重复跑本地流水线；它会读取最新 main CI、Pages Action、github-pages deployment、Pages Source 和线上 bundle，判断是否是 CI 仍在跑、Pages 未触发、deployment 落后、线上旧 bundle 或本地 HEAD 尚未进入 `origin/main`。该命令不提交、不推送、不部署、不修改远端设置：
+
+```bash
+pnpm portfolio:pages-watch
+pnpm portfolio:pages-watch -- --json
+pnpm portfolio:pages-watch -- --wait --json
+```
+
 公开试玩版上线前可跑一键预检：先拒绝密钥风险路径，再生成审核截图，验证 GitHub Pages 公开树，最后打印非部署发布清单；该命令只做本地检查，不提交、不推送、不部署：
 
 ```bash
 pnpm portfolio:mvp-preflight
 ```
 
-当前发布预检已经覆盖公开树生成、审核截图、公开树浏览器 smoke、GitHub Pages 子路径构建、dist 泄露检查和维护者发布清单回显；真实 Pages URL 必须在重新部署后通过 `pnpm test:browser:pages`，才可宣称 GitHub Pages 闭环完成。后续若转为 Public、创建 Release 或修改远端设置，仍需要维护者当次明确授权。
+当前发布预检已经覆盖公开树生成、审核截图、公开树浏览器 smoke、GitHub Pages 子路径构建、dist 泄露检查和维护者发布清单回显；真实 Pages URL 必须在重新部署后通过 `pnpm test:browser:pages`，且失败时应先用 `pnpm portfolio:pages-diagnose` 归因复核，才可宣称 GitHub Pages 闭环完成。后续若转为 Public、创建 Release 或修改远端设置，仍需要维护者当次明确授权。
 
 需要快速同步当前 P0/P1/P2 位置时，可打印公开安全的状态矩阵；它只复述可审证据、Pages 验证状态、《星露谷物语》对标口径和 No-Go 边界，不提交、不推送、不部署、不修改 GitHub 设置：
 

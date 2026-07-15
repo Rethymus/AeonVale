@@ -47,6 +47,8 @@
  "audit:public-content": "node tools/public-content-audit.mjs",
  "portfolio:status": "node tools/portfolio-status.mjs",
  "portfolio:release-checklist": "node tools/portfolio-release-checklist.mjs",
+ "portfolio:pages-diagnose": "node tools/portfolio-pages-diagnose.mjs",
+ "portfolio:pages-watch": "node tools/portfolio-pages-watch.mjs",
  "portfolio:mvp-preflight": "node tools/portfolio-mvp-preflight.mjs",
  "verify:public-tree": "pnpm prepare:public-tree .public-tree && pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts && pnpm --dir .public-tree governance:readiness && pnpm --dir .public-tree governance:public && pnpm --dir .public-tree governance:check && pnpm --dir .public-tree typecheck && pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts && pnpm test:browser:public-tree && PUBLIC_BUILD=true VITE_BASE_PATH=/AeonVale/ pnpm --dir .public-tree build && pnpm --dir .public-tree governance:dist",
  "commitlint": "node node_modules/@commitlint/cli/cli.js",
@@ -59,7 +61,7 @@
  "prepare": "node node_modules/simple-git-hooks/cli.js"
  },
  "simple-git-hooks": {
- "commit-msg": "pnpm commitlint --edit $1"
+ "commit-msg": "pnpm commitlint --edit \"$1\""
  },
  "dependencies": {
  "pixi.js": "^8.6.0",
