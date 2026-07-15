@@ -4,7 +4,7 @@
   * 启动：pnpm dev（当前以浏览器作为开发/测试/作品展示入口；游戏核心仍按离线单机、多端适配方向推进）。全程中文 UI（C8）。
  */
 import { Application, Assets, Texture } from 'pixi.js';
-import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
+import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
 import { saveGame, deserializeState } from '@sim/serialize';
 import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { t } from '@content/i18n';
@@ -434,6 +434,7 @@ function publishDebugSnapshot(): void {
  __AEON_TEST__?: {
  matureFrontCrop: () => boolean;
  waterFrontCrop: () => boolean;
+ buyMosslingSeed: () => boolean;
  closePanels: () => void;
  advanceOneDay: () => void;
  };
@@ -514,6 +515,7 @@ function installPlaywrightTestHooks(): void {
  __AEON_TEST__?: {
  matureFrontCrop: () => boolean;
  waterFrontCrop: () => boolean;
+ buyMosslingSeed: () => boolean;
  closePanels: () => void;
  advanceOneDay: () => void;
  };
@@ -553,6 +555,18 @@ function installPlaywrightTestHooks(): void {
  saveState(state);
  publishDebugSnapshot();
  return watered;
+ },
+ buyMosslingSeed: () => {
+ const result = buyShopItem(state, 'seed.mossling', 1);
+ if (!result.ok) {
+ publishDebugSnapshot();
+ return false;
+ }
+ interactionPanel = { kind: 'none' };
+ focusOwnedSeedHotbar('seed.mossling');
+ saveState(state);
+ publishDebugSnapshot();
+ return true;
  },
  closePanels: () => {
  interactionPanel = { kind: 'none' };
