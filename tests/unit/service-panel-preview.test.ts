@@ -296,7 +296,7 @@ expect(processingServiceToastPresentation('空格/E/回车进入')).toEqual({
  });
  });
 
-it('connects farmstead service shortcuts to the portfolio MVP cultivation loop', () => {
+it('connects farmstead service shortcuts to the public demo cultivation loop', () => {
  expect(farmWorkServiceToastPresentation('确认').message).toContain('翻地、补种、浇水、收获与出货');
  expect(processingServiceToastPresentation('确认').message).toContain('余货先晾晒');
  expect(processingServiceToastPresentation('确认').message).toContain('炼丹与阵法');

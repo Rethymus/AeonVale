@@ -84,7 +84,7 @@ The project currently offers a browser-playable public demo target with determin
 
 ## 快速体验
 
-公开试玩版目标地址：`https://Rethymus.github.io/AeonVale/`。Private 验收阶段该地址可能尚未启用；转为 Public 后，GitHub Pages 由通过公开树检查的构建产物部署。
+公开试玩版验收目标地址：`https://Rethymus.github.io/AeonVale/`。当前处于公开前验收阶段；本地公开树已通过 GitHub Pages 子路径 smoke，真实 Pages URL 需要在重新部署公开树后复跑 `pnpm test:browser:pages`。后续若转为 Public 或发布 Release，仍必须重新走授权、公开树和泄露检查流程。
 
 ```bash
 pnpm install --frozen-lockfile
@@ -122,15 +122,15 @@ pnpm test:browser:pages
 pnpm portfolio:mvp-preflight
 ```
 
-当前本地发布预检已经覆盖公开树生成、审核截图、公开树浏览器 smoke、GitHub Pages 子路径构建、dist 泄露检查和维护者发布清单回显；该状态只证明 P0-A 本地可审版本就绪。P0-B 公开链接仍需要维护者明确授权公开仓库 / Pages 设置，并在真实 URL 上复跑 `pnpm test:browser:pages`。
+当前发布预检已经覆盖公开树生成、审核截图、公开树浏览器 smoke、GitHub Pages 子路径构建、dist 泄露检查和维护者发布清单回显；真实 Pages URL 必须在重新部署后通过 `pnpm test:browser:pages`，才可宣称 GitHub Pages 闭环完成。后续若转为 Public、创建 Release 或修改远端设置，仍需要维护者当次明确授权。
 
-需要快速同步当前 P0/P1/P2 位置时，可打印公开安全的状态矩阵；它只复述本地可审证据、Pages 阻塞项、《星露谷物语》对标口径和 No-Go 边界，不提交、不推送、不部署、不修改 GitHub 设置：
+需要快速同步当前 P0/P1/P2 位置时，可打印公开安全的状态矩阵；它只复述可审证据、Pages 验证状态、《星露谷物语》对标口径和 No-Go 边界，不提交、不推送、不部署、不修改 GitHub 设置：
 
 ```bash
 pnpm portfolio:status
 ```
 
-需要让发布前检查或外部脚本读取同一份状态时，可输出机器可读 JSON；内容仍只包含公开安全的 P0/P1/P2 位置、对标维度、证据命令、证据产物和 No-Go 边界。`evidenceArtifacts` 会列出 `portfolio-evidence-json`、`portfolio-screenshot-set` 和 `live-pages-smoke`，用于复核本地可审证据、截图绘制统计和真实 Pages smoke 阻塞项：
+需要让发布前检查或外部脚本读取同一份状态时，可输出机器可读 JSON；内容仍只包含公开安全的 P0/P1/P2 位置、对标维度、证据命令、证据产物和 No-Go 边界。`evidenceArtifacts` 会列出 `public-demo-evidence-json`、`public-demo-screenshot-set` 和 `live-pages-smoke`，用于复核可审证据、截图绘制统计和真实 Pages smoke 状态：
 
 ```bash
 pnpm portfolio:status -- --json
@@ -142,7 +142,7 @@ pnpm portfolio:status -- --json
 pnpm portfolio:release-checklist
 ```
 
-发布清单同样支持机器可读 JSON，供发布前脚本复核 `requiredEvidence`、`authorizationRequired`、`runtimeSignals.todayBriefingProof`、`screenshotEvidence`、`pnpm test:browser:pages` 和 `blocked-by-maintainer-authorization` 等 P0 证据与 No-Go 闸门；输出仍只包含公开安全信息：
+发布清单同样支持机器可读 JSON，供发布前脚本复核 `requiredEvidence`、`authorizationRequired`、`runtimeSignals.todayBriefingProof`、`screenshotEvidence`、`pnpm test:browser:pages` 和远端操作授权边界等 P0 证据与 No-Go 闸门；输出仍只包含公开安全信息：
 
 ```bash
 pnpm portfolio:release-checklist -- --json
@@ -162,7 +162,7 @@ pnpm audit:public-worktree
 pnpm audit:public-content
 ```
 
-审核截图可本地生成到 `test-results/portfolio/`，用于公开前审核和 README 展示素材筛选；该目录属于生成物，不进入公开树。截图脚本会同时覆盖桌面首屏、地点目录、农事面板和移动首屏，并写出 `test-results/portfolio/portfolio-mvp-evidence.json`，记录 P0-A 首轮闭环、今日简报 `todayBriefingProof`、截图尺寸、非空绘制比例、颜色数、修仙差异化和 P0-B 授权阻塞，方便维护者在授权 Pages 前复核证据：
+审核截图可本地生成到 `test-results/portfolio/`，用于公开前审核和 README 展示素材筛选；该目录属于生成物，不进入公开树。截图脚本会同时覆盖桌面首屏、地点目录、农事面板和移动首屏，并写出 `test-results/portfolio/portfolio-mvp-evidence.json`，记录首轮闭环、今日简报 `todayBriefingProof`、截图尺寸、非空绘制比例、颜色数、修仙差异化和远端操作授权边界，方便维护者复核证据：
 
 ```bash
 pnpm portfolio:capture
@@ -234,18 +234,18 @@ pnpm portfolio:capture
 | 范围 | 当前判断 | 还差什么 | 预计投入 |
 |---|---|---|---|
 | P0-A 本地可审版本 | **约 85%-90%**。核心循环、首屏提示、公开树、截图、测试与构建门禁已经具备本地可审基础 | 维护者人工试玩、截图可读性复核、少量首屏文案/视觉微调 | 0.5-2 天 |
-| P0-B GitHub Pages 公开展示 | **尚未部署**。只能在维护者授权后，从通过检查的公开树发布 | 开启/确认公开仓库与 Pages 设置，部署后用真实 URL 复跑 smoke 和泄露检查 | 授权后约 0.5-1 天 |
+| P0-B GitHub Pages 公开展示 | **待复验**。本地公开树已通过 `/AeonVale/` 子路径 smoke；当前真实 Pages URL 仍需重新部署后通过 smoke 才可作为验收入口 | 取得授权后重新部署公开树，并复跑 `pnpm test:browser:pages`、README 措辞和公开边界检查 | 授权后约 0.5-1 天复核 |
 | 更强公开试玩版 | **纵切片已成形，但还可更锋利**。访客能看懂种田、出货、补种与修仙分叉 | 把炼丹、阵法、主动引劫压成更直观的 3-5 分钟展示链 | 3-7 天 |
 | 独立游戏首版 | **不是当前阶段**。已有系统骨架多，但内容厚度、长期目标和人物生活感仍远少于成熟生活模拟 | 补长期目标链、NPC 记忆点、更多设施/地点/事件和桌面端封装 | 以月计 |
 
-诚实结论：当前项目已经接近“可公开试玩的纵切片”，但还没有完成真实 GitHub Pages 上线，也还不能被称为完整独立游戏首版。现阶段最有意义的工作是先收束 P0：保护私有设计资料、通过公开树部署、确保首屏与 5 分钟试玩足够清楚；随后再进入 P1/P2 的长期内容扩展。
+诚实结论：当前项目已经接近公开前验收的可试玩纵切片门槛，本地公开树可在 GitHub Pages 子路径下启动；但真实 GitHub Pages 链接当前仍未通过 smoke，必须重新部署后复验，且它还不能被称为完整独立游戏首版。现阶段最有意义的工作是继续收束 P0 体验：保护私有设计资料、保持公开树和 Pages 稳定、让首屏与 5 分钟试玩更清楚；随后再进入 P1/P2 的长期内容扩展。
 
 ### 当前差距与优先级
 
 | 优先级 | 和《星露谷物语》相比还缺什么 | 当前处理策略 |
 |---|---|---|
 | P0 | 首次进入时还不够像完整产品，需要更强的“我该做什么、为什么做” | 继续压缩前 5 分钟路径，优先打磨今日简报、目标提示、首屏读图和 GitHub Pages 真机验证 |
-| P0 | 公开试玩还需要真实 URL 验证，而不只是本地构建通过 | 只从通过检查的公开树部署 Pages；上线后复跑浏览器 smoke、截图和 dist 泄露检查 |
+| P0 | 公开试玩需要持续保证真实 URL 可访问，而不只是本地构建通过 | 只从通过检查的公开树部署 Pages；每次部署后复跑浏览器 smoke、截图和 dist 泄露检查 |
 | P1 | 长期目标链还没有《星露谷物语》那种一眼可见的季度/年度牵引 | 把境界、设施、炼丹、引劫压缩成更清晰的中期目标，不急着堆内容数量 |
 | P1 | NPC 与节日已有框架，但生活感和记忆点还薄 | 先保留能改变每日选择的 NPC 信号、委托、生辰和节日，再逐步扩写人物厚度 |
 | P2 | 作物、地点、收藏、事件规模远小于成熟生活模拟游戏 | 公开试玩阶段不追求体量；独立游戏阶段按补丁 / DLC 式节奏扩容 |
@@ -258,11 +258,11 @@ pnpm portfolio:capture
 | 阶段 | 必须先完成什么 | 完成后说明 |
 |---|---|---|
 | P0-A 本地可审版本 | 首屏读图、今日简报、首轮农务、出货、补种、公开树、截图和浏览器 smoke 全部通过 | 可以作为本地可审版本，请维护者人工试玩和确认公开范围 |
-| P0-B GitHub Pages 部署 | 仅从 `pnpm prepare:public-tree` 生成的公开树构建，启用 Pages 后用 `pnpm test:browser:pages` 复跑真实 URL smoke，再复核截图和 dist 泄露检查 | 可以作为公开试玩链接对外展示 |
+| P0-B GitHub Pages 部署 | 仅从 `pnpm prepare:public-tree` 生成的公开树构建，启用 Pages 后用 `pnpm test:browser:pages` 复跑真实 URL smoke，再复核截图和 dist 泄露检查 | 真实 URL smoke 通过后才可作为可试玩 Demo 验收入口；转 Public 前仍需重新复核 |
 | P1 独立游戏首版 | 把炼丹、设施、阵法、境界和主动引劫整理成更清晰的中期目标链 | 从“展示纵切片”转向“可持续游玩” |
 | P2 补丁 / DLC 扩展 | 扩充 NPC 记忆点、节日、地点、作物、收藏、事件和长期叙事 | 逐步靠近《星露谷物语》的生活密度，而不是一次性堆量 |
 
-截至当前 P0-A 的自动化证据已经覆盖：本地构建、单元/集成/属性/回放/无头测试、浏览器 smoke、审核截图、公开树生成、公开树构建、公开内容审查、dist 泄露检查和非部署发布清单回显。P0-B 仍需要维护者授权公开仓库 / Pages 设置，并在真实 URL 上复验；Agent 不会自行 commit、push、发布或更改远端设置。
+截至当前自动化证据已经覆盖：本地构建、单元/集成/属性/回放/无头测试、浏览器 smoke、审核截图、公开树生成、公开树构建、公开内容审查、dist 泄露检查、非部署发布清单回显。真实 GitHub Pages URL 需要在重新部署后复跑 smoke；Agent 不会自行公开仓库、创建 Release、打 tag 或更改远端设置，这些动作仍需要维护者当次明确授权。
 
 ### 公开试玩验收清单
 

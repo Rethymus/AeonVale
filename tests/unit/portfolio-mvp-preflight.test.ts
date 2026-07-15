@@ -10,7 +10,7 @@ function indexOfRequired(text: string): number {
  return index;
 }
 
-describe('作品集 MVP 本地预检', () => {
+describe('可试玩 Demo 本地预检', () => {
  it('按公开发布风险顺序运行并以非部署清单收尾', () => {
  const worktreeAudit = indexOfRequired("args: ['audit:public-worktree', '--', '--fail-on-secret-risk']");
  const contentAudit = indexOfRequired("args: ['audit:public-content', '--', '--fail-on-high-risk']");
@@ -29,7 +29,7 @@ describe('作品集 MVP 本地预检', () => {
  expect(script).toContain('Print non-deploying portfolio release checklist');
  });
 
- it('清理旧截图、校验四张作品集截图，并默认移除公开树', () => {
+ it('清理旧截图、校验四张试玩验收截图，并默认移除公开树', () => {
  expect(script).toContain("rmSync('test-results/portfolio', { recursive: true, force: true })");
  expect(script).toContain("'test-results/portfolio/01-farm-loop.png'");
  expect(script).toContain("'test-results/portfolio/02-location-routing.png'");
@@ -49,8 +49,9 @@ describe('作品集 MVP 本地预检', () => {
  expect(script).toContain('paintedRatio');
  expect(script).toContain('minPaintedRatio: 0.55');
  expect(script).toContain('screenshot stats are too blank');
- expect(script).toContain('blocked-by-maintainer-authorization');
- expect(script).toContain('Verified generated portfolio MVP evidence');
+ expect(script).toContain('remote-action authorization boundary');
+ expect(script).toContain('Verified generated public demo evidence');
+ expect(script).toContain('public demo review screenshots');
  expect(script).toContain("rmSync('.public-tree', { recursive: true, force: true })");
  expect(script).toContain('--keep-public-tree');
  });

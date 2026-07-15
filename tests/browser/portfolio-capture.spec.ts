@@ -209,7 +209,7 @@ function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence:
  return {
  generatedBy: 'portfolio:capture',
  priority: 'P0-A',
- localStatus: '本地作品集 MVP 可审证据：首轮灵草日循环、出货补种、今日简报和截图均由浏览器自动化生成。',
+ localStatus: '本地可试玩 Demo 验收证据：首轮灵草日循环、出货补种、今日简报和截图均由浏览器自动化生成。',
  stardewComparison: [
  'P0 对标《星露谷物语》的低门槛日循环：翻地、播种、浇水、过夜、收获、出货、补种。',
  'P0 不追求成熟生活模拟体量，只证明数分钟内能看懂并重复第一轮农务经济闭环。',
@@ -241,11 +241,11 @@ function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence:
  screenshotEvidence,
  next: [
  '维护者人工试玩 3-5 分钟，确认首屏无需阅读设计文档也能理解下一步。',
- '维护者授权后从公开树部署 GitHub Pages，并在真实 URL 运行 pnpm test:browser:pages。',
+ '后续转 Public、重新推送公开树、修改 Pages 设置、创建 tag 或 Release 前，重新取得维护者当次明确授权。',
  ],
  noGo: [
- 'P0-B GitHub Pages 公开展示未获维护者授权前保持 blocked-by-maintainer-authorization。',
- '真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 P0-B 闭环完成。',
+ 'Public、Release 或远端设置变更仍保持 remote-action authorization boundary。',
+ '每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。',
  'docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入公开树、Pages 或 Release 产物。',
  ],
  };
@@ -292,7 +292,7 @@ async function expectCanvasFitsViewport(page: Page): Promise<void> {
  expect(box!.height).toBeLessThanOrEqual(viewport!.height);
 }
 
-test('captures deterministic portfolio screenshots for GitHub showcase review', async ({ page }) => {
+test('captures deterministic review screenshots for public demo validation', async ({ page }) => {
  test.setTimeout(180_000);
  await page.setViewportSize({ width: 1440, height: 900 });
  await installShowcaseSave(page);
@@ -312,7 +312,7 @@ await page.keyboard.press('Escape');
  await capturePortfolioScreenshot(page, 'test-results/portfolio/03-farm-actions.png');
 });
 
-test('captures a mobile-safe first screen for GitHub Pages portfolio review', async ({ page }) => {
+test('captures a mobile-safe first screen for GitHub Pages demo review', async ({ page }) => {
  test.setTimeout(60_000);
  await page.setViewportSize({ width: 390, height: 844 });
  await installShowcaseSave(page);

@@ -754,6 +754,646 @@ export const STAYING_WORLD_INCIDENT_CATALOG: readonly StayingWorldIncidentDef[] 
  count: 8,
  pressureRelief: 6 * MILLI,
  },
+ {
+ id: 'incident.wine-centennial',
+ title: '百年药酒祭',
+ summary: '百年大典需海量灵药酒洒地敬先；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 8,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-centennial',
+ title: '百年药膏祭',
+ summary: '百年大典需海量灵药膏熬制镇灾灵丹；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 8,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-centennial',
+ title: '百年残卷祭',
+ summary: '百年大典需海量丹方残卷补全传承大典；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 8,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-centennial',
+ title: '百年阵核祭',
+ summary: '百年大典需海量阵核铸制镇山大阵；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 8,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-centennial',
+ title: '百年灵壤肥祭',
+ summary: '百年大典需海量灵壤肥祭土祈福万年丰年；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 8,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-millennium',
+ title: '千年纪元灵石祭',
+ summary: '千年纪元大典需海量灵石镇场祭天；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-millennium',
+ title: '千年内丹祭',
+ summary: '千年纪元大典需海量妖兽内丹炼制镇山重器；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-millennium',
+ title: '千年碎件祭',
+ summary: '千年纪元大典需海量破损法宝熔炼镇山重器；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-millennium',
+ title: '千年封藏祭',
+ summary: '千年纪元大典需海量封藏灵草炼制镇山灵丹；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-millennium',
+ title: '千年晾晒祭',
+ summary: '千年纪元大典需海量晾晒灵草祭祖；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-millennium',
+ title: '千年药酒祭',
+ summary: '千年纪元大典需海量灵药酒洒地敬先；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-millennium',
+ title: '千年药膏祭',
+ summary: '千年纪元大典需海量灵药膏熬制镇灾灵丹；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-millennium',
+ title: '千年残卷祭',
+ summary: '千年纪元大典需海量丹方残卷补全传承大典；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-millennium',
+ title: '千年阵核祭',
+ summary: '千年纪元大典需海量阵核铸制镇山大阵；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-millennium',
+ title: '千年灵壤肥祭',
+ summary: '千年纪元大典需海量灵壤肥祭土祈福万年丰年；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 10,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-eternal',
+ title: '万古灵石祭',
+ summary: '万古纪元大典需海量灵石镇场祭天永镇山门；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-eternal',
+ title: '万古内丹祭',
+ summary: '万古纪元大典需海量妖兽内丹炼制镇山重器永镇山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-eternal',
+ title: '万古碎件祭',
+ summary: '万古纪元大典需海量破损法宝熔炼镇山重器永镇山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-eternal',
+ title: '万古封藏祭',
+ summary: '万古纪元大典需海量封藏灵草炼制镇山灵丹永镇山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-eternal',
+ title: '万古晾晒祭',
+ summary: '万古纪元大典需海量晾晒灵草祭祖永镇山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-eternal',
+ title: '万古药酒祭',
+ summary: '万古纪元大典需海量灵药酒洒地敬先永镇山门；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-eternal',
+ title: '万古药膏祭',
+ summary: '万古纪元大典需海量灵药膏熬制镇灾灵丹永镇山门；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-eternal',
+ title: '万古残卷祭',
+ summary: '万古纪元大典需海量丹方残卷补全传承大典永镇山门；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-eternal',
+ title: '万古阵核祭',
+ summary: '万古纪元大典需海量阵核铸制镇山大阵永镇山门；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-eternal',
+ title: '万古灵壤肥祭',
+ summary: '万古纪元大典需海量灵壤肥祭土祈福万年丰年永镇山门；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 12,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-final',
+ title: '终焉灵石祭',
+ summary: '终焉大典需终量灵石镇场祭天永定山门气运；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-final',
+ title: '终焉内丹祭',
+ summary: '终焉大典需终量妖兽内丹炼制镇山重器永定山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-final',
+ title: '终焉碎件祭',
+ summary: '终焉大典需终量破损法宝熔炼镇山重器永定山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-final',
+ title: '终焉封藏祭',
+ summary: '终焉大典需终量封藏灵草炼制镇山灵丹永定山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-final',
+ title: '终焉晾晒祭',
+ summary: '终焉大典需终量晾晒灵草祭祖永定山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-final',
+ title: '终焉药酒祭',
+ summary: '终焉大典需终量灵药酒洒地敬先永定山门；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-final',
+ title: '终焉药膏祭',
+ summary: '终焉大典需终量灵药膏熬制镇灾灵丹永定山门；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-final',
+ title: '终焉残卷祭',
+ summary: '终焉大典需终量丹方残卷补全传承大典永定山门；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-final',
+ title: '终焉阵核祭',
+ summary: '终焉大典需终量阵核铸制镇山大阵永定山门；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-final',
+ title: '终焉灵壤肥祭',
+ summary: '终焉大典需终量灵壤肥祭土祈福万年丰年永定山门；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 15,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-ultimate',
+ title: '终极灵石祭',
+ summary: '终极大典需终极量灵石镇场祭天永定山门气运；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-ultimate',
+ title: '终极内丹祭',
+ summary: '终极大典需终极量妖兽内丹炼制镇山重器永定山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-ultimate',
+ title: '终极碎件祭',
+ summary: '终极大典需终极量破损法宝熔炼镇山重器永定山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-ultimate',
+ title: '终极封藏祭',
+ summary: '终极大典需终极量封藏灵草炼制镇山灵丹永定山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-ultimate',
+ title: '终极晾晒祭',
+ summary: '终极大典需终极量晾晒灵草祭祖永定山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-ultimate',
+ title: '终极药酒祭',
+ summary: '终极大典需终极量灵药酒洒地敬先永定山门；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-ultimate',
+ title: '终极药膏祭',
+ summary: '终极大典需终极量灵药膏熬制镇灾灵丹永定山门；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-ultimate',
+ title: '终极残卷祭',
+ summary: '终极大典需终极量丹方残卷补全传承大典永定山门；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-ultimate',
+ title: '终极阵核祭',
+ summary: '终极大典需终极量阵核铸制镇山大阵永定山门；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-ultimate',
+ title: '终极灵壤肥祭',
+ summary: '终极大典需终极量灵壤肥祭土祈福万年丰年永定山门；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 20,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-supreme',
+ title: '无上灵石祭',
+ summary: '无上大典需无上量灵石镇场祭天永定山门气运；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-supreme',
+ title: '无上内丹祭',
+ summary: '无上大典需无上量妖兽内丹炼制镇山重器永定山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-supreme',
+ title: '无上碎件祭',
+ summary: '无上大典需无上量破损法宝熔炼镇山重器永定山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-supreme',
+ title: '无上封藏祭',
+ summary: '无上大典需无上量封藏灵草炼制镇山灵丹永定山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-supreme',
+ title: '无上晾晒祭',
+ summary: '无上大典需无上量晾晒灵草祭祖永定山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-supreme',
+ title: '无上药酒祭',
+ summary: '无上大典需无上量灵药酒洒地敬先永定山门；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-supreme',
+ title: '无上药膏祭',
+ summary: '无上大典需无上量灵药膏熬制镇灾灵丹永定山门；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-supreme',
+ title: '无上残卷祭',
+ summary: '无上大典需无上量丹方残卷补全传承大典永定山门；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-supreme',
+ title: '无上阵核祭',
+ summary: '无上大典需无上量阵核铸制镇山大阵永定山门；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-supreme',
+ title: '无上灵壤肥祭',
+ summary: '无上大典需无上量灵壤肥祭土祈福万年丰年永定山门；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 25,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-apex',
+ title: '巅峰灵石祭',
+ summary: '巅峰大典需巅峰量灵石镇场祭天永定山门气运；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-apex',
+ title: '巅峰内丹祭',
+ summary: '巅峰大典需巅峰量妖兽内丹炼制镇山重器永定山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-apex',
+ title: '巅峰碎件祭',
+ summary: '巅峰大典需巅峰量破损法宝熔炼镇山重器永定山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-apex',
+ title: '巅峰封藏祭',
+ summary: '巅峰大典需巅峰量封藏灵草炼制镇山灵丹永定山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-apex',
+ title: '巅峰晾晒祭',
+ summary: '巅峰大典需巅峰量晾晒灵草祭祖永定山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-apex',
+ title: '巅峰药酒祭',
+ summary: '巅峰大典需巅峰量灵药酒洒地敬先永定山门；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-apex',
+ title: '巅峰药膏祭',
+ summary: '巅峰大典需巅峰量灵药膏熬制镇灾灵丹永定山门；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-apex',
+ title: '巅峰残卷祭',
+ summary: '巅峰大典需巅峰量丹方残卷补全传承大典永定山门；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-apex',
+ title: '巅峰阵核祭',
+ summary: '巅峰大典需巅峰量阵核铸制镇山大阵永定山门；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-apex',
+ title: '巅峰灵壤肥祭',
+ summary: '巅峰大典需巅峰量灵壤肥祭土祈福万年丰年永定山门；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 30,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-zenith',
+ title: '极巅灵石祭',
+ summary: '极巅大典需极巅量灵石镇场祭天永定山门气运；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 50,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-zenith',
+ title: '极巅内丹祭',
+ summary: '极巅大典需极巅量妖兽内丹炼制镇山重器永定山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-zenith',
+ title: '极巅碎件祭',
+ summary: '极巅大典需极巅量破损法宝熔炼镇山重器永定山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-zenith',
+ title: '极巅封藏祭',
+ summary: '极巅大典需极巅量封藏灵草炼制镇山灵丹永定山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-zenith',
+ title: '极巅晾晒祭',
+ summary: '极巅大典需极巅量晾晒灵草祭祖永定山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.wine-zenith',
+ title: '极巅药酒祭',
+ summary: '极巅大典需极巅量灵药酒洒地敬先永定山门；得以药酒应供，或借巡守兽押运奠酒。',
+ itemId: 'item.herbal-wine',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.poultice-zenith',
+ title: '极巅药膏祭',
+ summary: '极巅大典需极巅量灵药膏熬制镇灾灵丹永定山门；得以药膏应供，或借巡守兽押运入库。',
+ itemId: 'item.spirit-poultice',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.recipe-zenith',
+ title: '极巅残卷祭',
+ summary: '极巅大典需极巅量丹方残卷补全传承大典永定山门；得以残卷应供，或借巡守兽押运入库。',
+ itemId: 'item.recipe-fragment',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.array-core-zenith',
+ title: '极巅阵核祭',
+ summary: '极巅大典需极巅量阵核铸制镇山大阵永定山门；得以阵核应供，或借巡守兽熔炼代缴。',
+ itemId: 'item.array-core',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.compost-zenith',
+ title: '极巅灵壤肥祭',
+ summary: '极巅大典需极巅量灵壤肥祭土祈福万年丰年永定山门；得以灵壤肥应供，或借巡守兽押运培土。',
+ itemId: 'item.spirit-compost',
+ count: 40,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.spirit-stone-eternal-zenith',
+ title: '永镇灵石祭',
+ summary: '永镇大典需永镇量灵石镇场祭天永镇山门气运；备好灵石应祭，或借巡守兽代为押运。',
+ itemId: 'item.spirit-stone',
+ count: 60,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.beast-core-eternal-zenith',
+ title: '永镇内丹祭',
+ summary: '永镇大典需永镇量妖兽内丹炼制镇山重器永镇山门；备好内丹应供，或借巡守兽猎妖代缴。',
+ itemId: 'item.beast-core',
+ count: 50,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.talisman-eternal-zenith',
+ title: '永镇碎件祭',
+ summary: '永镇大典需永镇量破损法宝熔炼镇山重器永镇山门；得以碎件应供，或借巡守兽拆解代缴。',
+ itemId: 'item.broken-talisman',
+ count: 50,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.sealed-eternal-zenith',
+ title: '永镇封藏祭',
+ summary: '永镇大典需永镇量封藏灵草炼制镇山灵丹永镇山门；得以封藏灵草应供，或借巡守兽押运入库。',
+ itemId: 'item.sealed-herb',
+ count: 50,
+ pressureRelief: 6 * MILLI,
+ },
+ {
+ id: 'incident.dried-herb-eternal-zenith',
+ title: '永镇晾晒祭',
+ summary: '永镇大典需永镇量晾晒灵草祭祖永镇山门；得以晾晒灵草应供，或借巡守兽晒场翻理。',
+ itemId: 'item.dried-herb',
+ count: 50,
+ pressureRelief: 6 * MILLI,
+ },
 ];
 
 function assistingGuardBeast(state: GameState, incident: StayingWorldIncidentDef): GuardBeastIncidentAssist | null {
@@ -1525,6 +2165,406 @@ return {
  return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
  }
  if (incident.id === 'incident.dried-herb-centennial') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-centennial') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-centennial') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-centennial') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-centennial') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-centennial') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-millennium') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-eternal') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-final') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-ultimate') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-supreme') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-apex') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.wine-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.poultice-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.recipe-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.array-core-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.compost-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.spirit-stone-eternal-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.beast-core-eternal-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.talisman-eternal-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.sealed-eternal-zenith') {
+ const best = preferredGuardBeastForPatrol(state);
+ if (!best) return null;
+ return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
+ }
+ if (incident.id === 'incident.dried-herb-eternal-zenith') {
  const best = preferredGuardBeastForPatrol(state);
  if (!best) return null;
  return { beastId: best.id, vigorCost: 1, pressureReliefBonus: guardBeastMasteryReady(best) ? 5 * MILLI : best.specialty === 'field-ward' || guardBeastSpecialtyReady(best) ? 4 * MILLI : 3 * MILLI, mastery: guardBeastMasteryReady(best) || undefined, spentCountOverride: Math.max(0, incident.count - 1), specialtyProgress: 'field-ward' };
