@@ -1,10 +1,29 @@
 import { expect, test } from '@playwright/test';
-import { clearIntroDialogue, gameDebugSnapshot, openGame } from './openGame';
+import { clearIntroDialogue, gameDebugSnapshot, gameEntryPath, openGame } from './openGame';
 
 test('loads the public demo first screen without page errors', async ({ page }) => {
   test.setTimeout(45_000);
+  const isDeployedPagesSmoke = process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true';
   const errors: string[] = [];
+  const failedRequests: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
+  page.on('requestfailed', (request) => failedRequests.push(`${request.failure()?.errorText ?? 'failed'} ${request.url()}`));
+
+  if (isDeployedPagesSmoke) {
+    await page.goto(gameEntryPath());
+    const canvas = page.locator('canvas');
+    await expect(canvas).toBeVisible();
+    await expect(page).toHaveTitle(/Aeon Vale|永恒山谷/);
+    const box = await canvas.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(100);
+    expect(box?.height ?? 0).toBeGreaterThan(100);
+    await canvas.click({ position: { x: 10, y: 10 } });
+    await page.waitForTimeout(500);
+    expect(errors).toEqual([]);
+    expect(failedRequests).toEqual([]);
+    return;
+  }
+
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page).toHaveTitle(/Aeon Vale|永恒山谷/);
@@ -48,4 +67,5 @@ test('loads the public demo first screen without page errors', async ({ page }) 
   expect(debug.starterSpiritStoneCount).toBe(2);
   expect(debug.shippingBinItemCount).toBe(0);
   expect(errors).toEqual([]);
+  expect(failedRequests).toEqual([]);
 });
