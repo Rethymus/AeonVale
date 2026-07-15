@@ -115,7 +115,7 @@ expect(briefing.body).toContain('意义：稳定农务后，灵草会持续转�
  expect(briefing.body).toContain('动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。');
  });
 
-it('首轮里程碑简报仍保留修仙回报，让作品集访客看懂下一步价值', () => {
+it('首轮里程碑简报仍保留修仙回报，让试玩访客看懂下一步价值', () => {
  const { state, ctx } = setup(101);
  const tile = state.tiles[0]!;
  tile.tilled = true;

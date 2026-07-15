@@ -32,16 +32,16 @@ describe('公开试玩状态矩阵', () => {
     expect(output).toContain('对标维度');
     expect(output).toContain('P0 日循环（daily-loop）');
     expect(output).toContain('P0 公开发布可验证性（publishability）');
-    expect(output).toContain('状态：blocked-by-maintainer-authorization');
+    expect(output).toContain('状态：pages-redeploy-required');
     expect(output).toContain('P2 内容体量（content-scale）');
     expect(output).toContain('证据产物');
-    expect(output).toContain('P0-A portfolio-evidence-json');
+    expect(output).toContain('P0-A public-demo-evidence-json');
     expect(output).toContain('test-results/portfolio/portfolio-mvp-evidence.json');
     expect(output).toContain('first-loop-complete onboarding objective');
     expect(output).toContain('screenshotEvidence paintedRatio and colors meet thresholds');
     expect(output).toContain('P0-B live-pages-smoke');
     expect(output).toContain('PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL');
-    expect(output).toContain('真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 P0-B GitHub Pages 闭环完成');
+    expect(output).toContain('每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成');
     expect(output).toContain('docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入公开树、Pages 或 Release 产物');
   });
 
@@ -102,8 +102,8 @@ describe('公开试玩状态矩阵', () => {
     expect(status.dimensions).toContainEqual(expect.objectContaining({
       id: 'publishability',
       priority: 'P0',
-      evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree',
-      status: 'blocked-by-maintainer-authorization',
+      evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree && pnpm test:browser:pages',
+      status: 'pages-redeploy-required',
     }));
     expect(status.dimensions).toContainEqual(expect.objectContaining({
       id: 'content-scale',
@@ -111,7 +111,7 @@ describe('公开试玩状态矩阵', () => {
       status: 'p2-deferred',
     }));
     expect(status.evidenceArtifacts).toContainEqual(expect.objectContaining({
-      id: 'portfolio-evidence-json',
+      id: 'public-demo-evidence-json',
       priority: 'P0-A',
       path: 'test-results/portfolio/portfolio-mvp-evidence.json',
       generatedBy: 'pnpm portfolio:capture',
@@ -120,12 +120,12 @@ describe('公开试玩状态矩阵', () => {
         'first-loop-complete onboarding objective',
         '10/10 first-loop progress',
         'today briefing proof includes farm, alchemy, tribulation, and 10/10 progress cues',
-        'blocked-by-maintainer-authorization',
+        'remote-action authorization boundary',
       ]),
       publicTreePolicy: expect.stringContaining('must not enter the public tree'),
     }));
     expect(status.evidenceArtifacts).toContainEqual(expect.objectContaining({
-      id: 'portfolio-screenshot-set',
+      id: 'public-demo-screenshot-set',
       priority: 'P0-A',
       path: 'test-results/portfolio/*.png',
       requiredSignals: expect.arrayContaining([
@@ -139,8 +139,8 @@ describe('公开试玩状态矩阵', () => {
       path: 'https://Rethymus.github.io/AeonVale/',
       generatedBy: 'maintainer-authorized GitHub Pages deployment',
       reviewCommand: 'pnpm test:browser:pages',
-      publicTreePolicy: expect.stringContaining('blocked until maintainer authorization'),
+      publicTreePolicy: expect.stringContaining('verified for private Pages'),
     }));
-    expect(status.noGo).toContain('真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 P0-B GitHub Pages 闭环完成。');
+    expect(status.noGo).toContain('每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。');
   });
 });

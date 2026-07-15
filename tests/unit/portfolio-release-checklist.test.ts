@@ -37,7 +37,7 @@ describe('公开试玩发布清单', () => {
     expect(output).toContain('screenshotEvidence：4 张截图尺寸均为 960x540');
     expect(output).toContain('paintedRatio 达到阈值，colors 达到阈值');
     expect(output).toContain('该文件仍是生成物，不进入公开树');
-    expect(output).toContain('真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成');
+    expect(output).toContain('每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成');
     expect(output).toContain('对标范围与优先级复核');
     expect(output).toContain('以《星露谷物语》作为长期生活感参照');
     expect(output).toContain('P0 只要求公开试玩版与 GitHub Pages 部署闭环成立');
@@ -70,11 +70,11 @@ describe('公开试玩发布清单', () => {
 
     const evidenceById = new Map(checklist.requiredEvidence.map((evidence) => [evidence.id, evidence]));
     expect(evidenceById.get('portfolio-mvp-preflight')?.command).toBe('pnpm portfolio:mvp-preflight -- --keep-public-tree');
-    expect(evidenceById.get('portfolio-evidence-json')?.requiredSignals.join('\n')).toContain('runtimeSignals.todayBriefingProof');
-    expect(evidenceById.get('portfolio-screenshot-set')?.requiredSignals.join('\n')).toContain('screenshotEvidence');
+    expect(evidenceById.get('public-demo-evidence-json')?.requiredSignals.join('\n')).toContain('runtimeSignals.todayBriefingProof');
+    expect(evidenceById.get('public-demo-screenshot-set')?.requiredSignals.join('\n')).toContain('screenshotEvidence');
     expect(evidenceById.get('live-pages-smoke')?.command).toBe('pnpm test:browser:pages');
-    expect(evidenceById.get('live-pages-smoke')?.blocker).toBe('blocked-by-maintainer-authorization');
-    expect(checklist.authorizationRequired).toContain('启用 GitHub Pages 或设置 ENABLE_PAGES=true');
+    expect(evidenceById.get('live-pages-smoke')?.blocker).toBe('requires re-verification after every deployment and before Public/Release operations');
+    expect(checklist.authorizationRequired).toContain('重新推送公开树、调整 Pages 设置或修改 ENABLE_PAGES 闸门');
     expect(checklist.noGo.join('\n')).toContain('真实 Pages URL 尚未通过 pnpm test:browser:pages');
   });
 });

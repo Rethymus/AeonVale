@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import playwrightConfig from '../../playwright.config';
 
-describe('Playwright 作品集产物配置', () => {
- it('keeps portfolio screenshots outside Playwright managed output cleanup', () => {
+describe('Playwright 试玩验收产物配置', () => {
+ it('keeps review screenshots outside Playwright managed output cleanup', () => {
  expect(playwrightConfig.outputDir).toBe('test-results/playwright');
  expect(playwrightConfig.outputDir).not.toBe('test-results');
  });

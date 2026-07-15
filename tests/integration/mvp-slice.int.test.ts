@@ -46,7 +46,7 @@ function setupPortfolioNewGame(seed = 20260710) {
 }
 
 describe('MVP 垂直切片', () => {
- it('作品集首轮农务闭环：新档真实完成播种、照料、收获、出货、结算、补种', () => {
+ it('试玩首轮农务闭环：新档真实完成播种、照料、收获、出货、结算、补种', () => {
  const { state, ctx } = setupPortfolioNewGame();
  const at = { x: 4, y: 4 };
  const secondAt = { x: 5, y: 4 };
