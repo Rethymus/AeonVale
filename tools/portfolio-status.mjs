@@ -15,7 +15,7 @@ const rows = [
     scope: 'P0-B GitHub Pages 公开展示',
     status: '待复验：本地公开树 smoke 已通过；当前真实 Pages URL 必须在重新部署后再次通过 smoke 才能宣称闭环完成',
     evidence: 'pnpm test:browser:pages 访问真实 URL',
-    next: `使用维护者授权的公开树产物重新部署后，复跑 pnpm test:browser:pages 并复核 ${pagesUrl}`,
+    next: `使用维护者授权的公开树产物重新部署后，先用 pnpm portfolio:pages-diagnose 归因复核，再复跑 pnpm test:browser:pages 并复核 ${pagesUrl}`,
   },
   {
     scope: 'P1 独立游戏首版循环',

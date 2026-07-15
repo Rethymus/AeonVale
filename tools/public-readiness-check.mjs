@@ -31,6 +31,8 @@ for (const file of [
   'tools/public-worktree-audit.mjs',
   'tools/portfolio-status.mjs',
   'tools/portfolio-release-checklist.mjs',
+  'tools/portfolio-pages-diagnose.mjs',
+  'tools/portfolio-pages-watch.mjs',
   'tools/publication-check.mjs',
   'tools/public-dist-check.mjs',
 ]) {
@@ -75,6 +77,16 @@ if (typeof packageJson.scripts?.['portfolio:release-checklist'] !== 'string') {
 } else if (!packageJson.scripts['portfolio:release-checklist'].includes('tools/portfolio-release-checklist.mjs')) {
   failures.push('package.json portfolio:release-checklist must run the non-deploying release checklist script');
 }
+if (typeof packageJson.scripts?.['portfolio:pages-diagnose'] !== 'string') {
+  failures.push('package.json missing required script: portfolio:pages-diagnose');
+} else if (!packageJson.scripts['portfolio:pages-diagnose'].includes('tools/portfolio-pages-diagnose.mjs')) {
+  failures.push('package.json portfolio:pages-diagnose must run the non-deploying Pages diagnosis script');
+}
+if (typeof packageJson.scripts?.['portfolio:pages-watch'] !== 'string') {
+  failures.push('package.json missing required script: portfolio:pages-watch');
+} else if (!packageJson.scripts['portfolio:pages-watch'].includes('tools/portfolio-pages-watch.mjs')) {
+  failures.push('package.json portfolio:pages-watch must run the non-deploying Pages watch script');
+}
 requireIncludes('tools/portfolio-status.mjs', '不提交、不推送、不部署、不修改 GitHub 设置', 'Portfolio status must be explicitly non-deploying');
 requireIncludes('tools/portfolio-status.mjs', 'P0-A 本地可审版本', 'Portfolio status must distinguish local public-demo readiness');
 requireIncludes('tools/portfolio-status.mjs', 'P0-B GitHub Pages 公开展示', 'Portfolio status must distinguish deployed GitHub Pages status');
@@ -92,7 +104,31 @@ requireIncludes('tools/portfolio-status.mjs', "id: 'public-demo-screenshot-set'"
 requireIncludes('tools/portfolio-status.mjs', "id: 'live-pages-smoke'", 'Portfolio status must include the post-deployment live Pages smoke artifact');
 requireIncludes('tools/portfolio-status.mjs', 'screenshotEvidence paintedRatio and colors meet thresholds', 'Portfolio status must carry screenshot paint-stat evidence requirements');
 requireIncludes('tools/portfolio-status.mjs', 'PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL', 'Portfolio status must carry deployed Pages smoke evidence requirements');
+requireIncludes('tools/portfolio-status.mjs', 'pnpm portfolio:pages-diagnose', 'Portfolio status must route live Pages failures through the non-deploying diagnosis command');
 requireIncludes('tools/portfolio-status.mjs', 'pages-redeploy-required', 'Portfolio status must record that live Pages requires deployment and re-verification');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', '不提交、不推送、不部署、不修改远端设置', 'Pages diagnosis must be explicitly non-deploying');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'local-head-differs-from-origin-main', 'Pages diagnosis must detect local branch drift from origin/main');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'AbortController', 'Pages diagnosis must bound live Pages fetches with a timeout');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'live-pages-fetch-failed', 'Pages diagnosis must classify network or live Pages fetch failures');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'deployed-bundle-uses-body-append', 'Pages diagnosis must detect deployed stale canvas body append bundles');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'live-canvas-starts-outside-initial-viewport', 'Pages diagnosis must detect live canvas viewport failures');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'latest-pages-action-not-green', 'Pages diagnosis must include latest GitHub Pages Action status');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', 'process.argv.includes(\'--json\')', 'Pages diagnosis must expose a machine-readable JSON mode');
+requireIncludes('tools/portfolio-pages-watch.mjs', '不提交、不推送、不部署、不修改远端设置', 'Pages watch must be explicitly non-deploying');
+requireIncludes('tools/portfolio-pages-watch.mjs', "process.argv.includes('--json')", 'Pages watch must expose a machine-readable JSON mode');
+requireIncludes('tools/portfolio-pages-watch.mjs', "process.argv.includes('--wait')", 'Pages watch must expose an explicit bounded wait mode');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'AEON_PAGES_WATCH_TIMEOUT_MS', 'Pages watch must bound waiting with a timeout');
+requireIncludes('tools/portfolio-pages-watch.mjs', "latestRun('CI')", 'Pages watch must include latest main CI status');
+requireIncludes('tools/portfolio-pages-watch.mjs', "latestRun('Deploy GitHub Pages')", 'Pages watch must include latest Pages Action status');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'repos/${fullRepo}/pages', 'Pages watch must include GitHub Pages source configuration');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'deployments?environment=github-pages', 'Pages watch must include latest github-pages deployment');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'deploymentStatuses', 'Pages watch must include deployment status history');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'deployed-bundle-uses-body-append', 'Pages watch must detect stale deployed body append bundles');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'local-head-differs-from-origin-main', 'Pages watch must detect local branch drift from origin/main');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'pages-run-behind-ci', 'Pages watch must detect Pages Action lag behind CI');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'deployment-behind-origin-main', 'Pages watch must detect deployments behind origin/main');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'gh run watch', 'Pages watch must point short waits to gh run watch without triggering workflows');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'remote-pages-chain-current', 'Pages watch must report a settled happy path');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'", 'Public demo preflight must fail on secret-risk worktree paths');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-high-risk'", 'Public demo preflight must fail on high-risk public content findings');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'portfolio:capture'", 'Public demo preflight must run screenshot capture');
@@ -133,6 +169,7 @@ requireIncludes('tools/portfolio-release-checklist.mjs', 'requiredEvidence', 'Po
 requireIncludes('tools/portfolio-release-checklist.mjs', 'authorizationRequired', 'Portfolio release checklist must expose structured maintainer authorization gates');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'pnpm portfolio:mvp-preflight -- --keep-public-tree', 'Portfolio release checklist must include local public demo preflight');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'pnpm test:browser:pages', 'Portfolio release checklist must include real GitHub Pages smoke');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'pnpm portfolio:pages-diagnose', 'Portfolio release checklist must include non-deploying Pages diagnosis before live smoke');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'requires re-verification after every deployment and before Public/Release operations', 'Portfolio release checklist must require live Pages re-verification after every deployment');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'README.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md', 'Portfolio release checklist must name public governance docs');
 requireIncludes('tools/portfolio-release-checklist.mjs', '不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md', 'Portfolio release checklist must preserve private design-document boundaries');
@@ -217,6 +254,11 @@ requireIncludes('README.md', 'authorizationRequired', 'README.md must document t
 requireIncludes('README.md', 'pnpm portfolio:capture', 'README.md must document the portfolio screenshot capture path');
 requireIncludes('README.md', 'pnpm test:browser:smoke', 'README.md must document the dedicated browser smoke path');
 requireIncludes('README.md', 'pnpm test:browser:pages', 'README.md must document the deployed GitHub Pages browser smoke path');
+requireIncludes('README.md', 'pnpm portfolio:pages-diagnose', 'README.md must document the non-deploying GitHub Pages diagnosis path');
+requireIncludes('README.md', '部署漂移、线上旧 bundle、GitHub Action 状态', 'README.md must explain the Pages diagnosis scope');
+requireIncludes('README.md', 'pnpm portfolio:pages-watch', 'README.md must document the non-deploying GitHub Pages watch path');
+requireIncludes('README.md', 'CI、Pages Action、github-pages deployment、Pages Source 和线上 bundle', 'README.md must explain the Pages watch scope');
+requireIncludes('README.md', 'pnpm portfolio:pages-watch -- --wait --json', 'README.md must document the bounded machine-readable Pages watch mode');
 requireIncludes('README.md', 'test-results/portfolio/', 'README.md must document the generated portfolio screenshot directory');
 requireIncludes('README.md', 'test-results/portfolio/portfolio-mvp-evidence.json', 'README.md must document the generated public demo evidence JSON');
 requireIncludes('README.md', 'todayBriefingProof', 'README.md must document the today briefing proof field in generated portfolio evidence');
@@ -243,15 +285,28 @@ requireIncludes('.github/workflows/ci.yml', 'PLAYWRIGHT_APP_DIR: .public-tree', 
 requireIncludes('.github/workflows/ci.yml', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'CI browser smoke must cover the GitHub Pages route');
 requireIncludes('.github/workflows/ci.yml', 'VITE_BASE_PATH: /AeonVale/', 'CI public-tree build must use the GitHub Pages base path');
 requireIncludes('.github/workflows/ci.yml', 'pnpm test:browser:public-tree', 'CI browser smoke must reuse the public-tree deployment smoke script');
+requireIncludes('.github/workflows/ci.yml', 'aeonvale-pages-dist-${{ github.sha }}', 'CI must upload the CI-verified Pages dist artifact for deployment reuse');
+requireIncludes('.github/workflows/ci.yml', 'include-hidden-files: true', 'CI Pages dist artifact must preserve .nojekyll and other hidden deployment files');
 
 requireIncludes('.github/workflows/pages.yml', "vars.ENABLE_PAGES == 'true'", 'Pages deployment must stay behind an explicit repository variable');
+requireIncludes('.github/workflows/pages.yml', 'actions: read', 'Pages deployment must be allowed to download the triggering CI artifact');
+requireIncludes('.github/workflows/pages.yml', "github.event_name == 'workflow_dispatch' &&", 'Manual Pages deployment must be scoped to main');
+requireIncludes('.github/workflows/pages.yml', "github.ref == 'refs/heads/main'", 'Manual Pages deployment must be scoped to main');
+requireIncludes('.github/workflows/pages.yml', "github.event.workflow_run.conclusion == 'success'", 'workflow_run Pages deployment must require successful CI');
+requireIncludes('.github/workflows/pages.yml', "github.event.workflow_run.event == 'push'", 'workflow_run Pages deployment must come from a main push CI run');
+requireIncludes('.github/workflows/pages.yml', "github.event.workflow_run.head_branch == 'main'", 'workflow_run Pages deployment must come from main');
+requireIncludes('.github/workflows/pages.yml', 'github.event.workflow_run.head_repository.full_name == github.repository', 'workflow_run Pages deployment must come from the same repository');
 requireIncludes('.github/workflows/pages.yml', 'ref: ${{ github.event.workflow_run.head_sha || github.sha }}', 'Pages deployment must checkout the CI-verified commit');
 requireIncludes('.github/workflows/pages.yml', 'VITE_BASE_PATH: /AeonVale/', 'Pages build must use the repository subpath base');
+requireIncludes('.github/workflows/pages.yml', 'actions/download-artifact@v4', 'Pages deployment must reuse the CI-verified dist artifact on workflow_run');
+requireIncludes('.github/workflows/pages.yml', 'aeonvale-pages-dist-${{ github.event.workflow_run.head_sha }}', 'Pages deployment must download the dist artifact matching the CI head SHA');
+requireIncludes('.github/workflows/pages.yml', 'run-id: ${{ github.event.workflow_run.id }}', 'Pages deployment must download the artifact from the triggering CI run');
 requireIncludes('.github/workflows/pages.yml', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'Pages deployment must install public-tree dependencies without lifecycle scripts');
 requireIncludes('.github/workflows/pages.yml', 'pnpm --dir .public-tree governance:readiness', 'Pages deployment must run public readiness checks');
-requireIncludes('.github/workflows/pages.yml', 'pnpm --dir .public-tree governance:dist', 'Pages deployment must run public dist checks');
 requireIncludes('.github/workflows/pages.yml', 'pnpm test:browser:public-tree', 'Pages deployment must run public-tree browser smoke before upload');
-requireIncludes('.github/workflows/pages.yml', 'path: .public-tree/dist', 'Pages deployment must upload only the checked public dist artifact');
+requireIncludes('.github/workflows/pages.yml', 'run: pnpm governance:dist', 'Pages deployment must re-check the exact dist directory before upload');
+requireIncludes('.github/workflows/pages.yml', 'path: dist', 'Pages deployment must upload only the checked public dist artifact');
+requireIncludes('.github/workflows/pages.yml', 'Install Chromium for deployed Pages smoke', 'Pages deployment must install Chromium before deployed URL smoke');
 requireIncludes('.github/workflows/pages.yml', 'pnpm test:browser:pages', 'Pages deployment must smoke test the deployed GitHub Pages URL');
 
 requireIncludes('.github/workflows/release.yml', 'workflow_dispatch:', 'Release workflow must remain manually triggered');

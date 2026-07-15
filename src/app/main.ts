@@ -192,7 +192,8 @@ const app = new Application();
  antialias: true,
  preserveDrawingBuffer: import.meta.env.VITE_PRESERVE_DRAWING_BUFFER === 'true',
  });
- document.body.appendChild(app.canvas);
+ const mount = document.querySelector('#app') ?? document.body;
+ mount.appendChild(app.canvas);
  const renderAssets = await loadRenderAssets(assetStore);
  const proceduralCropTextures = buildProceduralCropTextures(reg);
  renderAssets.cropHerbs = proceduralCropTextures.herbs;

@@ -13,11 +13,17 @@ describe('GitHub workflow deployment guardrails', () => {
  expect(ciWorkflow).toContain('    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0');
  expect(ciWorkflow).toContain("      - run: pnpm --dir .public-tree build\n        env:\n          PUBLIC_BUILD: 'true'\n          VITE_BASE_PATH: /AeonVale/");
  expect(ciWorkflow).toContain('      - run: pnpm test:browser:public-tree\n        env:\n          PLAYWRIGHT_APP_DIR: .public-tree');
+ expect(ciWorkflow).toContain('name: aeonvale-pages-dist-${{ github.sha }}');
+ expect(ciWorkflow).toContain('include-hidden-files: true');
 
  expect(pagesWorkflow).toContain('on:\n  workflow_run:\n    workflows: [CI]\n    types: [completed]\n    branches: [main]\n  workflow_dispatch:');
- expect(pagesWorkflow).toContain('permissions:\n  contents: read\n  pages: write\n  id-token: write');
- expect(pagesWorkflow).toContain('jobs:\n  deploy:\n    if: vars.ENABLE_PAGES');
- expect(pagesWorkflow).toContain('      - uses: actions/upload-pages-artifact@v3\n        with:\n          path: .public-tree/dist');
+ expect(pagesWorkflow).toContain('permissions:\n  contents: read\n  actions: read\n  pages: write\n  id-token: write');
+ expect(pagesWorkflow).toContain('jobs:\n  deploy:\n    if: >-');
+ expect(pagesWorkflow).toContain('      - name: Download CI-verified dist artifact\n        if: github.event_name ==');
+ expect(pagesWorkflow).toContain('          name: aeonvale-pages-dist-${{ github.event.workflow_run.head_sha }}');
+ expect(pagesWorkflow).toContain('      - name: Rebuild checked public tree for manual dispatch');
+ expect(pagesWorkflow).toContain('      - name: Verify deployment dist\n        run: pnpm governance:dist');
+ expect(pagesWorkflow).toContain('      - uses: actions/upload-pages-artifact@v3\n        with:\n          path: dist');
 
  expect(releaseWorkflow).toContain('on:\n  workflow_dispatch:\n    inputs:\n      version:\n        description: Semantic version without the v prefix');
  expect(releaseWorkflow).toContain('jobs:\n  release:\n    if: github.ref ==');
@@ -40,6 +46,8 @@ expect(ciWorkflow).toContain('pnpm governance:check');
  expect(ciWorkflow).toContain('pnpm --dir .public-tree governance:public');
  expect(ciWorkflow).toContain('pnpm --dir .public-tree build');
  expect(ciWorkflow).toContain('pnpm --dir .public-tree governance:dist');
+ expect(ciWorkflow).toContain('aeonvale-pages-dist-${{ github.sha }}');
+ expect(ciWorkflow).toContain('include-hidden-files: true');
  expect(ciWorkflow).toContain('uses: gitleaks/gitleaks-action@v2');
  expect(ciWorkflow).toContain('PLAYWRIGHT_APP_DIR: .public-tree');
  expect(ciWorkflow).toContain('PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/');
@@ -47,12 +55,33 @@ expect(ciWorkflow).toContain('pnpm governance:check');
  expect(ciWorkflow).toContain('VITE_BASE_PATH: /AeonVale/');
  });
 
-it('deploys Pages from the exact CI-verified commit when triggered by workflow_run', () => {
+it('only deploys Pages from trusted CI runs or an explicit manual dispatch', () => {
  const pagesWorkflow = readFileSync('.github/workflows/pages.yml', 'utf8');
 
 expect(pagesWorkflow).toContain('workflow_run:');
  expect(pagesWorkflow).toContain('workflows: [CI]');
+ expect(pagesWorkflow).toContain(`    if: >-
+      vars.ENABLE_PAGES == 'true' &&
+      (
+        (
+          github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/main'
+        ) ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )`);
  expect(pagesWorkflow).toContain('ref: ${{ github.event.workflow_run.head_sha || github.sha }}');
+ expect(pagesWorkflow).toContain('actions/download-artifact@v4');
+ expect(pagesWorkflow).toContain('run-id: ${{ github.event.workflow_run.id }}');
+ expect(pagesWorkflow).toContain('github-token: ${{ secrets.GITHUB_TOKEN }}');
+ expect(pagesWorkflow).toContain('name: aeonvale-pages-dist-${{ github.event.workflow_run.head_sha }}');
+ expect(pagesWorkflow).toContain('path: dist');
+ expect(pagesWorkflow).toContain('if: github.event_name ==');
  expect(pagesWorkflow).toContain('pnpm --dir .public-tree governance:readiness');
  expect(pagesWorkflow).toContain('pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts');
  expect(pagesWorkflow).toContain('pnpm --dir .public-tree governance:public');
@@ -61,8 +90,9 @@ expect(pagesWorkflow).toContain('workflow_run:');
  expect(pagesWorkflow).toContain('pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts');
  expect(pagesWorkflow).toContain('pnpm exec playwright install --with-deps chromium');
  expect(pagesWorkflow).toContain('pnpm test:browser:public-tree');
- expect(pagesWorkflow).toContain('pnpm --dir .public-tree governance:dist');
- expect(pagesWorkflow).toContain('path: .public-tree/dist');
+ expect(pagesWorkflow).toContain('run: pnpm governance:dist');
+ expect(pagesWorkflow).toContain('path: dist');
+ expect(pagesWorkflow).toContain('Install Chromium for deployed Pages smoke');
  expect(pagesWorkflow).toContain('pnpm test:browser:pages');
  });
 

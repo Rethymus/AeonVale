@@ -38,6 +38,7 @@ const sections = [
     title: '4. Pages 部署后真实 URL 验证',
     items: [
       `访问 ${pagesUrl}`,
+      'pnpm portfolio:pages-diagnose',
       'pnpm test:browser:pages',
       'pnpm governance:dist',
       `确认仓库 Homepage 指向 ${pagesUrl}`,

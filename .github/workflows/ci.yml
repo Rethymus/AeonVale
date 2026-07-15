@@ -79,8 +79,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
-          name: web-dist-${{ github.sha }}
+          name: aeonvale-pages-dist-${{ github.sha }}
           path: .public-tree/dist
+          include-hidden-files: true
           retention-days: 10
 
   browser-smoke:
