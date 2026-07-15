@@ -12,4 +12,8 @@ describe('Playwright 作品集产物配置', () => {
  env: { VITE_PRESERVE_DRAWING_BUFFER: 'true' },
  });
  });
+
+ it('serializes CI browser smoke to avoid overloading hosted Chromium', () => {
+ expect(playwrightConfig.workers).toBe(process.env.CI ? 1 : undefined);
+ });
 });

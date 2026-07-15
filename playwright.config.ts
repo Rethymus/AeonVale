@@ -11,6 +11,7 @@ export default defineConfig({
  testDir: './tests/browser',
  outputDir: 'test-results/playwright',
  retries: process.env.CI ? 1 : 0,
+ workers: process.env.CI ? 1 : undefined,
  reporter: process.env.CI ? 'github' : 'list',
  use: { baseURL, trace: 'on-first-retry' },
  webServer: skipWebServer ? undefined : {
