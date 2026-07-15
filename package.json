@@ -50,9 +50,10 @@
  "portfolio:mvp-preflight": "node tools/portfolio-mvp-preflight.mjs",
  "verify:public-tree": "pnpm prepare:public-tree .public-tree && pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts && pnpm --dir .public-tree governance:readiness && pnpm --dir .public-tree governance:public && pnpm --dir .public-tree governance:check && pnpm --dir .public-tree typecheck && pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts && pnpm test:browser:public-tree && PUBLIC_BUILD=true VITE_BASE_PATH=/AeonVale/ pnpm --dir .public-tree build && pnpm --dir .public-tree governance:dist",
  "commitlint": "node node_modules/@commitlint/cli/cli.js",
- "test:browser": "node node_modules/@playwright/test/cli.js test",
- "test:browser:smoke": "node node_modules/@playwright/test/cli.js test tests/browser/smoke.spec.ts",
- "test:browser:public-tree": "PLAYWRIGHT_APP_DIR=.public-tree PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ PLAYWRIGHT_VITE_BASE_PATH=/AeonVale/ pnpm test:browser:smoke",
+  "test:browser": "node node_modules/@playwright/test/cli.js test",
+  "test:browser:smoke": "node node_modules/@playwright/test/cli.js test tests/browser/smoke.spec.ts",
+  "test:browser:first-loop": "node node_modules/@playwright/test/cli.js test tests/browser/first-loop.regression.spec.ts",
+  "test:browser:public-tree": "PLAYWRIGHT_APP_DIR=.public-tree PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ PLAYWRIGHT_VITE_BASE_PATH=/AeonVale/ pnpm test:browser:smoke",
  "test:browser:pages": "PLAYWRIGHT_BASE_URL=https://Rethymus.github.io PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ PLAYWRIGHT_SKIP_WEBSERVER=true pnpm test:browser:smoke",
  "portfolio:capture": "node node_modules/@playwright/test/cli.js test tests/browser/portfolio-capture.spec.ts --reporter=line",
  "prepare": "node node_modules/simple-git-hooks/cli.js"
