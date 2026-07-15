@@ -1,0 +1,985 @@
+{
+ "version": 1,
+ "sprites": [
+ {
+ "id": "cg.ending-ascension",
+ "path": "cg/cg.ending-ascension.png",
+ "type": "png",
+ "checksum": "fb7b6722462d4a81c73d13019372334f9bf5fd2ccab402209f4e1b9a55cc95cc",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 结局 CG 例外; motif=ascension 飞升离界; ink-wash xianxia (tools/gen-cg.mjs)；T8 去AI味重生(水墨 sumi-e prompt)"
+ },
+ {
+ "id": "cg.ending-lifespan-death",
+ "path": "cg/cg.ending-lifespan-death.png",
+ "type": "png",
+ "checksum": "27349532154c87ed963cd07433de6a6c099525b5cc7fe391a7ea538b2f36408b",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 结局 CG 例外; motif=lifespan-death 寿尽归田; ink-wash xianxia (tools/gen-cg.mjs)；T8 去AI味重生(水墨 sumi-e prompt)"
+ },
+ {
+ "id": "cg.ending-poison-death",
+ "path": "cg/cg.ending-poison-death.png",
+ "type": "png",
+ "checksum": "2efd32ad3318694e78e540a458b554ffae27fb3ab02722b3f05aa1f5f79c52bf",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 结局 CG 例外; motif=poison-death 丹毒暴毙; ink-wash xianxia (tools/gen-cg.mjs)；T8 去AI味重生(水墨 sumi-e prompt)"
+ },
+ {
+ "id": "sprite.player",
+ "path": "sprites/player.png",
+ "type": "png",
+ "checksum": "073978d199e96771c844765dc818a7f502e5176bfd83676a05bd658ff7440c9e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行（review-ai-art.py 量化+审核 + 视觉判定）; motif=player 体修凡人; 用户授权 AI 用于角色精灵；T8 去AI味重生(de-AI prompt 重新生成)"
+ },
+ {
+ "id": "sprite.npc.wandering-cultivator",
+ "path": "sprites/npc.wandering-cultivator.png",
+ "type": "png",
+ "checksum": "3689162f995779215441e06d07a14c8c0a243cc58a177e1a2634877c2e26fbd4",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行; motif=游方散修; 用户授权 AI 用于角色精灵；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "sprite.npc.herb-gatherer",
+ "path": "sprites/npc.herb-gatherer.png",
+ "type": "png",
+ "checksum": "f5d53c0f855dda991919ca4faa10e7738de495f003270bf9ecf7f77e330d2369",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行; motif=采药女; 用户授权 AI 用于角色精灵；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "sprite.npc.array-smith",
+ "path": "sprites/npc.array-smith.png",
+ "type": "png",
+ "checksum": "5de34103914b76d06982d9baa2dcea6bf7e0d20a968d25db4dced6ebe592a1bb",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行; motif=阵匠老陆; 用户授权 AI 用于角色精灵；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "sprite.guard-beast",
+ "path": "sprites/guard-beast.png",
+ "type": "png",
+ "checksum": "c5a3c7214a896468b179854d22705ad882b18468c80fe9f8db85844cb71abff4",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行; motif=守田兽; 用户授权 AI 用于角色精灵；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.item.spirit-stone",
+ "path": "icons/item.spirit-stone.png",
+ "type": "png",
+ "checksum": "b4a506c05a14fe67eda4783812f007a93f3169960a54c463cd8cd1f0de72a307",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=灵石 currency; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.item.beast-core",
+ "path": "icons/item.beast-core.png",
+ "type": "png",
+ "checksum": "2b26657af0e3351b6466423f234105c0226b73454cf05bf9c1ee8dbde9f11a43",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=妖兽内丹; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.item.spirit-compost",
+ "path": "icons/item.spirit-compost.png",
+ "type": "png",
+ "checksum": "43bec96d74bebeaef0f48ba695259cbabf1184d71cb7ed6a4a6d57bea899f993",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=灵壤肥; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.item.rust-hoe",
+ "path": "icons/item.rust-hoe.png",
+ "type": "png",
+ "checksum": "0a582bea241feb51b83af5b49000fee2b8918a5f998fcfd5252e33e9880af23b",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=铁锈锄; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.item.sickle",
+ "path": "icons/item.sickle.png",
+ "type": "png",
+ "checksum": "08e9bde3c173dce6976e9098e48fc81c795d691c86515e920a274cb6c54a93da",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=镰刀; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.item.water-pail",
+ "path": "icons/item.water-pail.png",
+ "type": "png",
+ "checksum": "9dac8eed1a57a322d37636d99693403ef5b03b93aa953bda01db71a590656092",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=灵水桶; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.pill.ward-basic",
+ "path": "icons/pill.ward-basic.png",
+ "type": "png",
+ "checksum": "5bd6aae9cf6ffc678ec8b51166ef18757e1c54cc63f816b67b7b0f236721902c",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=避雷丹; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "icon.pill.ascend",
+ "path": "icons/pill.ascend.png",
+ "type": "png",
+ "checksum": "dd89c0da017600a845cf9b902b58cd04465df66d15432d1df484cca608511051",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay (https://fast.qianxing.us.ci/v1); 经多重审核放行(量化LANCZOS+Lab + 审核 + 视觉); motif=飞升丹; 用户授权 AI 用于物品图标(覆盖 §1.3, 须过审核)；T8 去AI味重量化(posterize+8色)"
+ },
+ {
+ "id": "facility.drying-rack",
+ "path": "facilities/drying-rack.png",
+ "type": "png",
+ "checksum": "bd4ad1aa14a9ebdc4e02e143f0e1f918c1ba672bf5fb8b373fc04bd9001009a7",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=晁晒架 drying-rack; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
+ },
+ {
+ "id": "facility.sealing-cabinet",
+ "path": "facilities/sealing-cabinet.png",
+ "type": "png",
+ "checksum": "ecaf3c334acccd8334f096b442074b7a8a32d62881c7752c164e5585c7d9b7e5",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=封存柜 sealing-cabinet; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
+ },
+ {
+ "id": "facility.talisman-furnace",
+ "path": "facilities/talisman-furnace.png",
+ "type": "png",
+ "checksum": "b4458886c155061e6df73e16a75b9439142b2c66563a667102cd87e67d90425f",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味管线 posterize+8色 + 审核 + 视觉含AI味否决); motif=符炉 talisman-furnace; 对齐 FacilityKind，用户授权 AI 用于设施精灵"
+ },
+ {
+ "id": "icon.pill.iron-bone",
+ "path": "icons/pill.iron-bone.png",
+ "type": "png",
+ "checksum": "ee42772e81bf3128c6a9cfa763067e6bc80cbcdab10ab646b83839d7bd2559aa",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=铁骨丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.temper",
+ "path": "icons/pill.temper.png",
+ "type": "png",
+ "checksum": "8ab7db1b84d84faf8745cf2160e43deb9bfd9a483851c4f897647ebd5c773d6a",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=淬体丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.detox",
+ "path": "icons/pill.detox.png",
+ "type": "png",
+ "checksum": "7949cedb6befb3b5820d991bddbfd943e02d3087971f794279c4780c01c82741",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=净毒丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.item.array-core",
+ "path": "icons/item.array-core.png",
+ "type": "png",
+ "checksum": "f73521376da31e49808df24370244c557ab25f6efafbdcfb2aa686f9192f2ea8",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵核; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.item.recipe-fragment",
+ "path": "icons/item.recipe-fragment.png",
+ "type": "png",
+ "checksum": "88987bc34d527559e3520ce44d20fd776b37bf353cfb70ba6567619d773c5edc",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=残卷; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.item.broken-talisman",
+ "path": "icons/item.broken-talisman.png",
+ "type": "png",
+ "checksum": "5265e0a94a92657d1052a5cff111f0d5708847c12f09585d429168020c0837c9",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=破损法宝; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.bone-basic",
+ "path": "icons/pill.bone-basic.png",
+ "type": "png",
+ "checksum": "190c790048d0814a36e9e7c42985668f312d160022e7622786b97f155856452e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=生骨丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.madness",
+ "path": "icons/pill.madness.png",
+ "type": "png",
+ "checksum": "ba4c85e647b95e7d02622c44d6ab00e4dd3b134dec70bc7836a026970a084cb6",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=走火丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.neutral-pearl",
+ "path": "icons/pill.neutral-pearl.png",
+ "type": "png",
+ "checksum": "c321576bd35366db86c40e8c061b43334acab371093c6e9669b233015b78a5d4",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=太一珠; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.item.dried-herb",
+ "path": "icons/item.dried-herb.png",
+ "type": "png",
+ "checksum": "69781260434308e8cbfda15ef4e21c24dd86a59f58da9585e1dc7d33cf83ca51",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=晾晒灵草; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.item.sealed-herb",
+ "path": "icons/item.sealed-herb.png",
+ "type": "png",
+ "checksum": "f5e1a99aec832ed48e48e24f8049a0076ff8986f9d5b1d4fbdded849d9888340",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=封藏灵草; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.cold-mud",
+ "path": "icons/pill.cold-mud.png",
+ "type": "png",
+ "checksum": "0f407221e9775976923c643925e03ca5d1eccd90cd6d72dc568ce2538b872d95",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=寒泥丸; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.deep-detox",
+ "path": "icons/pill.deep-detox.png",
+ "type": "png",
+ "checksum": "58403cc4f67d7838cbb708408e2138c024871b2329545bad8755545ed89247c0",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=涤髓丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.temper-supreme",
+ "path": "icons/pill.temper-supreme.png",
+ "type": "png",
+ "checksum": "9027ba34a75efea5fdf8f60a714c730c7ddd58db25d2e86e06de81a6ef7e632d",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=无极淬体丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.ward-heaven",
+ "path": "icons/pill.ward-heaven.png",
+ "type": "png",
+ "checksum": "494a1855a462689560d82d3538ce15c45934044ca24d0d0302fde4f268e6259e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=偷天避雷丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "icon.pill.ward-greater",
+ "path": "icons/pill.ward-greater.png",
+ "type": "png",
+ "checksum": "dfb5cf1ef4cfedeb5574da54165836eacc403fa7bffdd77793b88266b25f2413",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=大避雷丹; 用户授权 AI 用于物品图标"
+ },
+ {
+ "id": "loc.farmstead",
+ "path": "locations/farmstead.png",
+ "type": "png",
+ "checksum": "2e18ba7e48e8aabbe64a916002c72dcd018dcb7a9fee6a9387f6f867bb5eb6c3",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=农庄; 对齐 locations.ts，地点目录 UI 用"
+ },
+ {
+ "id": "loc.valley-market",
+ "path": "locations/valley-market.png",
+ "type": "png",
+ "checksum": "6b1389b162cd7b5b0d1e4f3cdc27ebadc251d93a9d390771bcf1433e2f821a08",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=山谷集市; 对齐 locations.ts，地点目录 UI 用"
+ },
+ {
+ "id": "loc.ruin-gate",
+ "path": "locations/ruin-gate.png",
+ "type": "png",
+ "checksum": "6f5ca4d6d8d155df142bc49192be9dfc6301b4abf3e4d06781cb57c1430327b5",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=遗迹门口; 对齐 locations.ts，地点目录 UI 用"
+ },
+ {
+ "id": "loc.tea-shed",
+ "path": "locations/tea-shed.png",
+ "type": "png",
+ "checksum": "d16dc8f26eba6879b9996fdd24bea618964812b3d4f58f691ac995fb6f398a77",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=旧茶棚; 对齐 locations.ts，地点目录 UI 用"
+ },
+ {
+ "id": "loc.spirit-vein",
+ "path": "locations/spirit-vein.png",
+ "type": "png",
+ "checksum": "a3387c73907c6bc3e2ac44969959a2859f675f8a2f77e5db8a38c537186bc8a9",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=残脉入口; 对齐 locations.ts，地点目录 UI 用"
+ },
+ {
+ "id": "loc.ore-slope",
+ "path": "locations/ore-slope.png",
+ "type": "png",
+ "checksum": "53efebc12ed1daf71424282339920f2c617fcb066b8d42940c9f87ae4f018065",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=矿石坡; 对齐 locations.ts，地点目录 UI 用"
+ },
+ {
+ "id": "loc.festival-ground",
+ "path": "locations/festival-ground.png",
+ "type": "png",
+ "checksum": "7449728ddb7b218a40974c5d766cfab56d09a634e5e36ba1504d4cb264b1190e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=节日会场; 对齐 locations.ts"
+ },
+ {
+ "id": "loc.valley-outskirts",
+ "path": "locations/valley-outskirts.png",
+ "type": "png",
+ "checksum": "72f456974a858e0a86f971bd5987a2b6e8c11b5bd36fdaab4078c676d19253dd",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=山谷野外; 对齐 locations.ts"
+ },
+ {
+ "id": "loc.array-shed",
+ "path": "locations/array-shed.png",
+ "type": "png",
+ "checksum": "95770ec1c3aa9473f8dc1772708554a23b4e91a9e5bcafcd033ac39690376b24",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵器棚; 对齐 locations.ts"
+ },
+ {
+ "id": "loc.greenhouse",
+ "path": "locations/greenhouse.png",
+ "type": "png",
+ "checksum": "c91a194fc82a9ff1ed6067211d7489ae9d58ed15c31c8c3c62288d5be4f79a51",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=暖棚; 对齐 locations.ts"
+ },
+ {
+ "id": "icon.herb.balmleaf",
+ "path": "icons/herb.balmleaf.png",
+ "type": "png",
+ "checksum": "deeb9fcc223c56ad215124f6c02977733dfefac27d16f411b8c5490c5143e59a",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.boneash-lily",
+ "path": "icons/herb.boneash-lily.png",
+ "type": "png",
+ "checksum": "9bd897b9f918240cf2900f12015071fe601fd751a3d101c29cddedd69999bb3e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.dao-root",
+ "path": "icons/herb.dao-root.png",
+ "type": "png",
+ "checksum": "26223b4cad951685a376055460764f791a9cc93e51d053af48ea55ed1891de6e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.dewroot",
+ "path": "icons/herb.dewroot.png",
+ "type": "png",
+ "checksum": "14cf1f86ad208e6f1043fa932c78eff5fd63ce3f53f9d627911d315b44f15414",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.emberheart",
+ "path": "icons/herb.emberheart.png",
+ "type": "png",
+ "checksum": "35568dc4ad438da221eca7686bcfa1663dfab08fc39921887588ff5f62256c3d",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.embermoss",
+ "path": "icons/herb.embermoss.png",
+ "type": "png",
+ "checksum": "3c6bb52c941079c3b99c7a39e8387815dd336ea7b8c4e0890acd6edfda34f961",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.frostmarrow",
+ "path": "icons/herb.frostmarrow.png",
+ "type": "png",
+ "checksum": "b80dd964895dde30e9b9efee44443aed3194480d6ea74c4498660fe48e163960",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.fulgurseed",
+ "path": "icons/herb.fulgurseed.png",
+ "type": "png",
+ "checksum": "83a468859d3a4dd604cb35eac1da247dac2bb4cd8e1b7e81457fc21733a29112",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.griefvein",
+ "path": "icons/herb.griefvein.png",
+ "type": "png",
+ "checksum": "bc8850153c8826294453a0f65fe5fe301a64da475a93950baacb4bfafb78f5fe",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.ironwill-thorn",
+ "path": "icons/herb.ironwill-thorn.png",
+ "type": "png",
+ "checksum": "db1384d9cee27e74100a1f8f14bc2ca16f542dfd23c2b251cd62991965038a1f",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.jadewing",
+ "path": "icons/herb.jadewing.png",
+ "type": "png",
+ "checksum": "e84658c0c76487cd46a2bfdb97b587a82b6529e082fbb13c703927e5dcbc65a5",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.metalpine",
+ "path": "icons/herb.metalpine.png",
+ "type": "png",
+ "checksum": "d0a80c1f1a9d813fae25c1c9e3ad1cc38bee363c2f34dc19bd82170f587861ab",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.mistfern",
+ "path": "icons/herb.mistfern.png",
+ "type": "png",
+ "checksum": "b17583f8f9974560aa8d111962b3530987e327e921d29d96928c1717d7b2bd77",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (retry 成功)"
+ },
+ {
+ "id": "icon.herb.mossling",
+ "path": "icons/herb.mossling.png",
+ "type": "png",
+ "checksum": "9a7f4c9cf157021a51687f4151b649e90df397e147925effeb89e622faf6055c",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.plumeweed",
+ "path": "icons/herb.plumeweed.png",
+ "type": "png",
+ "checksum": "dfb2ebca3660ca7258a812dd151efbf7d2b5368e3b9bd940db1d9d2679b0045c",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.silentbell",
+ "path": "icons/herb.silentbell.png",
+ "type": "png",
+ "checksum": "1567db1a51a504765a566e7fac4161957a47b8a99a7bf500d996158b2c7fe9a7",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
+ },
+ {
+ "id": "icon.herb.solar-pith",
+ "path": "icons/herb.solar-pith.png",
+ "type": "png",
+ "checksum": "059303e393196fac0addb00e145638216e5d31b7fcecb660752b1b33f0b9bf3b",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
+ },
+ {
+ "id": "icon.herb.stonegrain",
+ "path": "icons/herb.stonegrain.png",
+ "type": "png",
+ "checksum": "9dafc46da94311738a4bec5293080e7d16c465d8765af55f3d07c8d3ae86f571",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
+ },
+ {
+ "id": "icon.herb.suncap",
+ "path": "icons/herb.suncap.png",
+ "type": "png",
+ "checksum": "fc43059665db01845bb206c3d234f26100a825bc4234583dafadd184b03d111b",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize (API 恢复后重试成功)"
+ },
+ {
+ "id": "icon.herb.sunmoss",
+ "path": "icons/herb.sunmoss.png",
+ "type": "png",
+ "checksum": "df22481680f90a09edf15d02d8cb0c764f2dd7c3b36cb1084a619292d263c3ec",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.thunderreed",
+ "path": "icons/herb.thunderreed.png",
+ "type": "png",
+ "checksum": "5b8695e9c65f11e4b1c75c2aea5e4e06db2612b1769b234aa8ff549299adc0bf",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.tidegrass",
+ "path": "icons/herb.tidegrass.png",
+ "type": "png",
+ "checksum": "b84327b83c23983dfe8b8afcf9176d3b1e26e93a1623675e6434488adf1f5b5a",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.violet-ascend",
+ "path": "icons/herb.violet-ascend.png",
+ "type": "png",
+ "checksum": "de551e2aef5389b03eec25f581e9c0cb099c5726fbcb528a579818bf15ded2e9",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.herb.voidmantle",
+ "path": "icons/herb.voidmantle.png",
+ "type": "png",
+ "checksum": "33a6678aa21024c92c2cdf3c197ffd9ab312fa23ed6c8d02e1e65d26460b9324",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts); 16-color re-quantize"
+ },
+ {
+ "id": "icon.seed.mossling",
+ "path": "icons/seed.mossling.png",
+ "type": "png",
+ "checksum": "e4690faab259045e4c66bb295eadba620772d1c2cc16862b650bdb301f8ffe5a",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.dewroot",
+ "path": "icons/seed.dewroot.png",
+ "type": "png",
+ "checksum": "30d0493fe617a4e00bf6d1ad7d386223cb4eaee29cc020a86740e2830574d295",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.suncap",
+ "path": "icons/seed.suncap.png",
+ "type": "png",
+ "checksum": "00ef43318897b664657ff737081bd5310252f0fbeb92b9b95550a9828518f2c9",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+ },
+ {
+ "id": "icon.seed.frostmarrow",
+ "path": "icons/seed.frostmarrow.png",
+ "type": "png",
+ "checksum": "954c2f98db377a0fa65fa9b65cda310958c0fed3eff6378760f77f747d47d996",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.emberheart",
+ "path": "icons/seed.emberheart.png",
+ "type": "png",
+ "checksum": "2efe2c7d18f8ad7d7f8ae98b66d6c5ce2f6d254173146a2a3546ea5d9ce651cc",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+ },
+ {
+ "id": "icon.seed.metalpine",
+ "path": "icons/seed.metalpine.png",
+ "type": "png",
+ "checksum": "59ed4ebad0d1c7271eb6fd7b5deaf96b8719d253b00c658f88b5acef150dbcf4",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.balmleaf",
+ "path": "icons/seed.balmleaf.png",
+ "type": "png",
+ "checksum": "167a46bf237ad49b8dabf5adda96e0b955ea905e05567f4b19a826c248c7b0e9",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.thunderreed",
+ "path": "icons/seed.thunderreed.png",
+ "type": "png",
+ "checksum": "34c11584c0d82d49d0c9bbe9509346bf59db389715b141ad76cecfe960595f22",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.griefvein",
+ "path": "icons/seed.griefvein.png",
+ "type": "png",
+ "checksum": "3c09948a9d36bd603978d18ba6419f924e973b97608548db54e50005c658b876",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.ironwill-thorn",
+ "path": "icons/seed.ironwill-thorn.png",
+ "type": "png",
+ "checksum": "9cb9b0b397e46158cc21bda5e61d529f3e75a9b3803b25bd51c132c69ba982c5",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.boneash-lily",
+ "path": "icons/seed.boneash-lily.png",
+ "type": "png",
+ "checksum": "c366f9708e1219fbd4ad58ef735cf926efde9b15c77995bc3f4512ee7c3c2e99",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.violet-ascend",
+ "path": "icons/seed.violet-ascend.png",
+ "type": "png",
+ "checksum": "2053e4ff2f67af653c7360a9655b774d5c5f5cec1c9b2ffb7753f3a12bf1e6d1",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.silentbell",
+ "path": "icons/seed.silentbell.png",
+ "type": "png",
+ "checksum": "9447f497faccd1a57d931440310b5481a9863bb7ef780ef5f5db047da6cdfde9",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.voidmantle",
+ "path": "icons/seed.voidmantle.png",
+ "type": "png",
+ "checksum": "353223ff7e9fe66010816c96f70685be207a8f73ad46b2d2e872a1aaae8f06cb",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.solar-pith",
+ "path": "icons/seed.solar-pith.png",
+ "type": "png",
+ "checksum": "cb650231b6f79bdd2b1cfff814e7d9cec0934d9ee865ce7726aa27cbf05c1dca",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+ },
+ {
+ "id": "icon.seed.dao-root",
+ "path": "icons/seed.dao-root.png",
+ "type": "png",
+ "checksum": "ed2b9c61fc1eaaee861f77171cf6700cdc203ac2f83175ec63847b7e8531e932",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.stonegrain",
+ "path": "icons/seed.stonegrain.png",
+ "type": "png",
+ "checksum": "1afc2981cdc57d591976754ef662ab69c7f772d153869595b241dbb0af961bef",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.mistfern",
+ "path": "icons/seed.mistfern.png",
+ "type": "png",
+ "checksum": "db94dcfa0e176a93792d4c6f09992061326d08d9736ca26df6821218e01bbd9c",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.sunmoss",
+ "path": "icons/seed.sunmoss.png",
+ "type": "png",
+ "checksum": "3576f9da67e52c6fb989bfd42fad2862f21f5738bcb862cd2dcfc72c836c6fed",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+ },
+ {
+ "id": "icon.seed.plumeweed",
+ "path": "icons/seed.plumeweed.png",
+ "type": "png",
+ "checksum": "d772cb9c90e3689f7ce8918373790b031bd8aa4173d212a298a52a3314995716",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=warm"
+ },
+ {
+ "id": "icon.seed.tidegrass",
+ "path": "icons/seed.tidegrass.png",
+ "type": "png",
+ "checksum": "2884d4f95ec1aa42b1da4559c5687a4611afd0349e93bc4da08cddac48774a93",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=cold"
+ },
+ {
+ "id": "icon.seed.embermoss",
+ "path": "icons/seed.embermoss.png",
+ "type": "png",
+ "checksum": "a22c62f1aad9478f57208d9fa3596ee15d5f33bcf924a99b5e4fe6111b7308fb",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=hot"
+ },
+ {
+ "id": "icon.seed.jadewing",
+ "path": "icons/seed.jadewing.png",
+ "type": "png",
+ "checksum": "50994b779359abbf08cd9e439cabee0358830a9362fdb8ef6e159a8f40f6cca5",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "icon.seed.fulgurseed",
+ "path": "icons/seed.fulgurseed.png",
+ "type": "png",
+ "checksum": "5f61d4bff593f578a624bbf44faa482879051ed0e240f84f16af906e999efc42",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral"
+ },
+ {
+ "id": "loc.herb-plot",
+ "path": "locations/herb-plot.png",
+ "type": "png",
+ "checksum": "7c6144e5ae0d36a74d968f38fa1b803e0fe22922876a91288e954463b29d446b",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=露根药圃; 对齐 locations.ts"
+ },
+ {
+ "id": "loc.creek-field",
+ "path": "locations/creek-field.png",
+ "type": "png",
+ "checksum": "08673e727b7ab307c44af56a3b157e00fca03d4644340005f32ed02ae4fd841e",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=溪边药田; 对齐 locations.ts"
+ },
+ {
+ "id": "loc.drying-yard",
+ "path": "locations/drying-yard.png",
+ "type": "png",
+ "checksum": "cb77f124c8ff5e02363da6b28aac321319cd4e4071a80ecd734ae2be33068f2c",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=晾晒架旁; 对齐 locations.ts"
+ },
+ {
+ "id": "sprite.npc.market-merchant",
+ "path": "sprites/npc.market-merchant.png",
+ "type": "png",
+ "checksum": "821d48e840447b7dc40c6fa32097cda9cd3f4f3575da6f9ee22a977f8218f1ba",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=市集商人 market-merchant; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+ },
+ {
+ "id": "sprite.npc.tea-shed-elder",
+ "path": "sprites/npc.tea-shed-elder.png",
+ "type": "png",
+ "checksum": "0be59b7921f7f1b34d1ebd852bbc1b2bd5f7fec9ed184a593af9ba77beecfa10",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=茶棚老者 tea-shed-elder; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+ },
+ {
+ "id": "sprite.npc.processing-artisan",
+ "path": "sprites/npc.processing-artisan.png",
+ "type": "png",
+ "checksum": "be790e7638e590a10b73f63b7657e3b7df6eca217b28d6f4633ea911e7ce3a03",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=加工匠人 processing-artisan; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+ },
+ {
+ "id": "sprite.npc.patrol-guard",
+ "path": "sprites/npc.patrol-guard.png",
+ "type": "png",
+ "checksum": "417a0d4e158aad68720d5bea6f8338097a066283d2497fe4692661eae231eae5",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=镇守巡检 patrol-guard; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+ },
+ {
+ "id": "sprite.guard-beast-boar",
+ "path": "sprites/guard-beast-boar.png",
+ "type": "png",
+ "checksum": "8070f8ac5a4f8967e8a7c7f019f84860f2142d792d89b22c7a5d825c76a03f2d",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=野猪守兽 guard-beast-boar 变体; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+ },
+ {
+ "id": "sprite.guard-beast-wolf",
+ "path": "sprites/guard-beast-wolf.png",
+ "type": "png",
+ "checksum": "56f38e39191b25706d47d7c77d558434b1dcb7279d975bdb29afebe8e725ddc7",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=灵狼守兽 guard-beast-wolf 变体; 维护者 ART-ASSETS-STATUS 下一批需求(市集/茶棚/加工/镇守 NPC + 巡守兽扩充); 用户授权 AI"
+ },
+ {
+ "id": "facility.storage-chest",
+ "path": "facilities/storage-chest.png",
+ "type": "png",
+ "checksum": "32a47779495d670426b1736525bd628b145173243bd7ae484ddefe0b1f5c6fc7",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=仓储容器 storage-chest; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+ },
+ {
+ "id": "facility.shipping-bin",
+ "path": "facilities/shipping-bin.png",
+ "type": "png",
+ "checksum": "ba77d6031f3dacad873cb7ae44a862e1aacffbfd40db49b673241ef2031ef3ad",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=出货箱 shipping-bin; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+ },
+ {
+ "id": "facility.array-flag",
+ "path": "facilities/array-flag.png",
+ "type": "png",
+ "checksum": "637a18a24b2f633a7f48d4a0160a1eb64a48780302f6480ef0086d4a77c3e9eb",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵旗 array-flag; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+ },
+ {
+ "id": "facility.array-eye",
+ "path": "facilities/array-eye.png",
+ "type": "png",
+ "checksum": "46ee1263cb89ccb431bdc445c57e5e76c1d0ba0a804b044c3c45eea66ef2a2bd",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; 经多重审核放行(去AI味 posterize+8色 + 审核); motif=阵眼 array-eye; 维护者 ART-ASSETS-STATUS 下一批「设施精灵」(仓储/出货/阵旗/阵眼)"
+ },
+ {
+ "id": "tile.loam",
+ "path": "tiles/loam.png",
+ "type": "png",
+ "checksum": "01ed65cfdc502a8fc629d738e241600a040ab2e80b14e211de1a5f8b7e72a922",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.wet-loam",
+ "path": "tiles/wet-loam.png",
+ "type": "png",
+ "checksum": "9fdc7f29ebaaf3fbc40d5bb3bd345f8a8dd6524c1c600d449168d72e46135e29",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.dry-sand",
+ "path": "tiles/dry-sand.png",
+ "type": "png",
+ "checksum": "55e517858e2beb955c464018cca3fb33a9ea03b0877a687ab04ff36e75323d4d",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.insulated",
+ "path": "tiles/insulated.png",
+ "type": "png",
+ "checksum": "35342c7f918259ff70c4903ac76ad018893d15438fe4ee8c30c950c694971375",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.scorched",
+ "path": "tiles/scorched.png",
+ "type": "png",
+ "checksum": "9236874afc593aed5a3d8fe474e80b477a46c23fa818c086b7a3dc9964bb940b",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.spirit-loam",
+ "path": "tiles/spirit-loam.png",
+ "type": "png",
+ "checksum": "ae2a09ee748974c7cd248d93c621956077f2d3d54ea9d2fbf178fc655e907cba",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.rock",
+ "path": "tiles/rock.png",
+ "type": "png",
+ "checksum": "8a234dfc5e80ccfc8f3f35556453a0ecb469f3966220318be22ca5d446dce1d1",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.water",
+ "path": "tiles/water.png",
+ "type": "png",
+ "checksum": "0eae85563f21c43e9cb27b1f905edfb9e629f4a26f030d7d9181982d4e0176f3",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "tile.metal-ore",
+ "path": "tiles/metal-ore.png",
+ "type": "png",
+ "checksum": "caf42a516fcb95827d13541995fff0be0be6042cbb3fe45237f50ce66b676b80",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural bake-tile-textures.py (正弦和无缝噪声,), 非 AI"
+ },
+ {
+ "id": "icon.herb.voidmoss",
+ "path": "icons/herb.voidmoss.png",
+ "type": "png",
+ "checksum": "e1ec50411d1ac011458ded809a31d004113cb1e0b2e131aba74527f01db7b0b7",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/edits refine of procedural herb base (sprites.ts, element=neutral); voidmoss pale ash-gray void-moss prompt (tools/refine-voidmoss.mjs); 16-color re-quantize (tools/review-ai-art.py)"
+ },
+ {
+ "id": "icon.seed.voidmoss",
+ "path": "icons/seed.voidmoss.png",
+ "type": "png",
+ "checksum": "8b4e03cd6003568f6e235ebfcbc8a9d5db89f2ab5176b65dba566d1b56fba68d",
+ "license": "CC-BY-NC-4.0",
+ "source": "procedural sprites.ts generateSeedSprite, no AI; elem=neutral; 绝灵苔 seed (按既有 seed 约定纯程序化)"
+ },
+ {
+ "id": "logo.emblem",
+ "path": "logo/logo-emblem.png",
+ "type": "png",
+ "checksum": "4498ee101660dbc6fe59d58b8d4638f617a6bf37bf5ee02bc8f1c711407afce6",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 /images/generations emblem (herb+lightning+soil ink talisman, ink+spirit-gold); trim/square via tools/compose-logo.py; 不量化(logo 保留高细节)"
+ },
+ {
+ "id": "logo.full",
+ "path": "logo/logo-full.png",
+ "type": "png",
+ "checksum": "0d629bc239753e807c11386d022e59c5f573bd865f9fd46833d25a328cfaf765",
+ "license": "AI-Generated",
+ "source": "emblem (gpt-image-2) + 真字体叠加(思源宋体CN-Bold/FreeSerifBold); 文字不交给AI; tools/compose-logo.py"
+ },
+ {
+ "id": "logo.favicon-64",
+ "path": "logo/favicon-64.png",
+ "type": "png",
+ "checksum": "b150165d45f92977b49243e07329a5a63bd4b209b0659c37a6449b60a577accb",
+ "license": "AI-Generated",
+ "source": "emblem 64px favicon (derived from logo.emblem); tools/compose-logo.py"
+ },
+ {
+ "id": "logo.favicon-32",
+ "path": "logo/favicon-32.png",
+ "type": "png",
+ "checksum": "50a7ff582d6102cb66ea9ba9102ee7089f703dbd268701c43a8ed1b7270bef50",
+ "license": "AI-Generated",
+ "source": "emblem 32px favicon (derived from logo.emblem); tools/compose-logo.py"
+ }
+ ],
+ "audio": [],
+ "fonts": [
+ {
+ "id": "font.lxgw-wenkai",
+ "path": "fonts/lxgw-wenkai-regular.subset.woff2",
+ "type": "woff2",
+ "checksum": "4ea57e5e370e6e5da9d606554e6f32f3991d12c1d3e07503b4c948b3aeb3ea2b",
+ "license": "OFL-1.1",
+ "source": "https://github.com/lxgw/LxgwWenKai (v1.522, LXGWWenKai-Regular，按游戏用字子集化)"
+ }
+ ],
+ "shaders": []
+}

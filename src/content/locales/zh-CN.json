@@ -1,0 +1,90 @@
+{
+ "meta": { "locale": "zh-CN", "displayName": "简体中文" },
+ "ui": {
+ "title": "永恒山谷：大道之歌",
+ "subtitle": "Aeon Vale: Song of the Dao",
+ "help": {
+ "default": "方向键移动·1-0/滚轮/Q切热栏·空格/E互动·Enter过夜·Tab背包·C修炼·P暂停·Shift+M农庄操作·Shift+Tab地点目录",
+ "inventory": "背包已开·Tab/Esc关闭·1-0仅预选热栏·当前不会触发世界动作或过夜",
+ "cultivation": "修炼总览已开·Esc关闭·当前不会触发世界动作或过夜",
+ "pause": "已暂停·Esc恢复行动·当前不会推进时间或触发世界动作",
+ "dialogue": "对白中·空格/E/Enter继续·当前不会过夜或切换工具",
+ "location": "地点目录·Shift+数字选地点·数字选服务·Tab切地点·Shift+Tab切服务·空格/E/Enter确认·Esc返回",
+ "farmAction": "农庄操作·数字预选项目·Tab切换项目·Enter确认进入·Esc返回",
+ "npcAction": "人物操作·数字预选互动·Tab切换·Enter确认·Esc返回",
+ "build": "建造中·Tab切换候选·Enter确认放置·Esc返回",
+ "upgrade": "升级面板·Tab切换候选·Enter确认升级·Esc返回",
+ "storage": "仓储面板·Tab切换物品·Enter确认·Esc返回·当前不会过夜",
+ "shipping": "出货面板·Tab切换物品·Enter确认·Esc返回·当前不会过夜",
+ "processing": "加工面板·Tab切换候选·Enter确认·Esc返回",
+ "facilityCollect": "设施收取·Tab切换目标·Enter收取·Esc返回",
+ "shop": "商店/摊位·Tab切换商品·Enter购买·Esc返回",
+ "trade": "交易面板·Tab切换条目·Enter成交·Esc返回",
+ "festival": "节日面板·Tab切换项目·Enter确认·Esc返回",
+ "commission": "委托/差事面板·Enter交付·Esc返回",
+ "teaShed": "旧茶棚·Enter静养·Esc返回",
+ "greenhouse": "暖棚养护·Enter照料·Esc返回",
+ "ascensionChoice": "飞升抉择·仅 1/2 可选结局·当前不会过夜或切换工具"
+ },
+ "objective": {
+ "first-till": "当前目标：先翻出一块地。",
+ "first-sow": "当前目标：播下第一颗青苔种或露根草种。",
+ "first-water": "当前目标：给刚种下的幼苗浇一次水。",
+ "first-harvest": "当前目标：继续照料，收下第一株成熟灵草。",
+ "first-ship": "当前目标：把第一株灵草投进出货箱。",
+ "first-sleep": "当前目标：按 Enter 过夜，等次日结算换回灵石。",
+ "first-market-restock": "当前目标：去山谷集市补几颗种子，把第二轮药材接上。",
+ "first-second-sow": "当前目标：把刚补到的种子播回田里，接上第二轮药材。",
+ "first-second-water": "当前目标：给刚补种的新苗浇上第一轮水，把第二轮药材真正接稳。",
+ "first-loop-complete": "当前目标：第二轮药材动线已成立，继续照料新苗、卖余货，或再扩一小片田。"
+ },
+ "restart": "按 R 重新开始",
+ "tribulation": {
+ "countdown": "天劫倒计时",
+ "incoming": "天劫降临",
+ "waves": "第 {n} 波 / 共 {m} 波"
+ },
+ "hud": {
+ "hp": "气血",
+ "pillPoison": "丹毒",
+ "cultivation": "体魄",
+ "qi": "灵气",
+ "stamina": "体力",
+ "day": "第 {n} 日",
+ "year": "第 {n} 年",
+ "season": { "spring": "春", "summer": "夏", "autumn": "秋", "winter": "冬" },
+ "stages": ["凡骨", "淬皮", "锻骨", "通脉", "洗髓", "凝血", "雷骨", "飞升前夜"],
+ "invTitle": "—— 背包 ——",
+ "invEmpty": "（空）",
+ "invSeed": "种子",
+ "invHerb": "灵草",
+ "invPill": "丹药",
+ "invMisc": "杂物",
+ "invOther": "其他"
+ },
+ "menu": { "newGame": "新的旅程", "continue": "继续游戏", "settings": "设置", "quit": "退出" },
+ "action": {
+ "till": "翻地",
+ "sow": "播种",
+ "water": "浇水",
+ "channelQi": "供灵",
+ "harvest": "收获",
+ "rest": "静修",
+ "alchemy": "炼丹"
+ }
+ },
+ "event": {
+ "crop-mature": "{name} 成熟了",
+ "crop-withered": "{name} 枯萎了",
+ "season-change": "入{season}",
+ "furnace-explosion": "炸炉！",
+ "lightning-strike": "劫雷落下"
+ },
+ "ending": {
+ "ascension": "白日飞升\n凡骨碎裂，踏雷而起。天道，输了这一局。\n太一宗当年说我是废物——倒也没说错。废物，才捡得到别人不要的那条路。",
+ "poison-death": "丹毒暴毙\n凡骨扛不住的，从来不只是雷。",
+ "tribulation-death": "陨于天劫\n凡人逆天，终被天收——但有人记得，你曾向它挥过拳。",
+ "lifespan-death": "大限已至\n凡骨熬尽，仍未等来下一道雷。",
+ "madness": "走火入魔\n《偷天换劫诀》的上一个修习者，也是这样结束的。"
+ }
+}

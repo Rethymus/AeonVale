@@ -1,0 +1,31 @@
+name: M5 proxy balance
+
+on:
+ schedule:
+ - cron: '17 3 * * *'
+ workflow_dispatch:
+
+permissions:
+ contents: read
+
+jobs:
+ certify:
+ runs-on: ubuntu-latest
+ timeout-minutes: 20
+ steps:
+ - uses: actions/checkout@v4
+ - uses: pnpm/action-setup@v4
+ with:
+ version: 10
+ - uses: actions/setup-node@v4
+ with:
+ node-version: 22
+ cache: pnpm
+ - name: Install
+ run: pnpm install --frozen-lockfile
+ - name: M5 proxy balance report (advisory; non-blocking)
+ run: pnpm m5:certify -- --fail-on never --format json
+ # M5 接受点估计落带的 provisional 工具结果；严格 Wilson 认证推迟到 M6 人类 playtest 校准。
+ # 夜跑始终只报告，结构硬门由 m5:check 承担。
+ - name: M5 structural certification (hard gate)
+ run: pnpm m5:check

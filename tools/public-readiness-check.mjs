@@ -1,0 +1,275 @@
+import { existsSync, readFileSync } from 'node:fs';
+
+const failures = [];
+
+function requireFile(file) {
+  if (!existsSync(file)) failures.push(`missing required public readiness file: ${file}`);
+}
+
+function requireIncludes(file, text, message) {
+  requireFile(file);
+  if (!existsSync(file)) return;
+  const content = readFileSync(file, 'utf8');
+  if (!content.includes(text)) failures.push(message ?? `${file} must include ${text}`);
+}
+
+for (const file of [
+  'README.md',
+  'CONTRIBUTING.md',
+  'SECURITY.md',
+  'LICENSE',
+  'CONTENT-LICENSE.md',
+  'CHANGELOG.md',
+  '.github/workflows/ci.yml',
+  '.github/workflows/pages.yml',
+  '.github/workflows/release.yml',
+  '.github/pull_request_template.md',
+  'tools/portfolio-mvp-preflight.mjs',
+  'tools/public-tree-rules.mjs',
+  'tools/prepare-public-tree.mjs',
+  'tools/public-content-audit.mjs',
+  'tools/public-worktree-audit.mjs',
+  'tools/portfolio-status.mjs',
+  'tools/portfolio-release-checklist.mjs',
+  'tools/publication-check.mjs',
+  'tools/public-dist-check.mjs',
+]) {
+  requireFile(file);
+}
+
+const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
+if (packageJson.private !== true) failures.push('package.json must remain private before public repository conversion');
+if (packageJson.repository?.url !== 'https://github.com/Rethymus/AeonVale.git') {
+  failures.push('package.json repository.url must point at the public GitHub target');
+}
+for (const script of ['governance:check', 'governance:public', 'governance:dist', 'governance:readiness', 'prepare:public-tree', 'verify:public-tree']) {
+  if (typeof packageJson.scripts?.[script] !== 'string') failures.push(`package.json missing required script: ${script}`);
+}
+if (typeof packageJson.scripts?.['audit:public-worktree'] !== 'string') {
+  failures.push('package.json missing required script: audit:public-worktree');
+} else if (!packageJson.scripts['audit:public-worktree'].includes('tools/public-worktree-audit.mjs')) {
+  failures.push('package.json audit:public-worktree must run the public worktree audit script');
+}
+if (typeof packageJson.scripts?.['audit:public-content'] !== 'string') {
+  failures.push('package.json missing required script: audit:public-content');
+} else if (!packageJson.scripts['audit:public-content'].includes('tools/public-content-audit.mjs')) {
+  failures.push('package.json audit:public-content must run the public content audit script');
+}
+if (typeof packageJson.scripts?.['portfolio:capture'] !== 'string') {
+  failures.push('package.json missing required script: portfolio:capture');
+} else if (!packageJson.scripts['portfolio:capture'].includes('tests/browser/portfolio-capture.spec.ts')) {
+  failures.push('package.json portfolio:capture must run the dedicated portfolio capture spec');
+}
+if (typeof packageJson.scripts?.['portfolio:mvp-preflight'] !== 'string') {
+  failures.push('package.json missing required script: portfolio:mvp-preflight');
+} else if (!packageJson.scripts['portfolio:mvp-preflight'].includes('tools/portfolio-mvp-preflight.mjs')) {
+  failures.push('package.json portfolio:mvp-preflight must run the dedicated preflight script');
+}
+if (typeof packageJson.scripts?.['portfolio:status'] !== 'string') {
+  failures.push('package.json missing required script: portfolio:status');
+} else if (!packageJson.scripts['portfolio:status'].includes('tools/portfolio-status.mjs')) {
+  failures.push('package.json portfolio:status must run the non-deploying portfolio status script');
+}
+if (typeof packageJson.scripts?.['portfolio:release-checklist'] !== 'string') {
+  failures.push('package.json missing required script: portfolio:release-checklist');
+} else if (!packageJson.scripts['portfolio:release-checklist'].includes('tools/portfolio-release-checklist.mjs')) {
+  failures.push('package.json portfolio:release-checklist must run the non-deploying release checklist script');
+}
+requireIncludes('tools/portfolio-status.mjs', '不提交、不推送、不部署、不修改 GitHub 设置', 'Portfolio status must be explicitly non-deploying');
+requireIncludes('tools/portfolio-status.mjs', 'P0-A 本地作品集 MVP', 'Portfolio status must distinguish local portfolio MVP readiness');
+requireIncludes('tools/portfolio-status.mjs', 'P0-B GitHub Pages 公开展示', 'Portfolio status must distinguish deployed GitHub Pages status');
+requireIncludes('tools/portfolio-status.mjs', '真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 P0-B GitHub Pages 闭环完成', 'Portfolio status must keep live Pages verification as the P0-B completion gate');
+requireIncludes('tools/portfolio-status.mjs', '《星露谷物语》是长期生活感参照', 'Portfolio status must keep the Stardew comparison scope');
+requireIncludes('tools/portfolio-status.mjs', '炼丹、阵法、淬体、主动引劫', 'Portfolio status must preserve the xianxia differentiation scope');
+requireIncludes('tools/portfolio-status.mjs', 'P2 Patch / DLC 内容厚度', 'Portfolio status must reserve deeper content expansion for P2');
+requireIncludes('tools/portfolio-status.mjs', "process.argv.includes('--json')", 'Portfolio status must expose a machine-readable JSON mode');
+requireIncludes('tools/portfolio-status.mjs', "id: 'daily-loop'", 'Portfolio status must include a structured daily-loop comparison dimension');
+requireIncludes('tools/portfolio-status.mjs', "id: 'xianxia-differentiation'", 'Portfolio status must include a structured xianxia differentiation dimension');
+requireIncludes('tools/portfolio-status.mjs', "id: 'publishability'", 'Portfolio status must include a structured publishability dimension');
+requireIncludes('tools/portfolio-status.mjs', 'evidenceArtifacts', 'Portfolio status must expose structured evidence artifacts');
+requireIncludes('tools/portfolio-status.mjs', "id: 'portfolio-evidence-json'", 'Portfolio status must include the generated portfolio MVP evidence JSON artifact');
+requireIncludes('tools/portfolio-status.mjs', "id: 'portfolio-screenshot-set'", 'Portfolio status must include the generated screenshot evidence artifact set');
+requireIncludes('tools/portfolio-status.mjs', "id: 'live-pages-smoke'", 'Portfolio status must include the post-deployment live Pages smoke artifact');
+requireIncludes('tools/portfolio-status.mjs', 'screenshotEvidence paintedRatio and colors meet thresholds', 'Portfolio status must carry screenshot paint-stat evidence requirements');
+requireIncludes('tools/portfolio-status.mjs', 'PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL', 'Portfolio status must carry deployed Pages smoke evidence requirements');
+requireIncludes('tools/portfolio-status.mjs', 'blocked-by-maintainer-authorization', 'Portfolio status must keep GitHub Pages publication blocked pending maintainer authorization');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'", 'Portfolio MVP preflight must fail on secret-risk worktree paths');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-high-risk'", 'Portfolio MVP preflight must fail on high-risk public content findings');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "'portfolio:capture'", 'Portfolio MVP preflight must run screenshot capture');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "'verify:public-tree'", 'Portfolio MVP preflight must verify the public tree');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "'portfolio:status'", 'Portfolio MVP preflight must print the non-deploying portfolio status matrix');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "'portfolio:release-checklist'", 'Portfolio MVP preflight must print the non-deploying maintainer release checklist');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "rmSync('test-results/portfolio'", 'Portfolio MVP preflight must clear stale portfolio screenshots before capture');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'PLAYWRIGHT_PREVIEW_PORT', 'Portfolio MVP preflight must choose and pass a Playwright preview port');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'createServer', 'Portfolio MVP preflight must probe for an available preview port');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'test-results/portfolio/01-farm-loop.png', 'Portfolio MVP preflight must verify generated farm-loop screenshot output');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'test-results/portfolio/04-mobile-farm-loop.png', 'Portfolio MVP preflight must verify generated mobile screenshot output');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'test-results/portfolio/portfolio-mvp-evidence.json', 'Portfolio MVP preflight must verify generated portfolio MVP evidence JSON');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "evidence.runtimeSignals?.onboardingObjectiveId !== 'first-loop-complete'", 'Portfolio MVP preflight must verify first-loop completion evidence');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "evidence.runtimeSignals?.firstLoopProgress !== '10/10'", 'Portfolio MVP preflight must verify first-loop progress evidence');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'todayBriefingProof', 'Portfolio MVP preflight must verify today briefing body proof evidence');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'blocked-by-maintainer-authorization', 'Portfolio MVP preflight must keep P0-B blocked until maintainer authorization');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'screenshotEvidence', 'Portfolio MVP preflight must verify screenshot evidence paint stats');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'paintedRatio', 'Portfolio MVP preflight must verify screenshot painted ratio evidence');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'minPaintedRatio: 0.55', 'Portfolio MVP preflight must preserve the nonblank screenshot paint threshold');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'readUInt32BE(16)', 'Portfolio MVP preflight must parse PNG screenshot width');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'readUInt32BE(20)', 'Portfolio MVP preflight must parse PNG screenshot height');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 960, height: 540', 'Portfolio MVP preflight must verify generated canvas screenshot dimensions');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'setViewportSize({ width: 1440, height: 900 })', 'Portfolio screenshot capture must cover the desktop portfolio viewport');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'setViewportSize({ width: 390, height: 844 })', 'Portfolio screenshot capture must cover the mobile portfolio viewport');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'expectCanvasFitsViewport(page)', 'Portfolio screenshot capture must prove the canvas fits the mobile viewport');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'portfolio-mvp-evidence.json', 'Portfolio screenshot capture must emit the portfolio MVP evidence JSON');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', "priority: 'P0-A'", 'Portfolio MVP evidence must stay scoped to local P0-A review');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'screenshotEvidence', 'Portfolio MVP evidence must include screenshot evidence paint stats');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'paintedRatio', 'Portfolio MVP evidence must include screenshot painted ratio evidence');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'PORTFOLIO_PAINT_THRESHOLDS', 'Portfolio screenshot capture must preserve explicit paint thresholds');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', 'todayBriefingProof', 'Portfolio MVP evidence must persist today briefing body proof snippets');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', '翻地、播种、浇水、过夜、收获、出货、补种', 'Portfolio MVP evidence must preserve the Stardew first-loop comparison');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', '炼丹', 'Portfolio MVP evidence must include xianxia alchemy differentiation');
+requireIncludes('tests/browser/portfolio-capture.spec.ts', '主动引劫', 'Portfolio MVP evidence must include active tribulation differentiation');
+requireIncludes('tools/portfolio-release-checklist.mjs', '不提交、不推送、不部署、不修改 GitHub 设置', 'Portfolio release checklist must be explicitly non-deploying');
+requireIncludes('tools/portfolio-release-checklist.mjs', "process.argv.includes('--json')", 'Portfolio release checklist must expose a machine-readable JSON mode');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'requiredEvidence', 'Portfolio release checklist must expose structured required evidence');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'authorizationRequired', 'Portfolio release checklist must expose structured maintainer authorization gates');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'pnpm portfolio:mvp-preflight -- --keep-public-tree', 'Portfolio release checklist must include local portfolio MVP preflight');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'pnpm test:browser:pages', 'Portfolio release checklist must include real GitHub Pages smoke');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'blocked-by-maintainer-authorization', 'Portfolio release checklist must keep P0-B blocked pending maintainer authorization');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'README.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md', 'Portfolio release checklist must name public governance docs');
+requireIncludes('tools/portfolio-release-checklist.mjs', '不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md', 'Portfolio release checklist must preserve private design-document boundaries');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'Settings -> Pages 的 Source 设为 GitHub Actions', 'Portfolio release checklist must require maintainer verification of the GitHub Actions Pages source');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'ENABLE_PAGES=true 闸门保护', 'Portfolio release checklist must preserve the explicit Pages deployment gate');
+requireIncludes('tools/portfolio-release-checklist.mjs', '确认仓库 Homepage 指向', 'Portfolio release checklist must include repository Homepage verification after Pages deployment');
+requireIncludes('tools/portfolio-release-checklist.mjs', '《星露谷物语》对照验收', 'Portfolio release checklist must include the Stardew comparison acceptance gate');
+requireIncludes('tools/portfolio-release-checklist.mjs', '低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种', 'Portfolio release checklist must verify the low-friction farm loop against Stardew scope');
+requireIncludes('tools/portfolio-release-checklist.mjs', '差异化内核：炼丹、阵法、淬体、主动引劫', 'Portfolio release checklist must preserve the xianxia differentiation gate');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'Go / No-Go 证据', 'Portfolio release checklist must include go/no-go evidence before maintainer deployment');
+requireIncludes('tools/portfolio-release-checklist.mjs', '4 张 test-results/portfolio/*.png 截图为本次生成', 'Portfolio release checklist must require fresh portfolio screenshot evidence');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成', 'Portfolio release checklist must require fresh portfolio MVP evidence JSON');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10', 'Portfolio release checklist must require maintainers to inspect today briefing proof evidence');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'screenshotEvidence：4 张截图尺寸均为 960x540', 'Portfolio release checklist must require maintainers to inspect screenshot evidence dimensions');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'paintedRatio 达到阈值，colors 达到阈值', 'Portfolio release checklist must require maintainers to inspect screenshot paint stats');
+requireIncludes('tools/portfolio-release-checklist.mjs', '该文件仍是生成物，不进入公开树', 'Portfolio release checklist must keep portfolio MVP evidence JSON out of the public tree');
+requireIncludes('tools/portfolio-release-checklist.mjs', '真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成', 'Portfolio release checklist must keep live Pages verification as the P0-B completion gate');
+requireIncludes('tools/portfolio-release-checklist.mjs', '对标范围与优先级复核', 'Portfolio release checklist must include the Stardew/comparison priority review section');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'P0 只要求作品集 MVP 与 GitHub 部署闭环成立', 'Portfolio release checklist must keep P0 scoped to portfolio MVP and GitHub deployment');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'P1 再推进独立游戏首版的可持续循环', 'Portfolio release checklist must separate P1 indie-game loop work from P0 release readiness');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'P2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事', 'Portfolio release checklist must reserve deeper content expansion for P2 patch/DLC work');
+requireIncludes('tools/portfolio-release-checklist.mjs', '《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》', 'Portfolio release checklist must preserve xianxia competitor comparison boundaries');
+if (typeof packageJson.scripts?.['verify:public-tree'] === 'string') {
+  if (!packageJson.scripts['verify:public-tree'].includes('pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts')) {
+    failures.push('package.json verify:public-tree must install public-tree dependencies without lifecycle scripts');
+  }
+  if (!packageJson.scripts['verify:public-tree'].includes('tests/unit/public-dist-check.test.ts')) {
+    failures.push('package.json verify:public-tree must run public dist check unit tests');
+  }
+  if (!packageJson.scripts['verify:public-tree'].includes('tests/unit/public-content-audit.test.ts')) {
+    failures.push('package.json verify:public-tree must run public content audit unit tests');
+  }
+}
+if (typeof packageJson.scripts?.['test:browser:smoke'] !== 'string') {
+  failures.push('package.json missing required script: test:browser:smoke');
+} else if (!packageJson.scripts['test:browser:smoke'].includes('tests/browser/smoke.spec.ts')) {
+  failures.push('test:browser:smoke must run only the browser smoke spec');
+}
+if (typeof packageJson.scripts?.['test:browser:public-tree'] !== 'string') {
+  failures.push('package.json missing required script: test:browser:public-tree');
+} else {
+  const publicBrowserScript = packageJson.scripts['test:browser:public-tree'];
+  if (!publicBrowserScript.includes('PLAYWRIGHT_APP_DIR=.public-tree')) failures.push('test:browser:public-tree must run against the public tree');
+  if (!publicBrowserScript.includes('PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree must cover the GitHub Pages route');
+  if (!publicBrowserScript.includes('PLAYWRIGHT_VITE_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree must build with the GitHub Pages base path');
+  if (!publicBrowserScript.includes('pnpm test:browser:smoke') && !publicBrowserScript.includes('tests/browser/smoke.spec.ts')) failures.push('test:browser:public-tree must run only the deployment smoke spec');
+}
+if (typeof packageJson.scripts?.['test:browser:pages'] !== 'string') {
+  failures.push('package.json missing required script: test:browser:pages');
+} else {
+  const pagesBrowserScript = packageJson.scripts['test:browser:pages'];
+  if (!pagesBrowserScript.includes('PLAYWRIGHT_BASE_URL=https://Rethymus.github.io')) failures.push('test:browser:pages must target the GitHub Pages host');
+  if (!pagesBrowserScript.includes('PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/')) failures.push('test:browser:pages must cover the GitHub Pages route');
+  if (!pagesBrowserScript.includes('PLAYWRIGHT_SKIP_WEBSERVER=true')) failures.push('test:browser:pages must verify the deployed URL without starting local preview');
+  if (!pagesBrowserScript.includes('pnpm test:browser:smoke')) failures.push('test:browser:pages must reuse the dedicated browser smoke path');
+}
+if (typeof packageJson.scripts?.['verify:public-tree'] === 'string' && !packageJson.scripts['verify:public-tree'].includes('pnpm test:browser:public-tree')) {
+  failures.push('package.json verify:public-tree must run public-tree browser smoke');
+}
+if (typeof packageJson.scripts?.['verify:public-tree'] === 'string' && !packageJson.scripts['verify:public-tree'].includes('VITE_BASE_PATH=/AeonVale/')) {
+  failures.push('package.json verify:public-tree must build public dist with the GitHub Pages base path');
+}
+
+requireIncludes('README.md', 'https://Rethymus.github.io/AeonVale/', 'README.md must name the GitHub Pages target');
+requireIncludes('README.md', 'pnpm prepare:public-tree <目标目录>', 'README.md must document the public-tree publication path');
+requireIncludes('README.md', 'pnpm verify:public-tree', 'README.md must document the one-command public-tree verification path');
+requireIncludes('README.md', 'pnpm audit:public-worktree', 'README.md must document the public worktree audit path');
+requireIncludes('README.md', 'pnpm audit:public-content', 'README.md must document the public content audit path');
+requireIncludes('README.md', 'pnpm portfolio:mvp-preflight', 'README.md must document the portfolio MVP preflight path');
+requireIncludes('README.md', '打印非部署发布清单', 'README.md must document that portfolio MVP preflight prints the non-deploying release checklist');
+requireIncludes('README.md', '维护者发布清单回显', 'README.md must include release-checklist echo in the local MVP preflight evidence');
+requireIncludes('README.md', 'pnpm portfolio:status', 'README.md must document the non-deploying portfolio status path');
+requireIncludes('README.md', 'pnpm portfolio:status -- --json', 'README.md must document the machine-readable portfolio status path');
+requireIncludes('README.md', 'evidenceArtifacts', 'README.md must document the machine-readable portfolio evidence artifact list');
+requireIncludes('README.md', 'portfolio-evidence-json', 'README.md must document the portfolio evidence JSON artifact id');
+requireIncludes('README.md', 'portfolio-screenshot-set', 'README.md must document the portfolio screenshot artifact id');
+requireIncludes('README.md', 'live-pages-smoke', 'README.md must document the live Pages smoke artifact id');
+requireIncludes('README.md', 'pnpm portfolio:release-checklist', 'README.md must document the non-deploying portfolio release checklist path');
+requireIncludes('README.md', 'pnpm portfolio:release-checklist -- --json', 'README.md must document the machine-readable portfolio release checklist path');
+requireIncludes('README.md', 'requiredEvidence', 'README.md must document the machine-readable release checklist evidence list');
+requireIncludes('README.md', 'authorizationRequired', 'README.md must document the machine-readable release checklist authorization gates');
+requireIncludes('README.md', 'pnpm portfolio:capture', 'README.md must document the portfolio screenshot capture path');
+requireIncludes('README.md', 'pnpm test:browser:smoke', 'README.md must document the dedicated browser smoke path');
+requireIncludes('README.md', 'pnpm test:browser:pages', 'README.md must document the deployed GitHub Pages browser smoke path');
+requireIncludes('README.md', 'test-results/portfolio/', 'README.md must document the generated portfolio screenshot directory');
+requireIncludes('README.md', 'test-results/portfolio/portfolio-mvp-evidence.json', 'README.md must document the generated portfolio MVP evidence JSON');
+requireIncludes('README.md', 'todayBriefingProof', 'README.md must document the today briefing proof field in generated portfolio evidence');
+requireIncludes('README.md', '非空绘制比例、颜色数', 'README.md must document screenshot paint-stat evidence for portfolio review');
+requireIncludes('README.md', 'P0-B 授权阻塞', 'README.md must document that evidence preserves the GitHub Pages authorization blocker');
+requireIncludes('README.md', '该目录属于生成物，不进入公开树', 'README.md must keep generated portfolio screenshots out of the public tree');
+requireIncludes('README.md', '## 公开优先级', 'README.md must document the public portfolio-MVP priority framing');
+requireIncludes('README.md', '### 当前进度快照', 'README.md must document an honest current portfolio-MVP progress snapshot');
+requireIncludes('README.md', 'P0-B GitHub Pages 公开展示', 'README.md must distinguish local MVP readiness from deployed GitHub Pages status');
+requireIncludes('README.md', '维护者授权后', 'README.md must state that GitHub Pages publication requires maintainer authorization');
+requireIncludes('README.md', 'P0 作品集 MVP 与 GitHub 部署', 'README.md must name portfolio MVP and GitHub deployment as the P0 priority');
+requireIncludes('README.md', '### 作品集 MVP 验收清单', 'README.md must include the public portfolio MVP acceptance checklist');
+requireIncludes('README.md', '玩家知道今天先做什么', 'README.md must document the player-facing daily-priority acceptance item');
+requireIncludes('README.md', 'GitHub Pages 构建不泄露设计资料', 'README.md must document the public deployment leak-prevention acceptance item');
+requireIncludes('CONTRIBUTING.md', 'pnpm prepare:public-tree <目标目录>', 'CONTRIBUTING.md must require public-tree based publication');
+requireIncludes('CONTRIBUTING.md', '创作设定、玩法细案、路线规划、美术状态等设计资料不得进入公开仓库、Pages 或 Release 产物', 'CONTRIBUTING.md must document private design-document boundaries');
+
+requireIncludes('.github/workflows/ci.yml', 'uses: gitleaks/gitleaks-action@v2', 'CI must include secret scanning');
+requireIncludes('.github/workflows/ci.yml', 'pnpm governance:readiness', 'CI must run private-tree readiness checks');
+requireIncludes('.github/workflows/ci.yml', 'pnpm prepare:public-tree .public-tree', 'CI must prepare the public tree');
+requireIncludes('.github/workflows/ci.yml', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'CI must install public-tree dependencies without lifecycle scripts');
+requireIncludes('.github/workflows/ci.yml', 'pnpm --dir .public-tree governance:readiness', 'CI must run public-tree readiness checks');
+requireIncludes('.github/workflows/ci.yml', 'PLAYWRIGHT_APP_DIR: .public-tree', 'CI browser smoke must run against the public tree');
+requireIncludes('.github/workflows/ci.yml', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'CI browser smoke must cover the GitHub Pages route');
+requireIncludes('.github/workflows/ci.yml', 'VITE_BASE_PATH: /AeonVale/', 'CI public-tree build must use the GitHub Pages base path');
+requireIncludes('.github/workflows/ci.yml', 'pnpm test:browser:public-tree', 'CI browser smoke must reuse the public-tree deployment smoke script');
+
+requireIncludes('.github/workflows/pages.yml', "vars.ENABLE_PAGES == 'true'", 'Pages deployment must stay behind an explicit repository variable');
+requireIncludes('.github/workflows/pages.yml', 'ref: ${{ github.event.workflow_run.head_sha || github.sha }}', 'Pages deployment must checkout the CI-verified commit');
+requireIncludes('.github/workflows/pages.yml', 'VITE_BASE_PATH: /AeonVale/', 'Pages build must use the repository subpath base');
+requireIncludes('.github/workflows/pages.yml', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'Pages deployment must install public-tree dependencies without lifecycle scripts');
+requireIncludes('.github/workflows/pages.yml', 'pnpm --dir .public-tree governance:readiness', 'Pages deployment must run public readiness checks');
+requireIncludes('.github/workflows/pages.yml', 'pnpm --dir .public-tree governance:dist', 'Pages deployment must run public dist checks');
+requireIncludes('.github/workflows/pages.yml', 'pnpm test:browser:public-tree', 'Pages deployment must run public-tree browser smoke before upload');
+requireIncludes('.github/workflows/pages.yml', 'path: .public-tree/dist', 'Pages deployment must upload only the checked public dist artifact');
+requireIncludes('.github/workflows/pages.yml', 'pnpm test:browser:pages', 'Pages deployment must smoke test the deployed GitHub Pages URL');
+
+requireIncludes('.github/workflows/release.yml', 'workflow_dispatch:', 'Release workflow must remain manually triggered');
+requireIncludes('.github/workflows/release.yml', "if: github.ref == 'refs/heads/main'", 'Release workflow must remain main-only');
+requireIncludes('.github/workflows/release.yml', 'pnpm governance:readiness', 'Release workflow must run private-tree readiness checks');
+requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'Release workflow must install public-tree dependencies without lifecycle scripts');
+requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree governance:readiness', 'Release workflow must run public-tree readiness checks');
+requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree governance:public', 'Release workflow must check the public tree');
+requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts', 'Release workflow must run public-tree publication guardrail unit tests');
+requireIncludes('.github/workflows/release.yml', 'cd .public-tree/dist && zip', 'Release zip must be built only from public dist');
+
+for (const ignorePattern of ['.public-tree/', 'dist/', 'playwright-report/', 'test-results/', '.claude/', '.omc/', '.codex/', '.agents/']) {
+  requireIncludes('.gitignore', ignorePattern, `.gitignore must ignore ${ignorePattern}`);
+}
+
+if (failures.length) {
+  console.error(failures.join('\n'));
+  process.exit(1);
+}
+
+console.log('Public readiness check passed (governance docs, workflows, public-tree scripts, and ignore rules are present).');
