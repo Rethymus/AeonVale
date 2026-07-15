@@ -8,7 +8,7 @@ describe('GitHub workflow deployment guardrails', () => {
  const releaseWorkflow = readFileSync('.github/workflows/release.yml', 'utf8');
 
  expect(ciWorkflow).toContain('on:\n  push:\n    branches: [main]\n  pull_request:');
- expect(ciWorkflow).toContain('permissions:\n  contents: read');
+ expect(ciWorkflow).toContain('permissions:\n  contents: read\n  pull-requests: read');
  expect(ciWorkflow).toContain('jobs:\n  governance:\n    name: Governance and repository hygiene');
  expect(ciWorkflow).toContain('    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0');
  expect(ciWorkflow).toContain("      - run: pnpm --dir .public-tree build\n        env:\n          PUBLIC_BUILD: 'true'\n          VITE_BASE_PATH: /AeonVale/");
