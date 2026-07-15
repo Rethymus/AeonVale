@@ -56,6 +56,24 @@ import { buildEncounterDialogueBeat, buildRelationshipDialogueBeat, type Dialogu
 
 type DirectFarmActionKind = Exclude<FarmActionFeedbackKind, 'sow' | 'fertilize'>;
 
+const RENDER_ASSET_LOAD_TIMEOUT_MS = 8_000;
+
+async function loadTextureWithTimeout(url: string): Promise<Texture | undefined> {
+ let timeout: ReturnType<typeof setTimeout> | undefined;
+ try {
+ return await Promise.race([
+ Assets.load<Texture>(url),
+ new Promise<undefined>((resolve) => {
+ timeout = setTimeout(() => resolve(undefined), RENDER_ASSET_LOAD_TIMEOUT_MS);
+ }),
+ ]);
+ } catch {
+ return undefined;
+ } finally {
+ if (timeout) clearTimeout(timeout);
+ }
+}
+
 async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets> {
  const iconIds = store.list('sprites')
  .map((entry) => entry.id)
@@ -95,12 +113,8 @@ const ids = [
 const loaded = await Promise.all(ids.map(async (id) => {
  const url = assetUrlForId(store, id);
  if (!url) return [id, undefined] as const;
- try {
- const texture = await Assets.load<Texture>(url);
+ const texture = await loadTextureWithTimeout(url);
  return [id, texture] as const;
- } catch {
- return [id, undefined] as const;
- }
  }));
 
 const textureById = new Map<string, Texture | undefined>(loaded);
