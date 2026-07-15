@@ -12,7 +12,7 @@ function runChecklistJson(): unknown {
   return JSON.parse(execFileSync('node', [script, '--json'], { encoding: 'utf8' }));
 }
 
-describe('作品集 MVP 发布清单', () => {
+describe('公开试玩发布清单', () => {
   it('只输出非部署清单并保留公开边界', () => {
     const output = runChecklist();
 
@@ -40,7 +40,7 @@ describe('作品集 MVP 发布清单', () => {
     expect(output).toContain('真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成');
     expect(output).toContain('对标范围与优先级复核');
     expect(output).toContain('以《星露谷物语》作为长期生活感参照');
-    expect(output).toContain('P0 只要求作品集 MVP 与 GitHub 部署闭环成立');
+    expect(output).toContain('P0 只要求公开试玩版与 GitHub Pages 部署闭环成立');
     expect(output).toContain('P1 再推进独立游戏首版的可持续循环');
     expect(output).toContain('P2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事');
     expect(output).toContain('《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》');
@@ -58,12 +58,12 @@ describe('作品集 MVP 发布清单', () => {
       noGo: string[];
     };
 
-    expect(checklist.title).toBe('Aeon Vale 作品集 MVP 发布清单');
+    expect(checklist.title).toBe('Aeon Vale 公开试玩发布清单');
     expect(checklist.generatedAt).toBe('static-public-release-checklist');
     expect(checklist.pagesUrl).toBe('https://Rethymus.github.io/AeonVale/');
     expect(checklist.safety).toContain('不提交、不推送、不部署、不修改 GitHub 设置');
     expect(checklist.sections.map((section) => section.title)).toContain('6. 《星露谷物语》对照验收');
-    expect(JSON.stringify(checklist.sections)).toContain('P0 只要求作品集 MVP 与 GitHub 部署闭环成立');
+    expect(JSON.stringify(checklist.sections)).toContain('P0 只要求公开试玩版与 GitHub Pages 部署闭环成立');
     expect(JSON.stringify(checklist.sections)).toContain('P1 再推进独立游戏首版的可持续循环');
     expect(JSON.stringify(checklist.sections)).toContain('P2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事');
     expect(JSON.stringify(checklist.sections)).toContain('《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》');

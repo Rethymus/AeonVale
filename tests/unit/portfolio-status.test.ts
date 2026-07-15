@@ -12,12 +12,12 @@ function runJsonStatus(): unknown {
   return JSON.parse(execFileSync('node', [script, '--json'], { encoding: 'utf8' }));
 }
 
-describe('作品集状态矩阵', () => {
+describe('公开试玩状态矩阵', () => {
   it('只输出公开安全状态并保留 P0/P1/P2 边界', () => {
     const output = runStatus();
 
     expect(output).toContain('不提交、不推送、不部署、不修改 GitHub 设置');
-    expect(output).toContain('P0-A 本地作品集 MVP');
+    expect(output).toContain('P0-A 本地可审版本');
     expect(output).toContain('pnpm portfolio:mvp-preflight -- --keep-public-tree');
     expect(output).toContain('P0-B GitHub Pages 公开展示');
     expect(output).toContain('维护者当次明确授权');
@@ -31,7 +31,7 @@ describe('作品集状态矩阵', () => {
     expect(output).toContain('《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》');
     expect(output).toContain('对标维度');
     expect(output).toContain('P0 日循环（daily-loop）');
-    expect(output).toContain('P0 公开可发布性（publishability）');
+    expect(output).toContain('P0 公开发布可验证性（publishability）');
     expect(output).toContain('状态：blocked-by-maintainer-authorization');
     expect(output).toContain('P2 内容体量（content-scale）');
     expect(output).toContain('证据产物');
@@ -76,7 +76,7 @@ describe('作品集状态矩阵', () => {
     expect(status.pagesUrl).toBe('https://Rethymus.github.io/AeonVale/');
     expect(status.safety).toContain('不提交、不推送、不部署、不修改 GitHub 设置');
     expect(status.rows.map((row) => row.scope)).toEqual([
-      'P0-A 本地作品集 MVP',
+      'P0-A 本地可审版本',
       'P0-B GitHub Pages 公开展示',
       'P1 独立游戏首版循环',
       'P2 Patch / DLC 内容厚度',

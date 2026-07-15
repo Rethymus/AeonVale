@@ -6,7 +6,7 @@ const generatedAt = 'static-public-status';
 
 const rows = [
   {
-    scope: 'P0-A 本地作品集 MVP',
+    scope: 'P0-A 本地可审版本',
     status: '接近可审：本地构建、测试、截图、公开树与泄露检查已有自动化路径',
     evidence: 'pnpm portfolio:mvp-preflight -- --keep-public-tree',
     next: '维护者人工试玩首轮 3-5 分钟，并复核 test-results/portfolio/ 截图可读性',
@@ -27,12 +27,12 @@ const rows = [
     scope: 'P2 Patch / DLC 内容厚度',
     status: '明确延后：人物、节日、地点、作物、收藏和长期叙事按补丁节奏扩容',
     evidence: '路线图与内容测试持续承接',
-    next: '避免在作品集首版前用内容堆量替代发布闭环',
+    next: '避免在公开试玩版前用内容堆量替代发布闭环',
   },
 ];
 
 const comparison = [
-  '《星露谷物语》是长期生活感参照，P0 只验收低门槛日循环与作品集展示闭环。',
+  '《星露谷物语》是长期生活感参照，P0 只验收低门槛日循环与公开试玩闭环。',
   'P0 日循环必须能看见翻地、播种、浇水、过夜、收获、出货、补种。',
   '本作差异化必须能看见炼丹、阵法、淬体、主动引劫，表达“种田即备战”。',
   '修仙竞品参照《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》，只吸收适合纯代码单人项目的成长、经营、关系与世界反馈。',
@@ -67,7 +67,7 @@ const dimensions = [
     dimension: '修仙差异化',
     stardewReference: '弱：不追求复刻星露谷的村镇体量，而是借用生活模拟可读性',
     xianxiaReference: '炼丹、阵法、淬体、主动引劫是公开演示必须看见的核心差异',
-    current: '系统和测试骨架已存在，作品集状态需要持续强调“种田即备战”',
+    current: '系统和测试骨架已存在，公开试玩状态需要持续强调“种田即备战”',
     next: '把炼丹、阵法、主动引劫整理成更直观的 3-5 分钟展示链',
     evidence: 'pnpm test tests/unit/alchemy.test.ts tests/unit/body-cultivation.test.ts tests/integration/tribulation.int.test.ts',
     status: 'visible-but-sharpening',
@@ -87,7 +87,7 @@ const dimensions = [
     id: 'social-commissions',
     priority: 'P1',
     dimension: '社交与委托',
-    stardewReference: '中：NPC、委托和节日提供生活感，但不是作品集 P0 的发布闸门',
+    stardewReference: '中：NPC、委托和节日提供生活感，但不是公开试玩 P0 的发布闸门',
     xianxiaReference: '关系网应服务于宗门、人情、机缘和资源交换',
     current: 'NPC 信号、委托和节日框架已有测试，人物记忆点仍薄',
     next: '优先保留能改变每日选择的 NPC 信号，再扩写人物厚度',
@@ -111,7 +111,7 @@ const dimensions = [
     dimension: '内容体量',
     stardewReference: '强但延后：成熟生活模拟的作物、地点、收藏、人物和节庆体量不能在 P0 硬追',
     xianxiaReference: '可按补丁 / DLC 扩展秘境、丹方、功法、人物线和长期叙事',
-    current: '明确延后，避免用内容堆量替代作品集发布闭环',
+    current: '明确延后，避免用内容堆量替代公开试玩发布闭环',
     next: 'P0-B 真实 Pages 验证后，再按补丁节奏扩容',
     evidence: 'pnpm portfolio:status -- --json',
     status: 'p2-deferred',
@@ -119,8 +119,8 @@ const dimensions = [
   {
     id: 'publishability',
     priority: 'P0',
-    dimension: '公开可发布性',
-    stardewReference: '间接：作品集链接必须像产品一样可访问、可试玩、可验证',
+    dimension: '公开发布可验证性',
+    stardewReference: '间接：公开试玩链接必须像产品一样可访问、可试玩、可验证',
     xianxiaReference: '公开产物只展示可试玩表层，不泄露私有设定、剧情细案或长期路线图',
     current: 'P0-A 本地检查链已建立；P0-B 被维护者授权和真实 Pages smoke 阻塞',
     next: '授权后从公开树部署，并用真实 URL 跑 pnpm test:browser:pages',
@@ -186,7 +186,7 @@ const evidenceArtifacts = [
 ];
 
 const status = {
-  title: 'Aeon Vale 作品集状态',
+  title: 'Aeon Vale 公开试玩状态',
   generatedAt,
   pagesUrl,
   safety: '此命令只输出公开安全的本地状态，不提交、不推送、不部署、不修改 GitHub 设置。',

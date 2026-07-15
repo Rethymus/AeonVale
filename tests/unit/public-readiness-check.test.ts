@@ -19,7 +19,7 @@ function makeReadyRepo(): string {
   mkdirSync(join(dir, 'tools'), { recursive: true });
   cpSync(script, join(dir, 'tools/public-readiness-check.mjs'));
 
-write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:public-tree <目标目录>\npnpm verify:public-tree\npnpm audit:public-worktree\npnpm audit:public-content\npnpm portfolio:mvp-preflight\n打印非部署发布清单\n维护者发布清单回显\npnpm portfolio:status\npnpm portfolio:status -- --json\nevidenceArtifacts\nportfolio-evidence-json\nportfolio-screenshot-set\nlive-pages-smoke\npnpm portfolio:release-checklist\npnpm portfolio:release-checklist -- --json\nrequiredEvidence\nauthorizationRequired\npnpm portfolio:capture\npnpm test:browser:smoke\npnpm test:browser:pages\ntest-results/portfolio/\ntest-results/portfolio/portfolio-mvp-evidence.json\ntodayBriefingProof\n非空绘制比例、颜色数\nP0-B 授权阻塞\n该目录属于生成物，不进入公开树\n## 公开优先级\n### 当前进度快照\nP0-B GitHub Pages 公开展示\n维护者授权后\nP0 作品集 MVP 与 GitHub 部署\n### 作品集 MVP 验收清单\n玩家知道今天先做什么\nGitHub Pages 构建不泄露设计资料\n');
+write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:public-tree <目标目录>\npnpm verify:public-tree\npnpm audit:public-worktree\npnpm audit:public-content\npnpm portfolio:mvp-preflight\n打印非部署发布清单\n维护者发布清单回显\npnpm portfolio:status\npnpm portfolio:status -- --json\nevidenceArtifacts\nportfolio-evidence-json\nportfolio-screenshot-set\nlive-pages-smoke\npnpm portfolio:release-checklist\npnpm portfolio:release-checklist -- --json\nrequiredEvidence\nauthorizationRequired\npnpm portfolio:capture\npnpm test:browser:smoke\npnpm test:browser:pages\ntest-results/portfolio/\ntest-results/portfolio/portfolio-mvp-evidence.json\ntodayBriefingProof\n非空绘制比例、颜色数\nP0-B 授权阻塞\n该目录属于生成物，不进入公开树\n## 公开优先级\n### 当前进度快照\nP0-B GitHub Pages 公开展示\n维护者授权后\nP0 公开试玩版与 GitHub Pages 部署\n### 公开试玩验收清单\n玩家知道今天先做什么\nGitHub Pages 构建不泄露设计资料\n');
   write(dir, 'CONTRIBUTING.md', 'pnpm prepare:public-tree <目标目录>\n创作设定、玩法细案、路线规划、美术状态等设计资料不得进入公开仓库、Pages 或 Release 产物\n');
   write(dir, 'SECURITY.md', '# Security\n');
   write(dir, 'LICENSE', 'MIT\n');
@@ -32,8 +32,8 @@ write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:publ
   write(dir, 'tools/prepare-public-tree.mjs', 'console.log("prepare");\n');
   write(dir, 'tools/public-content-audit.mjs', 'console.log("content audit");\n');
   write(dir, 'tools/public-worktree-audit.mjs', 'console.log("audit");\n');
-  write(dir, 'tools/portfolio-status.mjs', "process.argv.includes('--json')\nid: 'daily-loop'\nid: 'xianxia-differentiation'\nid: 'publishability'\nevidenceArtifacts\nid: 'portfolio-evidence-json'\nid: 'portfolio-screenshot-set'\nid: 'live-pages-smoke'\nscreenshotEvidence paintedRatio and colors meet thresholds\nPLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL\nblocked-by-maintainer-authorization\n不提交、不推送、不部署、不修改 GitHub 设置\nP0-A 本地作品集 MVP\nP0-B GitHub Pages 公开展示\n真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 P0-B GitHub Pages 闭环完成\n《星露谷物语》是长期生活感参照\n炼丹、阵法、淬体、主动引劫\nP2 Patch / DLC 内容厚度\n");
-  write(dir, 'tools/portfolio-release-checklist.mjs', "process.argv.includes('--json')\nrequiredEvidence\nauthorizationRequired\nblocked-by-maintainer-authorization\n不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nruntimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10\nscreenshotEvidence：4 张截图尺寸均为 960x540\npaintedRatio 达到阈值，colors 达到阈值\n该文件仍是生成物，不进入公开树\n真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求作品集 MVP 与 GitHub 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n");
+  write(dir, 'tools/portfolio-status.mjs', "process.argv.includes('--json')\nid: 'daily-loop'\nid: 'xianxia-differentiation'\nid: 'publishability'\nevidenceArtifacts\nid: 'portfolio-evidence-json'\nid: 'portfolio-screenshot-set'\nid: 'live-pages-smoke'\nscreenshotEvidence paintedRatio and colors meet thresholds\nPLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL\nblocked-by-maintainer-authorization\n不提交、不推送、不部署、不修改 GitHub 设置\nP0-A 本地可审版本\nP0-B GitHub Pages 公开展示\n真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 P0-B GitHub Pages 闭环完成\n《星露谷物语》是长期生活感参照\n炼丹、阵法、淬体、主动引劫\nP2 Patch / DLC 内容厚度\n");
+  write(dir, 'tools/portfolio-release-checklist.mjs', "process.argv.includes('--json')\nrequiredEvidence\nauthorizationRequired\nblocked-by-maintainer-authorization\n不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nruntimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10\nscreenshotEvidence：4 张截图尺寸均为 960x540\npaintedRatio 达到阈值，colors 达到阈值\n该文件仍是生成物，不进入公开树\n真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求公开试玩版与 GitHub Pages 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n");
   write(dir, 'tools/publication-check.mjs', 'console.log("public");\n');
   write(dir, 'tools/public-dist-check.mjs', 'console.log("dist");\n');
   write(dir, '.github/workflows/ci.yml', [
@@ -377,7 +377,7 @@ it('拒绝缺少作品集截图验收脚本的配置', () => {
 expect(() => runReadinessCheck(dir)).toThrow(/missing required script: portfolio:capture/);
   });
 
-it('拒绝作品集截图验收脚本未运行专用规格的配置', () => {
+it('拒绝审核截图验收脚本未运行专用规格的配置', () => {
     const dir = makeReadyRepo();
     write(dir, 'package.json', JSON.stringify({
       private: true,
@@ -404,46 +404,46 @@ it('拒绝作品集截图验收脚本未运行专用规格的配置', () => {
 expect(() => runReadinessCheck(dir)).toThrow(/portfolio:capture must run the dedicated portfolio capture spec/);
   });
 
-it('拒绝作品集 MVP 预检跳过公开树验证', () => {
+it('拒绝发布预检跳过公开树验证', () => {
     const dir = makeReadyRepo();
     write(dir, 'tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'\n'--fail-on-high-risk'\n'portfolio:capture'\n'portfolio:release-checklist'\nrmSync('test-results/portfolio'\nPLAYWRIGHT_PREVIEW_PORT\ncreateServer\n'test-results/portfolio/01-farm-loop.png'\n'test-results/portfolio/04-mobile-farm-loop.png'\n");
 
-expect(() => runReadinessCheck(dir)).toThrow(/Portfolio MVP preflight must verify the public tree/);
+expect(() => runReadinessCheck(dir)).toThrow(/Public demo preflight must verify the public tree/);
   });
 
-it('拒绝作品集 MVP 预检跳过高风险内容审查', () => {
+it('拒绝发布预检跳过高风险内容审查', () => {
     const dir = makeReadyRepo();
     write(dir, 'tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'\n'portfolio:capture'\n'verify:public-tree'\n'portfolio:release-checklist'\nrmSync('test-results/portfolio'\nPLAYWRIGHT_PREVIEW_PORT\ncreateServer\n'test-results/portfolio/01-farm-loop.png'\n'test-results/portfolio/04-mobile-farm-loop.png'\n");
 
-expect(() => runReadinessCheck(dir)).toThrow(/Portfolio MVP preflight must fail on high-risk public content findings/);
+expect(() => runReadinessCheck(dir)).toThrow(/Public demo preflight must fail on high-risk public content findings/);
   });
 
-it('拒绝作品集 MVP 预检跳过状态矩阵回显', () => {
+it('拒绝发布预检跳过状态矩阵回显', () => {
     const dir = makeReadyRepo();
     write(dir, 'tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'\n'--fail-on-high-risk'\n'portfolio:capture'\n'verify:public-tree'\n'portfolio:release-checklist'\nrmSync('test-results/portfolio'\nPLAYWRIGHT_PREVIEW_PORT\ncreateServer\n'test-results/portfolio/01-farm-loop.png'\n'test-results/portfolio/04-mobile-farm-loop.png'\nreadUInt32BE(16)\nreadUInt32BE(20)\nwidth: 960, height: 540\n");
 
-expect(() => runReadinessCheck(dir)).toThrow(/Portfolio MVP preflight must print the non-deploying portfolio status matrix/);
+expect(() => runReadinessCheck(dir)).toThrow(/Public demo preflight must print the non-deploying portfolio status matrix/);
   });
 
-it('拒绝作品集 MVP 预检不清理旧截图产物', () => {
+it('拒绝发布预检不清理旧截图产物', () => {
     const dir = makeReadyRepo();
     write(dir, 'tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'\n'--fail-on-high-risk'\n'portfolio:capture'\n'verify:public-tree'\n'portfolio:status'\n'portfolio:release-checklist'\nPLAYWRIGHT_PREVIEW_PORT\ncreateServer\n'test-results/portfolio/01-farm-loop.png'\n'test-results/portfolio/04-mobile-farm-loop.png'\n");
 
-expect(() => runReadinessCheck(dir)).toThrow(/Portfolio MVP preflight must clear stale portfolio screenshots before capture/);
+expect(() => runReadinessCheck(dir)).toThrow(/Public demo preflight must clear stale portfolio screenshots before capture/);
   });
 
-it('拒绝作品集 MVP 预检不探测空闲浏览器预览端口', () => {
+it('拒绝发布预检不探测空闲浏览器预览端口', () => {
     const dir = makeReadyRepo();
     write(dir, 'tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'\n'--fail-on-high-risk'\n'portfolio:capture'\n'verify:public-tree'\n'portfolio:status'\n'portfolio:release-checklist'\nrmSync('test-results/portfolio'\n'test-results/portfolio/01-farm-loop.png'\n'test-results/portfolio/04-mobile-farm-loop.png'\n");
 
-expect(() => runReadinessCheck(dir)).toThrow(/Portfolio MVP preflight must choose and pass a Playwright preview port/);
+expect(() => runReadinessCheck(dir)).toThrow(/Public demo preflight must choose and pass a Playwright preview port/);
   });
 
-it('拒绝作品集 MVP 预检不确认截图产物留存', () => {
+it('拒绝发布预检不确认截图产物留存', () => {
     const dir = makeReadyRepo();
     write(dir, 'tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'\n'--fail-on-high-risk'\n'portfolio:capture'\n'verify:public-tree'\n'portfolio:status'\n'portfolio:release-checklist'\nrmSync('test-results/portfolio'\nPLAYWRIGHT_PREVIEW_PORT\ncreateServer\n");
 
-expect(() => runReadinessCheck(dir)).toThrow(/Portfolio MVP preflight must verify generated farm-loop screenshot output/);
+expect(() => runReadinessCheck(dir)).toThrow(/Public demo preflight must verify generated farm-loop screenshot output/);
   });
 
 it('拒绝缺少专用浏览器 smoke 脚本的配置', () => {
@@ -499,14 +499,14 @@ expect(() => runReadinessCheck(dir)).toThrow(/missing required script: test:brow
 
 it('拒绝 README 移除作品集截图验收说明', () => {
     const dir = makeReadyRepo();
-    write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:public-tree <目标目录>\npnpm verify:public-tree\npnpm audit:public-worktree\npnpm audit:public-content\npnpm portfolio:mvp-preflight\n打印非部署发布清单\n维护者发布清单回显\npnpm portfolio:status\npnpm portfolio:release-checklist\n## 公开优先级\nP0 作品集 MVP 与 GitHub 部署\n### 作品集 MVP 验收清单\n玩家知道今天先做什么\nGitHub Pages 构建不泄露设计资料\n');
+    write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:public-tree <目标目录>\npnpm verify:public-tree\npnpm audit:public-worktree\npnpm audit:public-content\npnpm portfolio:mvp-preflight\n打印非部署发布清单\n维护者发布清单回显\npnpm portfolio:status\npnpm portfolio:release-checklist\n## 公开优先级\nP0 公开试玩版与 GitHub Pages 部署\n### 公开试玩验收清单\n玩家知道今天先做什么\nGitHub Pages 构建不泄露设计资料\n');
 
 expect(() => runReadinessCheck(dir)).toThrow(/README\.md must document the portfolio screenshot capture path/);
   });
 
 it('拒绝 README 移除状态 JSON 证据产物说明', () => {
     const dir = makeReadyRepo();
-    write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:public-tree <目标目录>\npnpm verify:public-tree\npnpm audit:public-worktree\npnpm audit:public-content\npnpm portfolio:mvp-preflight\n打印非部署发布清单\n维护者发布清单回显\npnpm portfolio:status\npnpm portfolio:status -- --json\npnpm portfolio:release-checklist\npnpm portfolio:capture\npnpm test:browser:smoke\npnpm test:browser:pages\ntest-results/portfolio/\ntest-results/portfolio/portfolio-mvp-evidence.json\n非空绘制比例、颜色数\nP0-B 授权阻塞\n该目录属于生成物，不进入公开树\n## 公开优先级\n### 当前进度快照\nP0-B GitHub Pages 公开展示\n维护者授权后\nP0 作品集 MVP 与 GitHub 部署\n### 作品集 MVP 验收清单\n玩家知道今天先做什么\nGitHub Pages 构建不泄露设计资料\n');
+    write(dir, 'README.md', 'https://Rethymus.github.io/AeonVale/\npnpm prepare:public-tree <目标目录>\npnpm verify:public-tree\npnpm audit:public-worktree\npnpm audit:public-content\npnpm portfolio:mvp-preflight\n打印非部署发布清单\n维护者发布清单回显\npnpm portfolio:status\npnpm portfolio:status -- --json\npnpm portfolio:release-checklist\npnpm portfolio:capture\npnpm test:browser:smoke\npnpm test:browser:pages\ntest-results/portfolio/\ntest-results/portfolio/portfolio-mvp-evidence.json\n非空绘制比例、颜色数\nP0-B 授权阻塞\n该目录属于生成物，不进入公开树\n## 公开优先级\n### 当前进度快照\nP0-B GitHub Pages 公开展示\n维护者授权后\nP0 公开试玩版与 GitHub Pages 部署\n### 公开试玩验收清单\n玩家知道今天先做什么\nGitHub Pages 构建不泄露设计资料\n');
 
 expect(() => runReadinessCheck(dir)).toThrow(/README\.md must document the machine-readable portfolio evidence artifact list/);
   });
@@ -520,14 +520,14 @@ expect(() => runReadinessCheck(dir)).toThrow(/Portfolio release checklist must i
 
 it('拒绝发布清单移除今日简报证据复核', () => {
     const dir = makeReadyRepo();
-    write(dir, 'tools/portfolio-release-checklist.mjs', '不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nscreenshotEvidence：4 张截图尺寸均为 960x540\npaintedRatio 达到阈值，colors 达到阈值\n该文件仍是生成物，不进入公开树\n真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求作品集 MVP 与 GitHub 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n');
+    write(dir, 'tools/portfolio-release-checklist.mjs', '不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nscreenshotEvidence：4 张截图尺寸均为 960x540\npaintedRatio 达到阈值，colors 达到阈值\n该文件仍是生成物，不进入公开树\n真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求公开试玩版与 GitHub Pages 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n');
 
 expect(() => runReadinessCheck(dir)).toThrow(/Portfolio release checklist must require maintainers to inspect today briefing proof evidence/);
   });
 
 it('拒绝发布清单移除截图证据绘制统计复核', () => {
     const dir = makeReadyRepo();
-    write(dir, 'tools/portfolio-release-checklist.mjs', '不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nruntimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10\n该文件仍是生成物，不进入公开树\n真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求作品集 MVP 与 GitHub 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n');
+    write(dir, 'tools/portfolio-release-checklist.mjs', '不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nruntimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10\n该文件仍是生成物，不进入公开树\n真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 P0-B GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求公开试玩版与 GitHub Pages 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n');
 
 expect(() => runReadinessCheck(dir)).toThrow(/Portfolio release checklist must require maintainers to inspect screenshot evidence dimensions/);
   });
