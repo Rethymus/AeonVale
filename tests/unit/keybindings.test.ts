@@ -88,14 +88,21 @@ describe('主循环高频键上下文路由', () => {
     expect(resolvePrimaryInteractionShortcut({ key: 'E', shiftKey: false, quickLocationShortcut: null })).toBe('default-confirm');
   });
 
-  it('热栏与主确认提示文案同步显式包含 E', () => {
+  it('热栏提示文案同步显式包含切换与直选信息', () => {
     expect(
       hotbarStatusText(
         0,
         () => '青苔',
         () => '翻地'
       )
-    ).toContain('空格/E主交互');
+    ).toContain('Space/Q切换');
+    expect(
+      hotbarStatusText(
+        0,
+        () => '青苔',
+        () => '翻地'
+      )
+    ).toContain('1-0直选');
   });
 
   it('解析 Enter 的确认上下文优先级', () => {

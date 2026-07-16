@@ -14,6 +14,8 @@ describe('onboarding objective helper', () => {
 
   it('provides a direct action hint for each onboarding step', () => {
     expect(onboardingObjectiveActionLine('first-till')).toBe('操作：站到空地前，按 空格 / E 翻地。');
+    expect(onboardingObjectiveActionLine('first-sow')).toContain('按 Z 直接播种');
+    expect(onboardingObjectiveActionLine('first-sow')).toContain('Space / Q 切换热栏');
     expect(onboardingObjectiveActionLine('first-market-restock')).toContain('Shift+Tab 打开地点目录');
   });
 
@@ -127,7 +129,7 @@ describe('onboarding objective helper', () => {
     });
 
     expect(onboardingObjectiveAdvanceToastPresentation('first-sow')).toEqual({
-      message: '下一步：播下第一颗青苔种或露根草种。｜保持站在已翻土地前，按 Z 播下热栏中的种子。',
+      message: '下一步：播下第一颗青苔种或露根草种。｜保持站在已翻土地前，按 Z 直接播种；若要手动换种子，可按 Space / Q 切换热栏，或按 1-0 直选。',
       assetId: 'icon.seed.mossling'
     });
 

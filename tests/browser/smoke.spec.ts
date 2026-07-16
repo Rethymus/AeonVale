@@ -1,11 +1,30 @@
 import { expect, test } from '@playwright/test';
-import { clearIntroDialogue, gameDebugSnapshot, openGame } from './openGame';
+import { clearIntroDialogue, continueToWorld, gameDebugSnapshot, gameEntryPath, waitForInitialSurface } from './openGame';
+
+test('boot-ready reveals a playable first surface before any input', async ({ page }) => {
+  test.setTimeout(process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 120_000 : 45_000);
+  await page.goto(gameEntryPath());
+
+  const initial = await waitForInitialSurface(page);
+  expect(initial.appSurface === 'title' || initial.appSurface === 'world').toBe(true);
+
+  if (initial.appSurface === 'title') {
+    await expect(page.locator('#flow-title-new-game')).toBeVisible();
+    await expect(page.locator('[data-app-surface="loading"]')).toBeHidden();
+    await expect(page.locator('canvas')).toBeHidden();
+  } else {
+    await expect(page.locator('#app')).toBeVisible();
+    await expect(page.locator('canvas')).toBeVisible();
+  }
+});
 
 test('loads the public demo first screen without page errors', async ({ page }) => {
   test.setTimeout(process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 120_000 : 45_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
-  await openGame(page);
+  await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
+  await continueToWorld(page);
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page).toHaveTitle(/Aeon Vale|永恒山谷/);
   await clearIntroDialogue(page);

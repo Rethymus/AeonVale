@@ -90,11 +90,24 @@ export function gameEntryPath(): string {
   return basePath.endsWith('/') ? basePath : `${basePath}/`;
 }
 
-export async function openGame(page: Page): Promise<void> {
-  await page.goto(gameEntryPath());
+export async function waitForInitialSurface(page: Page): Promise<AeonDebugSnapshot> {
   const canvas = page.locator('canvas');
   await canvas.waitFor({ state: 'attached' });
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: unknown }).__AEON_DEBUG__ != null);
+  await page.waitForFunction(() => {
+    const debug = (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__;
+    const surface = debug?.appSurface;
+    if (!surface) return false;
+    const active = document.querySelector<HTMLElement>(`[data-app-surface="${surface}"]`);
+    if (!active) return false;
+    const style = window.getComputedStyle(active);
+    return !active.hidden && active.getAttribute('aria-hidden') === 'false' && style.display !== 'none' && style.visibility !== 'hidden' && active.offsetWidth > 0 && active.offsetHeight > 0;
+  });
+  return gameDebugSnapshot(page);
+}
+
+export async function continueToWorld(page: Page): Promise<void> {
+  const canvas = page.locator('canvas');
 
   const continueButton = page.locator('#flow-title-continue');
   const newGameButton = page.locator('#flow-title-new-game');
@@ -118,6 +131,12 @@ export async function openGame(page: Page): Promise<void> {
     throw new Error(`Game canvas starts outside the initial viewport: box=${JSON.stringify(box)}, viewport=${JSON.stringify(viewport)}`);
   }
   await canvas.focus();
+}
+
+export async function openGame(page: Page): Promise<void> {
+  await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
+  await continueToWorld(page);
 }
 
 export async function gameDebugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
