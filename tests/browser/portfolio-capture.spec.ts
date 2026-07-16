@@ -12,7 +12,7 @@ import { canvasPngSnapshot, paintStatsFromDataUrl, gameDebugSnapshot, openGame, 
 const SAVE_KEY = 'aeonvale-save-v1';
 const PORTFOLIO_EVIDENCE_PATH = 'test-results/portfolio/portfolio-mvp-evidence.json';
 const PORTFOLIO_PAINT_THRESHOLDS = { minSampled: 500, minPaintedRatio: 0.55, minColors: 32 } as const;
-const TODAY_BRIEFING_PROOF = ['农庄', '炼丹', '引劫', '首轮进度：10/10'] as const;
+const TODAY_BRIEFING_PROOF = ['农庄', '炼丹', '引劫', '首轮进度：10/10', '修行接力'] as const;
 
 interface PortfolioScreenshotEvidence {
  path: string;

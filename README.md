@@ -177,7 +177,7 @@ pnpm audit:public-worktree
 pnpm audit:public-content
 ```
 
-审核截图可本地生成到 `test-results/portfolio/`，用于公开前审核和 README 展示素材筛选；该目录属于生成物，不进入公开树。截图脚本会同时覆盖桌面首屏、地点目录、农事面板和移动首屏，并写出 `test-results/portfolio/portfolio-mvp-evidence.json`，记录首轮闭环、今日简报 `todayBriefingProof`、截图尺寸、非空绘制比例、颜色数、修仙差异化和远端操作授权边界，方便维护者复核证据：
+审核截图可本地生成到 `test-results/portfolio/`，用于公开前审核和 README 展示素材筛选；该目录属于生成物，不进入公开树。截图脚本会同时覆盖桌面首屏、地点目录、农事面板和移动首屏，并写出 `test-results/portfolio/portfolio-mvp-evidence.json`，记录首轮闭环、今日简报 `todayBriefingProof`（含 10/10 进度与修行接力）、截图尺寸、非空绘制比例、颜色数、修仙差异化和远端操作授权边界，方便维护者复核证据：
 
 ```bash
 pnpm portfolio:capture

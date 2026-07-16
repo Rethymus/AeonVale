@@ -47,7 +47,7 @@ const portfolioScreenshots = [
 const portfolioPaintThresholds = { minSampled: 500, minPaintedRatio: 0.55, minColors: 32 };
 
 const portfolioEvidencePath = 'test-results/portfolio/portfolio-mvp-evidence.json';
-const todayBriefingProof = ['农庄', '炼丹', '引劫', '首轮进度：10/10'];
+const todayBriefingProof = ['农庄', '炼丹', '引劫', '首轮进度：10/10', '修行接力'];
 
 function pngDimensions(file) {
  const data = readFileSync(file);
@@ -171,7 +171,7 @@ function verifyPortfolioEvidence() {
  process.exit(1);
  }
  if (!Array.isArray(evidence.runtimeSignals?.todayBriefingProof) || !todayBriefingProof.every((text) => evidence.runtimeSignals.todayBriefingProof.includes(text))) {
- console.error('[portfolio:mvp-preflight] Public demo evidence must prove today briefing body carries the P0 farm, alchemy, tribulation, and 10/10 progress cues.');
+ console.error('[portfolio:mvp-preflight] Public demo evidence must prove today briefing body carries the P0 farm, alchemy, tribulation, 10/10 progress, and cultivation handoff cues.');
  process.exit(1);
  }
  verifyScreenshotEvidence(evidence);

@@ -67,7 +67,7 @@ const sections = [
     items: [
       'Go：pnpm portfolio:mvp-preflight -- --keep-public-tree 全绿，且 4 张 test-results/portfolio/*.png 截图为本次生成',
       'Go：test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成，记录首轮闭环、修仙差异化和远端操作授权边界；该文件仍是生成物，不进入公开树',
-      'Go：人工复核 portfolio-mvp-evidence.json 的 runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10，证明访客首屏能理解下一步和修仙差异化',
+      'Go：人工复核 portfolio-mvp-evidence.json 的 runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10、修行接力，证明访客首屏能理解下一步和修仙差异化',
       'Go：人工复核 portfolio-mvp-evidence.json 的 screenshotEvidence：4 张截图尺寸均为 960x540，paintedRatio 达到阈值，colors 达到阈值，thresholds 与本次截图一致',
       'Go：公开树内 pnpm test:browser:public-tree、PUBLIC_BUILD=true VITE_BASE_PATH=/AeonVale/ pnpm --dir .public-tree build、pnpm --dir .public-tree governance:dist 均已通过',
       'No-Go：未获得维护者当次明确授权时，不得转为 Public、重新推送公开树、修改 Pages 设置、创建 tag 或 Release',
@@ -102,7 +102,7 @@ const requiredEvidence = [
     path: 'test-results/portfolio/portfolio-mvp-evidence.json',
     generatedBy: 'pnpm portfolio:capture',
     requiredSignals: [
-      'runtimeSignals.todayBriefingProof includes 农庄, 炼丹, 引劫, and 首轮进度：10/10',
+      'runtimeSignals.todayBriefingProof includes 农庄, 炼丹, 引劫, 首轮进度：10/10, and 修行接力',
       'P0-A first-loop closure evidence is current',
       'xianxia differentiation is visible from farm, alchemy, array, body-cultivation, and active-tribulation cues',
       'remote-action authorization boundary remains recorded for Public/Release operations',

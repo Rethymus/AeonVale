@@ -1,6 +1,6 @@
 import { getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getPrimaryStayingWorldGoal, upcomingCalendarEntries, type CalendarEntry, type GameState, type MainlineQuestStatus, type SimContext, type SpecialOrderStatus, type StayingWorldGoalStatus } from '@sim';
 import { readyForBreakthrough } from '@sim/progression/progression';
-import { onboardingObjectiveActionLine, onboardingObjectiveHeadline, onboardingObjectivePayoffLine, onboardingObjectiveProgressLine, onboardingObjectivePurposeLine, onboardingObjectiveRouteLine, primaryObjectiveLine, stripObjectivePrefix } from './onboardingObjective';
+import { onboardingObjectiveActionLine, onboardingObjectiveCultivationHandoffLine, onboardingObjectiveHeadline, onboardingObjectivePayoffLine, onboardingObjectiveProgressLine, onboardingObjectivePurposeLine, onboardingObjectiveRouteLine, primaryObjectiveLine, stripObjectivePrefix } from './onboardingObjective';
 import { FIRST_HARVEST_FLAG, FIRST_MARKET_RESTOCK_FLAG, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, FIRST_SHIPPING_SETTLEMENT_FLAG, getOnboardingObjectiveId, type OnboardingObjectiveId } from '@sim/story/onboarding';
 import { itemIconAssetId } from './itemIcons';
 import { collectFarmsteadActionSignals, formatLocationActionSignalLine } from './locationActionSignals';
@@ -305,6 +305,7 @@ function onboardingObjectiveBriefingLines(
  const headline = `目标：${objective}`;
  const purpose = onboardingObjectivePurposeLine(objectiveId);
  const payoff = onboardingObjectivePayoffLine(objectiveId);
+ const handoff = onboardingObjectiveCultivationHandoffLine(objectiveId);
  const action = onboardingObjectiveActionLine(objectiveId);
  const route = onboardingObjectiveRouteLine(objectiveId);
  const progress = onboardingObjectiveProgressLine(objectiveId);
@@ -312,7 +313,7 @@ function onboardingObjectiveBriefingLines(
  const fallback = todayScheduleLine(state, ctx);
 
 const lines = milestone
- ? [headline, progress, milestone, purpose, payoff, action, route]
+ ? [headline, progress, milestone, purpose, payoff, handoff, action, route]
  : [headline, progress, purpose || action || farmFocusLine(state), payoff, action, route || fallback];
  return lines.filter((line) => line.length > 0);
 }

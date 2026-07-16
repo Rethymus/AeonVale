@@ -182,7 +182,7 @@ requireIncludes('tools/portfolio-release-checklist.mjs', '差异化内核：炼�
 requireIncludes('tools/portfolio-release-checklist.mjs', 'Go / No-Go 证据', 'Portfolio release checklist must include go/no-go evidence before maintainer deployment');
 requireIncludes('tools/portfolio-release-checklist.mjs', '4 张 test-results/portfolio/*.png 截图为本次生成', 'Portfolio release checklist must require fresh portfolio screenshot evidence');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成', 'Portfolio release checklist must require fresh public demo evidence JSON');
-requireIncludes('tools/portfolio-release-checklist.mjs', 'runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10', 'Portfolio release checklist must require maintainers to inspect today briefing proof evidence');
+requireIncludes('tools/portfolio-release-checklist.mjs', 'runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10、修行接力', 'Portfolio release checklist must require maintainers to inspect today briefing proof evidence');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'screenshotEvidence：4 张截图尺寸均为 960x540', 'Portfolio release checklist must require maintainers to inspect screenshot evidence dimensions');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'paintedRatio 达到阈值，colors 达到阈值', 'Portfolio release checklist must require maintainers to inspect screenshot paint stats');
 requireIncludes('tools/portfolio-release-checklist.mjs', '该文件仍是生成物，不进入公开树', 'Portfolio release checklist must keep public demo evidence JSON out of the public tree');
@@ -262,6 +262,7 @@ requireIncludes('README.md', 'pnpm portfolio:pages-watch -- --wait --json', 'REA
 requireIncludes('README.md', 'test-results/portfolio/', 'README.md must document the generated portfolio screenshot directory');
 requireIncludes('README.md', 'test-results/portfolio/portfolio-mvp-evidence.json', 'README.md must document the generated public demo evidence JSON');
 requireIncludes('README.md', 'todayBriefingProof', 'README.md must document the today briefing proof field in generated portfolio evidence');
+requireIncludes('README.md', '修行接力', 'README.md must document that today briefing proof includes the post-loop cultivation handoff');
 requireIncludes('README.md', '非空绘制比例、颜色数', 'README.md must document screenshot paint-stat evidence for public demo review');
 requireIncludes('README.md', '真实 Pages URL 必须在重新部署后通过 `pnpm test:browser:pages`', 'README.md must document that live Pages needs post-deployment URL smoke');
 requireIncludes('README.md', '该目录属于生成物，不进入公开树', 'README.md must keep generated review screenshots out of the public tree');
