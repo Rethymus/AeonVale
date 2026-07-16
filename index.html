@@ -1,24 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>永恒山谷：大道之歌 · Aeon Vale</title>
-    <style>
-      @font-face {
-        font-family: 'LXGW WenKai';
-        src: url('/fonts/lxgw-wenkai-regular.subset.woff2') format('woff2');
-        font-weight: 400;
-        font-style: normal;
-        font-display: swap;
-      }
-      html, body { margin: 0; padding: 0; background: #10101a; color: #eae0c8; font-family: 'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei',sans-serif; }
-      #app { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-      canvas { image-rendering: pixelated; border: 1px solid #2a2a3a; }
-    </style>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/app/main.ts"></script>
-  </body>
+ <head>
+ <meta charset="UTF-8" />
+ <link rel="icon" type="image/png" sizes="32x32" href="./logo/favicon-32.png" />
+ <link rel="icon" type="image/png" sizes="64x64" href="./logo/favicon-64.png" />
+ <link rel="apple-touch-icon" href="./logo/favicon-64.png" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>永恒山谷：大道之歌 · Aeon Vale</title>
+ <style>
+ html, body { margin: 0; padding: 0; background: #10101a; color: #eae0c8; font-family: 'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei',sans-serif; }
+ #app { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+ canvas { image-rendering: pixelated; border: 1px solid #2a2a3a; box-sizing: border-box; max-width: 100vw; max-height: 100vh; width: min(100vw, 960px); height: auto; }
+ </style>
+ </head>
+ <body>
+ <div id="app"></div>
+ <script type="module" src="./src/app/main.ts"></script>
+ </body>
 </html>
