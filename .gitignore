@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.public-tree/
 coverage/
 .vite/
 *.log
@@ -18,3 +19,21 @@ content/saves/*.json
 # 本地环境
 .env
 .env.local
+.env.*
+!.env.example
+
+# AI agent / local orchestration state (never publish)
+.claude/
+.omc/
+.codex/
+.agents/
+**/.claude/
+**/.omc/
+**/.codex/
+**/.agents/
+
+# Local reports and browser artifacts
+playwright-report/
+test-results/
+*.tsbuildinfo
+.tmp.playwright-*.config.ts
