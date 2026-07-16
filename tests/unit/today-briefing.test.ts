@@ -111,6 +111,7 @@ it('首轮 onboarding 简报始终把农务意义接到修仙核心循环', () =
 
 expect(briefing.body).toContain('意义：稳定农务后，灵草会持续转成丹药、阵法与抗劫底气。');
  expect(briefing.body).toContain('回报：日常循环已成立，下一步可以把药材投入炼丹、设施和引劫准备。');
+ expect(briefing.body).toContain('修行接力：炼丹备避雷丹、布引雷/绝缘阵、淬体满后按 T 主动引劫。');
  expect(briefing.body).toContain('操作：继续补种浇水；有余货时按 Shift+M 打开农庄加工或阵法面板。');
  expect(briefing.body).toContain('动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。');
  });
@@ -622,13 +623,14 @@ it('在首轮闭环成立后，会把闭环完成感写进简报', () => {
  state.player.flags.add(FIRST_SECOND_WATER_FLAG);
 
 const briefing = buildTodayBriefing(state, ctx, '当前目标：第二轮药材动线已成立，继续照料新苗、卖余货，或再扩一小片田。');
- const [headline = '', progress = '', milestone = '', purpose = '', payoff = '', action = '', route = ''] = briefing.body.split('\n');
+ const [headline = '', progress = '', milestone = '', purpose = '', payoff = '', handoff = '', action = '', route = ''] = briefing.body.split('\n');
 
 expect(headline).toBe('目标：第二轮药材动线已成立，继续照料新苗、卖余货，或再扩一小片田。');
  expect(progress).toBe('首轮进度：10/10 灵草→灵石→补种→备劫');
  expect(milestone).toBe('里程碑：首轮农务闭环已跑通，按 Shift+M 把余货接入加工、阵法与备劫。');
  expect(purpose).toBe('意义：稳定农务后，灵草会持续转成丹药、阵法与抗劫底气。');
  expect(payoff).toBe('回报：日常循环已成立，下一步可以把药材投入炼丹、设施和引劫准备。');
+ expect(handoff).toBe('修行接力：炼丹备避雷丹、布引雷/绝缘阵、淬体满后按 T 主动引劫。');
  expect(action).toBe('操作：继续补种浇水；有余货时按 Shift+M 打开农庄加工或阵法面板。');
  expect(route).toBe('动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。');
  expect(briefing.assetId).toBe('loc.herb-plot');

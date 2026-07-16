@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { inferOnboardingObjectiveId, normalizeGuidanceLine, onboardingEndDayWarning, onboardingEndDayWarningToastPresentation, onboardingHelpText, onboardingObjectiveActionLine, onboardingObjectiveAdvanceToast, onboardingObjectiveAdvanceToastPresentation, onboardingObjectiveHeadline, onboardingObjectivePayoffLine, onboardingObjectiveProgressLine, onboardingObjectivePurposeLine, onboardingObjectiveRouteLine, onboardingObjectiveText, onboardingRestockReturnToastPresentation, onboardingSecondWaterCompletionToastPresentation, onboardingWelcomeToastPresentation, stripObjectivePrefix } from '@app/onboardingObjective';
+import { inferOnboardingObjectiveId, normalizeGuidanceLine, onboardingEndDayWarning, onboardingEndDayWarningToastPresentation, onboardingHelpText, onboardingObjectiveActionLine, onboardingObjectiveAdvanceToast, onboardingObjectiveAdvanceToastPresentation, onboardingObjectiveCultivationHandoffLine, onboardingObjectiveHeadline, onboardingObjectivePayoffLine, onboardingObjectiveProgressLine, onboardingObjectivePurposeLine, onboardingObjectiveRouteLine, onboardingObjectiveText, onboardingRestockReturnToastPresentation, onboardingSecondWaterCompletionToastPresentation, onboardingWelcomeToastPresentation, stripObjectivePrefix } from '@app/onboardingObjective';
 
 describe('onboarding objective helper', () => {
  it('reads objective text from i18n and strips the prefix for compact surfaces', () => {
@@ -29,6 +29,8 @@ it('explains why the first farm loop matters for the cultivation fantasy', () =>
  expect(onboardingObjectivePurposeLine('first-loop-complete')).toContain('丹药、阵法与抗劫底气');
  expect(onboardingObjectivePayoffLine('first-harvest')).toContain('出货换灵石');
  expect(onboardingObjectivePayoffLine('first-loop-complete')).toContain('炼丹、设施和引劫准备');
+ expect(onboardingObjectiveCultivationHandoffLine('first-loop-complete')).toBe('修行接力：炼丹备避雷丹、布引雷/绝缘阵、淬体满后按 T 主动引劫。');
+ expect(onboardingObjectiveCultivationHandoffLine('first-till')).toBe('');
  });
 
 it('builds combined help text for the HUD hint area', () => {

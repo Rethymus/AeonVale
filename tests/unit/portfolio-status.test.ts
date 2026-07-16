@@ -119,7 +119,7 @@ describe('公开试玩状态矩阵', () => {
       requiredSignals: expect.arrayContaining([
         'first-loop-complete onboarding objective',
         '10/10 first-loop progress',
-        'today briefing proof includes farm, alchemy, tribulation, and 10/10 progress cues',
+        'today briefing proof includes farm, alchemy, tribulation, 10/10 progress, and cultivation handoff cues',
         'remote-action authorization boundary',
       ]),
       publicTreePolicy: expect.stringContaining('must not enter the public tree'),

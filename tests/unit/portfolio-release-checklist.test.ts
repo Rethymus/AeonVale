@@ -33,7 +33,7 @@ describe('公开试玩发布清单', () => {
     expect(output).toContain('Go / No-Go 证据');
     expect(output).toContain('4 张 test-results/portfolio/*.png 截图为本次生成');
     expect(output).toContain('test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成');
-    expect(output).toContain('runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10');
+    expect(output).toContain('runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10、修行接力');
     expect(output).toContain('screenshotEvidence：4 张截图尺寸均为 960x540');
     expect(output).toContain('paintedRatio 达到阈值，colors 达到阈值');
     expect(output).toContain('该文件仍是生成物，不进入公开树');

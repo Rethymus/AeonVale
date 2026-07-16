@@ -43,8 +43,8 @@ describe('可试玩 Demo 本地预检', () => {
  expect(script).toContain("evidence.runtimeSignals?.onboardingObjectiveId !== 'first-loop-complete'");
  expect(script).toContain("evidence.runtimeSignals?.firstLoopProgress !== '10/10'");
  expect(script).toContain('todayBriefingProof');
- expect(script).toContain("['农庄', '炼丹', '引劫', '首轮进度：10/10']");
- expect(script).toContain('farm, alchemy, tribulation, and 10/10 progress cues');
+ expect(script).toContain("['农庄', '炼丹', '引劫', '首轮进度：10/10', '修行接力']");
+ expect(script).toContain('farm, alchemy, tribulation, 10/10 progress, and cultivation handoff cues');
  expect(script).toContain('screenshotEvidence');
  expect(script).toContain('paintedRatio');
  expect(script).toContain('minPaintedRatio: 0.55');

@@ -147,7 +147,7 @@ const evidenceArtifacts = [
       'farmstead + show-farm-work selection',
       'shipping bin review output',
       'today briefing visible with asset',
-      'today briefing proof includes farm, alchemy, tribulation, and 10/10 progress cues',
+      'today briefing proof includes farm, alchemy, tribulation, 10/10 progress, and cultivation handoff cues',
       'Stardew low-friction loop text',
       'xianxia differentiation text',
       'remote-action authorization boundary',

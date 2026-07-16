@@ -58,6 +58,10 @@ const ONBOARDING_PAYOFF_LINES: Readonly<Record<OnboardingObjectiveId, string>> =
  'first-loop-complete': '回报：日常循环已成立，下一步可以把药材投入炼丹、设施和引劫准备。',
 };
 
+const ONBOARDING_CULTIVATION_HANDOFF_LINES: Readonly<Partial<Record<OnboardingObjectiveId, string>>> = {
+ 'first-loop-complete': '修行接力：炼丹备避雷丹、布引雷/绝缘阵、淬体满后按 T 主动引劫。',
+};
+
 const ONBOARDING_OBJECTIVE_IDS: readonly OnboardingObjectiveId[] = [
  'first-till',
  'first-sow',
@@ -158,14 +162,20 @@ export function onboardingObjectivePayoffLine(objectiveId: OnboardingObjectiveId
  return ONBOARDING_PAYOFF_LINES[objectiveId];
 }
 
+export function onboardingObjectiveCultivationHandoffLine(objectiveId: OnboardingObjectiveId | null): string {
+ if (!objectiveId) return '';
+ return ONBOARDING_CULTIVATION_HANDOFF_LINES[objectiveId] ?? '';
+}
+
 export function onboardingHelpText(objectiveId: OnboardingObjectiveId | null): string {
  if (!objectiveId) return '';
  const headline = onboardingObjectiveText(objectiveId);
  const purpose = onboardingObjectivePurposeLine(objectiveId);
  const payoff = onboardingObjectivePayoffLine(objectiveId);
+ const handoff = onboardingObjectiveCultivationHandoffLine(objectiveId);
  const action = onboardingObjectiveActionLine(objectiveId);
  const route = onboardingObjectiveRouteLine(objectiveId);
- return [headline, purpose, payoff, action, route].filter((line) => line.length > 0).join('\n');
+ return [headline, purpose, payoff, handoff, action, route].filter((line) => line.length > 0).join('\n');
 }
 
 export function onboardingObjectiveAdvanceToast(objectiveId: OnboardingObjectiveId | null): string | null {
