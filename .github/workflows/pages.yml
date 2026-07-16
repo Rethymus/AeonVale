@@ -1,0 +1,109 @@
+name: Deploy GitHub Pages
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: >-
+      vars.ENABLE_PAGES == 'true' &&
+      (
+        (
+          github.event_name == 'workflow_dispatch' &&
+          github.ref == 'refs/heads/main'
+        ) ||
+        (
+          github.event_name == 'workflow_run' &&
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository
+        )
+      )
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Download CI-verified dist artifact
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: aeonvale-pages-dist-${{ github.event.workflow_run.head_sha }}
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+      - name: Rebuild checked public tree for manual dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm prepare:public-tree .public-tree
+      - name: Install manual public tree dependencies
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
+      - name: Manual public tree readiness
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree governance:readiness
+      - name: Manual public tree publication check
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree governance:public
+      - name: Manual public tree governance
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree governance:check
+      - name: Manual public tree typecheck
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree typecheck
+      - name: Manual public tree guardrail tests
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts
+      - name: Install Chromium for manual public tree smoke
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Manual public tree browser smoke
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm test:browser:public-tree
+      - name: Manual public tree build
+        if: github.event_name == 'workflow_dispatch'
+        run: pnpm --dir .public-tree build
+        env:
+          PUBLIC_BUILD: 'true'
+          VITE_BASE_PATH: /AeonVale/
+      - name: Copy manual public dist for deploy
+        if: github.event_name == 'workflow_dispatch'
+        run: rm -rf dist && cp -R .public-tree/dist dist
+      - name: Verify deployment dist
+        run: pnpm governance:dist
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Install Chromium for deployed Pages smoke
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Smoke deployed Pages URL
+        run: pnpm test:browser:pages

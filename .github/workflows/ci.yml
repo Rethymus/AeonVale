@@ -2,28 +2,90 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
 
-jobs:
-  golden-replay:
-    name: Golden Replay hard gate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Replay fixtures
-        run: pnpm test:replay
+permissions:
+  contents: read
+  pull-requests: read
 
-  test:
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    name: Governance and repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm governance:check
+      - run: pnpm governance:readiness
+      - run: pnpm prepare:public-tree .public-tree
+      - run: pnpm --dir .public-tree governance:readiness
+      - run: pnpm --dir .public-tree governance:public
+      - run: pnpm --dir .public-tree governance:check
+      - name: Validate PR title
+        if: github.event_name == 'pull_request'
+        run: printf '%s\n' "$PR_TITLE" | pnpm commitlint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+      - name: Validate commits
+        if: github.event_name == 'pull_request'
+        run: pnpm commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  quality:
+    name: Typecheck, tests, build, and simulation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm content:lint
+      - run: pnpm test
+      - run: pnpm test:replay
+      - run: pnpm m5:check
+      - run: pnpm prepare:public-tree .public-tree
+      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
+      - run: pnpm --dir .public-tree governance:readiness
+      - run: pnpm --dir .public-tree governance:public
+      - run: pnpm --dir .public-tree build
+        env:
+          PUBLIC_BUILD: 'true'
+          VITE_BASE_PATH: /AeonVale/
+      - run: pnpm --dir .public-tree governance:dist
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: aeonvale-pages-dist-${{ github.sha }}
+          path: .public-tree/dist
+          include-hidden-files: true
+          retention-days: 10
+
+  browser-smoke:
+    name: Chromium smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,17 +96,14 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - name: Install
-        run: pnpm install --frozen-lockfile
-      - name: Typecheck
-        run: pnpm typecheck
-      - name: Test
-        run: pnpm test
-      - name: Build
-        run: pnpm build
-      - name: Content lint
-        run: pnpm content:lint
-      - name: Headless smoke
-        run: pnpm headless -- --seeds 5
-      - name: M5 structural proxy certification
-        run: pnpm m5:check
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prepare:public-tree .public-tree
+      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
+      - run: pnpm --dir .public-tree governance:readiness
+      - run: pnpm --dir .public-tree governance:public
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:browser:public-tree
+        env:
+          PLAYWRIGHT_APP_DIR: .public-tree
+          PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
+          PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/

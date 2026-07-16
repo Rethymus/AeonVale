@@ -5,6 +5,9 @@ on:
     - cron: '17 3 * * *'
   workflow_dispatch:
 
+permissions:
+ contents: read
+
 jobs:
   certify:
     runs-on: ubuntu-latest
@@ -22,8 +25,7 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: M5 proxy balance report (advisory; non-blocking)
         run: pnpm m5:certify -- --fail-on never --format json
-        # 注：normal 代理在 cap-assisted 设定下呈二相位跃迁（~0.28↔~0.48），[0.30,0.45]
-        # 带落在跃迁内→严格 wilson 裁定不可达。故夜跑仅作平衡数值上报，硬门交给 m5:check。
-        # 待 M6 proxy 校准（docs/18 §8 / docs/17 §10.2）后可恢复 --fail-on targets。
+      # M5 接受点估计落带的 provisional 工具结果；严格 Wilson 认证推迟到 M6 人类 playtest 校准。
+      # 夜跑始终只报告，结构硬门由 m5:check 承担。
       - name: M5 structural certification (hard gate)
         run: pnpm m5:check
