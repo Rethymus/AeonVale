@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { clearIntroDialogue, gameDebugSnapshot, openGame } from './openGame';
 
 test('loads the public demo first screen without page errors', async ({ page }) => {
-  test.setTimeout(process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 120_000 : 45_000);
+  test.setTimeout(process.env.CI || process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 120_000 : 45_000);
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   await openGame(page);

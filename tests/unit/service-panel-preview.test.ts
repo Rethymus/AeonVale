@@ -283,24 +283,27 @@ expect(greenhouseToast.assetId).toBe('sprite.npc.herb-gatherer');
  expect(greenhouseToast.message.endsWith('空格/E/回车养护暖棚·Esc返回')).toBe(true);
 
 expect(processingServiceToastPresentation('空格/E/回车进入')).toEqual({
- message: '加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜Tab切换到农庄加工项·空格/E/回车进入',
+ message: '加工：余货先晾晒，封藏稳药性，备避雷丹与炉料，再把熔炼阵核接炼丹与阵法｜Tab切换到农庄加工项·空格/E/回车进入',
  assetId: 'loc.farmstead',
  });
  expect(arraysServiceToastPresentation('R布引雷阵·F布绝缘阵')).toEqual({
- message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线｜R布引雷阵·F布绝缘阵',
+ message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线；淬体满后按 T 主动引劫｜R布引雷阵·F布绝缘阵',
  assetId: 'loc.farmstead',
  });
  expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作')).toEqual({
- message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+ message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环，再转炼丹、阵法与主动引劫｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
  assetId: 'loc.farmstead',
  });
  });
 
 it('connects farmstead service shortcuts to the public demo cultivation loop', () => {
  expect(farmWorkServiceToastPresentation('确认').message).toContain('翻地、补种、浇水、收获与出货');
+ expect(farmWorkServiceToastPresentation('确认').message).toContain('主动引劫');
  expect(processingServiceToastPresentation('确认').message).toContain('余货先晾晒');
+ expect(processingServiceToastPresentation('确认').message).toContain('避雷丹');
  expect(processingServiceToastPresentation('确认').message).toContain('炼丹与阵法');
  expect(arraysServiceToastPresentation('确认').message).toContain('备劫防线');
+ expect(arraysServiceToastPresentation('确认').message).toContain('主动引劫');
  });
 
 it('reuses the shared person-led service actor mapping for tea shed and greenhouse open toasts', () => {
@@ -312,29 +315,29 @@ expect(teaShedToastPresentation(state).assetId).toBe('sprite.npc.tea-shed-elder'
 
 it('keeps child-location service toasts on the child place art when processing or arrays are entered there directly', () => {
  expect(processingServiceToastPresentation('空格/E/回车进入', 'drying-yard')).toEqual({
- message: '加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜Tab切换到农庄加工项·空格/E/回车进入',
+ message: '加工：余货先晾晒，封藏稳药性，备避雷丹与炉料，再把熔炼阵核接炼丹与阵法｜Tab切换到农庄加工项·空格/E/回车进入',
  assetId: 'loc.drying-yard',
  });
 
 expect(arraysServiceToastPresentation('R布引雷阵·F布绝缘阵', 'array-shed')).toEqual({
- message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线｜R布引雷阵·F布绝缘阵',
+ message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线；淬体满后按 T 主动引劫｜R布引雷阵·F布绝缘阵',
  assetId: 'loc.array-shed',
  });
  });
 
 it('lets farm-work shortcut toasts reuse the current farmstead focus asset when one is provided', () => {
- expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作')).toEqual({
- message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作')).toEqual({
+ message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环，再转炼丹、阵法与主动引劫｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
  assetId: 'loc.farmstead',
  });
 
 expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作', 'facility.shipping-bin')).toEqual({
- message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+ message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环，再转炼丹、阵法与主动引劫｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
  assetId: 'loc.farmstead',
  });
 
 expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作', 'loc.herb-plot')).toEqual({
- message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+ message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环，再转炼丹、阵法与主动引劫｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
  assetId: 'loc.herb-plot',
  });
  });

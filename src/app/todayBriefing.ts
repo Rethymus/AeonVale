@@ -10,6 +10,7 @@ import { stayingWorldIncidentAssetId } from './stayingWorldIncidentAsset';
 import { calendarEntryPreviewAssetId } from './calendarPreviewAsset';
 import { farmsteadRootContextAssetId, getFarmsteadFocus } from './farmsteadFocus';
 import { tribulationPrepStatusLine } from './tribulationPrepText';
+import { POST_LOOP_MILESTONE } from './postLoopCultivationGuidance';
 
 function onboardingObjectiveAssetId(state: GameState, ctx: SimContext, objectiveId: OnboardingObjectiveId | null): string | undefined {
  switch (objectiveId) {
@@ -282,7 +283,7 @@ function isPortfolioWelcomeBriefing(state: GameState, objectiveId: OnboardingObj
 
 function firstLoopMilestoneLine(state: GameState, objectiveId: OnboardingObjectiveId | null): string {
  if (objectiveId === 'first-loop-complete' || state.player.flags.has(FIRST_SECOND_WATER_FLAG)) {
- return '里程碑：首轮农务闭环已跑通，按 Shift+M 把余货接入加工、阵法与备劫。';
+ return POST_LOOP_MILESTONE;
  }
  if (objectiveId === 'first-harvest' && !state.player.flags.has(FIRST_HARVEST_FLAG)) {
  return '里程碑：第一株灵草已经成熟，收下它，首轮农务才算真正开始兑现。';

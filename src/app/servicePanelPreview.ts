@@ -18,6 +18,7 @@ import {
 import { itemIconAssetId } from './itemIcons';
 import { locationServiceActorAssetId } from './locationPreview';
 import { normalizeFarmsteadRootAssetId } from './farmsteadFocus';
+import { postLoopArraysServiceMessage, postLoopFarmWorkServiceMessage, postLoopProcessingServiceMessage } from './postLoopCultivationGuidance';
 
 export interface ServicePanelPreview {
  title: string;
@@ -304,7 +305,7 @@ export function processingServiceToastPresentation(
  locationId: LocationId = 'farmstead',
 ): ServiceToastPresentation {
  return {
- message: `加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜Tab切换到农庄加工项·${confirmHint}`,
+ message: postLoopProcessingServiceMessage(confirmHint),
  assetId: farmServiceEntryAssetId(locationId, 'drying-yard'),
  };
 }
@@ -314,7 +315,7 @@ export function arraysServiceToastPresentation(
  locationId: LocationId = 'farmstead',
 ): ServiceToastPresentation {
  return {
- message: `阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线｜${confirmHint}`,
+ message: postLoopArraysServiceMessage(confirmHint),
  assetId: farmServiceEntryAssetId(locationId, 'array-shed'),
  };
 }
@@ -324,7 +325,7 @@ export function farmWorkServiceToastPresentation(
  assetIdOverride?: string,
 ): ServiceToastPresentation {
  return {
- message: `农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·${confirmHint}`,
+ message: postLoopFarmWorkServiceMessage(confirmHint),
  assetId: assetIdOverride ? normalizeFarmsteadRootAssetId(assetIdOverride) : 'loc.farmstead',
  };
 }
