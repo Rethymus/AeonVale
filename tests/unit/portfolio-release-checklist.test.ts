@@ -63,13 +63,13 @@ describe('公开试玩发布清单', () => {
     expect(checklist.generatedAt).toBe('static-public-release-checklist');
     expect(checklist.pagesUrl).toBe('https://Rethymus.github.io/AeonVale/');
     expect(checklist.safety).toContain('不提交、不推送、不部署、不修改 GitHub 设置');
-    expect(checklist.sections.map((section) => section.title)).toContain('6. 《星露谷物语》对照验收');
+    expect(checklist.sections.map(section => section.title)).toContain('6. 《星露谷物语》对照验收');
     expect(JSON.stringify(checklist.sections)).toContain('P0 只要求公开试玩版与 GitHub Pages 部署闭环成立');
     expect(JSON.stringify(checklist.sections)).toContain('P1 再推进独立游戏首版的可持续循环');
     expect(JSON.stringify(checklist.sections)).toContain('P2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事');
     expect(JSON.stringify(checklist.sections)).toContain('《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》');
 
-    const evidenceById = new Map(checklist.requiredEvidence.map((evidence) => [evidence.id, evidence]));
+    const evidenceById = new Map(checklist.requiredEvidence.map(evidence => [evidence.id, evidence]));
     expect(evidenceById.get('portfolio-mvp-preflight')?.command).toBe('pnpm portfolio:mvp-preflight -- --keep-public-tree');
     expect(evidenceById.get('public-demo-evidence-json')?.requiredSignals.join('\n')).toContain('runtimeSignals.todayBriefingProof');
     expect(evidenceById.get('public-demo-screenshot-set')?.requiredSignals.join('\n')).toContain('screenshotEvidence');

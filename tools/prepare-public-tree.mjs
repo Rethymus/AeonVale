@@ -6,32 +6,30 @@ import { shouldSkipPublicTreeFile } from './public-tree-rules.mjs';
 const destination = process.argv[2];
 
 if (!destination) {
- console.error('Usage: node tools/prepare-public-tree.mjs <destination-dir>');
- process.exit(1);
+  console.error('Usage: node tools/prepare-public-tree.mjs <destination-dir>');
+  process.exit(1);
 }
 
 const root = resolve('.');
 const target = resolve(destination);
 
 if (target === root || root.startsWith(`${target}/`)) {
- console.error('Destination must not be the current repository or one of its ancestors.');
- process.exit(1);
+  console.error('Destination must not be the current repository or one of its ancestors.');
+  process.exit(1);
 }
 
-const worktreeFiles = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { encoding: 'utf8' })
- .split('\0')
- .filter(Boolean);
-const publicFiles = worktreeFiles.filter((file) => !shouldSkipPublicTreeFile(file));
+const worktreeFiles = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+const publicFiles = worktreeFiles.filter(file => !shouldSkipPublicTreeFile(file));
 
 rmSync(target, { recursive: true, force: true });
 mkdirSync(target, { recursive: true });
 
 for (const file of publicFiles) {
- const source = join(root, file);
- if (!existsSync(source)) continue;
- const destinationFile = join(target, file);
- mkdirSync(dirname(destinationFile), { recursive: true });
- cpSync(source, destinationFile, { dereference: true, force: true, preserveTimestamps: true });
+  const source = join(root, file);
+  if (!existsSync(source)) continue;
+  const destinationFile = join(target, file);
+  mkdirSync(dirname(destinationFile), { recursive: true });
+  cpSync(source, destinationFile, { dereference: true, force: true, preserveTimestamps: true });
 }
 
 execFileSync('git', ['init'], { cwd: target, stdio: 'ignore' });

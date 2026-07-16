@@ -17,7 +17,7 @@ function makePublicTree(): string {
   const dir = mkdtempSync(join(tmpdir(), 'aeonvale-public-check-'));
   temps.push(dir);
 
-execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' });
+  execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' });
   write(dir, 'README.md', '# Aeon Vale\n');
   write(dir, 'CONTRIBUTING.md', '# Contribution policy\n');
   write(dir, 'SECURITY.md', '# Security policy\n');
@@ -29,7 +29,7 @@ execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' });
   write(dir, 'src/app/main.ts', 'export const ok = true;\n');
   execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
-return dir;
+  return dir;
 }
 
 function runPublicationCheck(cwd: string): string {
@@ -46,44 +46,44 @@ describe('公开树发布检查', () => {
     expect(runPublicationCheck(dir)).toContain('Public publication check passed');
   });
 
-it('拒绝 docs 下的设计文档', () => {
+  it('拒绝 docs 下的设计文档', () => {
     const dir = makePublicTree();
     write(dir, 'docs/00-DESIGN-BRIEF.md', '# private design\n');
     execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
-expect(() => runPublicationCheck(dir)).toThrow(/forbidden design document/);
+    expect(() => runPublicationCheck(dir)).toThrow(/forbidden design document/);
   });
 
-it('拒绝美术状态文档', () => {
+  it('拒绝美术状态文档', () => {
     const dir = makePublicTree();
     write(dir, 'assets/ART-ASSETS-STATUS.md', '# private art status\n');
     execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
-expect(() => runPublicationCheck(dir)).toThrow(/forbidden design\/status document/);
+    expect(() => runPublicationCheck(dir)).toThrow(/forbidden design\/status document/);
   });
 
-it('拒绝非白名单 Markdown 文档', () => {
+  it('拒绝非白名单 Markdown 文档', () => {
     const dir = makePublicTree();
     write(dir, 'DESIGN-NOTES.md', '# private design notes\n');
     execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
-expect(() => runPublicationCheck(dir)).toThrow(/forbidden markdown document/);
+    expect(() => runPublicationCheck(dir)).toThrow(/forbidden markdown document/);
   });
 
-it('拒绝 Agent 入口文档进入公开树', () => {
+  it('拒绝 Agent 入口文档进入公开树', () => {
     const dir = makePublicTree();
     write(dir, 'AGENTS.md', '# private agent entry\n');
     write(dir, 'CLAUDE.md', '# private agent entry\n');
     execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
-expect(() => runPublicationCheck(dir)).toThrow(/forbidden markdown document/);
+    expect(() => runPublicationCheck(dir)).toThrow(/forbidden markdown document/);
   });
 
-it('拒绝 README 引用未公开设计目录或 Agent 入口文档', () => {
+  it('拒绝 README 引用未公开设计目录或 Agent 入口文档', () => {
     const dir = makePublicTree();
     write(dir, 'README.md', 'See docs/00-DESIGN-BRIEF.md and AGENTS.md.\n');
     execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
-expect(() => runPublicationCheck(dir)).toThrow(/README\.md references private or unpublished document pattern/);
+    expect(() => runPublicationCheck(dir)).toThrow(/README\.md references private or unpublished document pattern/);
   });
 });

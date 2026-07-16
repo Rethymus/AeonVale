@@ -13,29 +13,7 @@ function requireIncludes(file, text, message) {
   if (!content.includes(text)) failures.push(message ?? `${file} must include ${text}`);
 }
 
-for (const file of [
-  'README.md',
-  'CONTRIBUTING.md',
-  'SECURITY.md',
-  'LICENSE',
-  'CONTENT-LICENSE.md',
-  'CHANGELOG.md',
-  '.github/workflows/ci.yml',
-  '.github/workflows/pages.yml',
-  '.github/workflows/release.yml',
-  '.github/pull_request_template.md',
-  'tools/portfolio-mvp-preflight.mjs',
-  'tools/public-tree-rules.mjs',
-  'tools/prepare-public-tree.mjs',
-  'tools/public-content-audit.mjs',
-  'tools/public-worktree-audit.mjs',
-  'tools/portfolio-status.mjs',
-  'tools/portfolio-release-checklist.mjs',
-  'tools/portfolio-pages-diagnose.mjs',
-  'tools/portfolio-pages-watch.mjs',
-  'tools/publication-check.mjs',
-  'tools/public-dist-check.mjs',
-]) {
+for (const file of ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', 'CONTENT-LICENSE.md', 'CHANGELOG.md', '.github/workflows/ci.yml', '.github/workflows/pages.yml', '.github/workflows/release.yml', '.github/pull_request_template.md', 'tools/portfolio-mvp-preflight.mjs', 'tools/public-tree-rules.mjs', 'tools/prepare-public-tree.mjs', 'tools/public-content-audit.mjs', 'tools/public-worktree-audit.mjs', 'tools/portfolio-status.mjs', 'tools/portfolio-release-checklist.mjs', 'tools/portfolio-pages-diagnose.mjs', 'tools/portfolio-pages-watch.mjs', 'tools/publication-check.mjs', 'tools/public-dist-check.mjs']) {
   requireFile(file);
 }
 
@@ -113,7 +91,7 @@ requireIncludes('tools/portfolio-pages-diagnose.mjs', 'live-pages-fetch-failed',
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'deployed-bundle-uses-body-append', 'Pages diagnosis must detect deployed stale canvas body append bundles');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'live-canvas-starts-outside-initial-viewport', 'Pages diagnosis must detect live canvas viewport failures');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'latest-pages-action-not-green', 'Pages diagnosis must include latest GitHub Pages Action status');
-requireIncludes('tools/portfolio-pages-diagnose.mjs', 'process.argv.includes(\'--json\')', 'Pages diagnosis must expose a machine-readable JSON mode');
+requireIncludes('tools/portfolio-pages-diagnose.mjs', "process.argv.includes('--json')", 'Pages diagnosis must expose a machine-readable JSON mode');
 requireIncludes('tools/portfolio-pages-watch.mjs', '不提交、不推送、不部署、不修改远端设置', 'Pages watch must be explicitly non-deploying');
 requireIncludes('tools/portfolio-pages-watch.mjs', "process.argv.includes('--json')", 'Pages watch must expose a machine-readable JSON mode');
 requireIncludes('tools/portfolio-pages-watch.mjs', "process.argv.includes('--wait')", 'Pages watch must expose an explicit bounded wait mode');

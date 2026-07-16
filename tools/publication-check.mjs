@@ -4,13 +4,7 @@ import { readFileSync } from 'node:fs';
 const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
 const failures = [];
 
-const allowedMarkdown = new Set([
-  'README.md',
-  'CHANGELOG.md',
-  'CONTENT-LICENSE.md',
-  'CONTRIBUTING.md',
-  'SECURITY.md',
-]);
+const allowedMarkdown = new Set(['README.md', 'CHANGELOG.md', 'CONTENT-LICENSE.md', 'CONTRIBUTING.md', 'SECURITY.md']);
 const allowedTextDocuments = new Set(['LICENSE', 'LICENSE.md', 'LICENSE.txt']);
 
 function isAllowedGithubTemplate(file) {
@@ -31,11 +25,7 @@ for (const file of tracked) {
 
 if (tracked.includes('README.md')) {
   const readme = readFileSync('README.md', 'utf8');
-  const forbiddenReadmePatterns = [
-    /\bdocs\//,
-    /\bAGENTS\.md\b/,
-    /\bCLAUDE\.md\b/,
-  ];
+  const forbiddenReadmePatterns = [/\bdocs\//, /\bAGENTS\.md\b/, /\bCLAUDE\.md\b/];
   for (const pattern of forbiddenReadmePatterns) {
     if (pattern.test(readme)) failures.push(`README.md references private or unpublished document pattern: ${pattern}`);
   }

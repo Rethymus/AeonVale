@@ -33,7 +33,7 @@ function readSource(file) {
 function mountSignature(source) {
   return {
     hasBodyAppend: /document\.body\.appendChild\(app\.canvas\)/.test(source),
-    hasAppMount: /querySelector\(['"]#app['"]\)/.test(source) && /appendChild\(app\.canvas\)/.test(source),
+    hasAppMount: /querySelector\(['"]#app['"]\)/.test(source) && /appendChild\(app\.canvas\)/.test(source)
   };
 }
 
@@ -50,7 +50,7 @@ async function fetchText(url) {
       lastModified: response.headers.get('last-modified'),
       etag: response.headers.get('etag'),
       cacheControl: response.headers.get('cache-control'),
-      text,
+      text
     };
   } finally {
     clearTimeout(timeout);
@@ -73,7 +73,7 @@ async function inspectLiveHtml(url) {
       status: null,
       finalUrl: url,
       error: errorMessage(error),
-      script: null,
+      script: null
     };
   }
   const scriptUrl = firstScriptSrc(html.text, html.url);
@@ -87,7 +87,7 @@ async function inspectLiveHtml(url) {
         status: js.status,
         bytes: js.text.length,
         hasBodyAppend: js.text.includes('document.body.appendChild('),
-        hasAppMountQuery: js.text.includes('querySelector("#app")') || js.text.includes("querySelector('#app')"),
+        hasAppMountQuery: js.text.includes('querySelector("#app")') || js.text.includes("querySelector('#app')")
       };
     } catch (error) {
       script = {
@@ -97,7 +97,7 @@ async function inspectLiveHtml(url) {
         bytes: 0,
         error: errorMessage(error),
         hasBodyAppend: false,
-        hasAppMountQuery: false,
+        hasAppMountQuery: false
       };
     }
   }
@@ -108,7 +108,7 @@ async function inspectLiveHtml(url) {
     lastModified: html.lastModified,
     etag: html.etag,
     cacheControl: html.cacheControl,
-    script,
+    script
   };
 }
 
@@ -121,7 +121,7 @@ async function inspectBrowser(url) {
     await page.waitForSelector('canvas', { state: 'visible', timeout: 30_000 });
     await page.waitForFunction(() => globalThis.__AEON_DEBUG__ != null, null, { timeout: 30_000 });
     return await page.evaluate(() => {
-      const rect = (element) => {
+      const rect = element => {
         if (!element) return null;
         const box = element.getBoundingClientRect();
         return { x: box.x, y: box.y, width: box.width, height: box.height };
@@ -140,14 +140,18 @@ async function inspectBrowser(url) {
         appRect,
         canvasRect,
         canvasInInitialViewport: Boolean(canvasRect && canvasRect.y >= 0 && canvasRect.y < innerHeight),
-        firstBodyChildren: Array.from(document.body.children).slice(0, 5).map((element) => ({
-          tag: element.tagName,
-          id: element.id,
-          className: String(element.className ?? ''),
-          rect: rect(element),
-        })),
-        scripts: Array.from(document.scripts).map((script) => script.src).filter(Boolean),
-        debug: globalThis.__AEON_DEBUG__ ?? null,
+        firstBodyChildren: Array.from(document.body.children)
+          .slice(0, 5)
+          .map(element => ({
+            tag: element.tagName,
+            id: element.id,
+            className: String(element.className ?? ''),
+            rect: rect(element)
+          })),
+        scripts: Array.from(document.scripts)
+          .map(script => script.src)
+          .filter(Boolean),
+        debug: globalThis.__AEON_DEBUG__ ?? null
       };
     });
   } finally {
@@ -156,13 +160,7 @@ async function inspectBrowser(url) {
 }
 
 function latestPagesRun() {
-  const raw = run('gh', [
-    'run', 'list',
-    '--workflow', 'Deploy GitHub Pages',
-    '--branch', 'main',
-    '--limit', '1',
-    '--json', 'databaseId,status,conclusion,headSha,createdAt,updatedAt,event,displayTitle',
-  ]);
+  const raw = run('gh', ['run', 'list', '--workflow', 'Deploy GitHub Pages', '--branch', 'main', '--limit', '1', '--json', 'databaseId,status,conclusion,headSha,createdAt,updatedAt,event,displayTitle']);
   if (typeof raw !== 'string') return raw;
   try {
     return JSON.parse(raw)[0] ?? null;
@@ -230,7 +228,7 @@ async function main() {
       branch: maybeText(branch),
       head: maybeText(head),
       originMain: maybeText(originMain),
-      headMatchesOriginMain: typeof head === 'string' && typeof originMain === 'string' ? head === originMain : null,
+      headMatchesOriginMain: typeof head === 'string' && typeof originMain === 'string' ? head === originMain : null
     },
     pagesRun: latestPagesRun(),
     localSource: mountSignature(localMain),
@@ -238,7 +236,7 @@ async function main() {
     live: await inspectLiveHtml(pagesUrl),
     browser: null,
     browserError: null,
-    diagnosis: null,
+    diagnosis: null
   };
 
   if (!skipBrowser) {
@@ -271,7 +269,7 @@ async function main() {
     if (report.browser) {
       console.log(`Canvas rect: ${JSON.stringify(report.browser.canvasRect)}`);
       console.log(`Canvas in initial viewport: ${String(report.browser.canvasInInitialViewport)}`);
-      console.log(`First body children: ${report.browser.firstBodyChildren.map((child) => `${child.tag}${child.id ? `#${child.id}` : ''}`).join(', ')}`);
+      console.log(`First body children: ${report.browser.firstBodyChildren.map(child => `${child.tag}${child.id ? `#${child.id}` : ''}`).join(', ')}`);
     } else if (report.browserError) {
       console.log(`Browser probe error: ${report.browserError}`);
     }
@@ -283,11 +281,11 @@ async function main() {
     for (const item of report.diagnosis.actions) console.log(`- ${item}`);
   }
 
-  const hasLiveError = report.diagnosis.findings.some((item) => item.includes('live-') || item.includes('deployed-bundle'));
+  const hasLiveError = report.diagnosis.findings.some(item => item.includes('live-') || item.includes('deployed-bundle'));
   if (failOnLiveError && hasLiveError) process.exit(1);
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(error instanceof Error ? error.message : String(error));
   process.exit(1);
 });

@@ -18,12 +18,12 @@ function makeSourceRepo(): string {
   const dir = mkdtempSync(join(tmpdir(), 'aeonvale-public-source-'));
   temps.push(dir);
 
-execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' });
+  execFileSync('git', ['init'], { cwd: dir, stdio: 'ignore' });
   mkdirSync(join(dir, 'tools'), { recursive: true });
   cpSync(script, join(dir, 'tools/prepare-public-tree.mjs'), { recursive: true });
   cpSync(rules, join(dir, 'tools/public-tree-rules.mjs'), { recursive: true });
 
-write(dir, 'README.md', '# public readme');
+  write(dir, 'README.md', '# public readme');
   write(dir, 'CHANGELOG.md', '# public changelog');
   write(dir, 'CONTENT-LICENSE.md', '# public content license');
   write(dir, 'AGENTS.md', '# private agent entry');
@@ -41,7 +41,7 @@ write(dir, 'README.md', '# public readme');
   write(dir, 'dist/assets/index.js.map', '{}');
   write(dir, '.env.local', 'SECRET=value');
 
-execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
+  execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
   return dir;
 }
 
@@ -55,12 +55,12 @@ describe('公开树生成脚本', () => {
     const target = join(mkdtempSync(join(tmpdir(), 'aeonvale-public-target-')), 'public');
     temps.push(dirname(target));
 
-const output = execFileSync('node', ['tools/prepare-public-tree.mjs', target], {
+    const output = execFileSync('node', ['tools/prepare-public-tree.mjs', target], {
       cwd: source,
-      encoding: 'utf8',
+      encoding: 'utf8'
     });
 
-expect(output).toContain('excluded design docs and local state');
+    expect(output).toContain('excluded design docs and local state');
     expect(output).toContain('install --frozen-lockfile --ignore-scripts');
     expect(output).toContain('governance:readiness');
     expect(existsSync(join(target, 'README.md'))).toBe(true);
@@ -72,7 +72,7 @@ expect(output).toContain('excluded design docs and local state');
     expect(existsSync(join(target, '.github/ISSUE_TEMPLATE/bug.md'))).toBe(true);
     expect(existsSync(join(target, 'src/app/main.ts'))).toBe(true);
 
-expect(existsSync(join(target, 'AGENTS.md'))).toBe(false);
+    expect(existsSync(join(target, 'AGENTS.md'))).toBe(false);
     expect(existsSync(join(target, 'CLAUDE.md'))).toBe(false);
     expect(existsSync(join(target, 'DESIGN-NOTES.md'))).toBe(false);
     expect(existsSync(join(target, 'docs/00-DESIGN-BRIEF.md'))).toBe(false);

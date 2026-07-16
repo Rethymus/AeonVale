@@ -45,31 +45,19 @@ function maybeText(value) {
 }
 
 function latestRun(workflow) {
-  const raw = run('gh', [
-    'run', 'list',
-    '--workflow', workflow,
-    '--branch', 'main',
-    '--limit', '1',
-    '--json', 'databaseId,status,conclusion,headSha,headBranch,createdAt,updatedAt,event,displayTitle,url',
-  ]);
+  const raw = run('gh', ['run', 'list', '--workflow', workflow, '--branch', 'main', '--limit', '1', '--json', 'databaseId,status,conclusion,headSha,headBranch,createdAt,updatedAt,event,displayTitle,url']);
   const parsed = parseJson(raw);
   if (!Array.isArray(parsed)) return parsed;
   return parsed[0] ?? null;
 }
 
 function pagesConfig() {
-  const raw = run('gh', [
-    'api', `repos/${fullRepo}/pages`,
-    '--jq', '{html_url:.html_url,build_type:.build_type,source:.source,status:.status,cname:.cname,protected_domain_state:.protected_domain_state}',
-  ]);
+  const raw = run('gh', ['api', `repos/${fullRepo}/pages`, '--jq', '{html_url:.html_url,build_type:.build_type,source:.source,status:.status,cname:.cname,protected_domain_state:.protected_domain_state}']);
   return parseJson(raw);
 }
 
 function latestDeployment() {
-  const raw = run('gh', [
-    'api', `repos/${fullRepo}/deployments?environment=github-pages&per_page=1`,
-    '--jq', '[.[] | {id,sha,ref,task,environment,created_at,updated_at,creator:.creator.login,statuses_url}]',
-  ]);
+  const raw = run('gh', ['api', `repos/${fullRepo}/deployments?environment=github-pages&per_page=1`, '--jq', '[.[] | {id,sha,ref,task,environment,created_at,updated_at,creator:.creator.login,statuses_url}]']);
   const parsed = parseJson(raw);
   if (!Array.isArray(parsed)) return parsed;
   return parsed[0] ?? null;
@@ -77,10 +65,7 @@ function latestDeployment() {
 
 function deploymentStatuses(deployment) {
   if (!deployment?.id) return [];
-  const raw = run('gh', [
-    'api', `repos/${fullRepo}/deployments/${deployment.id}/statuses`,
-    '--jq', '[.[] | {state,environment,environment_url,log_url,target_url,created_at,updated_at,description}]',
-  ]);
+  const raw = run('gh', ['api', `repos/${fullRepo}/deployments/${deployment.id}/statuses`, '--jq', '[.[] | {state,environment,environment_url,log_url,target_url,created_at,updated_at,description}]']);
   const parsed = parseJson(raw);
   return Array.isArray(parsed) ? parsed : parsed;
 }
@@ -97,7 +82,7 @@ async function fetchText(url) {
       lastModified: response.headers.get('last-modified'),
       etag: response.headers.get('etag'),
       cacheControl: response.headers.get('cache-control'),
-      text: await response.text(),
+      text: await response.text()
     };
   } finally {
     clearTimeout(timeout);
@@ -128,7 +113,7 @@ async function liveBundle() {
         status: js.status,
         bytes: js.text.length,
         hasBodyAppend: js.text.includes('document.body.appendChild('),
-        hasAppMountQuery: js.text.includes('querySelector("#app")') || js.text.includes("querySelector('#app')"),
+        hasAppMountQuery: js.text.includes('querySelector("#app")') || js.text.includes("querySelector('#app')")
       };
     } catch (error) {
       script = { url: scriptUrl, ok: false, status: null, bytes: 0, error: errorMessage(error), hasBodyAppend: false, hasAppMountQuery: false };
@@ -141,7 +126,7 @@ async function liveBundle() {
     lastModified: html.lastModified,
     etag: html.etag,
     cacheControl: html.cacheControl,
-    script,
+    script
   };
 }
 
@@ -229,7 +214,7 @@ async function snapshot() {
       branch: maybeText(branch),
       head: maybeText(head),
       originMain: maybeText(originMain),
-      headMatchesOriginMain: typeof head === 'string' && typeof originMain === 'string' ? head === originMain : null,
+      headMatchesOriginMain: typeof head === 'string' && typeof originMain === 'string' ? head === originMain : null
     },
     ciRun: latestRun('CI'),
     pagesRun: latestRun('Deploy GitHub Pages'),
@@ -237,14 +222,14 @@ async function snapshot() {
     deployment,
     deploymentStatuses: deploymentStatuses(deployment),
     live: await liveBundle(),
-    diagnosis: null,
+    diagnosis: null
   };
   report.diagnosis = buildDiagnosis(report);
   return report;
 }
 
 function isSettled(report) {
-  return !report.diagnosis.findings.some((finding) => finding === 'ci-running' || finding === 'pages-action-running');
+  return !report.diagnosis.findings.some(finding => finding === 'ci-running' || finding === 'pages-action-running');
 }
 
 function printReport(report) {
@@ -296,14 +281,14 @@ async function main() {
     settled: isSettled(report),
     elapsedMs: Date.now() - started,
     intervalMs,
-    timeoutMs: maxWaitMs,
+    timeoutMs: maxWaitMs
   };
 
   if (printJson) console.log(JSON.stringify(report, null, 2));
   else printReport(report);
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(errorMessage(error));
   process.exit(1);
 });
