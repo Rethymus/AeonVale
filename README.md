@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo/logo-emblem.png" alt="永恒山谷：大道之歌 徽记" width="200">
+</p>
+
 # 永恒山谷：大道之歌 · Aeon Vale: Song of the Dao
 
 > **凡骨种灵田，七情炼仙丹，硬抗九重天劫。**
@@ -116,6 +120,18 @@ GitHub Pages 启用并部署后，用真实公开地址复跑最低试玩 smoke�
 pnpm test:browser:pages
 ```
 
+若要直接卡住首屏播种键位这类“测试绿但不可玩”的回归，本地可额外运行 CDP 状态注入门：
+
+```bash
+pnpm test:browser:keypoint
+```
+
+部署后的真实 Pages URL 还应补跑一遍首屏真实输入可玩性验证：
+
+```bash
+pnpm test:browser:pages-playable
+```
+
 如果真实 Pages smoke 失败，先运行只读诊断区分是部署漂移、线上旧 bundle、GitHub Action 状态，还是当前代码的首屏布局问题；该命令只读取本地 Git、GitHub Actions 和真实 Pages URL，不提交、不推送、不部署、不修改远端设置：
 
 ```bash
@@ -177,7 +193,7 @@ pnpm audit:public-worktree
 pnpm audit:public-content
 ```
 
-审核截图可本地生成到 `test-results/portfolio/`，用于公开前审核和 README 展示素材筛选；该目录属于生成物，不进入公开树。截图脚本会同时覆盖桌面首屏、地点目录、农事面板和移动首屏，并写出 `test-results/portfolio/portfolio-mvp-evidence.json`，记录首轮闭环、今日简报 `todayBriefingProof`（含 10/10 进度与修行接力）、截图尺寸、非空绘制比例、颜色数、修仙差异化和远端操作授权边界，方便维护者复核证据：
+审核截图可本地生成到 `test-results/portfolio/`，用于公开前审核和 README 展示素材筛选；该目录属于生成物，不进入公开树。截图脚本会抓取 canvas 的 CSS 实际渲染结果，覆盖桌面首屏、地点目录、农事面板和 736x414 横屏小视口键盘优先首屏（为兼容既有证据路径仍保留 `04-mobile-farm-loop.png` 文件名，但不代表触控或移动端可玩性），并写出 `test-results/portfolio/portfolio-mvp-evidence.json`，记录首轮闭环、今日简报 `todayBriefingProof`、截图实际尺寸、非空绘制比例、颜色数、修仙差异化和远端操作授权边界，方便维护者复核证据：
 
 ```bash
 pnpm portfolio:capture
@@ -195,7 +211,7 @@ pnpm portfolio:capture
 | 4 | 前往山谷集市补种，再回农庄播下第二轮 | 证明循环能自我续航，而不是一次性教程 |
 | 5 | 继续进入炼丹、阵法、淬体和主动引劫 | 展示本作和传统农场生活模拟的核心分叉：种田即备战 |
 
-最低可验收试玩路径由浏览器 smoke 覆盖：`pnpm test:browser:smoke`。公开 Pages 路径会通过 `pnpm verify:public-tree` 在 `.public-tree` 内再次构建和复测。
+最低可验收试玩路径先由浏览器 smoke 覆盖：`pnpm test:browser:smoke`；首屏播种键位与 onboarding 快捷操作再由 `pnpm test:browser:keypoint` 和 `pnpm test:browser:pages-playable` 兜底。公开 Pages 路径会通过 `pnpm verify:public-tree` 在 `.public-tree` 内再次构建和复测。
 
 ---
 

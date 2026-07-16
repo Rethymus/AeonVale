@@ -3,24 +3,17 @@ import { existsSync, readFileSync } from 'node:fs';
 
 const failures = [];
 const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
-const forbidden = [
-  /(^|\/)\.claude\//, /(^|\/)\.omc\//, /(^|\/)\.codex\//, /(^|\/)\.agents\//,
-  /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//,
-  /(^|\/)\.env($|\.)/, /\.map$/,
-  /^\.tmp\.playwright-.*\.config\.ts$/,
-];
+const forbidden = [/(^|\/)\.claude\//, /(^|\/)\.omc\//, /(^|\/)\.codex\//, /(^|\/)\.agents\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /(^|\/)\.env($|\.)/, /\.map$/, /^\.tmp\.playwright-.*\.config\.ts$/];
 
 function isForbidden(file) {
-  return forbidden.some((pattern) => pattern.test(file)) && file !== '.env.example';
+  return forbidden.some(pattern => pattern.test(file)) && file !== '.env.example';
 }
 
 for (const file of tracked) {
   if (isForbidden(file)) failures.push(`forbidden tracked file: ${file}`);
 }
 
-const statusEntries = execFileSync('git', ['status', '--porcelain', '-z', '--untracked-files=all'], { encoding: 'utf8' })
-  .split('\0')
-  .filter(Boolean);
+const statusEntries = execFileSync('git', ['status', '--porcelain', '-z', '--untracked-files=all'], { encoding: 'utf8' }).split('\0').filter(Boolean);
 for (let index = 0; index < statusEntries.length; index += 1) {
   const entry = statusEntries[index];
   const code = entry.slice(0, 2);
@@ -30,7 +23,7 @@ for (let index = 0; index < statusEntries.length; index += 1) {
   if (isForbidden(path) && !code.includes('D')) failures.push(`forbidden working-tree file: ${path}`);
 }
 const agentEntryFiles = ['AGENTS.md', 'CLAUDE.md'];
-const hasPrivateAgentEntryContract = agentEntryFiles.some((entry) => tracked.includes(entry) || existsSync(entry));
+const hasPrivateAgentEntryContract = agentEntryFiles.some(entry => tracked.includes(entry) || existsSync(entry));
 
 if (existsSync('CONTRIBUTING.md') && hasPrivateAgentEntryContract) {
   for (const entry of agentEntryFiles) {

@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.public-tree/
+coverage/
+.vite/
+.omc/
+.claude/
+.codex/
+.agents/
+playwright-report/
+test-results/
+assets/
+pnpm-lock.yaml
+*.replay.json

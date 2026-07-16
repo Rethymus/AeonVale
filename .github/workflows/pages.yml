@@ -91,6 +91,7 @@ jobs:
         env:
           PUBLIC_BUILD: 'true'
           VITE_BASE_PATH: /AeonVale/
+          VITE_BUILD_REVISION: ${{ github.sha }}
       - name: Copy manual public dist for deploy
         if: github.event_name == 'workflow_dispatch'
         run: rm -rf dist && cp -R .public-tree/dist dist
@@ -107,3 +108,9 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
       - name: Smoke deployed Pages URL
         run: pnpm test:browser:pages
+        env:
+          PLAYWRIGHT_EXPECTED_BUILD_REVISION: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Verify deployed Pages playability
+        run: pnpm test:browser:pages-playable
+        env:
+          PLAYWRIGHT_EXPECTED_BUILD_REVISION: ${{ github.event.workflow_run.head_sha || github.sha }}
