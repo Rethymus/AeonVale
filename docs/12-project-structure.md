@@ -197,7 +197,7 @@ aeon-vale/
 | **@pixi/tilemap** | 瓦片批量绘制 | 自建 mesh | 单 draw call 出整张地图 |
 | **@pixi/particle-emitter** | 雷劫粒子 | 自建 | 成熟、API 稳定 |
 | **zod** (v4) | 运行时 schema 校验 | ajv / io-ts / valibot | TS 友好、原生 JSON Schema 导出、生态主流（参考 [Zod v4 迁移指南](https://dev.to/pockit_tools/migrating-to-zod-4-the-complete-guide-to-breaking-changes-performance-gains-and-new-features-3ll0)） |
-| **electron** (主线) | 桌面打包 | Tauri / Neutralino / 纯 Web | 成熟、Chromium 一致性、AI 生成资料密集（参考 [Tauri vs Electron 2026](https://tech-insider.org/tauri-vs-electron-2026/)） |
+| **electron** (主线) | 桌面打包（近期 Win/Linux） | Tauri / Neutralino / 纯 Web | 成熟、Chromium 一致性、AI 生成资料密集（参考 [Tauri vs Electron 2026](https://tech-insider.org/tauri-vs-electron-2026/)） |
 | **electron-store** | 简单设置持久化 | lowdb | 轻量、原子写 |
 
 ### 2.2 开发依赖（devDependencies）
@@ -229,19 +229,19 @@ aeon-vale/
 ### 3.1 工具链总览
 
 ```
-pnpm + Vite ─── dev server (HMR) ─── 浏览器预览
+pnpm + Vite ─── dev server (HMR) ─── 浏览器展示/调试预览
                 ↓ production build
                 dist/
                 ↓ electron-builder
-                Win/macOS/Linux 安装包
+                Win/Linux 安装包（近期）
 ```
 
 ### 3.2 开发命令（约定）
 
 | 命令 | 用途 |
 |------|------|
-| `pnpm dev` | 启 Electron + Vite dev server，HMR 热重载（代码 + 内容表） |
-| `pnpm dev:web` | 仅 Web 预览（无 Electron，浏览器直接玩） |
+| `pnpm dev` | 启 Vite dev server，HMR 热重载（代码 + 内容表）；当前默认浏览器开发/调试/展示入口 |
+| `pnpm dev:web` | 仅 Web 预览（无 Electron）；用于离线浏览器试玩、展示与回归验证 |
 | `pnpm test` | Vitest 单元 + 属性测试 |
 | `pnpm test:watch` | watch 模式 |
 | `pnpm test:headless` | 无头长时模拟（10k+ tick） |
@@ -260,7 +260,7 @@ pnpm + Vite ─── dev server (HMR) ─── 浏览器预览
 | 产物 | 路径 | 用途 |
 |------|------|------|
 | Web build | `dist/web/` | itch.io / GitHub Pages 试玩版 |
-| Electron app | `dist/<platform>/` | 桌面三平台发行 |
+| Electron app | `dist/<platform>/` | 桌面发行（近期 Windows/Linux，macOS 后置评估） |
 | Replay fixtures | `tests/replay/fixtures/*.replay.json` | CI 跑 |
 | Content registry | `dist/content.json`（打包后单文件） | 加载快 |
 

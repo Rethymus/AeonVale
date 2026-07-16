@@ -22,7 +22,7 @@
 
 ### 1.1 来源
 
-玩家是「绝灵之体」无灵根，无法像修士那样直接吸收天地灵气与灵草精华。当玩家**生食灵草**（直接吃未炼制的灵草）或**误食残丹/废丹**时，无法消化的灵气在体内郁结为 `PillPoison`。
+玩家被判无灵根（实为空灵根），凡骨无法像修士那样以吐纳直接消化天地灵气与灵草精华。当玩家**生食灵草**（直接吃未炼制的灵草）或**误食残丹/废丹**时，无法消化的灵气在体内郁结为 `PillPoison`。
 
 ```
 PillPoison += RawHerbPoisonValue * RawAbsorptionPenalty
@@ -78,7 +78,15 @@ PoisonDebuff(PillPoison) = scale(PillPoison / PillPoisonCap)
 
 ### 2.2 药性向量模型
 
-每种灵草带一个 `Property` 标签与一个 `Potency`（药性强 度）。为方便数值化，把药性投影到**一维药性轴**（"寒热轴"）：
+每种灵草带一个内部 `PropertyVector` 与一个 `Potency`（药性强度）。按照 `20` R6，**内部真源是四轴** `[cold, hot, warm, neutral]`，用于丹方匹配、七情配伍、毒性与品质计算；**玩家面展示是一维寒热投影**，用于平衡条与炸炉预警。
+
+玩家面投影规则：
+
+```
+PropertyAxisValue = hot - cold
+```
+
+其中 `warm` 作为温和增益/副轴微调，`neutral` 不参与主轴，但参与丹方匹配、净毒和稳定性评分。为方便 UI 与入门教学，一维投影仍使用以下读法：
 
 ```
 PropertyAxisValue:
@@ -93,9 +101,20 @@ PropertyAxisValue:
 
 ```
 Herb {
-  PropertyAxis: enum {Cold, Cool, Neutral, Warm, Hot}
-  PropertyAxisValue: float    // 上表
-  Potency: int                // 药性强 度 1..10，决定影响丹药强度
+  baseProperty: PropertyVector // [cold, hot, warm, neutral]，内部真源
+  PropertyAxisValue: float     // hot - cold 的玩家面投影
+  Potency: int                 // 药性强度 1..10，决定影响丹药强度
+}
+```
+
+内部四轴示意：
+
+```
+interface PropertyVector {
+  cold: int;
+  hot: int;
+  warm: int;
+  neutral: int;
 }
 ```
 
@@ -147,7 +166,7 @@ interface CompatibilityRule {
 ```
 
 - `resolvePill`（§6.3）在打分前先查这张表，把所有成对关系折算进 `score` 与 `poison`。
-- **十八反 / 十九畏 式"必炸药对"**：少数被标记 `relation=相反` 的特定药对（如 `Griefvein` 断肠藤 的寒热同体内部冲突、或设计上的禁忌对），命中即**无视火候强制炸炉**——给玩家"绝对禁忌"可学习，也制造黑色幽默（"凡人也知道这两样不能一起炼"）。这些禁忌对在 `15` 标注 `guaranteedExplosion: true`。
+- **十八反 / 十九畏 式"必炸药对"**：少数被标记 `relation=相反` 的特定药对（如 `Griefvein` 九死草 的寒热同体内部冲突、或设计上的禁忌对），命中即**无视火候强制炸炉**——给玩家"绝对禁忌"可学习，也制造黑色幽默（"凡人也知道这两样不能一起炼"）。这些禁忌对在 `15` 标注 `guaranteedExplosion: true`。
 - **学习曲线**：玩家首次触发某七情关系，UI 弹出一句中医化提示（如"寒热同炉，相反成毒"），把知识显性化——失败可学习（Pillar 1）。
 
 **与四轴/一维的关系**（呼应 `20` R6）：七情在**内部四轴** `[cold,hot,warm,neutral]` 上判定（相须=同轴同向强叠加；相反=寒热对轴极端冲突）；玩家面只看到**一维寒热轴**的平衡条与炸炉警告。即"理论用四轴，体验看一维"。
@@ -189,7 +208,8 @@ interface CompatibilityRule {
 
 ```
 on insert(herb, slot, order_index):
-    current.PropertySum += herb.Contribution
+    current.PropertyVector += herb.PropertyVectorContribution
+    current.AxisConflict = current.PropertyVector.hot - current.PropertyVector.cold
     current.Heat += herb.HeatEffect * OrderHeatWeight(order_index)
     // 先投入的草"奠基"，后投入的草"调性"
     if order_index == 1: current.Foundation = herb.PropertyAxisValue
@@ -206,7 +226,7 @@ on insert(herb, slot, order_index):
 
 炼丹是**实时操作**（不暂停）：玩家在火候动态变化时投入材料。投料瞬间锁定该槽的贡献，但**药性会随火候变化而演变**（见 §4.3 加热演变）。这制造"看准时机下料"的反应式玩法。
 
-> 备选方案（需主创拍板，见开放问题 Q2）：若希望更策略、更不反应，可改为"投料后自动炼制 N 秒"。本文推荐实时以保留紧张感。
+> 裁定说明：投料采用实时反应式（见 `20` D-05）。若未来推翻，可改为"投料后自动炼制 N 秒"的策略式流程。
 
 ---
 
@@ -241,9 +261,9 @@ FurnaceHeat in [0, 100]
 
 ```
 HeatPropertyShift = f(currentHeat)
-  if currentHeat in [60, 80]: PropertySum drifts toward Hot (+DriftRate/s)
-  if currentHeat in [10, 30]: PropertySum drifts toward Cold (-DriftRate/s)
-  if currentHeat in [30, 60]: PropertySum stable (文火稳定区)
+  if currentHeat in [60, 80]: PropertyVector.hot drifts up (+DriftRate/s)
+  if currentHeat in [10, 30]: PropertyVector.cold drifts up (+DriftRate/s)
+  if currentHeat in [30, 60]: PropertyVector stable (文火稳定区)
 ```
 
 - `【可调参数】HeatDriftRate`（默认 0.3/s）—— 高/低温下药性漂移速度。
@@ -276,7 +296,7 @@ QualityMultiplier = clamp(1 - HeatDeviation * HeatPenaltyFactor, 0, 1)
 
 ### 5.1 平衡条 UI
 
-屏幕中实时显示当前炉内 `PropertySum`（药性轴总和）：
+屏幕中实时显示当前炉内 `AxisConflict = hot − cold`（四轴药性的玩家面投影）：
 
 ```
 寒 ━━━━━━━━━━━|━━━━━━━━━━ 热
@@ -285,22 +305,23 @@ QualityMultiplier = clamp(1 - HeatDeviation * HeatPenaltyFactor, 0, 1)
 
 - 中心 0 = 完美平衡（平性丹）。
 - 偏向寒/热 = 该属性的丹。
-- 接近极端（|PropertySum| > `ConflictThreshold`）= 冲突警告，即将炸炉。
+- 接近极端（`|hot−cold| > ConflictThreshold`）= 冲突警告，即将炸炉。
 
 ### 5.2 炸炉判定
 
 ```
-if |PropertySum| >= ExplosionThreshold: trigger Explosion()
-elif |PropertySum| >= ConflictThreshold: warning state ( escalating risk )
+AxisConflict = |PropertyVector.hot - PropertyVector.cold|
+if AxisConflict >= ExplosionThreshold: trigger Explosion()
+elif AxisConflict >= ConflictThreshold: warning state ( escalating risk )
 ```
 
-- `【可调参数】ConflictThreshold`（默认 15）—— 开始警告。
+- `【可调参数】ConflictThreshold`（默认 `ExplosionThreshold × 0.6`）—— 开始警告，见 `20` R7。
 - `ExplosionThreshold = 14 + 2×stage`（**见 `14` §9.3 / P034**；阶段缩放；旧固定 25 已废弃，见 `20` R7）—— 必炸。
 
 炸炉概率模型（在冲突区时每 tick 掷骰）：
 
 ```
-P(explode per tick) = max(0, (|PropertySum| - ConflictThreshold)
+P(explode per tick) = max(0, (AxisConflict - ConflictThreshold)
                           / (ExplosionThreshold - ConflictThreshold))
                      * ExplosionRateBase
 ```
@@ -316,7 +337,7 @@ P(explode per tick) = max(0, (|PropertySum| - ConflictThreshold)
 2. `PillPoison += ExplosionPoisonBacklash`（默认 +20，丹毒反噬）。
 3. 玩家 HP `-ExplosionDamage`（默认 -15，炸伤）。
 4. 丹炉耐久 `-FurnaceDurabilityCost`（默认 -25%）；耐久归零丹炉损毁，需修复或更换。
-5. 若炸炉规模大（`|PropertySum|` 远超阈值），波及相邻建筑（破坏 nearby 农田格 / 阵法）。
+5. 若炸炉规模大（`AxisConflict` 远超阈值），波及相邻建筑（破坏 nearby 农田格 / 阵法）。
 
 - `【可调参数】ExplosionPoisonBacklash`（默认 20）。
 - `【可调参数】ExplosionDamage`（默认 15 HP）。
@@ -339,7 +360,8 @@ InputVector = {
   OrderVector:  sequence of insertion (有序序列)
   AvgHeat:      平均火候
   HeatTrajectory: 火候轨迹特征 (e.g. 是否经过焚炉区、是否恒温)
-  PropertySum:  最终药性总和
+  PropertyVector: 最终四轴药性
+  AxisConflict:   hot−cold 玩家面投影
   Adjuvant:     辅料类型 (水/油/矿粉)
   Duration:     炼制总时长
 }
@@ -359,7 +381,7 @@ function resolvePill(input):
     for recipe in candidates:
         score[recipe] = w1 * herbSetSimilarity
                       + w2 * heatRangeMatch(input.AvgHeat, recipe.IdealHeatRange)
-                      + w3 * propertyAlignment(input.PropertySum, recipe.TargetProperty)
+                      + w3 * propertyAlignment(input.PropertyVector, recipe.TargetProperty)
                       + w4 * orderPatternMatch(input.OrderVector, recipe.ExpectedOrder)
                       + w5 * adjuvantMatch(input.Adjuvant, recipe.RequiredAdjuvant)
     
@@ -447,11 +469,11 @@ score 接近合格但未达（如 0.4–0.6 但火候严重偏离）：产出"�
 
 ### 9.2 极端药性
 
-- 全寒/全热投入：`PropertySum` 立即超 `ConflictThreshold`，几乎必炸。教学关会警告。
+- 全寒/全热投入：`AxisConflict` 立即超 `ConflictThreshold`，几乎必炸。教学关会警告。
 
 ### 9.3 连续操作 / 状态污染
 
-- 上一次炼制未清炉就投新料：残留药性 `PropertyResidue` 污染下一炉（`PropertySum` 初始非 0）。玩家需手动 `清炉 CleanFurnace`（耗时 +消耗水/布）。
+- 上一次炼制未清炉就投新料：残留药性 `PropertyResidue` 污染下一炉（`PropertyVector` 初始非 0）。玩家需手动 `清炉 CleanFurnace`（耗时 +消耗水/布）。
 - 玩家离开丹炉界面：炼制**暂停**（不继续 tick），但已投入材料不返还。
 
 ### 9.4 储物戒材料不足
@@ -470,11 +492,12 @@ score 接近合格但未达（如 0.4–0.6 但火候严重偏离）：产出"�
 function alchemyTick(furnace, dt):
     furnace.Heat = driftToward(furnace.Heat, AmbientHeat, HeatDriftRate, dt)
     for herb in furnace.Slots:
-        if herb: furnace.PropertySum += heatEvolution(herb, furnace.Heat, dt)
-    if |furnace.PropertySum| >= ExplosionThreshold:
+        if herb: furnace.PropertyVector += heatEvolution(herb, furnace.Heat, dt)
+    axisConflict = abs(furnace.PropertyVector.hot - furnace.PropertyVector.cold)
+    if axisConflict >= ExplosionThreshold:
         return explode()
-    elif |furnace.PropertySum| >= ConflictThreshold:
-        if rng.next() < explodeProb(furnace.PropertySum, furnace.Heat): return explode()
+    elif axisConflict >= ConflictThreshold:
+        if rng.next() < explodeProb(axisConflict, furnace.Heat): return explode()
     return continue
 
 function resolvePillOnCollect(furnace):
@@ -511,10 +534,10 @@ function resolvePillOnCollect(furnace):
 | `BellowsCooldown` | 1.5 | s | 鼓风冷却 |
 | `BankRate` | 2 | /s | 封火降温 |
 | `HeatPenaltyFactor` | 0.8 | 比例 | 火候偏离惩罚 |
-| `ConflictThreshold` | 15 | PropertySum | 冲突警告阈值 |
+| `ConflictThreshold` | `ExplosionThreshold × 0.6` | AxisConflict | 冲突警告阈值（见 20 R7） |
 | `ExplosionThreshold` | `14 + 2×stage` | M | 炸炉阈值（见 14 P034，R7） |
 | `ExplosionRateBase` | 0.05 | /tick | 冲突区炸炉概率 |
-| `HeatExplosionAggr` | 5 | PropertySum | 焚炉区炸炉加剧 |
+| `HeatExplosionAggr` | 5 | AxisConflict | 焚炉区炸炉加剧 |
 | `ExplosionPoisonBacklash` | 20 | PillPoison | 炸炉反噬 |
 | `ExplosionDamage` | 15 | HP | 炸炉伤害 |
 | `FurnaceDurabilityCost` | 25 | % | 炸炉炉损 |
@@ -525,12 +548,12 @@ function resolvePillOnCollect(furnace):
 
 ---
 
-## 12. 开放问题（需主创拍板）
+## 12. 已裁定问题（Decision Links）
 
-- **Q1**：投料是实时（反应式）还是回合（策略式）？本文推荐实时，保留紧张感与火候解谜。若主创希望更接近 Potion Craft 的"策略性 alchemy map"，可改为离散步骤。
-- **Q2**：药性是一维（寒热轴）还是二维（寒热 + 升降/补泄等更多中医维度）？本文一维求简洁，二维可增深度但提高调参与 UI 复杂度。
-- **Q3**：废丹的回收通路是否全保留？肥料/阵法燃料/拆解三条都开会让失败惩罚过轻。建议至少保留一条。
-- **Q4**：丹方发现的"涌现优先级"是否会让玩家无意中跳阶获得强力丹？需配合 stage gating（高阶丹方材料本身 stage-locked）。
+- **D-05**：炼丹投料采用实时反应式，保留火候解谜与临场紧张感。
+- **D-09 / R6**：药性采用内部四轴 + 玩家面一维投影。
+- **R7**：炸炉阈值采用 `14 + 2×stage`，警告阈值为其 60%。
+- **七情配伍**：相须/相使/相畏/相杀/相恶/相反作为数据驱动规则保留，高阶丹方通过材料与阶段 gate 控制跳阶风险。
 
 ---
 

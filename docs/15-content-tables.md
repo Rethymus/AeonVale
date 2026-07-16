@@ -27,19 +27,20 @@
 | `herb.mossling` | 凡间青苔 | Mossling | `[0,0,0,3]` | 1 | 8 | 40 | 5 | 0.4 | 0 | 无 | 平 | 序章自带×3 | 凡间常见，微弱平性；教程作物，无丹毒风险 |
 | `herb.dewroot` | 露根草 | Dewroot | `[2,0,1,1]` | 1 | 7 | 45 | 8 | 0.6 | 0 | 无 | 春 | 序章自带×2 | 入门寒性，配净毒丹练习 |
 | `herb.suncap` | 朝阳菇 | Suncap | `[0,2,1,1]` | 1 | 7 | 45 | 8 | 0.6 | 0 | 无 | 夏 | 序章集市残货 | 入门热性 |
-| `herb.frostmarrow` | 寒髓草 | Frostmarrow | `[6,0,2,0]` | 2 | 5 | 80 | 20 | 1.2 | 0 | 无 | 冬 | 储物戒残卷 | 强寒性，避雷丹主料；生食丹毒高 |
-| `herb.emberheart` | 赤焰心 | Emberheart | `[0,6,2,0]` | 2 | 5 | 80 | 20 | 1.2 | 0 | 无 | 夏 | 储物戒残卷 | 强热性，生骨丹主料 |
+| `herb.frostmarrow` | 寒潭莲 | Frostmarrow | `[6,0,2,0]` | 2 | 5 | 80 | 20 | 1.2 | 0 | 无 | 冬 | 储物戒残卷 | 强寒性，避雷丹主料；生食丹毒高 |
+| `herb.emberheart` | 赤炎草 | Emberheart | `[0,6,2,0]` | 2 | 5 | 80 | 20 | 1.2 | 0 | 无 | 夏 | 储物戒残卷 | 强热性，生骨丹主料 |
 | `herb.balmleaf` | 和合叶 | Balmleaf | `[1,1,2,4]` | 2 | 6 | 75 | 18 | 1.0 | 0 | 无 | 秋 | 储物戒残卷 | 温和中和剂，降低炸炉风险 |
-| `herb.metalpine` | 金雷引 | Metalpine | `[1,1,0,2]` | 3 | 4 | 120 | 35 | 1.6 | **3.2** | **吸雷** | 秋 | 妖兽战利品/实验 | **金属性避雷草**：高 metalAttract，种田即布防（14 §5 核心） |
+| `herb.metalpine` | 雷击木 | Metalpine | `[1,1,0,2]` | 3 | 4 | 120 | 35 | 1.6 | **3.2** | **吸雷** | 秋 | 妖兽战利品/实验 | **金属性避雷草**：高 metalAttract，种田即布防（14 §5 核心） |
 | `herb.thunderreed` | 引雷芦 | Thunderreed | `[2,0,0,3]` | 3 | 4 | 130 | 32 | 1.5 | **2.4** | 吸雷 | 春 | 天象"雷汛"掉落 | 第二种避雷草，寒性可双用 |
-| `herb.griefvein` | 断肠藤 | Griefvein | `[5,4,0,0]` | 3 | 4 | 140 | 38 | 1.8 | 0 | 无 | 夏 | 魔修过境遗留 | **核心脆弱药草**：寒热同体，丹毒极高风险，但淬体丹关键料 |
-| `herb.silentbell` | 噤声铃 | Silentbell | `[0,0,0,7]` | 3 | 5 | 120 | 30 | 1.4 | 0 | 无 | 平 | 灵气潮汐奇遇 | 强平性，高级中和剂 |
+| `herb.griefvein` | 九死草 | Griefvein | `[5,4,0,0]` | 3 | 4 | 140 | 38 | 1.8 | 0 | 无 | 夏 | 魔修过境遗留 | **核心脆弱药草**：寒热同体，丹毒极高风险，但淬体丹关键料（"九死还生"呼应偷天路） |
+| `herb.silentbell` | 还魂草 | Silentbell | `[0,0,0,7]` | 3 | 5 | 120 | 30 | 1.4 | 0 | 无 | 平 | 灵气潮汐奇遇 | 强平性，高级中和剂 |
 | `herb.boneash-lily` | 劫灰百合 | Boneash Lily | `[3,3,3,2]` | 4 | 3 | 200 | 55 | 2.2 | 0.8 | 半吸 | 秋 | 旧天劫现场挖掘 | 四性均衡稀有料，万能调平剂 |
 | `herb.voidmantle` | 虚衾蕈 | Voidmantle | `[7,0,1,1]` | 4 | 3 | 210 | 58 | 2.4 | 0 | 无 | 冬 | 灵脉深掘 | 极寒，高阶避雷丹/淬体料 |
 | `herb.solar-pith` | 太阳髓 | Solar Pith | `[0,7,1,1]` | 4 | 3 | 210 | 58 | 2.4 | 0 | 无 | 夏 | 灵脉深掘 | 极热，对应虚空衾 |
 | `herb.ironwill-thorn` | 铁心刺 | Ironwill Thorn | `[0,0,0,5]` | 4 | 3 | 220 | 52 | 2.0 | **4.0** | **强吸雷** | 平 | 阵法残谱兑换 | 最强避雷草，塔防核心布防件 |
 | `herb.violet-ascend` | 紫极芝 | Violet Ascendshroom | `[4,4,4,4]` | 5 | 2 | 360 | 80 | 3.0 | 1.2 | 半吸 | 春秋 | 终局紫雷劫前培育 | 终极料，仅 stage4+ 可活；飞升丹主料 |
 | `herb.dao-root` | 大道残根 | Dao Root | `[0,0,0,10]` | 5 | 2 | 400 | 85 | 3.2 | 0 | 无 | 平 | 走火入魔后重生获得 | 传说级中和剂，极稀有 |
+| `herb.voidmoss` | 绝灵苔 | Voidmoss | `[0,0,0,0]` | 3 | 4 | 120 | **1.5** | 0.2 | 0 | 无 | 冬 | 主角田边偶发/绝灵之地 | **无灵性植物**：药性全零、极低吸灵（不吸反隔绝灵气），**绝缘阵推荐材料**（03 §6.1/6.3）；主角空灵根的镜像"空亦有空之用" |
 
 > **设计校验**：`metalAttract` 列已按 14 P012 (`0.8 × tier`) 校准——Metalpine tier3 = 0.8×3=2.4，表中取 3.2 为其"特化避雷"加成（超出基线的设计特性，在机制文档登记为 `metalAttractBonus`）。Ironwill Thorn tier4 基线 3.2 + 特化 = 4.0。**[待与 05 对齐：特化加成是否独立字段]**
 
@@ -107,22 +108,25 @@
 | `event.spirit-bloom` | 百草丰登 | 喜 | stage≥1, 春秋 | 8 | 3 日 | 全地块肥力 +20 | `soilFactor` 临时上限 +0.2 | 趁机翻地施肥 |
 | `event.wandering-immortal` | 游方散仙至 | 机 | stage≥2 | 4 | 1 日 | 散仙偶至，可换稀有种子/残谱 | 见 `16-economy.md` §5 最小交易 | 备好战利品舔包交换 |
 | `event.beast-tide` | 妖兽潮 | 危 | stage≥2, 灵气潮汐后 | 7 | 2 日 | 灵气引兽→连夜守田 | 妖兽吃掉地块灵草 | 布陷阱/毒唾丹/守夜 |
+| `event.beast-guardian` | 守田兽归巢 | 机 | stage≥2, 妖兽潮后 | 3 | 1 日 | 受伤幼兽徘徊田边→喂养可成守田兽 | 解锁守田巡逻位；降低后续啃田损失 | 用废丹/凡食驯养，不走正统驭兽线 |
 | `event.demonic-pass` | 魔修过境 | 危+机 | stage≥2 | 5 | 1 日 | 正魔交战波及山谷→遗骸可舔包 | 战利品掉落表见 §5 | 躲避为主；战后拾取 Griefvein 等 |
 | `event.qi-depletion` | 灵气枯竭 | 悲 | stage≥1, 冬 | 6 | 7 日 | 天地封灵→灵草停滞→饥荒 | `celestialQiMod=0.4` | 提前储丹/储粮 |
 | `event.bad-harvest` | 灾年 | 悲 | stage≥1 | 6 | 1 季 | 凡间作物歉收→HP 持续降 | 休息回 HP 效率 -50% | 靠丹药/储物度日 |
 | `event.heaven-eye` | 天道注视 | 危 | stage≥3, 临近突破 | 5 | 当次天劫 | 天劫强度 +30% | `bolt.baseDamage ×1.3` | 务必备大避雷丹 |
 | `event.demon-seed-rain` | 魔种雨 | 机+危 | stage≥3 | 4 | 1 日 | 天降异种→可种但风险 | 解锁 Griefvein 种子；伴生妖兽 | 风险投资 |
 | `event.vein-surfacing` | 残脉露头 | 机 | stage≥2 | 3 | 永久（挖掘后） | 地下灵脉露头可掘 | 新增 `veinMultiplier=3.0` 地块 | 优先抢占/布防 |
+| `event.body-ruin` | 体修遗迹 | 机+危 | stage≥2, 体魄进度≥60% | 2 | 1 次 | 无宗门传承的残破炼体遗迹现世→可得体修残页/淬体方 | 掉落体修残页；探索失败则 HP/丹毒惩罚 | 备生骨丹，权衡奇遇与伤势 |
 | `event.lightning-storm` | 雷汛 | 危 | stage≥3, 夏 | 5 | 3 日 | 非天劫期散雷→伤人伤草 | 随机小雷（`baseDamage×0.3`） | 避雷草/雷种收集窗 |
 | `event.frost-calimity` | 霜劫 | 悲 | stage≥1, 冬末 | 5 | 2 日 | 突霜→温/热草全毁 | 温热草 `growthPerDay=0` | 抢收或靠储丹 |
 | `event.prodigy-descend` | 天骄降世 | 喜+悲 | 全期 | 2 | 1 日 | 远方天骄渡劫→天地异象→本地灵气震荡 | 随机 `celestialQiMod` ±0.3 | 听天由命/赌方向 |
 | `event.forgotten-tomb` | 古修遗冢 | 机 | stage≥3 | 3 | 1 次 | 残冢现→探索得法宝/残谱 | 战利品高风险高回报 | 备足生骨丹 |
-| `event.dao-whisper` | 大道低语 | 喜 | stage≥4, `P<30` | 3 | 即时 | 清明悟道→修为 +50 | `X += 50` | 突破前祈祷触发 |
+| `event.dao-whisper` | 大道低语 | 喜 | stage≥4, `P<30` | 3 | 即时 | 清明悟道→体魄进度 +50 | `X += 50` | 突破前祈祷触发 |
 | `event.blood-moon` | 血月 | 危 | stage≥4 | 4 | 1 夜 | 妖兽狂化 + 走火风险升 | 走火累积 ×2 | 静守不炼丹 |
-| `event.purple-omen` | 紫雷前兆 | 危 | stage4，X ≥ StageQiCap(4) | 1（强制） | 7 日 | 紫雷劫倒计时开启 | 解锁终局线 | 全力备丹布阵 |
+| `event.lifespan-warning` | 大限将近 | 悲+危 | 寿元剩余≤30 日 | 1（催讨） | 持续至突破/死亡 | 气血衰败→训练收益下降→天道催讨压力上升 | `LifespanLimitRemaining` 压缩；催讨权重上升 | 主动引劫换寿元，或囤丹硬拖 |
+| `event.purple-omen` | 紫雷前兆 | 危 | stage4，X ≥ StageQiCap(4) 且 DaoAttention 高 | 1（催讨） | 7 日 | 紫雷劫因果浮现，天道开始催讨 | 解锁终局线；催讨倒计时开启 | 全力备丹布阵，择日主动引劫 |
 | `event.kindling-flame` | 炉心焰 | 机 | stage≥2 | 5 | 3 日 | 地火涌→炼丹火候易控 | `heatTolerance +10` | 趁机炼高难丹方 |
 
-> **权重校验**（14 §7）：所有 `baseWeight` 在 `eventGateProbability=0.25` 闸下，模拟应产出"平均 4 日一事件，喜悲危机大致 3:3:3:1"。`event.purple-omen` 为强制触发（gate 满即 weight=∞），不走日常抽样。**[待与 07 对齐：因果链细化]**
+> **权重校验**（14 §7）：所有 `baseWeight` 在 `eventGateProbability=0.25` 闸下，模拟应产出"平均 4 日一事件，喜悲危机大致 3:3:3:1"。`event.purple-omen` 与 `event.lifespan-warning` 属于催讨类事件：不走普通日常抽样，而由天道注视、因果债或寿元阈值接管。**[待与 07 对齐：因果链细化]**
 
 ---
 
@@ -140,7 +144,7 @@
 | `item.furnace-spirit` | 灵纹炉 | Spirit Furnace | 设备 | 炼丹；`heatTolerance=25`，炸炉阈 +3 | 1 | stage3 制造 | 中级炉 |
 | `item.furnace-heaven` | 乾坤炉 | Heaven Furnace | 设备 | 炼丹；`heatTolerance=40`，提取拱形 +20% | 1 | stage5 | 终极炉 |
 | `item.array-rod` | 引雷阵杆 | Lightning-Rod Array | 阵件 | 布设引雷阵（14 §5 `arrayModifier +3.0`） | 4 | 残谱+金属性草制 | 消耗性，抗 3 雷 |
-| `item.insulate-mat` | 绝缘阵席 | Insulating Mat | 阵件 | 布设绝缘阵（`arrayModifier -0.7`） | 4 | stage2 制造 | 保护核心区 |
+| `item.insulate-mat` | 绝缘阵席 | Insulating Mat | 阵件 | 布设绝缘阵（`arrayModifier 0.3`，乘性正倍率，越小越隔绝，见 14 P014） | 4 | stage2 制造 | 保护核心区 |
 | `item.compost` | 灵肥 | Spirit Compost | 材料 | 施肥 `F += 15` | 20 | 堆肥/购买 | 养地 |
 | `item.spirit-stone` | 灵石 | Spirit Stone | 货币/材料 | 交易媒介；可碎回灵气 `Q += 5` | 50 | 舔包/散仙 | 最小货币 |
 | `item.broken-talisman` | 破损法宝 | Broken Talisman | 战利品 | 可修或拆材料 | 3 | 魔修过境舔包 | 舔包主力 |
@@ -148,6 +152,9 @@
 | `item.beast-core` | 妖兽内丹 | Beast Core | 战利品 | 可碎灵气/制陷阱 | 5 | 妖兽战 | 副产品 |
 | `item.recipe-fragment` | 残卷 | Recipe Fragment | 知识 | 解锁丹方（消耗） | 8 | 舔包/探索 | 进度钥匙 |
 | `item.dao-scripture` | 功法残页 | Scripture Page | 知识 | 解锁阶段/阵法 | 1 | 关键剧情 | 主线钥匙 |
+| `item.body-manual-fragment` | 体修残页 | Body Manual Fragment | 知识 | 解锁体修阶段/淬体训练条目 | 1 | 体修遗迹/世家藏书/前辈传承 | 没落体修传承的主要来源 |
+| `item.training-ration` | 苦练食包 | Training Ration | 消耗品 | 完成高强度日课后恢复 HP/体力 | 10 | 凡食加工/交易 | 支撑百俯卧、百仰卧、百深蹲、十公里长跑的日常消耗 |
+| `item.guard-beast-whistle` | 守田兽哨 | Guardian Beast Whistle | 工具 | 指派守田兽巡逻地块 | 1 | 守田兽归巢事件 | 现代"看门狗"思路的农场防线工具 |
 | `item.rest-mat` | 静室蒲团 | Rest Mat | 设备 | 在家休息 `restBonus`（14 §3） | 1 | stage1 制造 | 鼓励回家清毒 |
 | `item.spirit-vein-shard` | 灵脉碎片 | Vein Shard | 材料 | 埋地块升 `veinMultiplier` | 4 | 残脉挖掘 | 稀缺战略 |
 | `item.anti-poison-charm` | 解毒符 | Detox Charm | 消耗品 | 即时清毒 10 | 5 | 散仙交易 | 应急 |
@@ -164,9 +171,9 @@
 
 | 检查项 | 结果 |
 |--------|------|
-| 灵草四属性覆盖 | 寒4 / 热4 / 温含于混合 / 平4 + 混合多 ✔ |
-| 各 tier 灵草数 | t1:3 / t2:3 / t3:4 / t4:4 / t5:2 = 16 种 ✔ |
-| 避雷草（metalAttract>0） | Metalpine/Thunder Reed/Ironwill Thorn/Violet(半) = 4 种 ✔ |
+| 灵草四属性覆盖 | 寒/热/温/平齐全 + 混合多，另含"空"（绝灵苔，药性全零）✔ |
+| 各 tier 灵草数 | t1:6 / t2:6 / t3:7 / t4:4 / t5:2 = 25 种 ✔ |
+| 避雷草（metalAttract>0） | Metalpine/Thunderreed/Fulgurseed/Ironwill Thorn + Violet/Boneash(半) = 6 种 ✔ |
 | 丹方覆盖四大抗劫刚需 | 避雷/生骨/净毒/淬体 全覆盖且分 tier 进阶 ✔ |
 | 涌现配方数 | 5 种（覆盖废丹/过火/双金属/单料高危/极致中和） ✔ |
 | 天象四类型覆盖 | 喜3/悲3/危6/机4（多复合） ✔ |

@@ -32,7 +32,7 @@
 | `soilType` | `SoilType` | 土壤类型 enum | `LOAM`/`SAND`/`CLAY`/`SPIRIT_LOAM`（灵壤）/`ROCK`/`WATER` |
 | `fertility` | int | 肥力 0..1000（毫点，10=1%） | 默认 500 |
 | `qiDensity` | int | 灵气密度 0..1000（毫点） | 默认随灵脉距离衰减 |
-| `conductivity` | int | 导电性 -1000..+1000（正=导电/引雷，负=绝缘） | 默认 0；金属土+500 |
+| `conductivity` | int | 导电倍率毫点 0..2000（1000=基准 1.0；100=绝缘垫 0.1；1800=水 1.8） | 默认随 `soilType`；见 `08` §3.3 / `20` R5 |
 | `moisture` | int | 湿度 0..1000 | 默认 300 |
 | `cropInstanceId` | int? | 占用此瓦片的作物实例 ID | null=空地 |
 | `arrayId` | int? | 此瓦片所属阵法 ID | null=无 |
@@ -70,7 +70,7 @@
 | `tier` | int | 品阶 1..9 | - |
 | `baseProperty` | `PropertyVector` | 基础药性（寒热温平 4 维，各 -1000..+1000） | - |
 | `growthTicks` | int | 完整生长所需 tick 数 | 30 TPS 下换算天/季 |
-| `conductivity` | int | 自身导电性 | 影响雷概率 |
+| `conductivity` | int | 自身导电倍率毫点 0..2000 | 影响落雷权重；1000=基准 1.0 |
 | `soilAffinity` | `Map<SoilType, int>` | 对各土壤的生长加成毫点 | - |
 | `qiNeed` | int | 灵气需求阈值 | 不满足则生长停滞 |
 | `yield` | `ItemDrop[]` | 收获产物（物品 ID + 数量） | - |
@@ -87,7 +87,8 @@ interface PropertyVector {
   warm: int;   // 温
   neutral: int;// 平
 }
-// 求和平衡：sum 应趋近 0；偏离过大 → 炸炉
+// 内部四轴为炼丹真源；玩家面寒热投影 = hot - cold。
+// 炸炉主判定用 |hot - cold|，丹方匹配与七情配伍使用完整四轴。
 ```
 
 ### 1.5 `PillDef`（丹药定义）

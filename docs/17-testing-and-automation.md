@@ -167,8 +167,18 @@ function runMonteCarlo(params, botSet, N, targetMetrics):
 `pnpm m5:check` 使用固定 64 种子对 normal/veteran 运行长周期 **assisted campaign proxy**：它必须走真实的紫雷前兆、突破与 `pill.ascend` 结局路径，并报告 Wilson 95% 区间、紫雷机械死锁、超时和辅助资源使用量。该 proxy 明确记录为合成资源辅助（阶段修为、渡劫准备、stage7 飞升丹），**不是自然内容获取或真实玩家通关率**。
 
 - PR：只阻断结构回归（无飞升、veteran 低于 normal、紫雷死锁或非确定性）。
-- 夜间：`pnpm m5:certify` 以 1,000 个独立 holdout 种子评估 M5 的 normal/veteran 代理通过率区间。
+- 夜间：`pnpm m5:certify` 以 1,000 个独立 holdout 种子评估 M5 的 normal/veteran 代理通过率区间，`m5-nightly` 仅报告、不阻断。
+- M5 工具以**点估计落入目标带**作为 `provisional` 合格；Wilson 95% 区间完整落带才标记 `certified`。前者是当前代理工具的可用门槛，不等于统计学严格认证；严格 Wilson 标准推迟到 M6 人类 playtest 对照完成代理校准后执行（`18` §8）。
 - 时长单位固定为 `game-days`，并以 timeout horizon 计算 restricted mean；18–25 真人小时仍待 M6 人类 playtest 校准，不能由日数直接换算。
+
+### 4.5 HP 继承代理原型（M6 校准输入）
+
+`pnpm m5:hp-inheritance` 比较既有“渡劫前回满”代理与“渡劫间继承 HP + 有限治疗”变体；它不修改正式游戏突破回满规则。固定 holdout `seed=40001..40128`、每点 128 局、扫描 `violetDamageMult=1.145..1.170` 时，60% maxHP 有限治疗得到：
+
+- normal：通过率 `0.2266 → 0.1484`，最大相邻跳变 `0.0391`；回满基线最大跳变为 `0.1406`。
+- veteran：通过率 `0.7344 → 0.7109`，最大相邻跳变 `0.0156`。
+
+因此该原型使 normal 曲线更平滑且仍有可测动态范围，但绝对通过率下移；它只能作为 M6 人类 playtest 校准的候选模型，不能解释为真实玩家通过率。40% 治疗过于严苛，80% 与回满基线过近，均保留在工具扫描中作为反例。
 
 ---
 

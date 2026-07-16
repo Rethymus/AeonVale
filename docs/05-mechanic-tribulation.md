@@ -38,9 +38,9 @@ InvokeTribulationAllowed:
   AND not already in Tribulation
 ```
 
-`StageQi` 在本文中沿用内部字段名，语义是**阶段肉身淬炼进度**，不是灵修灵力。来源：劫雷淬体（主要）、淬体丹药（次要）、基础训练/灵脉共鸣（微弱）。详见 §4.2 与 `09-progression-system.md`。
+`StageQi` 在本文中是**文档符号名**（非代码字段；实现字段为 `bodyFoundation`，容量函数 `stageQiCap()`，见 `09` §0），语义是**阶段肉身淬炼进度**，不是灵修灵力。来源：劫雷淬体（主要）、淬体丹药（次要）、基础训练/灵脉共鸣（微弱）。详见 §4.2 与 `09-progression-system.md`。
 
-主动引劫的收益与风险（漏斗体质视角，详见 `03` §2.2.1）：
+主动引劫的收益与风险（空灵根"封堵漏洞"视角，详见 `03` §2.2.1）：
 - **收益**：天劫雷能**永久封堵漏勺漏洞**（焊死裂缝）——每扛过一次，漏失率下降、净留存上升，体修变强。玩家可在 HP、丹药、阵法、天气最合适时开劫；也可在大限逼近前主动搏命。
 - **风险**：准备不足时雷劫收益低（漏洞封堵少）、死亡率高（漏勺碎裂 = 死）；每次主动引劫增加 `HeavenDebt` / `DaoAttention`，推动终局清算。
 - **精神内核**：这不是被动等天罚，而是"我命由我不由天"的玩法化表达。
@@ -206,8 +206,8 @@ falloff(d) = max(0, 1 - d/RodRadius)   // 线性衰减
 ArrayModifier(t) = Π_{arrays A covering t} A.Modifier
 ```
 
-- `【可调参数】RodArrayMultiplier`（默认 5.0）—— 引雷阵对覆盖格的权重倍率。
-- `【可调参数】InsulationArrayMultiplier`（默认 0.05）—— 绝缘阵的减权倍率。
+- `【可调参数】RodArrayMultiplier`（默认 4.0，见 14 P013）—— 引雷阵对覆盖格的权重倍率（对齐代码 `array.lightning-rod.modifier`）。
+- `【可调参数】InsulationArrayMultiplier`（默认 0.3，见 14 P014）—— 绝缘阵的减权倍率（乘性正倍率，越小越隔绝；对齐代码 `array.insulation.modifier`）。
 
 **(d) `PlayerProximity(t)` —— 玩家吸引力**
 天道要劈的是渡劫者本人，所以玩家位置有基础吸引力，随距离衰减：

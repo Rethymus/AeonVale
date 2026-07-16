@@ -182,9 +182,9 @@ soilFactor(F) = 0.3 + 0.7 × sqrt(F / 100)
 | tier | 代表草 | baseGrowth (G/日) | growthThreshold | qiNeed |
 |------|--------|-------------------|-----------------|--------|
 | 1 | 凡间青苔 Mossling | 8 | 40 | 5 |
-| 2 | 寒髓草 Frostmarrow | 5 | 80 | 20 |
-| 3 | 赤焰心 Emberheart | 4 | 120 | 35 |
-| 4 | 金雷引 Metalpine | 3 | 200 | 55 |
+| 2 | 寒潭莲 Frostmarrow | 5 | 80 | 20 |
+| 3 | 赤炎草 Emberheart | 4 | 120 | 35 |
+| 4 | 雷击木 Metalpine | 3 | 200 | 55 |
 | 5 | 紫极芝 Violet Ascendshroom | 2 | 360 | 80 |
 
 > 解读：tier1 约 5 日熟（快反馈），tier5 约 180 日熟（近两季——战略级长线投资）。
@@ -319,7 +319,7 @@ weight(e) = e.baseWeight
 
 > 对应 `09-progression-system.md`。**阶段结构以 09 为权威（7 阶制），经 `20-design-decisions-and-reconciliation.md` R1 裁定**；本节为各阶段默认数值（数值/公式单一真源 = 本文）。
 
-《偷天换劫诀》分 **7 个实修阶段（stage 1–7）** + 飞升（stage 0 = 凡骨，前功法）。修为 `StageQi`（本文记 `X`）由淬体累积（§6.2），达阶段上限 `StageQiCap` 触发**强制天劫倒计时**。stage≥3 起每阶段另设**经脉开辟（Meridian）子进度**（见 09 §2），把修为增长具象为可数经脉里程碑。
+《偷天换劫诀》分 **7 个实修阶段（stage 1–7）** + 飞升（stage 0 = 凡骨，前功法）。阶段体魄进度 `StageQi`（本文记 `X`，是文档符号名而非代码字段；实现为 `bodyFoundation`，见 `09` §0）由淬体累积（§6.2），达到阶段上限 `StageQiCap` 后进入**可主动引劫**状态；若长期拖延、天道注视过高或大限迫近，则触发天道催讨倒计时。stage≥3 起每阶段另设**经脉开辟（Meridian）子进度**（见 09 §2），把体魄增长具象为可数经脉里程碑。
 
 ### 8.1 阶段表（进度曲线总览，7 阶 —— 对齐 `20` R1 / `09` §1）
 
@@ -329,9 +329,9 @@ weight(e) = e.baseWeight
 | 1 | 淬皮 | Skin-Tempering | 100 | 3 | 20 | 110 | 1.0 | — | 1–4 h |
 | 2 | 锻骨 | Bone-Forging | 200 | 4 | 28 | 125 | 0.9 | — | 4–8 h |
 | 3 | 通脉 | Meridian-Opening | 400 | 5（青雷+紫雷初现） | 36 | 145 | 0.8 | 3 | 8–12 h |
-| 4 | 凝丹（伪） | False-Core | 700 | 6（紫雷为主） | 44 | 170 | 0.7 | 5 | 12–16 h |
-| 5 | 破丹 | Core-Shattering | 1100 | 7 | 52 | 195 | 0.6 | 7 | 16–20 h |
-| 6 | 化神 | Spirit-Transformation | 1600 | 8 | 60 | 220 | 0.5 | 9 | 20–23 h |
+| 4 | 洗髓 | Marrow-Cleansing | 700 | 6（紫雷为主） | 44 | 170 | 0.7 | 5 | 12–16 h |
+| 5 | 凝血 | Blood-Condensing | 1100 | 7 | 52 | 195 | 0.6 | 7 | 16–20 h |
+| 6 | 雷骨 | Thunder-Bone | 1600 | 8 | 60 | 220 | 0.5 | 9 | 20–23 h |
 | 7 | 飞升前夜 | Eve-of-Ascension | 2200 | 紫雷劫池（×8–12 波） | 68（紫雷 ×1.16） | 250 | 0.4 | 12 | 23–26 h（通关） |
 
 > `StageQiCap` 系列采用 `20` R1 裁定值（近似 ×1.8 增长，对齐 `09` §1.3 `BaseQiCap=100, GrowthFactor≈1.8`）。
@@ -341,14 +341,21 @@ weight(e) = e.baseWeight
 - `temperingEff` 随阶段下降，配合 `StageQiCap` 上升，使每阶段耗时**递增但不爆炸**——避免后期 farm 感。
 - 目标（对齐 `20` §4 / `17` §5.3）：**首劫（stage1）菜鸟存活率 60–75%**；stage3 难度跳点（紫雷初现）菜鸟死亡率显著上升；通关总时长 15–25 h。
 
-### 8.2 天劫触发与倒计时
+### 8.2 主动引劫与催讨倒计时
 
 ```
-when X >= X_cap(stage):
-    tribulationTimer = T_trib(stage)   // 默认 T_trib = 7 - min(stage,4) 日
+when X >= InvokeMinRatio(stage) * X_cap(stage)
+  and BodyFoundation >= BodyFoundationMin(stage)
+  and hasTribulationCatalyst(stage):
+    allow InvokeTribulation
+
+when X >= X_cap(stage) and delayDays > SafeDelay(stage)
+  or HeavenDebt >= DebtThreshold(stage)
+  or LifespanLimitRemaining <= LifespanWarningDays:
+    tribulationTimer = T_collect(stage) // 天道催讨倒计时
     // 倒计时归零 → 强制切入塔防生存（见 05-mechanic）
 ```
-倒计时给玩家"最后准备窗口"：补阵、炼丹、控毒。`T_trib` 随阶段**缩短**——后期更仓促，提升张力。
+主动引劫让玩家选择最适合的丹药、阵法与血量窗口开劫；催讨倒计时则防止无限囤资源。`T_collect` 随阶段**缩短**——后期更仓促，提升张力。
 
 ### 8.3 突破成功率与走火入魔
 
@@ -358,7 +365,7 @@ when X >= X_cap(stage):
 successRate = clamp(
     0.5                                              // 基础五五开
   + 0.15 × (prepScore)                               // 准备分：阵法完整度/丹药齐备度
-  + 0.10 × (X_surplus_ratio)                         // 修为盈余比（超 cap 的部分）
+  + 0.10 × (X_surplus_ratio)                         // 体魄盈余比（超 cap 的部分）
   - 0.20 × (P / 100)                                 // 丹毒惩罚（带毒强行突破大忌）
   - 0.10 × (qiDeviationAccum)                        // 走火累积
   , 0.05, 0.95)
@@ -366,9 +373,9 @@ successRate = clamp(
 
 | 结果 | 条件 | 后果 |
 |------|------|------|
-| 突破成功 | `rng < successRate` | 进入下一 stage，maxHP 涨，解锁内容 |
+| 突破成功 | `rng < successRate` | 进入下一 stage，maxHP 涨，寿元延长，解锁内容 |
 | 走火入魔 | `rng > successRate` 且 `P` 高 | 负面结局分支或重创（见 02-narrative） |
-| 险胜 | `rng > successRate` 但 `P` 低 | 留在原 stage，修为折损 30%，可重攒——**可挽回的局部失败**（C5） |
+| 险胜 | `rng > successRate` 但 `P` 低 | 留在原 stage，体魄进度折损 30%，可重攒——**可挽回的局部失败**（C5） |
 
 **设计意图**：`successRate` 永远在 [0.05, 0.95]——**没有百分百的突破**。丹毒是最大负权（-0.20），把"清毒"和"突破"强绑定，让炼丹的意义闭环。
 
@@ -479,8 +486,8 @@ finalPills = round(baseYield × yieldMultiplier × balanceScore)
 | P010 | `soilFactor.min` | 0.3 | × | [0.1, 0.5] | 低 | §4 贫瘠下限 |
 | P011 | `seasonFactor.peak` | 1.3 | × | [1.1, 1.6] | 中 | §4 季节峰值 |
 | P012 | `lightning.metalAttract.coef` | 0.8 | ×/tier | [0.4, 1.5] | **高** | §5 金属性吸雷 |
-| P013 | `lightning.arrayRedirect` | 3.0 | × | [1.5, 5.0] | 高 | §5 引雷阵强度 |
-| P014 | `lightning.arrayInsulate` | -0.7 | × | [-0.9, -0.3] | 高 | §5 绝缘阵 |
+| P013 | `lightning.arrayRedirect` | 4.0 | × | [1.5, 5.0] | 高 | §5 引雷阵强度（对齐代码 `array.lightning-rod.modifier=4.0`） |
+| P014 | `lightning.arrayInsulate` | 0.3 | × | [0.05, 0.5] | 高 | §5 绝缘阵（乘性正倍率，越小越隔绝；负值违反 R4 乘性"防负"语义，对齐代码 `array.insulation.modifier=0.3`） |
 | P015 | `lightning.playerProximity.coef` | 0.4 | × | [0.1, 1.0] | 中 | §5 雷偏玩家 |
 | P016 | `lightning.noise` | 0.1 | × | [0.0, 0.3] | 中 | §5 不确定性 |
 | P017 | `bolt.baseDamage.base` | 12 | HP | [8, 20] | **高** | §6 雷伤基值 |
@@ -513,13 +520,13 @@ finalPills = round(baseYield × yieldMultiplier × balanceScore)
 
 | 本文公式 | 依赖文档 | 状态 |
 |----------|----------|------|
-| §2 灵气 | `08-farming-system.md` | **待对齐**（本文先行给默认） |
-| §3 丹毒 | `06-mechanic-alchemy.md` | **待对齐** |
-| §4 生长 | `08-farming-system.md` | **待对齐** |
-| §5–6 天雷/淬体 | `05-mechanic-tribulation.md` | **待对齐** |
-| §7 天象 | `07-mechanic-celestial-events.md` | **待对齐** |
-| §8 进阶 | `09-progression-system.md` | **待对齐**（阶段名/数量以本文 5 阶段为基线） |
-| §9 炼丹 | `06-mechanic-alchemy.md` | **待对齐** |
+| §2 灵气 | `08-farming-system.md` | **已对齐**：灵气密度、潮汐、残脉语义一致 |
+| §3 丹毒 | `06-mechanic-alchemy.md` | **已对齐**：`decayBase=2.0/日`，丹毒上限 100 |
+| §4 生长 | `08-farming-system.md` | **已对齐**：生长/季节参数以本文注册表收口 |
+| §5–6 天雷/淬体 | `05-mechanic-tribulation.md` | **已对齐**：乘性 targeting、`baseDamage=12+8×stage`、伤害比例制淬体 |
+| §7 天象 | `07-mechanic-celestial-events.md` | **已对齐**：MVP 事件与权重由 15/20 裁定 |
+| §8 进阶 | `09-progression-system.md` | **已对齐**：采用 7 个实修阶段 + 飞升，见 `20` R1 |
+| §9 炼丹 | `06-mechanic-alchemy.md` | **已对齐**：内部四轴 + 玩家面一维投影，炸炉阈值 `14+2×stage` |
 | §11 注册表 | `17-testing-and-automation.md` | 本文为输入，17 为消费方 |
 
 机制设计师落地时，若需偏离默认值，须：①在本文 §11 改默认并记版本；②在机制文档反向引用本文参数 ID（如 `P024`）。
