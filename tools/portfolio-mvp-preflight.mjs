@@ -48,6 +48,11 @@ const portfolioPaintThresholds = { minSampled: 500, minPaintedRatio: 0.55, minCo
 
 const portfolioEvidencePath = 'test-results/portfolio/portfolio-mvp-evidence.json';
 const todayBriefingProof = ['农庄', '炼丹', '引劫', '首轮进度：10/10', '修行接力'];
+const locationRoutingProof = {
+ processingEntryProof: ['加工', '避雷丹', '炼丹', '阵法'],
+ arraysEntryProof: ['阵法', '引雷阵', '绝缘阵', '主动引劫'],
+ farmWorkEntryProof: ['农事', '炼丹', '阵法', '主动引劫'],
+};
 
 function pngDimensions(file) {
  const data = readFileSync(file);
@@ -174,12 +179,26 @@ function verifyPortfolioEvidence() {
  console.error('[portfolio:mvp-preflight] Public demo evidence must prove today briefing body carries the P0 farm, alchemy, tribulation, 10/10 progress, and cultivation handoff cues.');
  process.exit(1);
  }
+ const routing = evidence.runtimeSignals?.locationRoutingProof;
+ if (routing?.locationSelectionActive !== true || routing?.selectedLocationId !== 'farmstead' || routing?.selectedLocationServiceCommand !== 'show-processing') {
+ console.error('[portfolio:mvp-preflight] Public demo evidence must prove Shift+Tab can expose the farmstead processing route after the first loop.');
+ process.exit(1);
+ }
+ for (const [field, required] of Object.entries(locationRoutingProof)) {
+ if (!Array.isArray(routing?.[field]) || !required.every((text) => routing[field].includes(text))) {
+ console.error(`[portfolio:mvp-preflight] Public demo evidence is missing actionable cultivation route proof: ${field}.`);
+ process.exit(1);
+ }
+ }
  verifyScreenshotEvidence(evidence);
  for (const text of [
  '《星露谷物语》',
  '翻地、播种、浇水、过夜、收获、出货、补种',
  '炼丹',
  '阵法',
+ '避雷丹',
+ '引雷阵',
+ '绝缘阵',
  '淬体',
  '主动引劫',
  '种田即备战',

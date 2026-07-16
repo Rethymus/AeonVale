@@ -5,6 +5,7 @@ import { DEFAULT_BALANCE, greenhouseClimate, greenhouseVisitFlag, teaShedVisitFl
 import { readyForBreakthrough } from '@sim/progression/progression';
 import { getFarmsteadFocus } from './farmsteadFocus';
 import { tribulationPrepFocusReason } from './tribulationPrepText';
+import { POST_LOOP_PROCESSING_FOCUS } from './postLoopCultivationGuidance';
 
 export function locationPreviewFocusReason(
  state: GameState,
@@ -20,7 +21,7 @@ export function locationPreviewFocusReason(
  return '回农庄把刚买到的种子播回田里，让药材不断档。';
  }
  if (objectiveId === 'first-loop-complete' && locationId === 'farmstead' && command === 'show-processing') {
- return '首轮农务已成，回农庄按 Shift+M 把余货先排进加工，再接炼丹、阵法与备劫。';
+ return POST_LOOP_PROCESSING_FOCUS;
  }
  if (objectiveId === 'first-sleep' && locationId === 'farmstead') {
  return '今日农务已收尾，直接过夜等次日结算。';

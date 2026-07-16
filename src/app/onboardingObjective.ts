@@ -1,5 +1,6 @@
 import type { OnboardingObjectiveId } from '@sim/story/onboarding';
 import { t } from '@content/i18n';
+import { POST_LOOP_CULTIVATION_HANDOFF } from './postLoopCultivationGuidance';
 
 export interface OnboardingToastPresentation {
  message: string;
@@ -59,7 +60,7 @@ const ONBOARDING_PAYOFF_LINES: Readonly<Record<OnboardingObjectiveId, string>> =
 };
 
 const ONBOARDING_CULTIVATION_HANDOFF_LINES: Readonly<Partial<Record<OnboardingObjectiveId, string>>> = {
- 'first-loop-complete': '修行接力：炼丹备避雷丹、布引雷/绝缘阵、淬体满后按 T 主动引劫。',
+ 'first-loop-complete': POST_LOOP_CULTIVATION_HANDOFF,
 };
 
 const ONBOARDING_OBJECTIVE_IDS: readonly OnboardingObjectiveId[] = [

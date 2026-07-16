@@ -7,6 +7,7 @@ import { placeFacility } from '@sim/buildings/facilities';
 import { saveGame } from '@sim/serialize';
 import { mutateItem } from '@sim/world/player';
 import { tileAt } from '@sim/world/state';
+import { arraysServiceToastPresentation, farmWorkServiceToastPresentation, processingServiceToastPresentation } from '@app/servicePanelPreview';
 import { canvasPngSnapshot, paintStatsFromDataUrl, gameDebugSnapshot, openGame, type AeonDebugSnapshot, type CanvasPaintStats } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
@@ -37,11 +38,30 @@ interface PortfolioMvpEvidence {
  todayBriefingTitle: string;
  todayBriefingHasAsset: boolean;
  todayBriefingProof: string[];
+ locationRoutingProof: {
+ locationSelectionActive: boolean;
+ selectedLocationId: string | null;
+ selectedLocationServiceCommand: string | null;
+ processingEntryProof: string[];
+ arraysEntryProof: string[];
+ farmWorkEntryProof: string[];
+ };
  };
  evidence: string[];
  screenshotEvidence: PortfolioScreenshotEvidence[];
  next: string[];
  noGo: string[];
+}
+
+function serviceEntryProofs(): Pick<PortfolioMvpEvidence['runtimeSignals']['locationRoutingProof'], 'processingEntryProof' | 'arraysEntryProof' | 'farmWorkEntryProof'> {
+ const processing = processingServiceToastPresentation('空格/E/回车进入').message;
+ const arrays = arraysServiceToastPresentation('R布引雷阵·F布绝缘阵').message;
+ const farmWork = farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作').message;
+ return {
+ processingEntryProof: ['加工', '避雷丹', '炼丹', '阵法'].filter((text) => processing.includes(text)),
+ arraysEntryProof: ['阵法', '引雷阵', '绝缘阵', '主动引劫'].filter((text) => arrays.includes(text)),
+ farmWorkEntryProof: ['农事', '炼丹', '阵法', '主动引劫'].filter((text) => farmWork.includes(text)),
+ };
 }
 
 function buildShowcaseSave(): string {
@@ -205,7 +225,11 @@ async function appendPortfolioScreenshotEvidence(path: string, width: number, he
  await writePortfolioEvidence({ ...evidence, screenshotEvidence } as PortfolioMvpEvidence);
 }
 
-function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence: PortfolioScreenshotEvidence[]): PortfolioMvpEvidence {
+function buildPortfolioMvpEvidence(
+ debug: AeonDebugSnapshot,
+ screenshotEvidence: PortfolioScreenshotEvidence[],
+ locationRoutingProof?: PortfolioMvpEvidence['runtimeSignals']['locationRoutingProof'],
+): PortfolioMvpEvidence {
  return {
  generatedBy: 'portfolio:capture',
  priority: 'P0-A',
@@ -230,6 +254,12 @@ function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence:
  todayBriefingTitle: debug.todayBriefingTitle ?? '',
  todayBriefingHasAsset: debug.todayBriefingAssetId != null,
  todayBriefingProof: TODAY_BRIEFING_PROOF.filter((text) => debug.todayBriefingBody?.includes(text)),
+ locationRoutingProof: locationRoutingProof ?? {
+ locationSelectionActive: debug.locationSelectionActive ?? false,
+ selectedLocationId: debug.selectedLocationId ?? null,
+ selectedLocationServiceCommand: debug.selectedLocationServiceCommand ?? null,
+ ...serviceEntryProofs(),
+ },
  },
  evidence: [
  'test-results/portfolio/01-farm-loop.png',
@@ -241,6 +271,7 @@ function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence:
  screenshotEvidence,
  next: [
  '维护者人工试玩 3-5 分钟，确认首屏无需阅读设计文档也能理解下一步。',
+ '继续把地点目录中的加工、阵法和主动引劫准备压成更短的 3-5 分钟展示链。',
  '后续转 Public、重新推送公开树、修改 Pages 设置、创建 tag 或 Release 前，重新取得维护者当次明确授权。',
  ],
  noGo: [
@@ -254,7 +285,24 @@ function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence:
 async function writePortfolioMvpEvidence(debug: AeonDebugSnapshot): Promise<void> {
  const previous = await readPortfolioEvidence();
  const screenshotEvidence = Array.isArray(previous?.screenshotEvidence) ? previous.screenshotEvidence : [];
- const evidence = buildPortfolioMvpEvidence(debug, screenshotEvidence);
+ const previousRoutingProof = previous?.runtimeSignals?.locationRoutingProof as PortfolioMvpEvidence['runtimeSignals']['locationRoutingProof'] | undefined;
+ const evidence = buildPortfolioMvpEvidence(debug, screenshotEvidence, previousRoutingProof);
+ await writePortfolioEvidence(evidence);
+}
+
+async function writeLocationRoutingEvidence(page: Page): Promise<void> {
+ const debug = await gameDebugSnapshot(page);
+ expect(debug.locationSelectionActive).toBe(true);
+ expect(debug.selectedLocationId).toBe('farmstead');
+ expect(debug.selectedLocationServiceCommand).toBe('show-processing');
+ const previous = await readPortfolioEvidence();
+ const screenshotEvidence = Array.isArray(previous?.screenshotEvidence) ? previous.screenshotEvidence : [];
+ const evidence = buildPortfolioMvpEvidence(debug, screenshotEvidence, {
+ locationSelectionActive: debug.locationSelectionActive ?? false,
+ selectedLocationId: debug.selectedLocationId ?? null,
+ selectedLocationServiceCommand: debug.selectedLocationServiceCommand ?? null,
+ ...serviceEntryProofs(),
+ });
  await writePortfolioEvidence(evidence);
 }
 
@@ -304,6 +352,9 @@ test('captures deterministic review screenshots for public demo validation', asy
 
 await pressShiftTab(page);
  await waitForDebugState(page, { locationSelectionActive: true });
+ await page.keyboard.press('2');
+ await waitForDebugState(page, { selectedLocationId: 'farmstead', selectedLocationServiceCommand: 'show-processing' });
+ await writeLocationRoutingEvidence(page);
  await capturePortfolioScreenshot(page, 'test-results/portfolio/02-location-routing.png');
 
 await page.keyboard.press('Escape');
