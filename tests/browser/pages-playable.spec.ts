@@ -59,15 +59,12 @@ test('public build is playable with real first-screen farm inputs', async ({ pag
 
   await pressUntilDebugState(page, 'Space', 'first tile tilled', debug => debug.frontTileTilled === true && debug.frontTileCropId == null && debug.onboardingObjectiveId === 'first-sow');
 
-  await pressUntilDebugState(page, '5', 'mossling seed selected', debug => debug.hotbarSlotKind === 'seed' && debug.hotbarSeedId === 'seed.mossling');
-
   const beforeSow = await gameDebugSnapshot(page);
-  await pressUntilDebugState(page, 'Space', 'first seed sown', debug => debug.frontTileTilled === true && debug.frontTileCropId != null && debug.onboardingObjectiveId === 'first-water' && debug.starterMosslingSeedCount === (beforeSow.starterMosslingSeedCount ?? 0) - 1);
-
-  await pressUntilDebugState(page, '2', 'water tool selected', debug => debug.hotbarSlotKind === 'water' && debug.hotbarSeedId == null);
+  expect(beforeSow.hotbarSlotKind).toBe('till');
+  await pressUntilDebugState(page, 'Z', 'first seed sown through onboarding shortcut', debug => debug.frontTileTilled === true && debug.frontTileCropId != null && debug.onboardingObjectiveId === 'first-water' && debug.starterMosslingSeedCount === (beforeSow.starterMosslingSeedCount ?? 0) - 1 && debug.hotbarSlotKind === 'seed' && debug.hotbarSeedId === 'seed.mossling');
 
   const sown = await gameDebugSnapshot(page);
-  await pressUntilDebugState(page, 'Space', 'first crop watered', debug => debug.frontTileWateredToday === true && (debug.frontTileMoisture ?? 0) > (sown.frontTileMoisture ?? 0) && debug.onboardingObjectiveId === 'first-harvest');
+  await pressUntilDebugState(page, 'X', 'first crop watered through onboarding shortcut', debug => debug.frontTileWateredToday === true && (debug.frontTileMoisture ?? 0) > (sown.frontTileMoisture ?? 0) && debug.onboardingObjectiveId === 'first-harvest');
 
   const watered = await gameDebugSnapshot(page);
   await clearIntroDialogue(page);

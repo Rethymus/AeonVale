@@ -21,6 +21,17 @@ test('loads the public demo first screen without page errors', async ({ page }) 
   expect(debug.cultivationPanelVisible).toBe(false);
   expect(debug.postAscensionMode).toBe('none');
   expect(debug.interactionPanelKind).toBe('none');
+  expect(debug.debugSchemaVersion).toBe(2);
+  const expectedBuildRevision = process.env.PLAYWRIGHT_EXPECTED_BUILD_REVISION?.trim() || (process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? null : 'playwright-test');
+  if (expectedBuildRevision) expect(debug.buildRevision).toBe(expectedBuildRevision);
+  else {
+    expect(debug.buildRevision).toEqual(expect.any(String));
+    expect(debug.buildRevision).not.toBe('dev');
+    expect(debug.buildRevision?.trim()).not.toBe('');
+  }
+  expect(debug.flowScreen).toBe('world');
+  expect(debug.appSurface).toBe('world');
+  expect(debug.renderFrameCount).toBeGreaterThan(0);
 
   expect(debug.day).toBeGreaterThanOrEqual(1);
   expect(debug.season).toMatch(/spring|summer|autumn|winter/);
@@ -32,17 +43,17 @@ test('loads the public demo first screen without page errors', async ({ page }) 
   expect(debug.helpText).toEqual(expect.stringContaining('炼丹'));
   expect(debug.helpText).toEqual(expect.stringContaining('引劫'));
   expect(debug.helpText).toEqual(expect.stringContaining('回报'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('方向键移动'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('方向移动'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('I 背包'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('U 丹炉'));
   expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('\n'));
   expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('function'));
-  expect(debug.todayBriefingTitle).toBe('今日简报');
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('目标：先翻出一块地。'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('首轮进度：1/10 灵草→灵石→补种→备劫'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('农庄'));
+  expect(debug.todayBriefingTitle).toBe('1/4 · 获得灵草');
+  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('面对空地翻出第一块灵田'));
   expect(debug.todayBriefingBody).toEqual(expect.stringContaining('炼丹'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('引劫'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('回报：开出第一块灵田'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('按 空格 / E 翻地'));
+  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('备劫'));
+  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('行动：开始翻地'));
+  expect(debug.todayBriefingBody).not.toEqual(expect.stringContaining('1/10'));
   expect(debug.todayBriefingAssetId).toBe('logo.full');
   expect(debug.hotbarSlotKind).toBe('till');
   expect(debug.hotbarSeedId).toBeNull();
@@ -54,5 +65,8 @@ test('loads the public demo first screen without page errors', async ({ page }) 
   expect(debug.starterDewrootHerbCount).toBe(2);
   expect(debug.starterSpiritStoneCount).toBe(2);
   expect(debug.shippingBinItemCount).toBe(0);
+  const idleFrameCount = debug.renderFrameCount;
+  await page.waitForTimeout(160);
+  expect((await gameDebugSnapshot(page)).renderFrameCount).toBe(idleFrameCount);
   expect(errors).toEqual([]);
 });

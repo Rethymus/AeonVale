@@ -268,6 +268,7 @@ function buildSavePayload(mode: SaveFixtureMode): string {
     state.season = 'summer';
     state.seasonDay = 1;
     state.day = 1;
+    state.player.flags.add('narr-first-till');
     state.player.flags.add('onboarding-first-shipping-settlement');
     mutateItem(state.player, 'item.spirit-stone', 3);
   } else if (mode === 'shop-panel-trade') {
@@ -422,7 +423,7 @@ async function readSave(page: Page): Promise<SaveSnapshot> {
 test('legacy F5 now preselects build in farm action panel and Enter remains the real confirm path', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -455,7 +456,7 @@ test('legacy F5 now preselects build in farm action panel and Enter remains the 
 test('legacy Shift+F5 now preselects talisman furnace via farm action panel and still requires Enter to advance and confirm', async ({ page }) => {
   await installSave(page, 'furnace-build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -487,7 +488,7 @@ test('legacy Shift+F5 now preselects talisman furnace via farm action panel and 
 test('legacy F11 now preselects sealing through farm action panel and still requires Enter to advance and confirm', async ({ page }) => {
   await installSave(page, 'sealing-processing-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -519,7 +520,7 @@ test('legacy F11 now preselects sealing through farm action panel and still requ
 test('legacy Shift+F11 now preselects furnace processing through farm action panel and still requires Enter to advance and confirm', async ({ page }) => {
   await installSave(page, 'furnace-processing-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -551,7 +552,7 @@ test('legacy Shift+F11 now preselects furnace processing through farm action pan
 test('farm action panel flow persists facility placement to save', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('Shift+M');
@@ -574,7 +575,7 @@ test('farm action panel flow persists facility placement to save', async ({ page
 test('farm action panel digit direct-select now only preselects facility collect until Enter advances and confirms pickup', async ({ page }) => {
   await installSave(page, 'facility-collect-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -603,13 +604,13 @@ test('farm action panel digit direct-select now only preselects facility collect
 
   const parsed = await readSave(page);
   expect(parsed.state?.player?.inventory?.['item.dried-herb']?.count ?? 0).toBe(1);
-  expect(parsed.state?.facilities?.[0]?.[1]?.job ?? null).toBeNull;
+  expect(parsed.state?.facilities?.[0]?.[1]?.job ?? null).toBeNull();
 });
 
 test('farm action panel digit direct-select now only preselects storage deposit until Enter advances and confirms move', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -644,7 +645,7 @@ test('farm action panel digit direct-select now only preselects storage deposit 
 test('festival panel key flow persists participation result to save', async ({ page }) => {
   await installSave(page, 'festival-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('End');
@@ -664,7 +665,7 @@ test('festival panel key flow persists participation result to save', async ({ p
 test('location service flow opens market shop and persists purchase', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await preselectMarketShop(page);
@@ -685,7 +686,7 @@ test('location service flow opens market shop and persists purchase', async ({ p
 test('Shift+digit and digit now only preselect location and service before Enter confirms the flow', async ({ page }) => {
   await installSave(page, 'shop-panel-stable');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -712,7 +713,7 @@ test('Shift+digit and digit now only preselect location and service before Enter
 test('legacy comma key now preselects market shop via location services and Enter completes purchase', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await preselectMarketShop(page);
@@ -733,7 +734,7 @@ test('legacy comma key now preselects market shop via location services and Ente
 test('legacy npc gift key now preselects npc action first, then Enter advances into panel before applying gift', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -764,7 +765,7 @@ test('legacy npc gift key now preselects npc action first, then Enter advances i
 test('npc action panel supports digit direct-select before Enter confirms the selected social action', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -795,7 +796,7 @@ test('npc action panel supports digit direct-select before Enter confirms the se
 test('npc browse panel no longer chains Enter into gift confirmation', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -822,7 +823,7 @@ test('npc browse panel no longer chains Enter into gift confirmation', async ({ 
 test('legacy Ctrl+Enter still executes the currently selected market shop service', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press(',');
@@ -845,7 +846,7 @@ test('legacy Ctrl+Enter still executes the currently selected market shop servic
 test('legacy period key confirms the currently selected market shop service and purchase', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press(',');
@@ -868,7 +869,7 @@ test('legacy period key confirms the currently selected market shop service and 
 test('legacy period key no longer opens market shop on its own without a selected service', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -885,7 +886,7 @@ test('legacy period key no longer opens market shop on its own without a selecte
 test('legacy Ctrl+Enter no longer opens market shop on its own without a selected service', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -903,7 +904,7 @@ test('legacy Ctrl+Enter no longer opens market shop on its own without a selecte
 test('legacy O key now preselects market trade via location services and period confirms trade', async ({ page }) => {
   await installSave(page, 'shop-panel-trade');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -939,7 +940,7 @@ test('legacy O key now preselects market trade via location services and period 
 test('legacy semicolon key now only preselects valley exploration until Enter confirms the trip', async ({ page }) => {
   await installSave(page, 'exploration-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -973,7 +974,7 @@ test('legacy semicolon key now only preselects valley exploration until Enter co
 test('Escape closes location selection without mutating save', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -989,7 +990,7 @@ test('Escape closes location selection without mutating save', async ({ page }) 
 test('left click mirrors default confirm through location service preselect and shop purchase flow', async ({ page }) => {
   await installSave(page, 'shop-panel-stable');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -999,9 +1000,9 @@ test('left click mirrors default confirm through location service preselect and 
   const afterPreselect = await readSave(page);
   expect(afterPreselect).toEqual(before);
 
-  await page.locator('canvas').click;
+  await page.locator('canvas').click();
   await waitForDebugState(page, { interactionPanelKind: 'shop' });
-  await page.locator('canvas').click;
+  await page.locator('canvas').click();
   await page.waitForFunction(
     ({ key, previousCount }) => {
       const raw = window.localStorage.getItem(key);
@@ -1020,7 +1021,7 @@ test('left click mirrors default confirm through location service preselect and 
 test('right click closes location selection without mutating save', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1036,7 +1037,7 @@ test('right click closes location selection without mutating save', async ({ pag
 test('right click closes location selection before any secondary world tool can fire', async ({ page }) => {
   await installSave(page, 'shop-panel-stable');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('2');
@@ -1066,7 +1067,7 @@ test('right click closes location selection before any secondary world tool can 
 test('Tab toggles inventory while Shift+Tab remains the location-service entry key', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1097,7 +1098,7 @@ test('Tab toggles inventory while Shift+Tab remains the location-service entry k
 test('first restock purchase closes the shop and advances onboarding to the second sow objective', async ({ page }) => {
   await installSave(page, 'first-restock-ready');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1153,7 +1154,7 @@ test('first restock purchase closes the shop and advances onboarding to the seco
 test('after the first restock purchase, Space immediately sows the second loop crop on the front tile', async ({ page }) => {
   await installSave(page, 'first-restock-ready');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
 
@@ -1201,7 +1202,7 @@ test('after the first restock purchase, Space immediately sows the second loop c
   const after = await readSave(page);
   const frontTile = findTile(after, 7, 4);
   expect(frontTile?.tilled).toBe(true);
-  expect(frontTile?.cropId).not.toBeNull;
+  expect(frontTile?.cropId).not.toBeNull();
   expect(after.state?.player?.inventory?.['seed.mossling']?.count ?? 0).toBe(beforeSeedCount);
   expect(after.state?.player?.flags ?? []).toContain('onboarding-first-second-sow');
   expect(after.state?.player?.flags ?? []).not.toContain('onboarding-first-second-water');
@@ -1235,7 +1236,7 @@ test('after the first restock purchase, Space immediately sows the second loop c
 test('during the second sow onboarding step, Space auto-tills before sowing when the front tile is still raw', async ({ page }) => {
   await installSave(page, 'second-sow-raw-front');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
 
@@ -1264,7 +1265,7 @@ test('during the second sow onboarding step, Space auto-tills before sowing when
   const afterSow = await readSave(page);
   const frontTile = findTile(afterSow, 8, 4);
   expect(frontTile?.tilled).toBe(true);
-  expect(frontTile?.cropId).not.toBeNull;
+  expect(frontTile?.cropId).not.toBeNull();
 
   await page.keyboard.press('Space');
   await page.waitForFunction(key => {
@@ -1281,7 +1282,7 @@ test('during the second sow onboarding step, Space auto-tills before sowing when
 test('Enter does not advance the day while location selection is open and only works after the directory is dismissed', async ({ page }) => {
   await installSave(page, 'end-day-ready');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1315,7 +1316,7 @@ test('Enter does not advance the day while location selection is open and only w
 test('Escape closes interaction panel without confirming action or mutating save', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1332,7 +1333,7 @@ test('Escape closes interaction panel without confirming action or mutating save
 test('right click closes interaction panel without confirming action or mutating save', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1349,7 +1350,7 @@ test('right click closes interaction panel without confirming action or mutating
 test('right click closes interaction panels before any secondary world tool can fire', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await waitForDebugState(page, { postAscensionMode: 'choice-pending' });
@@ -1402,7 +1403,7 @@ test('right click closes interaction panels before any secondary world tool can 
 test('interaction panels dismiss same-key world actions instead of letting them leak through on the same press', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
@@ -1464,7 +1465,7 @@ test('interaction panels dismiss same-key world actions instead of letting them 
 test('legacy PageDown no longer confirms build panel and Enter remains the real confirm key', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1499,7 +1500,7 @@ test('legacy PageDown no longer confirms build panel and Enter remains the real 
 test('legacy F7 now only preselects drying in farm action panel until Enter advances the flow', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1514,7 +1515,7 @@ test('legacy F7 now only preselects drying in farm action panel until Enter adva
 test('legacy F8 now only preselects drying in farm action panel until Enter advances the flow', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1529,7 +1530,7 @@ test('legacy F8 now only preselects drying in farm action panel until Enter adva
 test('legacy Insert now only preselects quality shipping in farm action panel until Enter advances the flow', async ({ page }) => {
   await installSave(page, 'shipping-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1544,7 +1545,7 @@ test('legacy Insert now only preselects quality shipping in farm action panel un
 test('legacy Delete now only preselects quality shipping in farm action panel until Enter advances the flow', async ({ page }) => {
   await installSave(page, 'shipping-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1559,7 +1560,7 @@ test('legacy Delete now only preselects quality shipping in farm action panel un
 test('Escape closes inventory after Tab opens it without mutating save', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1576,7 +1577,7 @@ test('Escape closes inventory after Tab opens it without mutating save', async (
 test('Enter does not advance the day while inventory is open and only works after the overlay is closed', async ({ page }) => {
   await installSave(page, 'end-day-ready');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1611,7 +1612,7 @@ test('Enter does not advance the day while inventory is open and only works afte
 test('right click closes inventory after Tab opens it without mutating save', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1628,7 +1629,7 @@ test('right click closes inventory after Tab opens it without mutating save', as
 test('inventory overlay blocks keyboard farm actions until it is closed', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
 
@@ -1662,7 +1663,7 @@ test('inventory overlay blocks keyboard farm actions until it is closed', async 
 test('P pauses input and Escape resumes without mutating save until play continues', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1692,7 +1693,7 @@ test('P pauses input and Escape resumes without mutating save until play continu
 test('Enter does not advance the day while paused and only works again after play resumes', async ({ page }) => {
   await installSave(page, 'end-day-ready');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1727,7 +1728,7 @@ test('Enter does not advance the day while paused and only works again after pla
 test('Escape toggles scene pause only after dismissible surfaces are closed', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1754,7 +1755,7 @@ test('Escape toggles scene pause only after dismissible surfaces are closed', as
 test('C opens cultivation overview and Escape closes it without mutating save', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1771,7 +1772,7 @@ test('C opens cultivation overview and Escape closes it without mutating save', 
 test('Enter does not advance the day while cultivation overview is open and only works after the overlay is closed', async ({ page }) => {
   await installSave(page, 'end-day-ready');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -1806,7 +1807,7 @@ test('Enter does not advance the day while cultivation overview is open and only
 test('cultivation overview blocks left-click world confirm until it is dismissed', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
 
@@ -1835,7 +1836,7 @@ test('cultivation overview blocks left-click world confirm until it is dismissed
 test('right click uses the current watering tool on the front tile before falling back to cancel semantics', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
@@ -1876,7 +1877,7 @@ test('right click uses the current watering tool on the front tile before fallin
 test('right click still pauses the scene when no dismissible UI or secondary farm tool is active', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
 
@@ -1905,12 +1906,12 @@ test('right click still pauses the scene when no dismissible UI or secondary far
 test('mouse wheel does not cycle the hotbar while paused and resumes from the same slot after unpausing', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
   await page.keyboard.press('P');
   await page.waitForTimeout(40);
   await page.mouse.wheel(0, 120);
@@ -1933,12 +1934,12 @@ test('mouse wheel does not cycle the hotbar while paused and resumes from the sa
 test('mouse wheel does not cycle the hotbar while inventory is open and resumes from the same slot after closing it', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
   await page.keyboard.press('Tab');
   await page.waitForTimeout(40);
   await page.mouse.wheel(0, 120);
@@ -1961,12 +1962,12 @@ test('mouse wheel does not cycle the hotbar while inventory is open and resumes 
 test('mouse wheel does not cycle the hotbar while cultivation overview is open and resumes from the same slot after closing it', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
   await page.keyboard.press('C');
   await page.waitForTimeout(40);
   await page.mouse.wheel(0, 120);
@@ -1989,13 +1990,13 @@ test('mouse wheel does not cycle the hotbar while cultivation overview is open a
 test('mouse wheel does not cycle the hotbar while location selection is open and Space still confirms the preselected service', async ({ page }) => {
   await installSave(page, 'shop-panel-stable');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
 
   await preselectMarketShop(page);
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
   await page.mouse.wheel(0, 120);
   await page.waitForTimeout(40);
   await page.keyboard.press('Space');
@@ -2019,12 +2020,12 @@ test('mouse wheel does not cycle the hotbar while location selection is open and
 test('mouse wheel does not cycle the hotbar while a storage interaction panel is open and resumes from the same slot after closing it', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
   await page.keyboard.press('F2');
   await page.waitForTimeout(40);
   await page.mouse.wheel(0, 120);
@@ -2048,7 +2049,7 @@ test('mouse wheel does not cycle the hotbar while a storage interaction panel is
 test('farm action storage deposit path remains the primary flow and persists moving one item into storage', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('Shift+M');
@@ -2083,7 +2084,7 @@ test('farm action storage deposit path remains the primary flow and persists mov
 test('M no longer double-functions as confirm and now only opens the farm action menu', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2120,7 +2121,7 @@ test('M no longer double-functions as confirm and now only opens the farm action
 test('storage withdraw hotkey flow persists moving one item back to inventory', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2155,7 +2156,7 @@ test('storage withdraw hotkey flow persists moving one item back to inventory', 
 test('farm action shipping path remains the primary flow and persists moving one item into shipping bin', async ({ page }) => {
   await installSave(page, 'shipping-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2190,7 +2191,7 @@ test('farm action shipping path remains the primary flow and persists moving one
 test('legacy F2 now only preselects storage deposit in farm action panel until Enter advances and confirms', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2223,7 +2224,7 @@ test('legacy F2 now only preselects storage deposit in farm action panel until E
 test('legacy F3 now only opens storage deposit panel until Enter confirms', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2251,7 +2252,7 @@ test('legacy F3 now only opens storage deposit panel until Enter confirms', asyn
 test('legacy F6 now only preselects storage withdraw in farm action panel until Enter advances and confirms', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2284,7 +2285,7 @@ test('legacy F6 now only preselects storage withdraw in farm action panel until 
 test('Escape closes storage deposit panel without mutating save', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2301,7 +2302,7 @@ test('Escape closes storage deposit panel without mutating save', async ({ page 
 test('Enter does not advance the day while a storage interaction panel is open and only works after the panel is closed', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2336,7 +2337,7 @@ test('Enter does not advance the day while a storage interaction panel is open a
 test('legacy F1 now only preselects facility collect in farm action panel until Enter advances and confirms', async ({ page }) => {
   await installSave(page, 'facility-collect-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2363,13 +2364,13 @@ test('legacy F1 now only preselects facility collect in farm action panel until 
 
   const parsed = await readSave(page);
   expect(parsed.state?.player?.inventory?.['item.dried-herb']?.count ?? 0).toBe(1);
-  expect(parsed.state?.facilities?.[0]?.[1]?.job ?? null).toBeNull;
+  expect(parsed.state?.facilities?.[0]?.[1]?.job ?? null).toBeNull();
 });
 
 test('legacy F4 now only preselects storage withdraw in farm action panel until Enter advances and confirms', async ({ page }) => {
   await installSave(page, 'storage-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2402,7 +2403,7 @@ test('legacy F4 now only preselects storage withdraw in farm action panel until 
 test('legacy F9 now only preselects shipping in farm action panel until Enter advances and confirms', async ({ page }) => {
   await installSave(page, 'shipping-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2435,7 +2436,7 @@ test('legacy F9 now only preselects shipping in farm action panel until Enter ad
 test('legacy F10 now only opens shipping panel until Enter confirms', async ({ page }) => {
   await installSave(page, 'shipping-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2463,7 +2464,7 @@ test('legacy F10 now only opens shipping panel until Enter confirms', async ({ p
 test('legacy F12 now only preselects build in farm action panel until Enter advances the flow', async ({ page }) => {
   await installSave(page, 'build-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2484,7 +2485,7 @@ test('legacy F12 now only preselects build in farm action panel until Enter adva
 test('Escape closes shipping panel without mutating save', async ({ page }) => {
   await installSave(page, 'shipping-panel');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   const before = await readSave(page);
@@ -2501,7 +2502,7 @@ test('Escape closes shipping panel without mutating save', async ({ page }) => {
 test('hotbar digit selection plus Space persists till and sow on the front tile', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
@@ -2528,16 +2529,16 @@ test('hotbar digit selection plus Space persists till and sow on the front tile'
 
   const parsed = await readSave(page);
   const frontTile = findTile(parsed, 7, 4);
-  expect(frontTile).toBeDefined;
+  expect(frontTile).toBeDefined();
   expect(frontTile?.tilled).toBe(true);
-  expect(frontTile?.cropId).not.toBeNull;
+  expect(frontTile?.cropId).not.toBeNull();
   expect(parsed.state?.player?.inventory?.['seed.mossling']?.count ?? 0).toBe(2);
 });
 
 test('E mirrors Space as the default farm interaction key and Q cycles the hotbar', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
@@ -2581,7 +2582,7 @@ test('E mirrors Space as the default farm interaction key and Q cycles the hotba
 test('E also advances narrative modal beats as part of the default confirm flow', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
@@ -2612,7 +2613,7 @@ test('E also advances narrative modal beats as part of the default confirm flow'
 test('Enter advances a narrative modal without advancing the day and only resumes end-day after the modal closes', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
@@ -2659,12 +2660,12 @@ test('Enter advances a narrative modal without advancing the day and only resume
 test('mouse wheel does not cycle the hotbar while a narrative modal is open and resumes from the same slot after it closes', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
   await page.keyboard.press('Space');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
@@ -2695,7 +2696,7 @@ test('mouse wheel does not cycle the hotbar while a narrative modal is open and 
 test('Shift+E still triggers ascend pill flow without consuming the default interact key', async ({ page }) => {
   await installSave(page, 'ascension-pill');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -2714,7 +2715,7 @@ test('Shift+E still triggers ascend pill flow without consuming the default inte
   expect(parsed.state?.gameOver).toBe(false);
 });
 
-test('ascension choice 1 preserves the terminal save until R explicitly starts a new journey', async ({ page }) => {
+test('ascension choice 1 enters Ending and preserves the terminal save until New Game starts a new journey', async ({ page }) => {
   const saveFixture = await installSave(page, 'ascension-choice');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -2730,23 +2731,28 @@ test('ascension choice 1 preserves the terminal save until R explicitly starts a
 
   const terminalSave = await page.evaluate(key => window.localStorage.getItem(key), SAVE_KEY);
   expect(terminalSave).not.toBeNull();
+  await expect(page.locator('[data-app-surface="ending"]')).toBeVisible();
+  await expect(page.locator('canvas')).toBeHidden();
 
   await page.keyboard.press('Enter');
   const afterNonRestartKey = await page.evaluate(key => window.localStorage.getItem(key), SAVE_KEY);
   expect(afterNonRestartKey).toBe(terminalSave);
 
   await page.reload();
-  await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.locator('[data-app-surface="title"]')).toBeVisible();
   const restored = await readSave(page);
   expect(restored.state?.postAscension?.mode).toBe('ascended-away');
   expect(restored.state?.postAscension?.victoryRecorded).toBe(true);
   expect(restored.state?.ending).toBe('ascension');
   expect(restored.state?.gameOver).toBe(true);
+  await page.locator('#flow-title-continue').click();
+  await expect(page.locator('[data-app-surface="ending"]')).toBeVisible();
   await waitForDebugState(page, { postAscensionMode: 'ascended-away' });
   await saveFixture.dispose();
 
-  await Promise.all([page.waitForEvent('load'), page.keyboard.press('R')]);
-  await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: unknown }).__AEON_DEBUG__ != null);
+  await page.locator('#flow-ending-return').click();
+  await page.locator('#flow-title-new-game').click();
+  await expect(page.locator('[data-app-surface="prologue"]')).toBeVisible();
   const afterRestart = await page.evaluate(key => window.localStorage.getItem(key), SAVE_KEY);
   expect(afterRestart).toBeNull();
 });
@@ -2776,7 +2782,7 @@ test('ascension choice 2 persists stayed-in-world save for post-ending play', as
 test('Enter does not resolve or advance past the ascension choice modal and only explicit digit choices progress it', async ({ page }) => {
   await installSave(page, 'ascension-choice');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await waitForDebugState(page, { postAscensionMode: 'choice-pending' });
@@ -2808,11 +2814,11 @@ test('Enter does not resolve or advance past the ascension choice modal and only
 test('mouse wheel does not cycle the hotbar while the ascension choice modal is open and only explicit choice input resolves it', async ({ page }) => {
   await installSave(page, 'ascension-choice');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await waitForDebugState(page, { postAscensionMode: 'choice-pending' });
-  await page.locator('canvas').hover;
+  await page.locator('canvas').hover();
 
   const before = await readSave(page);
   const beforeDay = before.state?.day ?? 0;
@@ -2842,7 +2848,7 @@ test('mouse wheel does not cycle the hotbar while the ascension choice modal is 
 test('post-ascension commission board persists staying-world ward commission completion', async ({ page }) => {
   await installSave(page, 'post-ascension-commission');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -2875,7 +2881,7 @@ test('post-ascension commission board persists staying-world ward commission com
 test('legacy PageDown remains a commission-only compatibility path', async ({ page }) => {
   await installSave(page, 'post-ascension-commission');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -2900,7 +2906,7 @@ test('legacy PageDown remains a commission-only compatibility path', async ({ pa
 test('post-ascension tea shed service persists one calm-life rest visit', async ({ page }) => {
   await installSave(page, 'post-ascension-tea-shed');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -2998,7 +3004,7 @@ test('post-ascension greenhouse upkeep survives a page reload without granting a
 test('location selection digit direct-select plus Space confirm reduces staying-world daily service friction', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -3030,7 +3036,7 @@ test('location selection digit direct-select plus Space confirm reduces staying-
 test('location selection supports E confirm after Shift+Tab service preselect', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -3062,7 +3068,7 @@ test('location selection supports E confirm after Shift+Tab service preselect', 
 test('location selection supports single Enter confirm for auto-confirm daily services', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -3098,7 +3104,7 @@ test('location selection supports single Enter confirm for auto-confirm daily se
 test('legacy Ctrl+Enter shares the same auto-confirm location-service path', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -3134,7 +3140,7 @@ test('legacy Ctrl+Enter shares the same auto-confirm location-service path', asy
 test('legacy period confirm shares the same auto-confirm location-service path', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -3170,7 +3176,7 @@ test('legacy period confirm shares the same auto-confirm location-service path',
 test('location selection blocks same-key world actions until the directory is dismissed', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await page.waitForTimeout(40);
@@ -3224,7 +3230,7 @@ test('location selection blocks same-key world actions until the directory is di
 test('staying-world quick access keys open commission, tea shed, and greenhouse daily services', async ({ page }) => {
   await installSave(page, 'post-ascension-quick-access');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');
@@ -3273,7 +3279,7 @@ test('staying-world quick access keys open commission, tea shed, and greenhouse 
 test('= now only preselects upgrade before Enter opens and confirms greenhouse nursery expansion', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse-upgrade');
   await openGame(page);
-  await expect(page.locator('canvas')).toBeVisible;
+  await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
   await clearNarrativeBeat(page, 'stage-3');

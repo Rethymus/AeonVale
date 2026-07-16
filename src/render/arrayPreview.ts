@@ -5,6 +5,7 @@ export function arrayCoreFacilityKind(defId: string): 'array-eye' | 'array-flag'
 }
 
 export interface ArrayWorldPreviewPlacement {
+  arrayId: number;
   tileId: number;
   assetId: `facility.${'array-eye' | 'array-flag'}`;
   status: 'active' | 'idle';
@@ -15,6 +16,7 @@ export function arrayWorldPreviewPlacements(state: GameState): ArrayWorldPreview
   return Array.from(state.arrays.values())
     .sort((a, b) => a.coreTileId - b.coreTileId || a.id - b.id)
     .map(arr => ({
+      arrayId: arr.id,
       tileId: arr.coreTileId,
       assetId: `facility.${arrayCoreFacilityKind(arr.defId)}`,
       status: arr.active && arr.power > 0 ? 'active' : 'idle',

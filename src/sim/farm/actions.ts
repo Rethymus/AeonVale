@@ -29,6 +29,9 @@ import { resolveStayingWorldIncident } from '@sim/progression/stayingWorldIncide
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { canPlantOffSeasonInGreenhouse, greenhouseProtectedHarvestBonus, isOffSeasonSeed } from '@sim/social/greenhouse';
 import { FIRST_HARVEST_FLAG, FIRST_MARKET_RESTOCK_FLAG, FIRST_SECOND_SOW_FLAG, FIRST_SECOND_WATER_FLAG } from '@sim/story/onboarding';
+import { brewTutorialWardPill, prepareTutorialAlchemyKit } from '@sim/alchemy/alchemySystem';
+import { applyPill } from '@sim/alchemy/pillSystem';
+import { acknowledgeTutorialAftermath, resolveTutorialTribulationBolt, startTutorialTribulation } from '@sim/tribulation/tutorialTribulation';
 import type { CropInstance } from './crop';
 import { FERTILITY_CAP_MILLI, isPlantable, isTillable } from './tile';
 import { cropQualityScore, getFertilizer, qualityBonusYield, qualityFromScore } from './quality';
@@ -369,6 +372,30 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
     }
     case 'participate-festival': {
       participateFestival(state, ctx);
+      return;
+    }
+    case 'prepare-tutorial-alchemy-kit': {
+      prepareTutorialAlchemyKit(state, ctx);
+      return;
+    }
+    case 'brew-tutorial-pill': {
+      brewTutorialWardPill(state, a.avgHeatMilli, ctx);
+      return;
+    }
+    case 'eat-pill': {
+      applyPill(state, a.pillId, ctx);
+      return;
+    }
+    case 'start-tutorial-tribulation': {
+      startTutorialTribulation(state, ctx);
+      return;
+    }
+    case 'resolve-tutorial-bolt': {
+      resolveTutorialTribulationBolt(state, ctx);
+      return;
+    }
+    case 'acknowledge-tutorial-aftermath': {
+      acknowledgeTutorialAftermath(state);
       return;
     }
     case 'train': {

@@ -8,7 +8,7 @@ import type { Application, Texture } from 'pixi.js';
 import type { GameState } from '@sim/world/state';
 import type { ContentRegistry, RecipeDef } from '@content/defs';
 import type { BrewResult } from '@sim/alchemy/alchemySystem';
-import { CJK_FONT } from './renderer';
+import { CJK_FONT, RENDER_ROOT_LABELS, setTextIfChanged } from './renderer';
 import { itemIconAssetId } from '@app/itemIcons';
 
 export interface FurnaceLayer {
@@ -18,15 +18,14 @@ export interface FurnaceLayer {
   visible: boolean;
 }
 
-export function createFurnaceLayer(app: Application): FurnaceLayer {
+export function createFurnaceLayer(app: Application, parent?: Container): FurnaceLayer {
+  const root = parent ?? app.stage.getChildByLabel(RENDER_ROOT_LABELS.focus) ?? app.stage;
   const container = new Graphics();
-  app.stage.addChild(container);
   const icons = new Container();
-  app.stage.addChild(icons);
   const lines = new Text({ text: '', style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8, lineHeight: 18 } });
   lines.x = 300;
   lines.y = 96;
-  app.stage.addChild(lines);
+  root.addChild(container, icons, lines);
   return { container, icons, lines, visible: false };
 }
 
@@ -181,6 +180,6 @@ export function drawFurnace(layer: FurnaceLayer, _state: GameState, content: Con
     layer.icons.visible = layer.icons.children.length > 0;
   }
 
-  layer.lines.text = `── 炼丹炉 ── Y 切换丹方 · B 炼制 · [/] 调火候 · U 关闭\n` + `丹方：${recipe.displayName}（难度 ${recipe.difficulty}）→ ${din.pillName}\n` + `火候：${heat} ${heatInZone ? '✓理想区间' : '✗偏离'}\n` + `药性：[寒/热/温/平] 左=目标 右=当前炉内\n` + `预测：${OUTCOME_CN[preview.outcome]}${preview.outcome === 'pill' || preview.outcome === 'flawed' ? `（品质 ${qPct}%）` : ''}\n` + `材料：${mat || '无'}`;
+  setTextIfChanged(layer.lines, `── 炼丹炉 ── Y 切换丹方 · B 炼制 · [/] 调火候 · U 关闭\n` + `丹方：${recipe.displayName}（难度 ${recipe.difficulty}）→ ${din.pillName}\n` + `火候：${heat} ${heatInZone ? '✓理想区间' : '✗偏离'}\n` + `药性：[寒/热/温/平] 左=目标 右=当前炉内\n` + `预测：${OUTCOME_CN[preview.outcome]}${preview.outcome === 'pill' || preview.outcome === 'flawed' ? `（品质 ${qPct}%）` : ''}\n` + `材料：${mat || '无'}`);
   layer.lines.visible = true;
 }

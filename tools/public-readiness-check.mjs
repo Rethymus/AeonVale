@@ -13,7 +13,7 @@ function requireIncludes(file, text, message) {
   if (!content.includes(text)) failures.push(message ?? `${file} must include ${text}`);
 }
 
-for (const file of ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', 'CONTENT-LICENSE.md', 'CHANGELOG.md', '.github/workflows/ci.yml', '.github/workflows/pages.yml', '.github/workflows/release.yml', '.github/pull_request_template.md', 'tools/portfolio-mvp-preflight.mjs', 'tools/public-tree-rules.mjs', 'tools/prepare-public-tree.mjs', 'tools/public-content-audit.mjs', 'tools/public-worktree-audit.mjs', 'tools/portfolio-status.mjs', 'tools/portfolio-release-checklist.mjs', 'tools/portfolio-pages-diagnose.mjs', 'tools/portfolio-pages-watch.mjs', 'tools/publication-check.mjs', 'tools/public-dist-check.mjs']) {
+for (const file of ['README.md', 'CONTRIBUTING.md', 'SECURITY.md', 'LICENSE', 'CONTENT-LICENSE.md', 'CHANGELOG.md', 'playwright.config.ts', '.github/workflows/ci.yml', '.github/workflows/pages.yml', '.github/workflows/release.yml', '.github/pull_request_template.md', 'tools/portfolio-mvp-preflight.mjs', 'tools/public-tree-rules.mjs', 'tools/prepare-public-tree.mjs', 'tools/public-content-audit.mjs', 'tools/public-worktree-audit.mjs', 'tools/portfolio-status.mjs', 'tools/portfolio-release-checklist.mjs', 'tools/portfolio-pages-diagnose.mjs', 'tools/portfolio-pages-watch.mjs', 'tools/publication-check.mjs', 'tools/public-dist-check.mjs']) {
   requireFile(file);
 }
 
@@ -199,6 +199,20 @@ if (typeof packageJson.scripts?.['test:browser:public-tree'] !== 'string') {
   if (!publicBrowserScript.includes('PLAYWRIGHT_VITE_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree must build with the GitHub Pages base path');
   if (!publicBrowserScript.includes('pnpm test:browser:smoke') && !publicBrowserScript.includes('tests/browser/smoke.spec.ts')) failures.push('test:browser:public-tree must run only the deployment smoke spec');
 }
+if (typeof packageJson.scripts?.['test:browser:keypoint'] !== 'string') {
+  failures.push('package.json missing required script: test:browser:keypoint');
+} else if (!packageJson.scripts['test:browser:keypoint'].includes('tests/browser/keypoint-playability.spec.ts')) {
+  failures.push('test:browser:keypoint must run only the CDP keypoint playability spec');
+}
+if (typeof packageJson.scripts?.['test:browser:public-tree:keypoint'] !== 'string') {
+  failures.push('package.json missing required script: test:browser:public-tree:keypoint');
+} else {
+  const publicKeypointScript = packageJson.scripts['test:browser:public-tree:keypoint'];
+  if (!publicKeypointScript.includes('PLAYWRIGHT_APP_DIR=.public-tree')) failures.push('test:browser:public-tree:keypoint must run against the public tree');
+  if (!publicKeypointScript.includes('PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree:keypoint must cover the GitHub Pages route');
+  if (!publicKeypointScript.includes('PLAYWRIGHT_VITE_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree:keypoint must build with the GitHub Pages base path');
+  if (!publicKeypointScript.includes('pnpm test:browser:keypoint') && !publicKeypointScript.includes('tests/browser/keypoint-playability.spec.ts')) failures.push('test:browser:public-tree:keypoint must run only the CDP keypoint playability spec');
+}
 if (typeof packageJson.scripts?.['test:browser:pages'] !== 'string') {
   failures.push('package.json missing required script: test:browser:pages');
 } else {
@@ -208,8 +222,20 @@ if (typeof packageJson.scripts?.['test:browser:pages'] !== 'string') {
   if (!pagesBrowserScript.includes('PLAYWRIGHT_SKIP_WEBSERVER=true')) failures.push('test:browser:pages must verify the deployed URL without starting local preview');
   if (!pagesBrowserScript.includes('pnpm test:browser:smoke')) failures.push('test:browser:pages must reuse the dedicated browser smoke path');
 }
+if (typeof packageJson.scripts?.['test:browser:pages-playable'] !== 'string') {
+  failures.push('package.json missing required script: test:browser:pages-playable');
+} else {
+  const pagesPlayableScript = packageJson.scripts['test:browser:pages-playable'];
+  if (!pagesPlayableScript.includes('PLAYWRIGHT_BASE_URL=https://Rethymus.github.io')) failures.push('test:browser:pages-playable must target the GitHub Pages host');
+  if (!pagesPlayableScript.includes('PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/')) failures.push('test:browser:pages-playable must cover the GitHub Pages route');
+  if (!pagesPlayableScript.includes('PLAYWRIGHT_SKIP_WEBSERVER=true')) failures.push('test:browser:pages-playable must verify the deployed URL without starting local preview');
+  if (!pagesPlayableScript.includes('tests/browser/pages-playable.spec.ts')) failures.push('test:browser:pages-playable must run only the real-input playability spec');
+}
 if (typeof packageJson.scripts?.['verify:public-tree'] === 'string' && !packageJson.scripts['verify:public-tree'].includes('pnpm test:browser:public-tree')) {
   failures.push('package.json verify:public-tree must run public-tree browser smoke');
+}
+if (typeof packageJson.scripts?.['verify:public-tree'] === 'string' && !packageJson.scripts['verify:public-tree'].includes('pnpm test:browser:public-tree:keypoint')) {
+  failures.push('package.json verify:public-tree must run the public-tree CDP keypoint playability gate');
 }
 if (typeof packageJson.scripts?.['verify:public-tree'] === 'string' && !packageJson.scripts['verify:public-tree'].includes('VITE_BASE_PATH=/AeonVale/')) {
   failures.push('package.json verify:public-tree must build public dist with the GitHub Pages base path');
@@ -266,7 +292,9 @@ requireIncludes('.github/workflows/ci.yml', 'pnpm --dir .public-tree governance:
 requireIncludes('.github/workflows/ci.yml', 'PLAYWRIGHT_APP_DIR: .public-tree', 'CI browser smoke must run against the public tree');
 requireIncludes('.github/workflows/ci.yml', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'CI browser smoke must cover the GitHub Pages route');
 requireIncludes('.github/workflows/ci.yml', 'VITE_BASE_PATH: /AeonVale/', 'CI public-tree build must use the GitHub Pages base path');
+requireIncludes('.github/workflows/ci.yml', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'CI Pages dist build must embed the checked-out commit SHA');
 requireIncludes('.github/workflows/ci.yml', 'pnpm test:browser:public-tree', 'CI browser smoke must reuse the public-tree deployment smoke script');
+requireIncludes('.github/workflows/ci.yml', 'pnpm test:browser:public-tree:keypoint', 'CI must run the public-tree CDP keypoint playability gate');
 requireIncludes('.github/workflows/ci.yml', 'aeonvale-pages-dist-${{ github.sha }}', 'CI must upload the CI-verified Pages dist artifact for deployment reuse');
 requireIncludes('.github/workflows/ci.yml', 'include-hidden-files: true', 'CI Pages dist artifact must preserve .nojekyll and other hidden deployment files');
 
@@ -276,6 +304,7 @@ requireIncludes('.github/workflows/pages.yml', "github.event_name == 'workflow_d
 requireIncludes('.github/workflows/pages.yml', "github.ref == 'refs/heads/main'", 'Manual Pages deployment must be scoped to main');
 requireIncludes('.github/workflows/pages.yml', 'ref: ${{ github.event.workflow_run.head_sha || github.sha }}', 'Pages deployment must checkout the CI-verified commit');
 requireIncludes('.github/workflows/pages.yml', 'VITE_BASE_PATH: /AeonVale/', 'Pages build must use the repository subpath base');
+requireIncludes('.github/workflows/pages.yml', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'Manual Pages rebuild must embed the checked-out commit SHA');
 requireIncludes('.github/workflows/pages.yml', 'actions/download-artifact@v4', 'Pages deployment must reuse the CI-verified dist artifact on workflow_run');
 requireIncludes('.github/workflows/pages.yml', 'aeonvale-pages-dist-${{ github.event.workflow_run.head_sha }}', 'Pages deployment must download the dist artifact matching the CI head SHA');
 requireIncludes('.github/workflows/pages.yml', 'run-id: ${{ github.event.workflow_run.id }}', 'Pages deployment must download the artifact from the triggering CI run');
@@ -286,6 +315,8 @@ requireIncludes('.github/workflows/pages.yml', 'run: pnpm governance:dist', 'Pag
 requireIncludes('.github/workflows/pages.yml', 'path: dist', 'Pages deployment must upload only the checked public dist artifact');
 requireIncludes('.github/workflows/pages.yml', 'Install Chromium for deployed Pages smoke', 'Pages deployment must install Chromium before deployed URL smoke');
 requireIncludes('.github/workflows/pages.yml', 'pnpm test:browser:pages', 'Pages deployment must smoke test the deployed GitHub Pages URL');
+requireIncludes('.github/workflows/pages.yml', 'pnpm test:browser:pages-playable', 'Pages deployment must verify real-input playability on the deployed GitHub Pages URL');
+requireIncludes('.github/workflows/pages.yml', 'PLAYWRIGHT_EXPECTED_BUILD_REVISION: ${{ github.event.workflow_run.head_sha || github.sha }}', 'Pages deployed URL smoke must verify the exact deployed commit revision');
 
 requireIncludes('.github/workflows/release.yml', 'workflow_dispatch:', 'Release workflow must remain manually triggered');
 requireIncludes('.github/workflows/release.yml', "if: github.ref == 'refs/heads/main'", 'Release workflow must remain main-only');
@@ -294,7 +325,10 @@ requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree instal
 requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree governance:readiness', 'Release workflow must run public-tree readiness checks');
 requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree governance:public', 'Release workflow must check the public tree');
 requireIncludes('.github/workflows/release.yml', 'pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts', 'Release workflow must run public-tree publication guardrail unit tests');
+requireIncludes('.github/workflows/release.yml', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'Release public-tree build must embed the checked-out commit SHA');
 requireIncludes('.github/workflows/release.yml', 'cd .public-tree/dist && zip', 'Release zip must be built only from public dist');
+
+requireIncludes('playwright.config.ts', "VITE_BUILD_REVISION: 'playwright-test'", 'Local Playwright public builds must embed a stable non-empty test revision');
 
 for (const ignorePattern of ['.public-tree/', 'dist/', 'playwright-report/', 'test-results/', '.claude/', '.omc/', '.codex/', '.agents/']) {
   requireIncludes('.gitignore', ignorePattern, `.gitignore must ignore ${ignorePattern}`);

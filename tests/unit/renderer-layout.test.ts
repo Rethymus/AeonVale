@@ -1,9 +1,104 @@
 import { describe, expect, it } from 'vitest';
-import { briefingBoxHeight, facilityWorldBadgeAssetId, farmsteadPropBadgeAssetId, isBriefingHeroAsset, itemPreviewBoxHeight, locationPreviewBoxHeight, locationWorldBadgeLayout, locationServiceWorldBadgeAssetId, locationTaskWorldBadgeAssetId } from '@render/renderer';
+import { Container } from 'pixi.js';
+import type { Application } from 'pixi.js';
+import { briefingBoxHeight, createLayers, facilityWorldBadgeAssetId, farmsteadPropBadgeAssetId, isBriefingHeroAsset, itemPreviewBoxHeight, locationPreviewBoxHeight, locationWorldBadgeLayout, locationServiceWorldBadgeAssetId, locationTaskWorldBadgeAssetId, LOGICAL_RENDER_REGIONS, RENDER_ROOT_LABELS, screenPointForTile, setTextIfChanged, TILE } from '@render/renderer';
 import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
+import { createFurnaceLayer } from '@render/furnacePanel';
+
+function createFakeApplication(): Application {
+  return {
+    stage: new Container(),
+    screen: { width: 960, height: 540 }
+  } as unknown as Application;
+}
 
 describe('renderer layout sizing', () => {
+  it('groups the retained render API into five stable attention roots', () => {
+    const app = createFakeApplication();
+    const layers = createLayers(app);
+
+    expect(app.stage.children).toEqual([layers.worldRoot, layers.screenFxRoot, layers.hudRoot, layers.focusRoot, layers.toastRoot]);
+    expect(app.stage.children.map(child => child.label)).toEqual(Object.values(RENDER_ROOT_LABELS));
+    expect(layers.worldRoot.children).toEqual([layers.tiles, layers.tileSprites, layers.entities, layers.sceneSprites, layers.npcMarkers]);
+    expect(layers.worldRoot.getChildIndex(layers.npcMarkers)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.sceneSprites));
+    expect(layers.screenFxRoot.children).toEqual([layers.seasonTint, layers.particles, layers.tribFlash]);
+    expect(layers.hudRoot.children).toEqual([layers.hotbarIconBg, layers.hotbarIcon, layers.hud, layers.briefingBg, layers.briefingImage, layers.briefingIcon, layers.briefing, layers.help, layers.hotbar, layers.bars, ...layers.barLabels]);
+    expect(layers.focusRoot.children).toEqual([layers.panelPreviewBg, layers.panelPreviewIcon, layers.panelPreviewText, layers.locationPreviewBg, layers.locationPreviewImage, layers.locationPreviewNpcPrimary, layers.locationPreviewNpcSecondary, layers.locationPreviewText, layers.ending, layers.inv, layers.invIcons, layers.cultivation, layers.dialogueBg, layers.dialoguePortrait, layers.dialogue]);
+    expect(layers.toastRoot.children).toEqual([layers.toastIconBg, layers.toastIcon, layers.toast]);
+  });
+
+  it('attaches the furnace to focusRoot without changing the existing factory call', () => {
+    const app = createFakeApplication();
+    const layers = createLayers(app);
+    const furnace = createFurnaceLayer(app);
+
+    expect(furnace.container.parent).toBe(layers.focusRoot);
+    expect(furnace.icons.parent).toBe(layers.focusRoot);
+    expect(furnace.lines.parent).toBe(layers.focusRoot);
+    expect(app.stage.children).toHaveLength(5);
+  });
+
+  it('prefers an explicit furnace parent over the labeled focus root', () => {
+    const app = createFakeApplication();
+    const layers = createLayers(app);
+    const parent = new Container();
+    const furnace = createFurnaceLayer(app, parent);
+
+    expect(parent.children).toEqual([furnace.container, furnace.icons, furnace.lines]);
+    expect(layers.focusRoot.children).not.toContain(furnace.container);
+    expect(app.stage.children).toHaveLength(5);
+  });
+
+  it('falls back to the stage when no focus root exists', () => {
+    const app = createFakeApplication();
+    const furnace = createFurnaceLayer(app);
+
+    expect(app.stage.children).toEqual([furnace.container, furnace.icons, furnace.lines]);
+  });
+
+  it('does not assign canvas text when the rendered value is unchanged', () => {
+    let value = '稳定文本';
+    let writes = 0;
+    const target = {
+      get text() {
+        return value;
+      },
+      set text(next: string) {
+        writes += 1;
+        value = next;
+      }
+    };
+
+    expect(setTextIfChanged(target, '稳定文本')).toBe(false);
+    expect(writes).toBe(0);
+    expect(setTextIfChanged(target, '新文本')).toBe(true);
+    expect(writes).toBe(1);
+    expect(value).toBe('新文本');
+  });
+
+  it('aligns the logical world and objective rail to the approved world-first proportions', () => {
+    const layers = createLayers(createFakeApplication());
+    const { content, world, objectiveRail } = LOGICAL_RENDER_REGIONS;
+    const worldRatio = world.width / content.width;
+    const railRatio = objectiveRail.width / content.width;
+    const firstTileLeft = screenPointForTile(0, 0).x - TILE / 2;
+    const lastTileRight = screenPointForTile(13, 0).x + TILE / 2;
+    const worldRight = world.x + world.width;
+
+    expect(worldRatio).toBeGreaterThanOrEqual(0.72);
+    expect(worldRatio).toBeLessThanOrEqual(0.78);
+    expect(railRatio).toBeGreaterThanOrEqual(0.22);
+    expect(railRatio).toBeLessThanOrEqual(0.28);
+    expect(worldRight).toBeLessThanOrEqual(objectiveRail.x);
+    expect(firstTileLeft).toBeGreaterThanOrEqual(world.x);
+    expect(lastTileRight).toBeLessThanOrEqual(worldRight);
+    expect(Math.abs(firstTileLeft - world.x - (worldRight - lastTileRight))).toBeLessThanOrEqual(1);
+    expect(layers.briefing.x).toBeGreaterThanOrEqual(objectiveRail.x);
+    expect(layers.briefing.y).toBeGreaterThanOrEqual(objectiveRail.y);
+    expect(layers.briefing.x + layers.briefing.style.wordWrapWidth).toBeLessThanOrEqual(objectiveRail.x + objectiveRail.width);
+  });
+
   it('keeps today briefing at baseline height for short text and grows for denser copy', () => {
     expect(briefingBoxHeight(40)).toBe(70);
     expect(briefingBoxHeight(72)).toBe(88);

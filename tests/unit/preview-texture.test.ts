@@ -14,7 +14,6 @@ function assets(): RuntimeRenderAssets {
   const tile = new Texture({ source: Texture.EMPTY.source });
   const icon = new Texture({ source: Texture.EMPTY.source });
   const logo = new Texture({ source: Texture.EMPTY.source });
-  const ending = new Texture({ source: Texture.EMPTY.source });
   return {
     player,
     guardBeast,
@@ -22,7 +21,6 @@ function assets(): RuntimeRenderAssets {
     cropHerbs: {},
     cropSeeds: {},
     facilities: { 'drying-rack': facility, 'shipping-bin': shippingFacility },
-    endingCg: { ascension: ending },
     locations: { greenhouse: location },
     logos: { 'logo.full': logo },
     hotbarIcons: {},
@@ -33,7 +31,7 @@ function assets(): RuntimeRenderAssets {
 }
 
 describe('preview texture resolver', () => {
-  it('resolves player, facility, location, npc, guard beast variants, ending cg, tile, logo, and item asset ids', () => {
+  it('resolves player, facility, location, npc, guard beast variants, tile, logo, and item asset ids', () => {
     const renderAssets = assets();
 
     expect(resolvePreviewTexture(renderAssets, 'sprite.player')).toBe(renderAssets.player);
@@ -44,7 +42,6 @@ describe('preview texture resolver', () => {
     expect(resolvePreviewTexture(renderAssets, 'sprite.guard-beast')).toBe(renderAssets.guardBeast);
     expect(resolvePreviewTexture(renderAssets, 'sprite.guard-beast-wolf')).toBe(renderAssets.guardBeastVariants?.['sprite.guard-beast-wolf']);
     expect(resolvePreviewTexture(renderAssets, 'sprite.guard-beast-boar')).toBe(renderAssets.guardBeast);
-    expect(resolvePreviewTexture(renderAssets, 'cg.ending-ascension')).toBe(renderAssets.endingCg.ascension);
     expect(resolvePreviewTexture(renderAssets, 'tile.wet-loam')).toBe(renderAssets.tiles['tile.wet-loam']);
     expect(resolvePreviewTexture(renderAssets, 'logo.full')).toBe(renderAssets.logos['logo.full']);
     expect(resolvePreviewTexture(renderAssets, 'icon.herb.mossling')).toBe(renderAssets.itemIcons['icon.herb.mossling']);

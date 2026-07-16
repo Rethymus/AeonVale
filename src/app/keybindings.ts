@@ -253,11 +253,11 @@ export function resolveCommandShortcut(key: string, shiftKey: boolean): CommandS
 }
 
 export function resolveWorldActionShortcut(key: string, shiftKey: boolean): WorldActionShortcutAction | null {
-  if (key === 'z') return 'seed-from-hotbar';
-  if (key === 'x') return 'water-front-tile';
+  if (key === 'z' || key === 'Z') return 'seed-from-hotbar';
+  if (key === 'x' || key === 'X') return 'water-front-tile';
   if (key === 'Home') return 'fertilize-front-tile';
   if (key === 'c' || key === 'C') return 'toggle-cultivation-panel';
-  if (key === 'v') return 'harvest-front-tile';
+  if (key === 'v' || key === 'V') return 'harvest-front-tile';
   if (key === 't') return 'tribulation';
   if (key === 'g') return shiftKey ? 'feed-guard-beast' : 'hunt-beast';
   if (key === '!') return 'train-push-up';

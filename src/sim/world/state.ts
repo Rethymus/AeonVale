@@ -116,6 +116,31 @@ export interface TribulationState {
   startedDay: number | null;
 }
 
+export type TutorialTribulationPhase = 'idle' | 'active' | 'aftermath';
+export type TutorialTribulationOutcome = 'survived' | 'rescued' | null;
+
+export interface TutorialTribulationHits {
+  direct: number;
+  rod: number;
+  miss: number;
+  blocked: number;
+  violet: number;
+}
+
+/** 公开试玩三雷教学的最小持久状态；正式天劫状态与数值完全独立。 */
+export interface TutorialTribulationState {
+  phase: TutorialTribulationPhase;
+  boltIndex: number;
+  warnedTileId: number | null;
+  startingHpMilli: number;
+  failureLatched: boolean;
+  rawTemperingMilli: number;
+  hits: TutorialTribulationHits;
+  outcome: TutorialTribulationOutcome;
+  finalHpBeforeRescueMilli: number | null;
+  rewardMilli: number;
+}
+
 export type PostAscensionMode = 'none' | 'choice-pending' | 'ascended-away' | 'stayed-in-world';
 
 export interface PostAscensionState {
@@ -155,6 +180,7 @@ export interface GameState {
   player: Player;
   events: GameEvent[]; // 本步产出事件（每步开头清空）
   tribulation: TribulationState; // 主动引劫 / 天道催讨准备窗运行态
+  tutorialTribulation: TutorialTribulationState; // 公开试玩三雷教学；默认 idle 时不序列化
   postAscension: PostAscensionState; // 飞升达成后的结局分歧：离界或留世
   stayingWorld: StayingWorldState; // 留世后的跨日守境/安居状态
   activeEvent: ActiveCelestialEvent | null; // 激活中的天象事件
@@ -204,6 +230,21 @@ export function createDefaultPostAscensionState(): PostAscensionState {
     mode: 'none',
     ascensionDay: null,
     victoryRecorded: false
+  };
+}
+
+export function createDefaultTutorialTribulationState(): TutorialTribulationState {
+  return {
+    phase: 'idle',
+    boltIndex: 0,
+    warnedTileId: null,
+    startingHpMilli: 0,
+    failureLatched: false,
+    rawTemperingMilli: 0,
+    hits: { direct: 0, rod: 0, miss: 0, blocked: 0, violet: 0 },
+    outcome: null,
+    finalHpBeforeRescueMilli: null,
+    rewardMilli: 0
   };
 }
 
@@ -287,6 +328,7 @@ export function createWorld(o: WorldInit): GameState {
     player,
     events: [],
     tribulation: { status: 'idle', source: null, daysRemaining: 0, stage: 0, readyDays: 0, startedDay: null },
+    tutorialTribulation: createDefaultTutorialTribulationState(),
     postAscension: createDefaultPostAscensionState(),
     stayingWorld: createDefaultStayingWorldState(),
     activeEvent: null,

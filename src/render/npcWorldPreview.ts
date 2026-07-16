@@ -13,6 +13,7 @@ export interface FarmsteadPropPlacement {
 }
 
 export interface NpcWorldPreviewPlacement {
+  placementKey: `scheduled:${string}` | `ambient:${LocationId}:${string}`;
   npcId: string;
   npcName: string;
   assetId: string;
@@ -22,6 +23,14 @@ export interface NpcWorldPreviewPlacement {
   birthday: boolean;
   hasQuest: boolean;
   questReady: boolean;
+}
+
+function scheduledNpcPlacementKey(npcId: string): `scheduled:${string}` {
+  return `scheduled:${npcId}`;
+}
+
+function ambientNpcPlacementKey(locationId: LocationId, assetId: string): `ambient:${LocationId}:${string}` {
+  return `ambient:${locationId}:${assetId}`;
 }
 
 export interface LocationWorldPreviewPlacement {
@@ -216,6 +225,11 @@ const WORLD_PREVIEW_OFFSETS = [
   { x: -1, y: 1 }
 ] as const;
 
+const AMBIENT_PREVIEW_SLOT_START = 3;
+const AMBIENT_PREVIEW_SLOT_START_BY_LOCATION: Readonly<Partial<Record<LocationId, number>>> = {
+  farmstead: 5
+};
+
 const AMBIENT_LOCATION_NPC_ASSETS: Readonly<Partial<Record<LocationId, readonly string[]>>> = {
   farmstead: ['sprite.npc.processing-artisan'],
   'valley-market': ['sprite.npc.market-merchant'],
@@ -398,15 +412,16 @@ function placementForLocation(state: GameState, locationId: LocationId, groupInd
   };
 }
 
-function ambientNpcWorldPreviewPlacements(state: GameState, scheduledCounts: ReadonlyMap<LocationId, number>, scheduledAssetIds: ReadonlyMap<LocationId, ReadonlySet<string>>): NpcWorldPreviewPlacement[] {
+function ambientNpcWorldPreviewPlacements(state: GameState, scheduledAssetIds: ReadonlyMap<LocationId, ReadonlySet<string>>): NpcWorldPreviewPlacement[] {
   return getActiveLocationDirectory(state)
     .flatMap(location => {
       const scheduledIds = scheduledAssetIds.get(location.id) ?? new Set<string>();
       const assetIds = (AMBIENT_LOCATION_NPC_ASSETS[location.id] ?? []).filter(assetId => !scheduledIds.has(assetId));
-      const existingCount = scheduledCounts.get(location.id) ?? 0;
       return assetIds.map((assetId, index) => {
-        const placement = placementForLocation(state, location.id, existingCount + index);
+        const slotStart = AMBIENT_PREVIEW_SLOT_START_BY_LOCATION[location.id] ?? AMBIENT_PREVIEW_SLOT_START;
+        const placement = placementForLocation(state, location.id, slotStart + index);
         return {
+          placementKey: ambientNpcPlacementKey(location.id, assetId),
           npcId: assetId,
           npcName: AMBIENT_NPC_DISPLAY_NAMES[assetId] ?? location.displayName,
           assetId,
@@ -494,17 +509,16 @@ export function npcWorldPreviewPlacements(state: GameState): NpcWorldPreviewPlac
     }))
     .sort((a, b) => a.locationId.localeCompare(b.locationId) || a.schedule.npc.id.localeCompare(b.schedule.npc.id));
 
-  const scheduledCounts = new Map<LocationId, number>();
   const scheduledAssetIds = new Map<LocationId, Set<string>>();
   const scheduledPlacements = schedules.map((entry, index, all) => {
     const sameLocationEntries = all.filter(candidate => candidate.locationId === entry.locationId);
     const groupIndex = sameLocationEntries.findIndex(candidate => candidate.schedule.npc.id === entry.schedule.npc.id);
     const placement = placementForLocation(state, entry.locationId, groupIndex);
-    scheduledCounts.set(entry.locationId, sameLocationEntries.length);
     const locationAssetIds = scheduledAssetIds.get(entry.locationId) ?? new Set<string>();
     locationAssetIds.add(npcWorldAssetId(entry.schedule.npc.id));
     scheduledAssetIds.set(entry.locationId, locationAssetIds);
     return {
+      placementKey: scheduledNpcPlacementKey(entry.schedule.npc.id),
       npcId: entry.schedule.npc.id,
       npcName: entry.schedule.npc.displayName,
       assetId: npcWorldAssetId(entry.schedule.npc.id),
@@ -517,5 +531,5 @@ export function npcWorldPreviewPlacements(state: GameState): NpcWorldPreviewPlac
     };
   });
 
-  return [...scheduledPlacements, ...ambientNpcWorldPreviewPlacements(state, scheduledCounts, scheduledAssetIds)].sort((a, b) => a.locationId.localeCompare(b.locationId) || a.x - b.x || a.y - b.y || a.assetId.localeCompare(b.assetId));
+  return [...scheduledPlacements, ...ambientNpcWorldPreviewPlacements(state, scheduledAssetIds)].sort((a, b) => a.locationId.localeCompare(b.locationId) || a.x - b.x || a.y - b.y || a.assetId.localeCompare(b.assetId) || a.placementKey.localeCompare(b.placementKey));
 }

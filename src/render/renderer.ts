@@ -25,16 +25,48 @@ import { inventoryIconStripEntries } from './inventoryIconStrip';
 import { tileAssetId } from './tileAsset';
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { itemIconAssetId } from '@app/itemIcons';
+import { computeViewportLayout } from './viewportLayout';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
 
+export const RENDER_ROOT_LABELS = {
+  world: 'world-root',
+  screenFx: 'screen-fx-root',
+  hud: 'hud-root',
+  focus: 'focus-root',
+  toast: 'toast-root'
+} as const;
+
+export function setTextIfChanged(target: { text: string }, nextText: string): boolean {
+  if (target.text === nextText) return false;
+  target.text = nextText;
+  return true;
+}
+
 export const TILE = 42;
-const OX = 32;
-const OY = 70;
 const SCREEN_W = 960; // 对齐 main.ts app.init 尺寸
 const SCREEN_H = 540;
-const BRIEFING_BOX = { x: SCREEN_W - 244, y: 8, width: 232, minHeight: 70, radius: 7, paddingY: 8 } as const;
+const logicalViewportLayout = computeViewportLayout({ width: SCREEN_W, height: SCREEN_H, touchCapable: false });
+if (!logicalViewportLayout.regions) {
+  throw new Error('The logical 960×540 renderer viewport must produce landscape regions.');
+}
+export const LOGICAL_RENDER_REGIONS = {
+  content: { ...logicalViewportLayout.regions.content },
+  world: { ...logicalViewportLayout.regions.world },
+  objectiveRail: { ...logicalViewportLayout.regions.objectiveRail }
+} as const;
+const DEFAULT_WORLD_COLUMNS = 14;
+const OX = Math.round(LOGICAL_RENDER_REGIONS.world.x + (LOGICAL_RENDER_REGIONS.world.width - DEFAULT_WORLD_COLUMNS * TILE) / 2);
+const OY = Math.round(LOGICAL_RENDER_REGIONS.world.y);
+const BRIEFING_BOX = {
+  x: Math.round(LOGICAL_RENDER_REGIONS.objectiveRail.x),
+  y: Math.round(LOGICAL_RENDER_REGIONS.objectiveRail.y),
+  width: Math.floor(LOGICAL_RENDER_REGIONS.objectiveRail.width),
+  minHeight: 70,
+  radius: 7,
+  paddingY: 8
+} as const;
 const PANEL_PREVIEW_BOX = { x: 688, y: 286, width: 248, minHeight: 112, radius: 8, paddingY: 18 } as const;
 const LOCATION_PREVIEW_BOX = { x: 648, y: 70, width: 288, minHeight: 206, maxHeight: 370, radius: 8, paddingY: 16 } as const;
 export const DIALOGUE_LAYOUT_LIMITS = {
@@ -97,10 +129,16 @@ const GUARD_BEAST_SPECIALTY_MARKER: Record<GuardBeastSpecialtyMarker, { color: n
 };
 
 export interface RenderLayers {
+  worldRoot: Container;
+  screenFxRoot: Container;
+  hudRoot: Container;
+  focusRoot: Container;
+  toastRoot: Container;
   tiles: Graphics;
   tileSprites: Container;
   entities: Graphics;
   sceneSprites: Container;
+  npcMarkers: Container;
   hotbarIconBg: Graphics;
   hotbarIcon: Sprite;
   panelPreviewBg: Graphics;
@@ -121,7 +159,6 @@ export interface RenderLayers {
   toast: Text;
   help: Text;
   ending: Text;
-  endingImage: Sprite;
   inv: Text;
   invIcons: Container;
   cultivation: Text;
@@ -147,7 +184,6 @@ export interface RuntimeRenderAssets {
   cropHerbs: Partial<Record<string, Texture>>;
   cropSeeds: Partial<Record<string, Texture>>;
   facilities: Partial<Record<string, Texture>>;
-  endingCg: Partial<Record<string, Texture>>;
   locations: Partial<Record<LocationId, Texture>>;
   logos: Partial<Record<string, Texture>>;
   hotbarIcons: Partial<Record<string, Texture>>;
@@ -240,25 +276,34 @@ export function dialogueBoxLayout(textHeight: number, hasPortrait: boolean): Dia
 }
 
 export function createLayers(app: Application): RenderLayers {
+  const worldRoot = new Container({ label: RENDER_ROOT_LABELS.world });
+  const screenFxRoot = new Container({ label: RENDER_ROOT_LABELS.screenFx });
+  const hudRoot = new Container({ label: RENDER_ROOT_LABELS.hud });
+  const focusRoot = new Container({ label: RENDER_ROOT_LABELS.focus });
+  const toastRoot = new Container({ label: RENDER_ROOT_LABELS.toast });
+  app.stage.addChild(worldRoot, screenFxRoot, hudRoot, focusRoot, toastRoot);
+
   const tiles = new Graphics();
-  app.stage.addChild(tiles);
+  worldRoot.addChild(tiles);
   const tileSprites = new Container();
-  app.stage.addChild(tileSprites);
+  worldRoot.addChild(tileSprites);
   const entities = new Graphics();
-  app.stage.addChild(entities);
+  worldRoot.addChild(entities);
   const sceneSprites = new Container();
-  app.stage.addChild(sceneSprites);
+  worldRoot.addChild(sceneSprites);
+  const npcMarkers = new Container();
+  worldRoot.addChild(npcMarkers);
   const hotbarIconBg = new Graphics();
-  app.stage.addChild(hotbarIconBg);
+  hudRoot.addChild(hotbarIconBg);
   const hotbarIcon = new Sprite();
   hotbarIcon.visible = false;
-  app.stage.addChild(hotbarIcon);
+  hudRoot.addChild(hotbarIcon);
   const panelPreviewBg = new Graphics();
   panelPreviewBg.visible = false;
-  app.stage.addChild(panelPreviewBg);
+  focusRoot.addChild(panelPreviewBg);
   const panelPreviewIcon = new Sprite();
   panelPreviewIcon.visible = false;
-  app.stage.addChild(panelPreviewIcon);
+  focusRoot.addChild(panelPreviewIcon);
   const panelPreviewText = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0xeae0c8, wordWrap: true, breakWords: true, wordWrapWidth: 148, lineHeight: 18 }
@@ -266,23 +311,23 @@ export function createLayers(app: Application): RenderLayers {
   panelPreviewText.x = 780;
   panelPreviewText.y = 332;
   panelPreviewText.visible = false;
-  app.stage.addChild(panelPreviewText);
+  focusRoot.addChild(panelPreviewText);
   const seasonTint = new Graphics();
-  app.stage.addChild(seasonTint);
+  screenFxRoot.addChild(seasonTint);
   const particles = new Graphics();
-  app.stage.addChild(particles);
+  screenFxRoot.addChild(particles);
   const locationPreviewBg = new Graphics();
   locationPreviewBg.visible = false;
-  app.stage.addChild(locationPreviewBg);
+  focusRoot.addChild(locationPreviewBg);
   const locationPreviewImage = new Sprite();
   locationPreviewImage.visible = false;
-  app.stage.addChild(locationPreviewImage);
+  focusRoot.addChild(locationPreviewImage);
   const locationPreviewNpcPrimary = new Sprite();
   locationPreviewNpcPrimary.visible = false;
-  app.stage.addChild(locationPreviewNpcPrimary);
+  focusRoot.addChild(locationPreviewNpcPrimary);
   const locationPreviewNpcSecondary = new Sprite();
   locationPreviewNpcSecondary.visible = false;
-  app.stage.addChild(locationPreviewNpcSecondary);
+  focusRoot.addChild(locationPreviewNpcSecondary);
   const locationPreviewText = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xeae0c8, wordWrap: true, breakWords: true, wordWrapWidth: 144, lineHeight: 15 }
@@ -290,54 +335,48 @@ export function createLayers(app: Application): RenderLayers {
   locationPreviewText.x = 776;
   locationPreviewText.y = 86;
   locationPreviewText.visible = false;
-  app.stage.addChild(locationPreviewText);
-  const endingImage = new Sprite();
-  endingImage.anchor.set(0.5);
-  endingImage.x = app.screen.width / 2;
-  endingImage.y = app.screen.height / 2;
-  endingImage.visible = false;
-  app.stage.addChild(endingImage);
+  focusRoot.addChild(locationPreviewText);
   const hud = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 15, fill: 0xeae0c8 }
   });
   hud.x = 10;
   hud.y = 8;
-  app.stage.addChild(hud);
+  hudRoot.addChild(hud);
   const briefingBg = new Graphics();
-  app.stage.addChild(briefingBg);
+  hudRoot.addChild(briefingBg);
   const briefingImage = new Sprite();
   briefingImage.visible = false;
-  app.stage.addChild(briefingImage);
+  hudRoot.addChild(briefingImage);
   const briefingIcon = new Sprite();
   briefingIcon.visible = false;
-  app.stage.addChild(briefingIcon);
+  hudRoot.addChild(briefingIcon);
   const briefing = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xeae0c8, wordWrap: true, breakWords: true, wordWrapWidth: 176, lineHeight: 16 }
   });
-  briefing.x = app.screen.width - 198;
-  briefing.y = 16;
-  app.stage.addChild(briefing);
+  briefing.x = BRIEFING_BOX.x + 40;
+  briefing.y = BRIEFING_BOX.y + BRIEFING_BOX.paddingY;
+  hudRoot.addChild(briefing);
   const toastIconBg = new Graphics();
-  app.stage.addChild(toastIconBg);
+  toastRoot.addChild(toastIconBg);
   const toastIcon = new Sprite();
   toastIcon.visible = false;
-  app.stage.addChild(toastIcon);
+  toastRoot.addChild(toastIcon);
   const toast = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 14, fill: 0xffe066, wordWrap: true, breakWords: true, wordWrapWidth: SCREEN_W - 56, lineHeight: 17 }
   });
   toast.x = 10;
   toast.y = app.screen.height - 88;
-  app.stage.addChild(toast);
+  toastRoot.addChild(toast);
   const help = new Text({
     text: t('ui.help.default'),
     style: { fontFamily: CJK_FONT, fontSize: 10, fill: 0x9090a0 }
   });
   help.x = 10;
   help.y = app.screen.height - 20;
-  app.stage.addChild(help);
+  hudRoot.addChild(help);
   const ending = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 52, fill: 0xffe066, align: 'center', stroke: { color: 0x000000, width: 4 } }
@@ -346,7 +385,7 @@ export function createLayers(app: Application): RenderLayers {
   ending.x = app.screen.width / 2;
   ending.y = app.screen.height / 2;
   ending.visible = false;
-  app.stage.addChild(ending);
+  focusRoot.addChild(ending);
   const inv = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8 }
@@ -354,10 +393,10 @@ export function createLayers(app: Application): RenderLayers {
   inv.x = app.screen.width - 190;
   inv.y = 70;
   inv.visible = false;
-  app.stage.addChild(inv);
+  focusRoot.addChild(inv);
   const invIcons = new Container();
   invIcons.visible = false;
-  app.stage.addChild(invIcons);
+  focusRoot.addChild(invIcons);
   const cultivation = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8, lineHeight: 20 }
@@ -365,43 +404,49 @@ export function createLayers(app: Application): RenderLayers {
   cultivation.x = app.screen.width - 286;
   cultivation.y = 70;
   cultivation.visible = false;
-  app.stage.addChild(cultivation);
+  focusRoot.addChild(cultivation);
   const hotbar = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0xd8d0ba }
   });
   hotbar.x = 46;
   hotbar.y = app.screen.height - 42;
-  app.stage.addChild(hotbar);
+  hudRoot.addChild(hotbar);
   const bars = new Graphics();
-  app.stage.addChild(bars);
+  hudRoot.addChild(bars);
   const tribFlash = new Graphics();
-  app.stage.addChild(tribFlash);
+  screenFxRoot.addChild(tribFlash);
   const dialogueBg = new Graphics();
   dialogueBg.visible = false;
-  app.stage.addChild(dialogueBg);
+  focusRoot.addChild(dialogueBg);
   const dialoguePortrait = new Sprite();
   dialoguePortrait.visible = false;
-  app.stage.addChild(dialoguePortrait);
+  focusRoot.addChild(dialoguePortrait);
   const dialogue = new Text({
     text: '',
     style: { fontFamily: CJK_FONT, fontSize: 15, fill: 0xeae0c8, ...dialogueTextLayoutStyle(false) }
   });
   dialogue.x = 58;
   dialogue.y = 314;
-  app.stage.addChild(dialogue);
+  focusRoot.addChild(dialogue);
   const barLabels = [t('ui.hud.hp'), t('ui.hud.pillPoison'), t('ui.hud.cultivation'), t('ui.hud.stamina')].map((label, i) => {
     const t = new Text({ text: label, style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xb0b0c8 } });
     t.x = 12 + i * 152;
     t.y = 26;
-    app.stage.addChild(t);
+    hudRoot.addChild(t);
     return t;
   });
   return {
+    worldRoot,
+    screenFxRoot,
+    hudRoot,
+    focusRoot,
+    toastRoot,
     tiles,
     tileSprites,
     entities,
     sceneSprites,
+    npcMarkers,
     hotbarIconBg,
     hotbarIcon,
     panelPreviewBg,
@@ -422,7 +467,6 @@ export function createLayers(app: Application): RenderLayers {
     toast,
     help,
     ending,
-    endingImage,
     inv,
     invIcons,
     cultivation,
@@ -449,13 +493,6 @@ export function screenPointForTile(x: number, y: number): { x: number; y: number
   };
 }
 
-function layoutEndingImage(sprite: Sprite): void {
-  const { width, height } = sprite.texture;
-  if (width <= 0 || height <= 0) return;
-  const scale = Math.max(SCREEN_W / width, SCREEN_H / height);
-  sprite.scale.set(scale);
-}
-
 function applyWorldSprite(sprite: Sprite, texture: Texture, x: number, y: number, size = TILE): void {
   sprite.texture = texture;
   sprite.anchor.set(0.5);
@@ -463,6 +500,9 @@ function applyWorldSprite(sprite: Sprite, texture: Texture, x: number, y: number
   sprite.y = y;
   sprite.width = size;
   sprite.height = size;
+  sprite.alpha = 1;
+  sprite.tint = 0xffffff;
+  sprite.visible = true;
 }
 
 function cropWorldSpriteSpec(stage: string): { size: number; yOffset: number } {
@@ -555,16 +595,126 @@ export function locationWorldBadgeLayout(options: { hasBirthday: boolean; hasQue
   };
 }
 
-function clearSceneSprites(layers: RenderLayers): void {
-  for (const child of layers.sceneSprites.removeChildren()) {
-    child.destroy();
+interface RetainedWorldSpriteCache {
+  tileSprites: Map<string, Sprite>;
+  sceneSprites: Map<string, Sprite>;
+  npcMarkers: Map<string, Graphics>;
+  usedTileSprites: Set<string>;
+  usedSceneSprites: Set<string>;
+  usedNpcMarkers: Set<string>;
+  tileOrder: Sprite[];
+  sceneOrder: Sprite[];
+  npcMarkerOrder: Graphics[];
+}
+
+const RETAINED_WORLD_SPRITES = new WeakMap<RenderLayers, RetainedWorldSpriteCache>();
+
+function retainedWorldSpriteCache(layers: RenderLayers): RetainedWorldSpriteCache {
+  const existing = RETAINED_WORLD_SPRITES.get(layers);
+  if (existing) return existing;
+  const created: RetainedWorldSpriteCache = {
+    tileSprites: new Map(),
+    sceneSprites: new Map(),
+    npcMarkers: new Map(),
+    usedTileSprites: new Set(),
+    usedSceneSprites: new Set(),
+    usedNpcMarkers: new Set(),
+    tileOrder: [],
+    sceneOrder: [],
+    npcMarkerOrder: []
+  };
+  RETAINED_WORLD_SPRITES.set(layers, created);
+  return created;
+}
+
+function beginRetainedWorldFrame(layers: RenderLayers): RetainedWorldSpriteCache {
+  const cache = retainedWorldSpriteCache(layers);
+  cache.usedTileSprites.clear();
+  cache.usedSceneSprites.clear();
+  cache.usedNpcMarkers.clear();
+  cache.tileOrder.length = 0;
+  cache.sceneOrder.length = 0;
+  cache.npcMarkerOrder.length = 0;
+  return cache;
+}
+
+function retainSprite(container: Container, sprites: Map<string, Sprite>, used: Set<string>, order: Sprite[], label: string): Sprite {
+  let sprite = sprites.get(label);
+  if (!sprite || sprite.destroyed) {
+    sprite = new Sprite();
+    sprite.label = label;
+    sprites.set(label, sprite);
+  }
+  if (sprite.parent !== container) container.addChild(sprite);
+  if (!used.has(label)) {
+    used.add(label);
+    order.push(sprite);
+  }
+  return sprite;
+}
+
+function retainTileSprite(layers: RenderLayers, cache: RetainedWorldSpriteCache, label: string): Sprite {
+  return retainSprite(layers.tileSprites, cache.tileSprites, cache.usedTileSprites, cache.tileOrder, label);
+}
+
+function retainSceneSprite(layers: RenderLayers, cache: RetainedWorldSpriteCache, label: string): Sprite {
+  return retainSprite(layers.sceneSprites, cache.sceneSprites, cache.usedSceneSprites, cache.sceneOrder, label);
+}
+
+function retainNpcMarker(layers: RenderLayers, cache: RetainedWorldSpriteCache, label: string): Graphics {
+  let marker = cache.npcMarkers.get(label);
+  if (!marker || marker.destroyed) {
+    marker = new Graphics();
+    marker.label = label;
+    cache.npcMarkers.set(label, marker);
+  }
+  if (marker.parent !== layers.npcMarkers) layers.npcMarkers.addChild(marker);
+  if (!cache.usedNpcMarkers.has(label)) {
+    cache.usedNpcMarkers.add(label);
+    cache.npcMarkerOrder.push(marker);
+  }
+  return marker;
+}
+
+function sweepRetainedSprites(container: Container, sprites: Map<string, Sprite>, used: ReadonlySet<string>): void {
+  for (const [label, sprite] of sprites) {
+    if (used.has(label)) continue;
+    if (sprite.parent === container) container.removeChild(sprite);
+    sprite.destroy();
+    sprites.delete(label);
   }
 }
 
-function clearTileSprites(layers: RenderLayers): void {
-  for (const child of layers.tileSprites.removeChildren()) {
-    child.destroy();
+function orderRetainedSprites(container: Container, order: readonly Sprite[]): void {
+  for (let index = 0; index < order.length; index += 1) {
+    const sprite = order[index]!;
+    if (container.getChildIndex(sprite) !== index) container.setChildIndex(sprite, index);
   }
+}
+
+function sweepRetainedNpcMarkers(cache: RetainedWorldSpriteCache, layers: RenderLayers): void {
+  for (const [label, marker] of cache.npcMarkers) {
+    if (cache.usedNpcMarkers.has(label)) continue;
+    if (marker.parent === layers.npcMarkers) layers.npcMarkers.removeChild(marker);
+    marker.destroy();
+    cache.npcMarkers.delete(label);
+  }
+}
+
+function orderRetainedNpcMarkers(layers: RenderLayers, order: readonly Graphics[]): void {
+  for (let index = 0; index < order.length; index += 1) {
+    const marker = order[index]!;
+    if (layers.npcMarkers.getChildIndex(marker) !== index) layers.npcMarkers.setChildIndex(marker, index);
+  }
+}
+
+function finishRetainedWorldFrame(layers: RenderLayers, cache: RetainedWorldSpriteCache): void {
+  sweepRetainedSprites(layers.tileSprites, cache.tileSprites, cache.usedTileSprites);
+  sweepRetainedSprites(layers.sceneSprites, cache.sceneSprites, cache.usedSceneSprites);
+  sweepRetainedNpcMarkers(cache, layers);
+  orderRetainedSprites(layers.tileSprites, cache.tileOrder);
+  orderRetainedSprites(layers.sceneSprites, cache.sceneOrder);
+  orderRetainedNpcMarkers(layers, cache.npcMarkerOrder);
 }
 
 function clearInventoryIcons(layers: RenderLayers): void {
@@ -802,9 +952,8 @@ export function renderCultivationOverview(state: GameState, ctx: SimContext): st
 export function drawWorld(layers: RenderLayers, state: GameState, content: ContentRegistry, ctx?: SimContext, assets?: RuntimeRenderAssets): void {
   // —— 瓦片 + 作物 ——
   const g = layers.tiles;
+  const retainedSprites = beginRetainedWorldFrame(layers);
   g.clear();
-  clearTileSprites(layers);
-  clearSceneSprites(layers);
   for (const t of state.tiles) {
     const x = OX + t.x * TILE;
     const y = OY + t.y * TILE;
@@ -813,10 +962,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const insulationCovered = hasActiveArrayCoverage(state, t.id, 'array.insulation');
     const tileTexture = assets?.tiles[tileAssetId(t, { insulationCovered })];
     if (tileTexture) {
-      const sprite = new Sprite();
+      const sprite = retainTileSprite(layers, retainedSprites, `world:tile:${t.id}`);
       applyWorldSprite(sprite, tileTexture, x + TILE / 2, y + TILE / 2, TILE - 1);
       sprite.alpha = 0.96;
-      layers.tileSprites.addChild(sprite);
       g.rect(x, y, TILE - 1, TILE - 1).fill({ color: 0x111118, alpha: 0.18 });
     } else {
       g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? 0x6b4f2a);
@@ -881,11 +1029,10 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         const fallbackRadius = crop.stage === 'seed' ? 3 : crop.stage === 'sprout' ? 6 : crop.stage === 'growing' ? 9 : 12;
         const texture = crop.stage === 'seed' ? assets?.cropSeeds[herb?.seedId ?? ''] : assets?.cropHerbs[crop.defId];
         if (texture) {
-          const sprite = new Sprite();
+          const sprite = retainSceneSprite(layers, retainedSprites, `world:crop:${crop.id}`);
           const spec = cropWorldSpriteSpec(crop.stage);
           applyWorldSprite(sprite, texture, cx, cy + spec.yOffset, spec.size);
           if (metal) sprite.tint = 0xc9d4ea;
-          layers.sceneSprites.addChild(sprite);
         } else {
           // 回退路径：保留原始程序化图元，保证无贴图时仍可稳定演示
           const col = metal ? 0xb8b8c8 : (STAGE_COLOR[crop.stage] ?? 0x4a9a30);
@@ -910,10 +1057,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const y = OY + placement.y * TILE;
     const guardTexture = assets?.guardBeastVariants?.[guardBeastPreviewAssetId(placement.beastId)] ?? assets?.guardBeast;
     if (guardTexture) {
-      const sprite = new Sprite();
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:guard-beast:${placement.beastId}`);
       applyWorldSprite(sprite, guardTexture, x + TILE / 2, y + TILE / 2 + 2, TILE - 6);
       sprite.alpha = 0.7 + placement.vigorRatio * 0.3;
-      layers.sceneSprites.addChild(sprite);
     } else {
       g.circle(x + TILE / 2, y + TILE / 2 + 2, 11).fill({ color: 0x8ac4ff, alpha: 0.82 });
       g.circle(x + TILE / 2, y + TILE / 2 + 2, 11).stroke({ width: 1.5, color: 0x16263a });
@@ -960,10 +1106,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const y = OY + prop.y * TILE;
     const texture = assets?.facilities[prop.assetId.slice('facility.'.length)];
     if (texture) {
-      const sprite = new Sprite();
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:farmstead-prop:${prop.assetId}`);
       applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1, TILE - 8);
       sprite.alpha = 0.9;
-      layers.sceneSprites.addChild(sprite);
     } else {
       const color = prop.assetId === 'facility.storage-chest' ? 0x8b6a3f : 0x7a4f2a;
       g.roundRect(x + 9, y + 10, TILE - 18, TILE - 16, 5).fill({ color, alpha: 0.92 });
@@ -976,9 +1121,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       if (badgeTexture) {
         g.circle(x + TILE - 10, y + 10, 7).fill({ color: 0x12121c, alpha: 0.9 });
         g.circle(x + TILE - 10, y + 10, 7).stroke({ width: 1.2, color: 0x7fe38b, alpha: 0.94 });
-        const badge = new Sprite();
+        const badge = retainSceneSprite(layers, retainedSprites, `world:farmstead-prop:${prop.assetId}:badge`);
         applyWorldSprite(badge, badgeTexture, x + TILE - 10, y + 10, 12);
-        layers.sceneSprites.addChild(badge);
       } else {
         g.circle(x + TILE - 10, y + 10, 5).fill(0x7fe38b);
         g.circle(x + TILE - 10, y + 10, 5).stroke({ width: 1.2, color: 0x1a1a22, alpha: 0.92 });
@@ -994,9 +1138,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const color = FACILITY_COLOR[facility.kind] ?? 0xb0b0b0;
     const facilityTexture = assets?.facilities[facility.kind];
     if (facilityTexture) {
-      const sprite = new Sprite();
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}`);
       applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2);
-      layers.sceneSprites.addChild(sprite);
     } else {
       g.rect(x + 7, y + 9, TILE - 15, TILE - 14).fill({ color, alpha: 0.92 });
       g.rect(x + 7, y + 9, TILE - 15, TILE - 14).stroke({ width: 1.5, color: 0x2a1a0a });
@@ -1022,9 +1165,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       if (done && badgeTexture) {
         g.circle(x + TILE - 9, y + 9, 7).fill({ color: 0x12121c, alpha: 0.9 });
         g.circle(x + TILE - 9, y + 9, 7).stroke({ width: 1.2, color: 0xffe066, alpha: 0.94 });
-        const badge = new Sprite();
+        const badge = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}:badge`);
         applyWorldSprite(badge, badgeTexture, x + TILE - 9, y + 9, 12);
-        layers.sceneSprites.addChild(badge);
       } else {
         g.circle(x + TILE - 9, y + 9, 5).fill(done ? 0xffe066 : 0x66ddff);
         g.circle(x + TILE - 9, y + 9, 5).stroke({ width: 1.1, color: 0x1a1a22, alpha: 0.92 });
@@ -1052,10 +1194,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     });
 
     if (locationTexture) {
-      const sprite = new Sprite();
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}`);
       applyWorldSprite(sprite, locationTexture, x + TILE / 2, y + TILE / 2, TILE - 4);
       sprite.alpha = 0.24;
-      layers.sceneSprites.addChild(sprite);
     } else {
       e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).fill({ color: 0x181824, alpha: 0.28 });
       e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).stroke({ width: 1.2, color: 0x5a6a8a, alpha: 0.5 });
@@ -1087,9 +1228,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       if (serviceBadgeTexture) {
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).fill({ color: 0x12121c, alpha: 0.9 });
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).stroke({ width: 1.2, color, alpha: 0.94 });
-        const badge = new Sprite();
+        const badge = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}:service`);
         applyWorldSprite(badge, serviceBadgeTexture, x + badgeLayout.service.x, y + badgeLayout.service.y, 12);
-        layers.sceneSprites.addChild(badge);
       } else {
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 4).fill({ color, alpha });
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 4).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
@@ -1101,9 +1241,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       if (badgeTexture) {
         e.circle(x + badgeLayout.task.x, y + badgeLayout.task.y, 7).fill({ color: 0x12121c, alpha: 0.9 });
         e.circle(x + badgeLayout.task.x, y + badgeLayout.task.y, 7).stroke({ width: 1.2, color: 0xffd36b, alpha: 0.94 });
-        const badge = new Sprite();
+        const badge = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}:task`);
         applyWorldSprite(badge, badgeTexture, x + badgeLayout.task.x, y + badgeLayout.task.y, 12);
-        layers.sceneSprites.addChild(badge);
       } else {
         e.rect(x + badgeLayout.task.x - 4, y + badgeLayout.task.y - 4, 8, 8).fill({ color: 0xffd36b, alpha: 0.95 });
         e.rect(x + badgeLayout.task.x - 4, y + badgeLayout.task.y - 4, 8, 8).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
@@ -1116,29 +1255,29 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const y = OY + placement.y * TILE;
     const npcTexture = assets?.npcs[placement.assetId];
     if (npcTexture) {
-      const sprite = new Sprite();
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:npc:${placement.placementKey}`);
       applyWorldSprite(sprite, npcTexture, x + TILE / 2, y + TILE / 2 + 1, TILE - 8);
       sprite.alpha = 0.92;
-      layers.sceneSprites.addChild(sprite);
     } else {
-      const fallback = new Graphics();
-      fallback.circle(x + TILE / 2, y + TILE / 2 + 1, 10).fill({ color: 0xd7c3a0, alpha: 0.88 });
-      fallback.circle(x + TILE / 2, y + TILE / 2 + 1, 10).stroke({ width: 1.5, color: 0x33261a, alpha: 0.95 });
-      layers.sceneSprites.addChild(fallback);
+      e.circle(x + TILE / 2, y + TILE / 2 + 1, 10).fill({ color: 0xd7c3a0, alpha: 0.88 });
+      e.circle(x + TILE / 2, y + TILE / 2 + 1, 10).stroke({ width: 1.5, color: 0x33261a, alpha: 0.95 });
     }
 
-    const marker = new Graphics();
-
-    if (placement.birthday) {
-      marker.circle(x + TILE - 10, y + 10, 4).fill({ color: 0xffb347, alpha: 0.94 });
-      marker.circle(x + TILE - 10, y + 10, 4).stroke({ width: 1, color: 0x5a2d0c, alpha: 0.9 });
+    if (placement.birthday || placement.hasQuest) {
+      const marker = retainNpcMarker(layers, retainedSprites, `world:npc:${placement.placementKey}:marker`);
+      marker.clear();
+      marker.x = x;
+      marker.y = y;
+      if (placement.birthday) {
+        marker.circle(TILE - 10, 10, 4).fill({ color: 0xffb347, alpha: 0.94 });
+        marker.circle(TILE - 10, 10, 4).stroke({ width: 1, color: 0x5a2d0c, alpha: 0.9 });
+      }
+      if (placement.hasQuest) {
+        const color = placement.questReady ? 0xffe066 : 0x66ddff;
+        marker.rect(6, 6, 7, 7).fill({ color, alpha: 0.94 });
+        marker.rect(6, 6, 7, 7).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
+      }
     }
-    if (placement.hasQuest) {
-      const color = placement.questReady ? 0xffe066 : 0x66ddff;
-      marker.rect(x + 6, y + 6, 7, 7).fill({ color, alpha: 0.94 });
-      marker.rect(x + 6, y + 6, 7, 7).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
-    }
-    if (placement.birthday || placement.hasQuest) layers.sceneSprites.addChild(marker);
   }
 
   // —— 玩家 + 阵眼 + 面前格光标 ——
@@ -1161,10 +1300,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const cy = OY + core.y * TILE + TILE / 2;
     const arrayTexture = assets?.facilities[arr.assetId.slice('facility.'.length)];
     if (arrayTexture) {
-      const sprite = new Sprite();
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:array:${arr.arrayId}`);
       applyWorldSprite(sprite, arrayTexture, cx, cy, TILE - 8);
       sprite.alpha = active ? 0.88 : 0.52;
-      layers.sceneSprites.addChild(sprite);
       e.circle(cx, cy, 7).stroke({ width: 1.5, color, alpha: active ? 0.75 : 0.42 });
     } else {
       e.circle(cx, cy, 6).fill({ color, alpha: active ? 0.96 : 0.5 });
@@ -1192,14 +1330,14 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   const px = OX + p.position.x * TILE + TILE / 2;
   const py = OY + p.position.y * TILE + TILE / 2;
   if (assets?.player) {
-    const sprite = new Sprite();
+    const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
     applyWorldSprite(sprite, assets.player, px, py, TILE);
-    layers.sceneSprites.addChild(sprite);
   } else {
     e.circle(px, py, TILE / 3).fill(0xff5a5a);
   }
   // 朝向指示
   e.circle(px + fdx * 10, py + fdy * 10, 4).fill(0xffffff);
+  finishRetainedWorldFrame(layers, retainedSprites);
 
   // 季节环境色调（T5）：全屏低透明叠色，渲染于 tiles/entities 之上、HUD 之下
   const st = layers.seasonTint;
@@ -1233,37 +1371,27 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   drawBar(bg, BAR_X0 + BAR_DX, BAR_Y, BAR_W, BAR_H, poisonPct, poisonColor);
   drawBar(bg, BAR_X0 + 2 * BAR_DX, BAR_Y, BAR_W, BAR_H, cultPct, 0x66ddff);
   drawBar(bg, BAR_X0 + 3 * BAR_DX, BAR_Y, BAR_W, BAR_H, staPct, 0x7ac050);
-  layers.barLabels[0]!.text = `气血 ${hpPct}%`;
-  layers.barLabels[1]!.text = `丹毒 ${pp}`;
-  layers.barLabels[2]!.text = `体魄 ${Math.round(cultPct * 100)}%`;
-  layers.barLabels[3]!.text = `体力 ${Math.round(staPct * 100)}%`;
+  setTextIfChanged(layers.barLabels[0]!, `气血 ${hpPct}%`);
+  setTextIfChanged(layers.barLabels[1]!, `丹毒 ${pp}`);
+  setTextIfChanged(layers.barLabels[2]!, `体魄 ${Math.round(cultPct * 100)}%`);
+  setTextIfChanged(layers.barLabels[3]!, `体力 ${Math.round(staPct * 100)}%`);
   const ev = state.activeEvent ? `　【天象·${state.activeEvent.displayName} ${state.activeEvent.daysLeft}日】` : '';
   const surge = state.beastSurge ? `　⚠妖兽潮 ${state.beastSurge.daysLeft}日` : '';
   const stayingGoal = getPrimaryStayingWorldGoal(state);
   const victory = state.postAscension.mode === 'stayed-in-world' && state.postAscension.victoryRecorded ? '　|　胜后留世存档' : '';
   const stayingText = stayingGoal ? `　|　留世目标：${stayingGoal.title}（${stayingGoal.progressLabel}）` : '';
-  layers.hud.text = `第 ${state.day} 日 · ${t('ui.hud.season.' + state.season)} · 第 ${state.year} 年　|　` + `阶段：${stageNames[state.player.stage] ?? state.player.stage}　寿元：${p.lifespanRemainingDays ?? '?'}日　炉温：${layers.furnaceHeat}${ev}${surge}${victory}${stayingText}`;
+  setTextIfChanged(layers.hud, `第 ${state.day} 日 · ${t('ui.hud.season.' + state.season)} · 第 ${state.year} 年　|　` + `阶段：${stageNames[state.player.stage] ?? state.player.stage}　寿元：${p.lifespanRemainingDays ?? '?'}日　炉温：${layers.furnaceHeat}${ev}${surge}${victory}${stayingText}`);
 
   // —— 结局遮罩 ——
   if (state.gameOver) {
     layers.tiles.visible = false;
     layers.entities.visible = false;
     layers.sceneSprites.visible = false;
+    layers.npcMarkers.visible = false;
     layers.bars.visible = false;
     for (const lbl of layers.barLabels) lbl.visible = false;
-    const endingTexture = assets?.endingCg[state.ending ?? ''];
-    if (endingTexture) {
-      layers.endingImage.texture = endingTexture;
-      layoutEndingImage(layers.endingImage);
-      layers.endingImage.alpha = 0.82;
-      layers.endingImage.visible = true;
-      layers.ending.y = SCREEN_H - 96;
-    } else {
-      layers.endingImage.visible = false;
-      layers.ending.y = SCREEN_H / 2;
-    }
-    layers.ending.text = `${t('ending.' + (state.ending ?? ''))}\n${t('ui.restart')}`;
-    layers.ending.visible = true;
+    layers.ending.y = SCREEN_H / 2;
+    layers.ending.visible = false;
     layers.inv.visible = false;
     clearInventoryIcons(layers);
     layers.cultivation.visible = false;
@@ -1271,11 +1399,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.sceneSprites.visible = true;
+    layers.npcMarkers.visible = true;
     layers.bars.visible = true;
     for (const lbl of layers.barLabels) lbl.visible = true;
-    layers.endingImage.visible = false;
     layers.ending.y = SCREEN_H / 2;
-    layers.ending.text = '紫雷尽散，天门已开。\n1 飞升离界\n2 留驻此界';
+    setTextIfChanged(layers.ending, '紫雷尽散，天门已开。\n1 飞升离界\n2 留驻此界');
     layers.ending.visible = true;
     layers.inv.visible = false;
     clearInventoryIcons(layers);
@@ -1284,22 +1412,22 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.sceneSprites.visible = true;
+    layers.npcMarkers.visible = true;
     layers.bars.visible = true;
     for (const lbl of layers.barLabels) lbl.visible = true;
-    layers.endingImage.visible = false;
     layers.ending.y = SCREEN_H / 2;
     layers.ending.visible = false;
     if (layers.showInv) {
       const shipping = ctx ? `\n\n${renderShippingBin(state, content, ctx)}` : '';
       const stayingGoals = state.postAscension.mode === 'stayed-in-world' ? `\n\n${renderPostAscensionGoals(state)}` : '';
-      layers.inv.text = `${renderInventory(state, content)}\n\n${renderStorage(state, content)}${shipping}${stayingGoals}`;
+      setTextIfChanged(layers.inv, `${renderInventory(state, content)}\n\n${renderStorage(state, content)}${shipping}${stayingGoals}`);
       layers.inv.visible = true;
       drawInventoryIconStrip(layers, state, content, assets, ctx);
     } else {
       layers.inv.visible = false;
       clearInventoryIcons(layers);
     }
-    if (!layers.cultivation.visible) layers.cultivation.text = '';
+    if (!layers.cultivation.visible) setTextIfChanged(layers.cultivation, '');
   }
 
   // 天劫全屏闪光（衰减，T3b 视听冲击）
@@ -1312,7 +1440,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
 }
 
 export function setToast(layers: RenderLayers, msg: string, texture?: Texture): void {
-  layers.toast.text = msg;
+  setTextIfChanged(layers.toast, msg);
   layers.toastIconBg.clear();
   if (!texture) {
     layers.toast.x = 10;
@@ -1334,9 +1462,9 @@ export function drawTodayBriefing(layers: RenderLayers, title: string, body: str
   const text = layers.briefing;
   const heroAsset = isBriefingHeroAsset(assetId) && texture !== undefined;
   text.style.wordWrapWidth = heroAsset ? 118 : 176;
-  text.x = heroAsset ? BRIEFING_BOX.x + 106 : SCREEN_W - 198;
-  text.y = 16;
-  text.text = `${title}\n${body}`;
+  text.x = BRIEFING_BOX.x + (heroAsset ? 106 : 40);
+  text.y = BRIEFING_BOX.y + BRIEFING_BOX.paddingY;
+  setTextIfChanged(text, `${title}\n${body}`);
   const height = briefingBoxHeight(text.height);
   bg.clear();
   bg.roundRect(BRIEFING_BOX.x, BRIEFING_BOX.y, BRIEFING_BOX.width, height, BRIEFING_BOX.radius).fill({ color: 0x12121c, alpha: 0.9 });
@@ -1365,12 +1493,12 @@ export function hideTodayBriefing(layers: RenderLayers): void {
   layers.briefingBg.clear();
   layers.briefingImage.visible = false;
   layers.briefingIcon.visible = false;
-  layers.briefing.text = '';
+  setTextIfChanged(layers.briefing, '');
   layers.briefing.visible = false;
 }
 
 export function setHotbar(layers: RenderLayers, msg: string): void {
-  layers.hotbar.text = msg;
+  setTextIfChanged(layers.hotbar, msg);
 }
 
 export function drawHotbarIcon(layers: RenderLayers, texture?: Texture): void {
@@ -1391,7 +1519,7 @@ export function drawHotbarIcon(layers: RenderLayers, texture?: Texture): void {
 
 export function drawPanelItemPreview(layers: RenderLayers, title: string, details: string, texture?: Texture): void {
   const bg = layers.panelPreviewBg;
-  layers.panelPreviewText.text = `${title}\n\n${details}`;
+  setTextIfChanged(layers.panelPreviewText, `${title}\n\n${details}`);
   const height = itemPreviewBoxHeight(layers.panelPreviewText.height);
   bg.clear();
   bg.roundRect(PANEL_PREVIEW_BOX.x, PANEL_PREVIEW_BOX.y, PANEL_PREVIEW_BOX.width, height, PANEL_PREVIEW_BOX.radius).fill({ color: 0x12121c, alpha: 0.94 });
@@ -1414,7 +1542,7 @@ export function hidePanelItemPreview(layers: RenderLayers): void {
   layers.panelPreviewBg.clear();
   layers.panelPreviewBg.visible = false;
   layers.panelPreviewIcon.visible = false;
-  layers.panelPreviewText.text = '';
+  setTextIfChanged(layers.panelPreviewText, '');
   layers.panelPreviewText.visible = false;
 }
 
@@ -1425,7 +1553,7 @@ export function drawLocationPreview(layers: RenderLayers, title: string, details
   layers.locationPreviewText.x = 664 + imageOffset;
   layers.locationPreviewText.y = 86;
   layers.locationPreviewText.style.wordWrapWidth = texture ? 144 : 256;
-  layers.locationPreviewText.text = `${title}\n\n${details}`;
+  setTextIfChanged(layers.locationPreviewText, `${title}\n\n${details}`);
   const height = locationPreviewBoxHeight(layers.locationPreviewText.height);
   bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).fill({ color: 0x12121c, alpha: 0.94 });
   bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).stroke({ width: 1.5, color: 0x5a6a8a });
@@ -1463,7 +1591,7 @@ export function hideLocationPreview(layers: RenderLayers): void {
   layers.locationPreviewImage.visible = false;
   layers.locationPreviewNpcPrimary.visible = false;
   layers.locationPreviewNpcSecondary.visible = false;
-  layers.locationPreviewText.text = '';
+  setTextIfChanged(layers.locationPreviewText, '');
   layers.locationPreviewText.visible = false;
 }
 
@@ -1476,7 +1604,7 @@ export function drawDialogue(layers: RenderLayers, lines: string[], texture?: Te
   layers.dialogue.style.breakWords = textStyle.breakWords;
   layers.dialogue.style.wordWrapWidth = textStyle.wordWrapWidth;
   layers.dialogue.style.lineHeight = textStyle.lineHeight;
-  layers.dialogue.text = `${lines.join('\n')}\n\n${DIALOGUE_CONTINUE_PROMPT}`;
+  setTextIfChanged(layers.dialogue, `${lines.join('\n')}\n\n${DIALOGUE_CONTINUE_PROMPT}`);
   const layout = dialogueBoxLayout(layers.dialogue.height, hasPortrait);
 
   g.clear();
@@ -1510,6 +1638,6 @@ export function drawPauseOverlay(layers: RenderLayers): void {
   layers.dialogue.x = 58;
   layers.dialogue.y = 314;
   layers.dialogue.style.wordWrapWidth = 560;
-  layers.dialogue.text = '已暂停\n\nEsc / P 继续\nTab 背包，Shift+M 农庄操作，Shift+Tab 地点目录';
+  setTextIfChanged(layers.dialogue, '已暂停\n\nEsc / P 继续\nTab 背包，Shift+M 农庄操作，Shift+Tab 地点目录');
   layers.dialogue.visible = true;
 }

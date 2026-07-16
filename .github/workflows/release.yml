@@ -48,6 +48,7 @@ jobs:
         env:
           PUBLIC_BUILD: 'true'
           VITE_BASE_PATH: ./
+          VITE_BUILD_REVISION: ${{ github.sha }}
       - run: pnpm --dir .public-tree governance:dist
       - run: cd .public-tree/dist && zip -r "../../AeonVale-v${{ inputs.version }}-web.zip" .
       - name: Create tag and release

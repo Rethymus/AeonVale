@@ -6,8 +6,14 @@ export const FIRST_SHIPPING_SETTLEMENT_FLAG = 'onboarding-first-shipping-settlem
 export const FIRST_MARKET_RESTOCK_FLAG = 'onboarding-first-market-restock';
 export const FIRST_SECOND_SOW_FLAG = 'onboarding-first-second-sow';
 export const FIRST_SECOND_WATER_FLAG = 'onboarding-first-second-water';
+export const TUTORIAL_ALCHEMY_KIT_FLAG = 'onboarding-tutorial-alchemy-kit';
+export const TUTORIAL_ALCHEMY_BREWED_FLAG = 'onboarding-tutorial-alchemy-brewed';
+export const TUTORIAL_TRIBULATION_COMPLETED_FLAG = 'onboarding-tutorial-tribulation-completed';
+export const TUTORIAL_TRIBULATION_REWARDED_FLAG = 'onboarding-tutorial-tribulation-rewarded';
+export const TUTORIAL_AFTERMATH_VIEWED_FLAG = 'onboarding-tutorial-aftermath-viewed';
 
 export type OnboardingObjectiveId = 'first-till' | 'first-sow' | 'first-water' | 'first-harvest' | 'first-ship' | 'first-sleep' | 'first-market-restock' | 'first-second-sow' | 'first-second-water' | 'first-loop-complete';
+export type PublicDemoObjectiveId = OnboardingObjectiveId | 'journey-alchemy' | 'journey-tribulation' | 'journey-aftermath' | 'journey-complete';
 
 function hasAnyTilledTile(state: GameState): boolean {
   return state.tiles.some(tile => tile.tilled);
@@ -40,4 +46,14 @@ export function getOnboardingObjectiveId(state: GameState): OnboardingObjectiveI
   if (hasMatureCrop(state)) return 'first-harvest';
   if (!hasWateredCropToday(state)) return 'first-water';
   return 'first-harvest';
+}
+
+/** 四段公开试玩目标；保留旧十步农务函数供日常引导继续使用。 */
+export function getPublicDemoObjectiveId(state: GameState): PublicDemoObjectiveId | null {
+  const flags = state.player.flags;
+  if (flags.has(TUTORIAL_AFTERMATH_VIEWED_FLAG)) return 'journey-complete';
+  if (state.tutorialTribulation?.phase === 'aftermath' || flags.has(TUTORIAL_TRIBULATION_COMPLETED_FLAG)) return 'journey-aftermath';
+  if (flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG)) return 'journey-tribulation';
+  if (flags.has(FIRST_HARVEST_FLAG)) return 'journey-alchemy';
+  return getOnboardingObjectiveId(state);
 }

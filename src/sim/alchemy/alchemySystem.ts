@@ -13,7 +13,8 @@ import { emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { RecipeDef } from '@content/defs';
 import type { PropertyVector } from '@sim/world/types';
-import { mutateItem, itemCount } from '@sim/world/player';
+import { inventoryCanFitRewards, mutateItem, itemCount } from '@sim/world/player';
+import { FIRST_HARVEST_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_ALCHEMY_KIT_FLAG } from '@sim/story/onboarding';
 import * as Pv from './property';
 import { summarizePairings } from './compatibility';
 
@@ -33,6 +34,16 @@ export interface BrewResult {
   hpDamageMilli: number;
   furnaceVec: PropertyVector;
 }
+
+export interface TutorialBrewAttemptResult {
+  attempted: boolean;
+  completed: boolean;
+  retryable: boolean;
+  brew: BrewResult | null;
+  reason?: 'harvest-required' | 'already-completed' | 'kit-unavailable' | 'recipe-unavailable' | 'inventory-full';
+}
+
+const TUTORIAL_WARD_RECIPE_ID = 'recipe.ward-pill';
 
 function multisetEqual(a: { herbId: string; qty: number }[], b: { herbId: string; qty: number }[]): boolean {
   if (a.length === 0 && b.length === 0) return false; // 空炉不匹配任何配方
@@ -104,15 +115,8 @@ export function resolveBrew(state: GameState, input: BrewInput, ctx: SimContext)
   };
 }
 
-/** 执行炼丹：消耗材料并应用结果。材料不足则不消耗、不出丹。返回结果。 */
-export function brewPills(state: GameState, input: BrewInput, ctx: SimContext): BrewResult {
-  for (const m of input.materials) {
-    if (itemCount(state.player, m.herbId) < m.qty) {
-      return { outcome: 'waste', quality: 0, poisonGainMilli: 0, hpDamageMilli: 0, furnaceVec: Pv.ZERO_PROPERTY };
-    }
-  }
-  const res = resolveBrew(state, input, ctx);
-  for (const m of input.materials) mutateItem(state.player, m.herbId, -m.qty);
+/** 应用已解析的炼丹结果；正式炼丹与教学成丹共享此副作用入口。 */
+function applyResolvedBrew(state: GameState, res: BrewResult, ctx: SimContext): void {
   const p = state.player;
   const poisonCap = ctx.params.pillPoison.cap * 1000;
   if (res.outcome === 'exploded') {
@@ -127,5 +131,67 @@ export function brewPills(state: GameState, input: BrewInput, ctx: SimContext): 
     p.pillPoison = Math.min(poisonCap, p.pillPoison + res.poisonGainMilli);
     emit(state, 'brew-waste', {});
   }
+}
+
+/** 执行炼丹：消耗材料并应用结果。材料不足则不消耗、不出丹。返回结果。 */
+export function brewPills(state: GameState, input: BrewInput, ctx: SimContext): BrewResult {
+  for (const m of input.materials) {
+    if (itemCount(state.player, m.herbId) < m.qty) {
+      return { outcome: 'waste', quality: 0, poisonGainMilli: 0, hpDamageMilli: 0, furnaceVec: Pv.ZERO_PROPERTY };
+    }
+  }
+  const res = resolveBrew(state, input, ctx);
+  for (const m of input.materials) mutateItem(state.player, m.herbId, -m.qty);
+  applyResolvedBrew(state, res, ctx);
   return res;
+}
+
+/** 首次收获后准备一份不可出售、不会进入背包的正式避雷丹药材包。 */
+export function prepareTutorialAlchemyKit(state: GameState, ctx: SimContext): boolean {
+  const flags = state.player.flags;
+  if (!flags.has(FIRST_HARVEST_FLAG)) return false;
+  if (flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG) || flags.has(TUTORIAL_ALCHEMY_KIT_FLAG)) return false;
+  const recipe = ctx.content.recipes.get(TUTORIAL_WARD_RECIPE_ID);
+  if (!recipe) return false;
+  flags.add(TUTORIAL_ALCHEMY_KIT_FLAG);
+  emit(state, 'tutorial-alchemy-kit-ready', {
+    recipeId: recipe.id,
+    inputs: recipe.inputs.map(input => ({ ...input }))
+  });
+  return true;
+}
+
+/** 用虚拟药包执行正式避雷丹方；失败保留药包，成功只产一枚并永久门禁。 */
+export function brewTutorialWardPill(state: GameState, avgHeatMilli: number, ctx: SimContext): TutorialBrewAttemptResult {
+  const flags = state.player.flags;
+  if (!flags.has(FIRST_HARVEST_FLAG)) return { attempted: false, completed: false, retryable: false, brew: null, reason: 'harvest-required' };
+  if (flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG)) return { attempted: false, completed: true, retryable: false, brew: null, reason: 'already-completed' };
+  if (!flags.has(TUTORIAL_ALCHEMY_KIT_FLAG)) return { attempted: false, completed: false, retryable: true, brew: null, reason: 'kit-unavailable' };
+  const recipe = ctx.content.recipes.get(TUTORIAL_WARD_RECIPE_ID);
+  if (!recipe) return { attempted: false, completed: false, retryable: false, brew: null, reason: 'recipe-unavailable' };
+
+  const heat = Math.max(0, Math.min(100_000, Math.round(Number.isFinite(avgHeatMilli) ? avgHeatMilli : 0)));
+  const input = { materials: recipe.inputs.map(entry => ({ herbId: entry.herbId, qty: entry.qty })), avgHeatMilli: heat };
+  const brew = resolveBrew(state, input, ctx);
+  const completesTutorial = (brew.outcome === 'pill' || brew.outcome === 'flawed') && brew.pillId === recipe.outputPillId;
+  if (completesTutorial && !inventoryCanFitRewards(state.player, [{ itemId: recipe.outputPillId, count: 1 }])) {
+    emit(state, 'tutorial-brew-rejected', { reason: 'inventory-full', recipeId: recipe.id });
+    return { attempted: false, completed: false, retryable: true, brew: null, reason: 'inventory-full' };
+  }
+
+  if (completesTutorial) {
+    applyResolvedBrew(state, brew, ctx);
+    flags.delete(TUTORIAL_ALCHEMY_KIT_FLAG);
+    flags.add(TUTORIAL_ALCHEMY_BREWED_FLAG);
+  }
+  emit(state, 'tutorial-brew-resolved', {
+    recipeId: recipe.id,
+    pillId: brew.pillId,
+    avgHeatMilli: heat,
+    outcome: brew.outcome,
+    quality: brew.quality,
+    completed: completesTutorial,
+    retryable: !completesTutorial
+  });
+  return { attempted: true, completed: completesTutorial, retryable: !completesTutorial, brew };
 }

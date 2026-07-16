@@ -75,6 +75,7 @@ jobs:
         env:
           PUBLIC_BUILD: 'true'
           VITE_BASE_PATH: /AeonVale/
+          VITE_BUILD_REVISION: ${{ github.sha }}
       - run: pnpm --dir .public-tree governance:dist
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
@@ -103,6 +104,11 @@ jobs:
       - run: pnpm --dir .public-tree governance:public
       - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:browser:public-tree
+        env:
+          PLAYWRIGHT_APP_DIR: .public-tree
+          PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
+          PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
+      - run: pnpm test:browser:public-tree:keypoint
         env:
           PLAYWRIGHT_APP_DIR: .public-tree
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/

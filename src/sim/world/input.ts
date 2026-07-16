@@ -47,6 +47,12 @@ export type PlayerAction =
   | { kind: 'claim-archive-milestone'; milestoneId: string }
   | { kind: 'participate-festival' }
   | { kind: 'train'; method: 'push-up' | 'sit-up' | 'squat' | 'long-run' }
+  | { kind: 'prepare-tutorial-alchemy-kit' }
+  | { kind: 'brew-tutorial-pill'; avgHeatMilli: number }
+  | { kind: 'eat-pill'; pillId: string }
+  | { kind: 'start-tutorial-tribulation' }
+  | { kind: 'resolve-tutorial-bolt' }
+  | { kind: 'acknowledge-tutorial-aftermath' }
   | { kind: 'invoke-tribulation' }
   | { kind: 'hunt-beast' } // 主动猎杀一只妖兽：耗体力并承受反击，成功后才有内丹
   | { kind: 'tame-guard-beast' } // 消耗内丹/灵石驯作灵田巡守兽，近似凡人农庄的看门犬

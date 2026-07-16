@@ -4,16 +4,18 @@
  * 启动：pnpm dev（当前以浏览器作为开发/测试/作品展示入口；游戏核心仍按离线单机、多端适配方向推进）。全程中文 UI（C8）。
  */
 import { Application, Assets, Texture } from 'pixi.js';
-import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
+import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, getPublicDemoObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
 import { saveGame, deserializeState } from '@sim/serialize';
 import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { t } from '@content/i18n';
 import manifestJson from '../../assets/manifest.json';
 import { itemCount } from '@sim/world/player';
-import { createLayers, drawWorld, setToast, setHotbar, triggerTribFlash, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, spawnBurst, updateParticles, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, drawTodayBriefing, hideTodayBriefing, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
+import { createLayers, drawWorld, setToast, setHotbar, setTextIfChanged, triggerTribFlash, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, spawnBurst, updateParticles, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, drawTodayBriefing, hideTodayBriefing, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
 import { GUARD_BEAST_ASSET_IDS } from '@render/guardBeastPreview';
 import { nextPendingBeat, markSeen, type NarrativeBeat } from '@content/narrative';
 import { createFurnaceLayer, drawFurnace } from '@render/furnacePanel';
+import { createRenderScheduler, type RenderScheduler } from '@render/renderScheduler';
+import { computeViewportLayout } from '@render/viewportLayout';
 import { runTribulation } from '@sim/tribulation/tribulationSystem';
 import { readyForBreakthrough, breakthrough, stageQiCap } from '@sim/progression/progression';
 import type { Direction } from '@sim/world/types';
@@ -53,6 +55,16 @@ import { farmActionMenuPreview, farmActionMenuToastPresentation, npcActionMenuPr
 import { activeSpecialOrderPanelPreview, archiveDonationFailureToastPresentation, archiveDonationToastPresentation, archiveEmptyToastPresentation, archiveMilestoneFailureToastPresentation, archiveMilestoneToastPresentation, commissionBoardEmptyToastPresentation, commissionCompleteToastPresentation, commissionIncompleteToastPresentation, commissionToastPresentation, dailyCommissionPanelPreview, dailySpecialOrderPanelPreview, mainlineQuestClaimFailureToastPresentation, mainlineQuestClaimToastPresentation, mainlineQuestPanelPreview, mainlineQuestUnavailableToastPresentation, ruinChapterClaimFailureToastPresentation, ruinChapterClaimToastPresentation, ruinChapterPanelPreview, ruinChapterUnavailableToastPresentation, specialOrderAcceptFailureToastPresentation, specialOrderAcceptToastPresentation, specialOrderClaimFailureToastPresentation, specialOrderClaimToastPresentation, specialOrderPendingToastPresentation, specialOrderProgressToastPresentation, specialOrderSubmitFailureToastPresentation, stayingWorldIncidentPanelPreview, stayingWorldIncidentResolveFailureToastPresentation, stayingWorldIncidentResolveToastPresentation } from './commissionPreview';
 import { resolvePreviewTexture } from './previewTexture';
 import { buildEncounterDialogueBeat, buildRelationshipDialogueBeat, type DialogueBeatWithAsset } from './dialoguePreview';
+import { buildJourneyGuide } from './journeyGuide';
+import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
+import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState } from './appFlowMachine';
+import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
+import { gameCommandFromKeyboard, type GameCommand } from './semanticInputRouter';
+import { createPublicDemoPanelsController, type PublicDemoPanelAction, type PublicDemoPanelsController } from './publicDemoPanelsView';
+import { buildPublicDemoAftermathView, buildPublicDemoAlchemyView, buildPublicDemoTribulationView } from './publicDemoPanels';
+import { deriveSemanticGameState, interactionPanelSemanticLabel, type SemanticWorldAttention } from './semanticGameState';
+import { decodeStoredSave, deriveSaveHealthPresentation, saveHealthAfterClear, saveHealthAfterLoad, saveHealthAfterWrite, type SaveHealth } from './saveHealth';
+import { DEFAULT_RUNTIME_SETTINGS, RUNTIME_SETTINGS_STORAGE_KEY, decodeRuntimeSettings, runtimeSettingsPersistenceText, serializeRuntimeSettings, type RuntimeSettings } from './runtimeSettings';
 
 type DirectFarmActionKind = Exclude<FarmActionFeedbackKind, 'sow' | 'fertilize'>;
 
@@ -98,7 +110,7 @@ async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets>
   const allNpcAssetIds = runtimeNpcAssetIds(store);
   const hotbarIconIds = [...new Set(HOTBAR_SLOTS.map(slot => hotbarSlotAssetId(slot)).filter((id): id is string => Boolean(id)))];
 
-  const ids = ['sprite.player', 'cg.ending-ascension', 'cg.ending-lifespan-death', 'cg.ending-poison-death', ...GUARD_BEAST_ASSET_IDS, ...allNpcAssetIds, ...facilityIds, ...hotbarIconIds, ...locationIds, ...tileIds, ...logoIds, ...iconIds] as const;
+  const ids = ['sprite.player', ...GUARD_BEAST_ASSET_IDS, ...allNpcAssetIds, ...facilityIds, ...hotbarIconIds, ...locationIds, ...tileIds, ...logoIds, ...iconIds] as const;
 
   const loaded = await Promise.all(
     ids.map(async id => {
@@ -119,11 +131,6 @@ async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets>
     cropHerbs: {},
     cropSeeds: {},
     facilities: Object.fromEntries(facilityIds.map(id => [id.slice('facility.'.length), textureById.get(id)])),
-    endingCg: {
-      ascension: textureById.get('cg.ending-ascension'),
-      'lifespan-death': textureById.get('cg.ending-lifespan-death'),
-      'poison-death': textureById.get('cg.ending-poison-death')
-    },
     locations: locationTextures,
     logos: Object.fromEntries(logoIds.map(id => [id, textureById.get(id)])),
     hotbarIcons: Object.fromEntries(hotbarIconIds.map(id => [id, textureById.get(id)])),
@@ -138,39 +145,76 @@ async function main(): Promise<void> {
   const assetStore = new AssetStore(validateManifest(manifestJson));
   const SEED = 20260710;
   const SAVE_KEY = 'aeonvale-save-v1';
+  const BUILD_REVISION = import.meta.env.VITE_BUILD_REVISION ?? 'dev';
+  const BUILD_LABEL = BUILD_REVISION === 'dev' ? '版本 0.1.0 · 本地试玩' : `版本 0.1.0 · ${BUILD_REVISION}`;
+  let requestRender: (() => void) | null = null;
+  let renderScheduler: RenderScheduler | null = null;
+  let publicDemoPanels: PublicDemoPanelsController | null = null;
 
-  const loadSave = (): GameState | null => {
+  const loadSave = (): { readonly state: GameState | null; readonly health: SaveHealth } => {
+    let raw: string | null;
     try {
-      const raw = localStorage.getItem(SAVE_KEY);
-      if (!raw) return null;
-      const sg = JSON.parse(raw) as { schemaHash?: string; state?: unknown };
-      if (!isSchemaHashCompatible(reg, sg.schemaHash) || !sg.state) return null;
-      return deserializeState(sg.state) as GameState;
+      raw = localStorage.getItem(SAVE_KEY);
     } catch {
-      return null;
+      return { state: null, health: saveHealthAfterLoad('storage-unavailable') };
     }
+
+    const decoded = decodeStoredSave<GameState>(
+      raw,
+      schemaHash => isSchemaHashCompatible(reg, schemaHash),
+      savedState => deserializeState(savedState) as GameState
+    );
+    return { state: decoded.state, health: saveHealthAfterLoad(decoded.status) };
   };
-  const saveState = (s: GameState): void => {
+  const saveState = (s: GameState): boolean => {
+    let succeeded = false;
     try {
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveGame(s, reg.schemaHash)));
+      succeeded = true;
     } catch {
       /* 存储满/禁用 */
     }
+    saveHealth = saveHealthAfterWrite(saveHealth, succeeded);
+    updateSaveHealthUi();
+    enterEndingIfNeeded();
+    publicDemoPanels?.render(s, ctx);
+    requestRender?.();
+    return succeeded;
   };
-  const clearSave = (): void => {
+  const clearSave = (): boolean => {
+    let succeeded = false;
     try {
       localStorage.removeItem(SAVE_KEY);
+      succeeded = true;
     } catch {
       /* ignore */
     }
+    saveHealth = saveHealthAfterClear(succeeded);
+    updateSaveHealthUi();
+    return succeeded;
   };
 
+  const loadRuntimeSettings = (): { readonly settings: RuntimeSettings; readonly persistenceAvailable: boolean } => {
+    try {
+      return { settings: decodeRuntimeSettings(localStorage.getItem(RUNTIME_SETTINGS_STORAGE_KEY)), persistenceAvailable: true };
+    } catch {
+      return { settings: DEFAULT_RUNTIME_SETTINGS, persistenceAvailable: false };
+    }
+  };
+
+  const createFreshState = (): GameState => {
+    const fresh = createWorld({ seed: SEED, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    applyMvpStarterKit(fresh, DEFAULT_BALANCE);
+    return fresh;
+  };
   const loaded = loadSave();
-  const state: GameState = loaded ?? createWorld({ seed: SEED, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
-  const ctx: SimContext = createSimContextFromState(state, reg, DEFAULT_BALANCE);
-  if (!loaded) {
-    applyMvpStarterKit(state, DEFAULT_BALANCE);
-  }
+  const loadedRuntimeSettings = loadRuntimeSettings();
+  let saveHealth = loaded.health;
+  let runtimeSettings = loadedRuntimeSettings.settings;
+  let runtimeSettingsPersistenceAvailable = loadedRuntimeSettings.persistenceAvailable;
+  let state: GameState = loaded.state ?? createFreshState();
+  let ctx: SimContext = createSimContextFromState(state, reg, DEFAULT_BALANCE);
+  document.documentElement.dataset.reducedMotion = String(runtimeSettings.reducedMotion);
 
   await preloadUiFont(assetStore);
 
@@ -184,6 +228,10 @@ async function main(): Promise<void> {
   });
   const mount = document.querySelector('#app');
   (mount ?? document.body).appendChild(app.canvas);
+  app.canvas.id = 'game-canvas';
+  app.canvas.tabIndex = 0;
+  app.canvas.setAttribute('aria-label', '永恒山谷游戏画面');
+  app.canvas.setAttribute('aria-describedby', 'game-instructions game-surface game-objective game-actions');
   const renderAssets = await loadRenderAssets(assetStore);
   const proceduralCropTextures = buildProceduralCropTextures(reg);
   renderAssets.cropHerbs = proceduralCropTextures.herbs;
@@ -192,6 +240,7 @@ async function main(): Promise<void> {
   const layers: RenderLayers = createLayers(app);
   const furnace = createFurnaceLayer(app);
   const audio = new AudioEngine();
+  audio.setMasterVolume(runtimeSettings.masterVolume);
   let furnaceHeat = 50; // 玩家炉温 0..100
 
   const seasonShort: Record<Season, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
@@ -222,7 +271,213 @@ async function main(): Promise<void> {
   let recipeIdx = 0;
   let dialogueBeat: DialogueBeatWithAsset | null = null;
   let paused = false;
-  const npcNameToId = new Map(getNpcList(state).map(npc => [npc.displayName, npc.id] as const));
+  let responsiveShell: ResponsiveShellController | null = null;
+  let flowView: AppFlowViewController | null = null;
+  const runtimeSettingsAbortController = new AbortController();
+  let npcNameToId = new Map(getNpcList(state).map(npc => [npc.displayName, npc.id] as const));
+  const prologueBeatIds = ['awaken', 'spirit-test', 'intro'] as const;
+
+  function setElementText(id: string, text: string): void {
+    const element = document.querySelector<HTMLElement>(`#${id}`);
+    if (element && element.textContent !== text) element.textContent = text;
+  }
+
+  function updateSaveHealthUi(): void {
+    const presentation = deriveSaveHealthPresentation(saveHealth);
+    flowView?.setContinueAvailable(presentation.continueAvailable);
+    setElementText('flow-settings-save-status', presentation.settingsStatus);
+    setElementText('flow-pause-save-status', presentation.pauseStatus);
+    setElementText('orientation-save-status', `农田、丹炉与天劫需要更宽的视野。${presentation.portraitStatus}`);
+
+    const titleNotice = document.querySelector<HTMLElement>('#flow-title-save-notice');
+    if (titleNotice) {
+      const notice = presentation.titleNotice;
+      titleNotice.hidden = notice === null;
+      if (titleNotice.textContent !== (notice ?? '')) titleNotice.textContent = notice ?? '';
+    }
+  }
+
+  function updateRuntimeSettingsUi(): void {
+    audio.setMasterVolume(runtimeSettings.masterVolume);
+    document.documentElement.dataset.reducedMotion = String(runtimeSettings.reducedMotion);
+
+    const volume = document.querySelector<HTMLInputElement>('#flow-settings-master-volume');
+    const output = document.querySelector<HTMLOutputElement>('#flow-settings-volume-output');
+    const reducedMotion = document.querySelector<HTMLInputElement>('#flow-settings-reduced-motion');
+    const volumeLabel = `${audio.getMasterVolume()}%`;
+    if (volume) {
+      volume.value = String(audio.getMasterVolume());
+      volume.setAttribute('aria-valuetext', volumeLabel);
+    }
+    if (output && output.textContent !== volumeLabel) output.textContent = volumeLabel;
+    if (reducedMotion) reducedMotion.checked = runtimeSettings.reducedMotion;
+    setElementText('flow-settings-runtime-persistence-status', runtimeSettingsPersistenceText(runtimeSettingsPersistenceAvailable));
+  }
+
+  function persistRuntimeSettings(): void {
+    try {
+      localStorage.setItem(RUNTIME_SETTINGS_STORAGE_KEY, serializeRuntimeSettings(runtimeSettings));
+      runtimeSettingsPersistenceAvailable = true;
+    } catch {
+      runtimeSettingsPersistenceAvailable = false;
+    }
+    setElementText('flow-settings-runtime-persistence-status', runtimeSettingsPersistenceText(runtimeSettingsPersistenceAvailable));
+  }
+
+  function bindRuntimeSettingsControls(): void {
+    const volume = document.querySelector<HTMLInputElement>('#flow-settings-master-volume');
+    const reducedMotion = document.querySelector<HTMLInputElement>('#flow-settings-reduced-motion');
+    const signal = runtimeSettingsAbortController.signal;
+
+    volume?.addEventListener(
+      'input',
+      () => {
+        audio.setMasterVolume(Number(volume.value));
+        runtimeSettings = { ...runtimeSettings, masterVolume: audio.getMasterVolume() };
+        updateRuntimeSettingsUi();
+        persistRuntimeSettings();
+      },
+      { signal }
+    );
+    reducedMotion?.addEventListener(
+      'change',
+      () => {
+        runtimeSettings = { ...runtimeSettings, reducedMotion: reducedMotion.checked };
+        updateRuntimeSettingsUi();
+        persistRuntimeSettings();
+      },
+      { signal }
+    );
+    updateRuntimeSettingsUi();
+  }
+
+  bindRuntimeSettingsControls();
+
+  function enterEndingIfNeeded(): boolean {
+    if (!state.gameOver || !flowView) return false;
+    if (flowView.getState().screen === 'ending') return true;
+    if (flowView.getState().overlay !== null) flowView.dispatch({ type: 'close-overlay' });
+    flowView.dispatch({ type: 'show-ending' });
+    return flowView.getState().screen === 'ending';
+  }
+
+  function clearLegacyAttentionSurfaces(): void {
+    locationSelectionActive = false;
+    interactionPanel = { kind: 'none' };
+    layers.showInv = false;
+    cultivationPanelVisible = false;
+    paused = false;
+    furnace.visible = false;
+    layers.cultivation.visible = false;
+    hideDialogue(layers);
+    hidePanelItemPreview(layers);
+    hideLocationPreview(layers);
+    hideTodayBriefing(layers);
+  }
+
+  function resetRuntimeState(nextState: GameState): void {
+    state = nextState;
+    ctx = createSimContextFromState(state, reg, DEFAULT_BALANCE);
+    npcNameToId = new Map(getNpcList(state).map(npc => [npc.displayName, npc.id] as const));
+    furnaceHeat = 50;
+    layers.furnaceHeat = furnaceHeat;
+    hotbarIdx = 0;
+    tradeIdx = 0;
+    shopIdx = 0;
+    npcIdx = 0;
+    shipIdx = 0;
+    qualityShipIdx = 0;
+    storageDepositIdx = 0;
+    storageWithdrawIdx = 0;
+    processingIdx = 0;
+    facilityCollectIdx = 0;
+    farmActionIdx = 0;
+    locationIdx = 0;
+    locationServiceIdx = 0;
+    locationEncounterIdx = 0;
+    npcActionIdx = 0;
+    facilityBuildIdx = 0;
+    recipeIdx = 0;
+    dialogueBeat = null;
+    clearLegacyAttentionSurfaces();
+    refreshHotbarHint();
+    refreshHelpHint();
+    publicDemoPanels?.render(state, ctx);
+  }
+
+  function flowAllowsWorldInput(): boolean {
+    return flowView == null || flowView.getPresentation().surface === 'world';
+  }
+
+  function setFlowSlotText(slot: string, text: string): void {
+    const target = document.querySelector(`[data-app-slot="${slot}"]`);
+    if (target && target.textContent !== text) target.textContent = text;
+  }
+
+  function updateFlowSurfaceContent(flow: AppFlowState): void {
+    if (flow.overlay === 'inventory') {
+      const entries = Object.values(state.player.inventory)
+        .filter(entry => entry.count > 0)
+        .map(entry => `${reg.items.get(entry.itemId)?.displayName ?? entry.itemId} ×${entry.count}`);
+      setFlowSlotText('inventory', entries.length > 0 ? entries.join('\n') : '背包还是空的。先从灵田收获第一批材料。');
+      return;
+    }
+    if (flow.overlay === 'map') {
+      const locations = locationSummary(state);
+      setFlowSlotText('map', locations.length > 0 ? locations.join('\n') : '山谷尚未显露新的去处。');
+      return;
+    }
+    if (flow.overlay === 'cultivation') {
+      setFlowSlotText('cultivation', renderCultivationOverview(state, ctx));
+      return;
+    }
+    if (flow.overlay === 'pause') {
+      const worldNavigationAvailable = flow.screen === 'world';
+      setFlowSlotText('pause', worldNavigationAvailable ? '选择下方页面，或继续返回农庄。关闭菜单后会恢复当前焦点。' : '教学天劫仍在等待本轮决定。此时只能调整设置，或继续返回天劫页面。');
+      for (const button of Array.from(document.querySelectorAll<HTMLButtonElement>('[data-app-surface="pause"] [data-world-only-command]'))) {
+        button.disabled = !worldNavigationAvailable;
+        button.setAttribute('aria-disabled', String(!worldNavigationAvailable));
+      }
+      return;
+    }
+    if (flow.screen === 'ending') {
+      setFlowSlotText('ending', `${t('ending.' + (state.ending ?? ''))}\n第 ${state.day} 日 · ${state.year} 年\n${deriveSaveHealthPresentation(saveHealth).endingStatus}`);
+    }
+  }
+
+  function handleFlowStateChange(next: AppFlowState, _previous: AppFlowState, event: AppFlowEvent): void {
+    if (event.type === 'continue-game' && enterEndingIfNeeded()) return;
+    if (event.type === 'start-new-game') {
+      clearSave();
+      resetRuntimeState(createFreshState());
+    } else if (event.type === 'finish-prologue' || event.type === 'skip-prologue') {
+      for (const beatId of prologueBeatIds) markSeen(state, beatId);
+      dialogueBeat = null;
+      saveState(state);
+    } else if (event.type === 'open-alchemy') {
+      applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
+      saveState(state);
+    } else if (event.type === 'continue-aftermath') {
+      applyAction(state, { kind: 'acknowledge-tutorial-aftermath' }, ctx);
+      saveState(state);
+    }
+
+    clearLegacyAttentionSurfaces();
+    updateFlowSurfaceContent(next);
+    publicDemoPanels?.render(state, ctx);
+    if (event.type === 'open-alchemy') flowView?.refocusCurrentSurface();
+    requestRender?.();
+    refreshAppPresentation();
+
+    if (event.type === 'continue-game') {
+      if (state.tutorialTribulation.phase === 'active') {
+        flowView?.dispatch({ type: 'start-tribulation' });
+      } else if (state.tutorialTribulation.phase === 'aftermath') {
+        flowView?.dispatch({ type: 'start-tribulation' });
+        flowView?.dispatch({ type: 'finish-tribulation' });
+      }
+    }
+  }
 
   function openDialogueBeat(beat: NarrativeBeat, assetId?: string): void {
     dialogueBeat = assetId ? { ...beat, assetId } : { ...beat };
@@ -242,6 +497,7 @@ async function main(): Promise<void> {
 
   function toast(msg: string, assetId?: string): void {
     setToast(layers, msg, resolvePreviewTexture(renderAssets, assetId));
+    requestRender?.();
   }
 
   function actionLabel(kind: DirectFarmActionKind): string {
@@ -273,7 +529,7 @@ async function main(): Promise<void> {
     const blockedReason = farmActionBlockedReason(state, ctx, kind, at);
     const before = snapshotFarmTiles(state);
     const eventStart = state.events.length;
-    const objectiveBefore = getOnboardingObjectiveId(state);
+    const objectiveBefore = getPublicDemoObjectiveId(state);
     applyAction(state, { kind, at }, ctx);
     const outcome = deriveFarmActionOutcome(kind, before, snapshotFarmTiles(state));
     const actionEvents = state.events.slice(eventStart);
@@ -290,10 +546,9 @@ async function main(): Promise<void> {
     else if (kind === 'water') audio.playSfx('water'); // G4: 浇水音效
     if (kind === 'harvest') {
       audio.playSfx('harvest');
-      const objectiveAfter = getOnboardingObjectiveId(state);
-      if (objectiveBefore === 'first-harvest' && objectiveAfter === 'first-ship') {
-        const nextStep = onboardingObjectiveAdvanceToast(objectiveAfter);
-        const milestoneToast = firstHarvestMilestoneToastPresentation(actionEvents, reg, nextStep ?? '下一步：把第一株灵草投进出货箱。');
+      const objectiveAfter = getPublicDemoObjectiveId(state);
+      if (objectiveBefore === 'first-harvest' && objectiveAfter === 'journey-alchemy') {
+        const milestoneToast = firstHarvestMilestoneToastPresentation(actionEvents, reg, '下一步：打开丹炉，把教学药包炼成首枚避雷丹。');
         if (milestoneToast) {
           toast(milestoneToast.message, milestoneToast.assetId);
           return true;
@@ -368,22 +623,86 @@ async function main(): Promise<void> {
       case 'greenhouse':
         return t('ui.help.greenhouse');
       default:
-        return t('ui.help.default');
+        return '方向移动 · 空格/E 行动 · M 农庄 · I 背包 · L 地点 · U 丹炉 · P 暂停';
     }
   }
 
   function currentOnboardingHelpText(): string {
-    const objectiveId = getOnboardingObjectiveId(state);
-    return onboardingHelpText(objectiveId);
+    const objectiveId = getPublicDemoObjectiveId(state);
+    if (objectiveId?.startsWith('journey-')) {
+      const guide = buildJourneyGuide(objectiveId);
+      return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n回报：完成当前阶段会推进灵草、炼丹、引劫与战后成长的四段闭环。\n操作：${guide.cta}。`;
+    }
+    return onboardingHelpText(getOnboardingObjectiveId(state));
+  }
+
+  function currentSemanticWorldAttention(): SemanticWorldAttention {
+    if (dialogueBeat) return { panel: '对话', objective: '阅读当前对话', actions: currentHelpText() };
+    if (locationSelectionActive) return { panel: '地点目录', objective: '选择地点与服务', actions: currentHelpText() };
+    if (layers.showInv) return { panel: '背包', objective: '查看随身物品', actions: currentHelpText() };
+    if (cultivationPanelVisible) return { panel: '修行', objective: '查看体魄与备劫状态', actions: currentHelpText() };
+    const panel = interactionPanelSemanticLabel(interactionPanel) ?? '交互面板';
+    return { panel, objective: `使用${panel}`, actions: currentHelpText() };
+  }
+
+  function currentJourneyBriefing(): { title: string; body: string; assetId?: string } {
+    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
+    const legacy = buildTodayBriefing(state, ctx, currentOnboardingHelpText());
+    return {
+      title: guide.progressLabel,
+      body: `${guide.currentAction}\n${guide.motivation}\n行动：${guide.cta}`,
+      assetId: legacy.assetId
+    };
   }
 
   function refreshHelpHint(): void {
-    layers.help.text = currentHelpText();
+    setTextIfChanged(layers.help, currentHelpText());
+  }
+
+  function syncAppPresentation(): void {
+    flowView?.setWorldAttention({
+      dialogueActive: dialogueBeat !== null,
+      panelActive: interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible,
+      locationActive: locationSelectionActive
+    });
+    const flow = flowView?.getState() ?? null;
+    const presentation = flowView?.getPresentation() ?? null;
+    const commandBar = document.querySelector<HTMLElement>('#world-command-bar');
+    if (commandBar) commandBar.hidden = presentation?.mode !== 'world';
+
+    const semanticWorldActive = presentation?.surface === 'world';
+    const semanticJourney = semanticWorldActive && presentation.mode === 'world' ? buildJourneyGuide(getPublicDemoObjectiveId(state)) : undefined;
+    const alchemyHeat = presentation?.surface === 'alchemy' ? Number(document.querySelector<HTMLInputElement>('#flow-alchemy-heat')?.value ?? 47) : 47;
+    responsiveShell?.updateSemanticState(
+      deriveSemanticGameState({
+        presentation,
+        worldStatus: `第 ${state.day} 日，${seasonShort[state.season]}季第 ${state.seasonDay} 日。气血 ${Math.round(state.player.hp / 1000)}，体力 ${Math.round(state.player.stamina / 1000)}。`,
+        announcement: String(layers.toast.text),
+        journey: semanticJourney,
+        worldAttention: semanticWorldActive && presentation.mode !== 'world' ? currentSemanticWorldAttention() : undefined,
+        pauseWorldNavigationAvailable: flow?.screen === 'world',
+        alchemy: presentation?.surface === 'alchemy' ? buildPublicDemoAlchemyView(state, ctx, alchemyHeat) : undefined,
+        tribulation: presentation?.surface === 'tribulation' ? buildPublicDemoTribulationView(state) : undefined,
+        aftermath: presentation?.surface === 'aftermath' ? buildPublicDemoAftermathView(state) : undefined,
+        saveHealth
+      })
+    );
   }
 
   function publishDebugSnapshot(): void {
     const target = window as typeof window & {
       __AEON_DEBUG__?: {
+        debugSchemaVersion: number;
+        buildRevision: string;
+        flowScreen: string;
+        flowOverlay: string | null;
+        uiMode: string;
+        appSurface: string;
+        renderFrameCount: number;
+        viewportProfile: string;
+        canvasBounds: { x: number; y: number; width: number; height: number } | null;
+        worldBounds: { x: number; y: number; width: number; height: number } | null;
+        objectiveRailBounds: { x: number; y: number; width: number; height: number } | null;
         hotbarIdx: number;
         hotbarSlotKind: HotbarSlotKind;
         hotbarSeedId: string | null;
@@ -409,6 +728,14 @@ async function main(): Promise<void> {
         playerX: number;
         playerY: number;
         playerFacing: Direction;
+        tutorialTribulationPhase: string;
+        tutorialBoltIndex: number;
+        tutorialBoltCount: number;
+        tutorialWarnedTileId: number | null;
+        tutorialPillCount: number;
+        tutorialWardMitigation: number;
+        tutorialOutcome: string | null;
+        tutorialRewardMilli: number;
         frontTileX: number;
         frontTileY: number;
         frontTileTilled: boolean;
@@ -437,6 +764,7 @@ async function main(): Promise<void> {
         shippingBinItemCount: number;
       };
       __AEON_TEST__?: {
+        configureSowKeypoint: () => boolean;
         matureFrontCrop: () => boolean;
         waterFrontCrop: () => boolean;
         buyMosslingSeed: () => boolean;
@@ -450,13 +778,31 @@ async function main(): Promise<void> {
     const services = selectedLocation ? getLocationServiceOptions(state, selectedLocation.id) : [];
     const selectedService = services.length > 0 ? (services[locationServiceIdx % services.length] ?? null) : null;
     const helpText = currentOnboardingHelpText();
-    const briefing = state.gameOver ? null : buildTodayBriefing(state, ctx, helpText);
+    const briefing = state.gameOver ? null : currentJourneyBriefing();
     const ft = frontTile();
     const front = tileAt(state, ft.x, ft.y);
     const frontCrop = front?.cropId != null ? (state.crops.get(front.cropId) ?? state.crops.get(front.id) ?? null) : null;
     const shippingChoices = interactionPanel.kind === 'shipping' ? (interactionPanel.mode === 'normal' ? normalShipChoices() : qualityShipChoices()) : [];
     const selectedShippingChoice = interactionPanel.kind === 'shipping' ? (interactionPanel.mode === 'normal' ? (shippingChoices[normalizeSelection(shipIdx, shippingChoices.length)] ?? null) : (shippingChoices[normalizeSelection(qualityShipIdx, shippingChoices.length)] ?? null)) : null;
+    const flow = flowView?.getState() ?? null;
+    const presentation = flowView?.getPresentation() ?? null;
+    const viewportLayout = computeViewportLayout({
+      width: Math.max(1, window.innerWidth),
+      height: Math.max(1, window.innerHeight),
+      touchCapable: navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches
+    });
     target.__AEON_DEBUG__ = {
+      debugSchemaVersion: 2,
+      buildRevision: BUILD_REVISION,
+      flowScreen: flow?.screen ?? 'boot',
+      flowOverlay: flow?.overlay ?? null,
+      uiMode: presentation?.mode ?? 'loading',
+      appSurface: presentation?.surface ?? 'loading',
+      renderFrameCount: renderScheduler?.snapshot().frameCount ?? 0,
+      viewportProfile: viewportLayout.profile,
+      canvasBounds: viewportLayout.canvas,
+      worldBounds: viewportLayout.regions?.world ?? null,
+      objectiveRailBounds: viewportLayout.regions?.objectiveRail ?? null,
       hotbarIdx,
       hotbarSlotKind: hotbarSlot.kind,
       hotbarSeedId: hotbarSlot.kind === 'seed' ? (hotbarSlot.seedId ?? null) : null,
@@ -469,9 +815,9 @@ async function main(): Promise<void> {
       selectedLocationId: selectedLocation?.id ?? null,
       selectedLocationServiceCommand: selectedService?.command ?? null,
       postAscensionMode: state.postAscension.mode,
-      paused,
-      inventoryVisible: layers.showInv,
-      cultivationPanelVisible,
+      paused: paused || flow?.overlay === 'pause',
+      inventoryVisible: layers.showInv || flow?.overlay === 'inventory',
+      cultivationPanelVisible: cultivationPanelVisible || flow?.overlay === 'cultivation',
       shopIdx,
       tradeIdx,
       day: state.day,
@@ -482,6 +828,14 @@ async function main(): Promise<void> {
       playerX: state.player.position.x,
       playerY: state.player.position.y,
       playerFacing: state.player.facing,
+      tutorialTribulationPhase: state.tutorialTribulation.phase,
+      tutorialBoltIndex: state.tutorialTribulation.boltIndex,
+      tutorialBoltCount: TUTORIAL_TRIBULATION_BOLT_COUNT,
+      tutorialWarnedTileId: state.tutorialTribulation.warnedTileId,
+      tutorialPillCount: itemCount(state.player, 'pill.ward-basic'),
+      tutorialWardMitigation: state.player.wardMitigation,
+      tutorialOutcome: state.tutorialTribulation.outcome,
+      tutorialRewardMilli: state.tutorialTribulation.rewardMilli,
       frontTileX: ft.x,
       frontTileY: ft.y,
       frontTileTilled: front?.tilled ?? false,
@@ -490,7 +844,7 @@ async function main(): Promise<void> {
       frontTileCropGrowth: frontCrop?.growth ?? 0,
       frontTileWateredToday: front?.wateredToday ?? false,
       frontTileMoisture: front?.moisture ?? 0,
-      onboardingObjectiveId: getOnboardingObjectiveId(state),
+      onboardingObjectiveId: getPublicDemoObjectiveId(state),
       helpText,
       renderedHelpText: String(layers.help.text),
       dialogueBackdropVisible: layers.dialogueBg.visible,
@@ -511,10 +865,16 @@ async function main(): Promise<void> {
     };
   }
 
+  function refreshAppPresentation(): void {
+    syncAppPresentation();
+    publishDebugSnapshot();
+  }
+
   function installPlaywrightTestHooks(): void {
     if (import.meta.env.VITE_PRESERVE_DRAWING_BUFFER !== 'true') return;
     const target = window as typeof window & {
       __AEON_TEST__?: {
+        configureSowKeypoint: () => boolean;
         matureFrontCrop: () => boolean;
         waterFrontCrop: () => boolean;
         buyMosslingSeed: () => boolean;
@@ -523,6 +883,37 @@ async function main(): Promise<void> {
       };
     };
     target.__AEON_TEST__ = {
+      configureSowKeypoint: () => {
+        const targetTile = state.tiles.find(tile => tile.y > 0 && tile.blockType === 'none' && tile.soilType !== 'water' && tile.soilType !== 'rock' && tile.soilType !== 'metal-ore') ?? null;
+        if (!targetTile) return false;
+
+        for (const tile of state.tiles) {
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.cropId = null;
+          tile.tilled = false;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+        }
+
+        targetTile.tilled = true;
+        for (const beatId of [...prologueBeatIds, 'first-till']) markSeen(state, beatId);
+        state.player.position = { x: targetTile.x, y: targetTile.y - 1 };
+        state.player.facing = 'down';
+        state.player.inventory['seed.mossling'] = { itemId: 'seed.mossling', count: Math.max(itemCount(state.player, 'seed.mossling'), 1) };
+        hotbarIdx = 0;
+        interactionPanel = { kind: 'none' };
+        locationSelectionActive = false;
+        cultivationPanelVisible = false;
+        layers.cultivation.visible = false;
+        layers.showInv = false;
+        paused = false;
+        dialogueBeat = null;
+        hideDialogue(layers);
+        saveState(state);
+        refreshAppPresentation();
+        return getPublicDemoObjectiveId(state) === 'first-sow' && tileAt(state, targetTile.x, targetTile.y)?.cropId == null;
+      },
       matureFrontCrop: () => {
         const ft = frontTile();
         let tile = tileAt(state, ft.x, ft.y);
@@ -531,7 +922,7 @@ async function main(): Promise<void> {
           const crop = state.crops.get(tile.cropId) ?? state.crops.get(tile.id);
           if (crop?.stage === 'mature') {
             saveState(state);
-            publishDebugSnapshot();
+            refreshAppPresentation();
             return true;
           }
           if (!tile.wateredToday) applyAction(state, { kind: 'water', at: ft }, ctx);
@@ -540,7 +931,7 @@ async function main(): Promise<void> {
           if (!tile?.cropId) break;
         }
         saveState(state);
-        publishDebugSnapshot();
+        refreshAppPresentation();
         return false;
       },
       waterFrontCrop: () => {
@@ -555,19 +946,19 @@ async function main(): Promise<void> {
         const after = tileAt(state, ft.x, ft.y);
         const watered = after?.cropId != null && ((after.wateredToday && !wasWatered) || after.moisture > previousMoisture);
         saveState(state);
-        publishDebugSnapshot();
+        refreshAppPresentation();
         return watered;
       },
       buyMosslingSeed: () => {
         const result = buyShopItem(state, 'seed.mossling', 1);
         if (!result.ok) {
-          publishDebugSnapshot();
+          refreshAppPresentation();
           return false;
         }
         interactionPanel = { kind: 'none' };
         focusOwnedSeedHotbar('seed.mossling');
         saveState(state);
-        publishDebugSnapshot();
+        refreshAppPresentation();
         return true;
       },
       closePanels: () => {
@@ -577,13 +968,13 @@ async function main(): Promise<void> {
         layers.cultivation.visible = false;
         layers.showInv = false;
         saveState(state);
-        publishDebugSnapshot();
+        refreshAppPresentation();
       },
       advanceOneDay: () => {
         state.events.length = 0;
         advanceDay(state, ctx);
         saveState(state);
-        publishDebugSnapshot();
+        refreshAppPresentation();
       }
     };
   }
@@ -729,7 +1120,7 @@ async function main(): Promise<void> {
   }
 
   function refreshCultivationPanel(): void {
-    layers.cultivation.text = renderCultivationOverview(state, ctx);
+    setTextIfChanged(layers.cultivation, renderCultivationOverview(state, ctx));
   }
 
   function toggleCultivationPanel(): void {
@@ -3110,13 +3501,228 @@ async function main(): Promise<void> {
     return layers.showInv || cultivationPanelVisible;
   }
 
+  function cancelCurrentSurface(): void {
+    if (dialogueBeat) {
+      performDialogueConfirm();
+      return;
+    }
+    if (paused) {
+      togglePause(true);
+      return;
+    }
+    const escapeShortcut = resolveEscapeShortcut({
+      interactionPanelActive: interactionPanelActive(interactionPanel),
+      inventoryVisible: layers.showInv,
+      cultivationPanelVisible,
+      locationSelectionActive
+    });
+    if (escapeShortcut != null) performEscapeShortcutAction(escapeShortcut);
+  }
+
+  function showTutorialAftermathSurface(): void {
+    if (!flowView || flowView.getState().screen !== 'world') return;
+    flowView.dispatch({ type: 'start-tribulation' });
+    flowView.dispatch({ type: 'finish-tribulation' });
+  }
+
+  function performJourneyPrimaryAction(): void {
+    const objective = getPublicDemoObjectiveId(state);
+    switch (objective) {
+      case 'first-till':
+        performFarmAction('till');
+        return;
+      case 'first-sow':
+        sowFromHotbarSelection(false);
+        return;
+      case 'first-water':
+        performFarmAction('water');
+        return;
+      case 'first-harvest':
+        performFarmAction('harvest');
+        return;
+      case 'journey-alchemy':
+        flowView?.dispatch({ type: 'open-alchemy' });
+        return;
+      case 'journey-tribulation':
+        flowView?.dispatch({ type: 'start-tribulation' });
+        return;
+      case 'journey-aftermath':
+        showTutorialAftermathSurface();
+        return;
+      case 'journey-complete':
+        toast('四段试玩旅程已经完成。农庄仍可继续经营。', 'logo.full');
+        return;
+      default:
+        performDefaultConfirm();
+    }
+  }
+
+  function navigateFromSystemMenu(target: Extract<GameCommand, { kind: 'open' }>['target']): boolean {
+    if (!flowView || flowView.getState().overlay !== 'pause') return false;
+    const sourceScreen = flowView.getState().screen;
+    const worldOnlyTarget = target === 'menu' || target === 'inventory' || target === 'cultivation' || target === 'map' || target === 'alchemy' || target === 'journey';
+    if (worldOnlyTarget && sourceScreen !== 'world') return false;
+    flowView.dispatch({ type: 'close-overlay' });
+    const returnFocus = flowView.getState().focus.initial;
+    switch (target) {
+      case 'inventory':
+      case 'cultivation':
+      case 'map':
+      case 'pause':
+      case 'settings':
+        flowView.dispatch({ type: 'open-overlay', overlay: target, returnFocus });
+        return true;
+      case 'alchemy':
+        flowView.dispatch({ type: 'open-alchemy' });
+        return true;
+      case 'journey':
+        performJourneyPrimaryAction();
+        return true;
+      case 'menu':
+        openFarmActionPanel();
+        return true;
+    }
+  }
+
+  function handlePublicDemoPanelAction(action: PublicDemoPanelAction): void {
+    switch (action.kind) {
+      case 'alchemy-primary':
+        if (state.player.flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG)) {
+          flowView?.dispatch({ type: 'close-alchemy' });
+          return;
+        }
+        applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
+        applyAction(state, { kind: 'brew-tutorial-pill', avgHeatMilli: action.heatPercent * 1_000 }, ctx);
+        audio.playSfx('ui');
+        break;
+      case 'take-pill':
+        applyAction(state, { kind: 'eat-pill', pillId: 'pill.ward-basic' }, ctx);
+        audio.playSfx('ui');
+        break;
+      case 'tribulation-primary':
+        if (state.tutorialTribulation.phase === 'idle') {
+          applyAction(state, { kind: 'start-tutorial-tribulation' }, ctx);
+          triggerTribFlash(layers);
+        } else if (state.tutorialTribulation.phase === 'active') {
+          applyAction(state, { kind: 'resolve-tutorial-bolt' }, ctx);
+          triggerTribFlash(layers);
+        }
+        if (state.tutorialTribulation.phase === 'aftermath') flowView?.dispatch({ type: 'finish-tribulation' });
+        break;
+      case 'move':
+        if (state.tutorialTribulation.phase === 'active') move(action.direction);
+        break;
+    }
+
+    saveState(state);
+    refreshAppPresentation();
+  }
+
+  function dispatchGameCommand(command: GameCommand): void {
+    audio.init();
+    audio.resume();
+    if (!flowAllowsWorldInput()) {
+      if (command.kind === 'open' && navigateFromSystemMenu(command.target)) {
+        saveState(state);
+        refreshAppPresentation();
+      }
+      return;
+    }
+    if (state.gameOver || state.postAscension.mode === 'choice-pending') return;
+
+    if (dialogueBeat && command.kind !== 'confirm' && command.kind !== 'cancel') return;
+    if (paused && command.kind !== 'cancel' && !(command.kind === 'open' && (command.target === 'pause' || command.target === 'settings'))) return;
+
+    switch (command.kind) {
+      case 'move':
+        if (!hotbarWheelBlocked() && !dialogueBeat) move(command.direction);
+        break;
+      case 'confirm':
+        if (dialogueBeat) performDialogueConfirm();
+        else if (!paused) performDefaultConfirm();
+        break;
+      case 'cancel':
+        cancelCurrentSurface();
+        break;
+      case 'cycle':
+        if (interactionPanelActive(interactionPanel)) cycleActiveInteractionPanel(command.direction === 'previous');
+        else if (locationSelectionActive) cycleLocation(command.direction === 'previous');
+        else if (!hotbarWheelBlocked()) cycleHotbar(command.direction === 'previous' ? -1 : 1, true);
+        break;
+      case 'hotbar':
+        if (!hotbarWheelBlocked()) setHotbarIndex(command.index, true);
+        break;
+      case 'open':
+        switch (command.target) {
+          case 'menu':
+            if (!paused) openFarmActionPanel();
+            break;
+          case 'inventory':
+            if (!paused && flowView) flowView.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            else if (!paused) toggleInventoryVisibility();
+            break;
+          case 'cultivation':
+            if (!paused && flowView) flowView.dispatch({ type: 'open-overlay', overlay: 'cultivation', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            else if (!paused) toggleCultivationPanel();
+            break;
+          case 'map':
+            if (!paused && flowView) flowView.dispatch({ type: 'open-overlay', overlay: 'map', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            else if (!paused) activateLocationSelection('地点');
+            break;
+          case 'alchemy':
+            if (!paused && flowView) flowView.dispatch({ type: 'open-alchemy' });
+            else if (!paused && !furnace.visible) performFurnaceShortcut('toggle-furnace');
+            break;
+          case 'journey':
+            if (!paused) performJourneyPrimaryAction();
+            break;
+          case 'pause':
+          case 'settings':
+            if (flowView) flowView.dispatch({ type: 'open-overlay', overlay: command.target, returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            else togglePause(true);
+            break;
+        }
+        break;
+      case 'end-day':
+        if (!hotbarWheelBlocked() && !dialogueBeat) endDay();
+        break;
+    }
+
+    saveState(state);
+    refreshAppPresentation();
+  }
+
+  const portraitMedia = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
+  flowView = createAppFlowViewController({
+    continueAvailable: deriveSaveHealthPresentation(saveHealth).continueAvailable,
+    buildLabel: BUILD_LABEL,
+    onReloadRequest: () => window.location.reload(),
+    onStateChange: handleFlowStateChange
+  });
+  const handlePortraitChange = (event: MediaQueryListEvent): void => {
+    flowView?.setPortraitBlocked(event.matches);
+    requestRender?.();
+    refreshAppPresentation();
+  };
+  const handleViewportResize = (): void => {
+    requestRender?.();
+    refreshAppPresentation();
+  };
+  portraitMedia.addEventListener('change', handlePortraitChange);
+  window.addEventListener('resize', handleViewportResize);
+
+  responsiveShell = createResponsiveShell({ dispatch: dispatchGameCommand });
+  publicDemoPanels = createPublicDemoPanelsController({ onAction: handlePublicDemoPanelAction });
+  publicDemoPanels.render(state, ctx);
+
   refreshHotbarHint();
   refreshHelpHint();
-  publishDebugSnapshot();
+  refreshAppPresentation();
 
   window.addEventListener(
     'wheel',
     ev => {
+      if (!flowAllowsWorldInput()) return;
       if (state.gameOver || dialogueBeat || state.postAscension.mode === 'choice-pending' || hotbarWheelBlocked()) return;
       const delta = hotbarWheelDelta(ev.deltaY);
       if (delta === 0) return;
@@ -3134,6 +3740,10 @@ async function main(): Promise<void> {
     if (ev.button !== 0 && ev.button !== 2) return;
     audio.init();
     audio.resume();
+    if (!flowAllowsWorldInput()) {
+      ev.preventDefault();
+      return;
+    }
     if (state.gameOver || state.postAscension.mode === 'choice-pending') {
       ev.preventDefault();
       return;
@@ -3176,7 +3786,7 @@ async function main(): Promise<void> {
       });
       if (escapeShortcut != null) performEscapeShortcutAction(escapeShortcut);
       saveState(state);
-      publishDebugSnapshot();
+      refreshAppPresentation();
       ev.preventDefault();
       return;
     }
@@ -3205,14 +3815,8 @@ async function main(): Promise<void> {
   window.addEventListener('keydown', ev => {
     audio.init();
     audio.resume();
-    if (state.gameOver) {
-      if (ev.key === 'r' || ev.key === 'R') {
-        ev.preventDefault();
-        clearSave();
-        location.reload();
-      }
-      return;
-    }
+    if (!flowAllowsWorldInput()) return;
+    if (state.gameOver) return;
     if (state.postAscension.mode === 'choice-pending') {
       if (ev.key === '1') {
         resolveAscensionChoice(state, 'ascend-away');
@@ -3248,6 +3852,23 @@ async function main(): Promise<void> {
         ev.preventDefault();
         saveState(state);
       }
+      return;
+    }
+    const semanticCommand = gameCommandFromKeyboard(
+      {
+        key: ev.key,
+        code: ev.code,
+        shiftKey: ev.shiftKey,
+        ctrlKey: ev.ctrlKey,
+        altKey: ev.altKey,
+        metaKey: ev.metaKey
+      },
+      { enterBehavior: interactionPanelActive(interactionPanel) || locationSelectionActive ? 'confirm' : 'end-day' }
+    );
+    const semanticCommandAllowed = semanticCommand?.kind !== 'hotbar' || (!interactionPanelActive(interactionPanel) && !locationSelectionActive);
+    if (semanticCommand && semanticCommandAllowed) {
+      dispatchGameCommand(semanticCommand);
+      ev.preventDefault();
       return;
     }
     const f = frontTile();
@@ -3334,12 +3955,12 @@ async function main(): Promise<void> {
           break;
         default:
           ev.preventDefault();
-          publishDebugSnapshot();
+          refreshAppPresentation();
           return;
       }
       ev.preventDefault();
       saveState(state);
-      publishDebugSnapshot();
+      refreshAppPresentation();
       return;
     }
     const farmActionDigit = interactionPanel.kind === 'farm-action' ? farmActionIndexFromDigitKey(ev.key) : null;
@@ -3364,7 +3985,7 @@ async function main(): Promise<void> {
     if (shouldDismissInteractionPanel) {
       clearInteractionPanel(false);
       ev.preventDefault();
-      publishDebugSnapshot();
+      refreshAppPresentation();
       saveState(state);
       return;
     }
@@ -3384,7 +4005,7 @@ async function main(): Promise<void> {
     if (shouldDismissLocationSelection) {
       clearLocationSelection(false);
       ev.preventDefault();
-      publishDebugSnapshot();
+      refreshAppPresentation();
       saveState(state);
       return;
     }
@@ -3395,7 +4016,7 @@ async function main(): Promise<void> {
       }
       ev.preventDefault();
       saveState(state);
-      publishDebugSnapshot();
+      refreshAppPresentation();
       return;
     }
     switch (ev.key) {
@@ -3444,12 +4065,14 @@ async function main(): Promise<void> {
             break;
         }
         break;
-      case 'z': {
+      case 'z':
+      case 'Z': {
         // 播种
         if (worldActionShortcut === 'seed-from-hotbar') sowFromHotbarSelection(false);
         break;
       }
-      case 'x': // 浇水
+      case 'x':
+      case 'X': // 浇水
         if (worldActionShortcut === 'water-front-tile') {
           performFarmAction('water', f);
         }
@@ -3465,7 +4088,8 @@ async function main(): Promise<void> {
       case 'C':
         if (worldActionShortcut === 'toggle-cultivation-panel') toggleCultivationPanel();
         break;
-      case 'v': // 收获
+      case 'v':
+      case 'V': // 收获
         if (worldActionShortcut === 'harvest-front-tile') {
           performFarmAction('harvest', f);
         }
@@ -3844,38 +4468,39 @@ async function main(): Promise<void> {
     }
     ev.preventDefault();
     saveState(state);
-    publishDebugSnapshot();
+    refreshAppPresentation();
   });
 
-  app.ticker.add(() => {
+  function renderFrame(): void {
+    const worldSurfaceActive = flowAllowsWorldInput();
     drawWorld(layers, state, reg, ctx, renderAssets);
     const hotbarSlot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
     drawHotbarIcon(layers, renderAssets.hotbarIcons[hotbarSlotAssetId(hotbarSlot) ?? '']);
     refreshHelpHint();
-    const focusedOverlayActive = locationSelectionActive || interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible || paused || dialogueBeat !== null || state.postAscension.mode === 'choice-pending';
+    const focusedOverlayActive = !worldSurfaceActive || locationSelectionActive || interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible || paused || dialogueBeat !== null || state.postAscension.mode === 'choice-pending';
     if (!state.gameOver && !focusedOverlayActive) {
-      const briefing = buildTodayBriefing(state, ctx, currentOnboardingHelpText());
+      const briefing = currentJourneyBriefing();
       drawTodayBriefing(layers, briefing.title, briefing.body, resolvePreviewTexture(renderAssets, briefing.assetId), briefing.assetId);
     } else {
       hideTodayBriefing(layers);
     }
-    if (locationSelectionActive) {
+    if (worldSurfaceActive && locationSelectionActive) {
       const preview = locationPreviewDetails();
       if (preview) drawLocationPreview(layers, preview.title, preview.details, preview.texture, preview.npcPrimary, preview.npcSecondary);
       else hideLocationPreview(layers);
     } else {
       hideLocationPreview(layers);
     }
-    const panelPreview = !paused && dialogueBeat === null && !cultivationPanelVisible && (interactionPanelActive(interactionPanel) || layers.showInv) ? selectedPanelItemPreview() : null;
+    const panelPreview = worldSurfaceActive && !paused && dialogueBeat === null && !cultivationPanelVisible && (interactionPanelActive(interactionPanel) || layers.showInv) ? selectedPanelItemPreview() : null;
     if (panelPreview) drawPanelItemPreview(layers, panelPreview.title, panelPreview.details, panelPreview.texture);
     else hidePanelItemPreview(layers);
-    if (cultivationPanelVisible) {
+    if (worldSurfaceActive && cultivationPanelVisible) {
       refreshCultivationPanel();
       layers.cultivation.visible = true;
     }
     updateParticles(layers); // 程序化粒子推进（T9）
     // 丹炉面板（可见时 resolveBrew 实时预览当前火候+丹方的产出）
-    const fr = furnace.visible ? reg.recipes.get(brewRecipes[recipeIdx % brewRecipes.length]!) : null;
+    const fr = worldSurfaceActive && furnace.visible ? reg.recipes.get(brewRecipes[recipeIdx % brewRecipes.length]!) : null;
     if (fr) {
       const preview = resolveBrew(state, { materials: fr.inputs.map(i => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: furnaceHeat * 1000 }, ctx);
       const pillName = reg.items.get(fr.outputPillId)?.displayName ?? fr.outputPillId;
@@ -3885,27 +4510,75 @@ async function main(): Promise<void> {
       drawFurnace(furnace, state, reg, null);
     }
     // 叙事节拍（T4）：无对白时寻找下一待浮现节拍；游戏结束清空
-    if (!state.gameOver) {
+    if (worldSurfaceActive && !state.gameOver) {
       if (!dialogueBeat) {
         const nextBeat = nextPendingBeat(state);
         if (nextBeat) openDialogueBeat(nextBeat);
       }
-    } else {
+    } else if (state.gameOver) {
       dialogueBeat = null;
     }
-    if (paused) drawPauseOverlay(layers);
-    else if (dialogueBeat) drawDialogue(layers, dialogueBeat.lines, resolvePreviewTexture(renderAssets, dialogueBeat.assetId));
+    if (worldSurfaceActive && paused) drawPauseOverlay(layers);
+    else if (worldSurfaceActive && dialogueBeat) drawDialogue(layers, dialogueBeat.lines, resolvePreviewTexture(renderAssets, dialogueBeat.assetId));
     else hideDialogue(layers);
-    publishDebugSnapshot();
+    refreshAppPresentation();
     // BGM 慢/急切换：体魄达极限、引劫在即→急，否则→慢
     const mode = state.gameOver ? 'off' : readyForBreakthrough(state, DEFAULT_BALANCE) ? 'tense' : 'calm';
     audio.setBgmMode(mode);
+    app.renderer.render(app.stage);
+  }
+
+  app.ticker.stop();
+  renderScheduler = createRenderScheduler({
+    requestFrame: callback => window.requestAnimationFrame(callback),
+    cancelFrame: handle => window.cancelAnimationFrame(handle as number),
+    onFrame: () => {
+      renderFrame();
+      return {
+        particlesActive: layers.particleList.length > 0,
+        flashActive: layers.tribFlashTtl > 0
+      };
+    }
   });
+  requestRender = () => renderScheduler?.invalidate('world', 'hud', 'focus', 'toast', 'effects');
+  window.addEventListener(
+    'pagehide',
+    () => {
+      portraitMedia.removeEventListener('change', handlePortraitChange);
+      window.removeEventListener('resize', handleViewportResize);
+      responsiveShell?.destroy();
+      publicDemoPanels?.destroy();
+      flowView?.destroy();
+      runtimeSettingsAbortController.abort();
+      renderScheduler?.dispose();
+    },
+    { once: true }
+  );
+  requestRender();
 
   {
     const presentation = onboardingWelcomeToastPresentation(currentOnboardingHelpText());
     toast(presentation.message, presentation.assetId);
   }
+  flowView.dispatch({ type: 'boot-ready' });
+  updateSaveHealthUi();
+  flowView.setPortraitBlocked(portraitMedia.matches);
 }
 
-void main();
+void main().catch(error => {
+  const loading = document.querySelector<HTMLElement>('[data-app-surface="loading"]');
+  const errorSurface = document.querySelector<HTMLElement>('[data-app-surface="boot-error"]');
+  if (loading) {
+    loading.hidden = true;
+    loading.inert = true;
+    loading.setAttribute('aria-hidden', 'true');
+  }
+  if (errorSurface) {
+    errorSurface.hidden = false;
+    errorSurface.inert = false;
+    errorSurface.setAttribute('aria-hidden', 'false');
+    errorSurface.querySelector<HTMLElement>('[data-flow-focusable]')?.focus({ preventScroll: true });
+  }
+  document.querySelector<HTMLButtonElement>('[data-flow-action="reload-page"]')?.addEventListener('click', () => window.location.reload(), { once: true });
+  console.error('Aeon Vale initialization failed.', error);
+});

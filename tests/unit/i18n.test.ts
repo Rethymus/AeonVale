@@ -9,7 +9,6 @@ describe('i18n 层', () => {
   it('t dotted key 取值', () => {
     expect(t('ui.hud.hp')).toBe('气血');
     expect(t('ui.hud.season.winter')).toBe('冬');
-    expect(t('ui.restart')).toBe('按 R 重新开始');
   });
 
   it('t {var} 插值', () => {

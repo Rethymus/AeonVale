@@ -19,9 +19,6 @@ export function resolvePreviewTexture(renderAssets: RuntimeRenderAssets, assetId
   if (assetId.startsWith('sprite.guard-beast')) {
     return renderAssets.guardBeastVariants?.[assetId] ?? renderAssets.guardBeast;
   }
-  if (assetId.startsWith('cg.ending-')) {
-    return renderAssets.endingCg[assetId.slice('cg.ending-'.length)];
-  }
   if (assetId.startsWith('tile.')) {
     return renderAssets.tiles[assetId];
   }

@@ -100,7 +100,7 @@ export function getRelationship(state: GameState, npcId: string): RelationshipSt
 }
 
 export function getNpcList(state: GameState): Array<NpcDef & RelationshipState> {
-  return NPC_CATALOG.map(npc => ({ ...npc, ...getRelationship(state, npc.id) }));
+  return NPC_CATALOG.map(npc => ({ ...npc, ...(state.social?.[npc.id] ?? { affection: 0, lastGiftDay: 0 }) }));
 }
 
 export function isNpcBirthday(state: GameState, npc: NpcDef): boolean {

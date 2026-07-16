@@ -13,6 +13,17 @@ export interface CanvasPngSnapshot {
 }
 
 export interface AeonDebugSnapshot {
+  debugSchemaVersion?: number;
+  buildRevision?: string;
+  flowScreen?: string;
+  flowOverlay?: string | null;
+  uiMode?: string;
+  appSurface?: string;
+  renderFrameCount?: number;
+  viewportProfile?: string;
+  canvasBounds?: { x: number; y: number; width: number; height: number } | null;
+  worldBounds?: { x: number; y: number; width: number; height: number } | null;
+  objectiveRailBounds?: { x: number; y: number; width: number; height: number } | null;
   hotbarIdx?: number;
   hotbarSlotKind?: string;
   hotbarSeedId?: string | null;
@@ -38,6 +49,14 @@ export interface AeonDebugSnapshot {
   playerX?: number;
   playerY?: number;
   playerFacing?: string;
+  tutorialTribulationPhase?: string;
+  tutorialBoltIndex?: number;
+  tutorialBoltCount?: number;
+  tutorialWarnedTileId?: number | null;
+  tutorialPillCount?: number;
+  tutorialWardMitigation?: number;
+  tutorialOutcome?: string | null;
+  tutorialRewardMilli?: number;
   frontTileX?: number;
   frontTileY?: number;
   frontTileTilled?: boolean;
@@ -74,14 +93,31 @@ export function gameEntryPath(): string {
 export async function openGame(page: Page): Promise<void> {
   await page.goto(gameEntryPath());
   const canvas = page.locator('canvas');
-  await canvas.waitFor({ state: 'visible' });
+  await canvas.waitFor({ state: 'attached' });
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: unknown }).__AEON_DEBUG__ != null);
+
+  const continueButton = page.locator('#flow-title-continue');
+  const newGameButton = page.locator('#flow-title-new-game');
+  if (await newGameButton.isVisible()) {
+    if (await continueButton.isEnabled()) {
+      await continueButton.click();
+    } else {
+      await newGameButton.click();
+      await page.locator('#flow-prologue-skip').click();
+    }
+  }
+
+  await page.waitForFunction(() => {
+    const debug = (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__;
+    return debug?.appSurface === 'world' || (debug != null && debug.appSurface == null);
+  });
+  await canvas.waitFor({ state: 'visible' });
   const box = await canvas.boundingBox();
   const viewport = page.viewportSize();
   if (!box || !viewport || box.y < 0 || box.y >= viewport.height) {
     throw new Error(`Game canvas starts outside the initial viewport: box=${JSON.stringify(box)}, viewport=${JSON.stringify(viewport)}`);
   }
-  await canvas.click({ position: { x: 10, y: 10 } });
+  await canvas.focus();
 }
 
 export async function gameDebugSnapshot(page: Page): Promise<AeonDebugSnapshot> {

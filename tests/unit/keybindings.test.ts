@@ -160,11 +160,14 @@ describe('主循环高频键上下文路由', () => {
 
   it('解析领域动作键的农务、修炼、炼丹、阵法与丹炉入口', () => {
     expect(resolveWorldActionShortcut('z', false)).toBe('seed-from-hotbar');
+    expect(resolveWorldActionShortcut('Z', false)).toBe('seed-from-hotbar');
     expect(resolveWorldActionShortcut('x', false)).toBe('water-front-tile');
+    expect(resolveWorldActionShortcut('X', false)).toBe('water-front-tile');
     expect(resolveWorldActionShortcut('Home', false)).toBe('fertilize-front-tile');
     expect(resolveWorldActionShortcut('c', false)).toBe('toggle-cultivation-panel');
     expect(resolveWorldActionShortcut('C', false)).toBe('toggle-cultivation-panel');
     expect(resolveWorldActionShortcut('v', false)).toBe('harvest-front-tile');
+    expect(resolveWorldActionShortcut('V', false)).toBe('harvest-front-tile');
     expect(resolveWorldActionShortcut('t', false)).toBe('tribulation');
     expect(resolveWorldActionShortcut('g', false)).toBe('hunt-beast');
     expect(resolveWorldActionShortcut('g', true)).toBe('feed-guard-beast');

@@ -20,6 +20,7 @@ describe('npc world preview placements', () => {
 
     expect(npcWorldPreviewPlacements(state)).toEqual([
       {
+        placementKey: 'scheduled:npc.array-smith',
         npcId: 'npc.array-smith',
         npcName: '阵匠老陆',
         assetId: 'sprite.npc.array-smith',
@@ -31,17 +32,19 @@ describe('npc world preview placements', () => {
         questReady: false
       },
       {
+        placementKey: 'ambient:farmstead:sprite.npc.processing-artisan',
         npcId: 'sprite.npc.processing-artisan',
         npcName: '晒坊匠人',
         assetId: 'sprite.npc.processing-artisan',
         locationId: 'farmstead',
-        x: 2,
-        y: 2,
+        x: 1,
+        y: 3,
         birthday: false,
         hasQuest: false,
         questReady: false
       },
       {
+        placementKey: 'scheduled:npc.herb-gatherer',
         npcId: 'npc.herb-gatherer',
         npcName: '采药女',
         assetId: 'sprite.npc.herb-gatherer',
@@ -53,21 +56,11 @@ describe('npc world preview placements', () => {
         questReady: false
       },
       {
+        placementKey: 'ambient:ruin-gate:sprite.npc.patrol-guard',
         npcId: 'sprite.npc.patrol-guard',
         npcName: '巡谷守卫',
         assetId: 'sprite.npc.patrol-guard',
         locationId: 'ruin-gate',
-        x: 12,
-        y: 5,
-        birthday: false,
-        hasQuest: false,
-        questReady: false
-      },
-      {
-        npcId: 'sprite.npc.patrol-guard',
-        npcName: '巡谷守卫',
-        assetId: 'sprite.npc.patrol-guard',
-        locationId: 'spirit-vein',
         x: 12,
         y: 6,
         birthday: false,
@@ -75,6 +68,19 @@ describe('npc world preview placements', () => {
         questReady: false
       },
       {
+        placementKey: 'ambient:spirit-vein:sprite.npc.patrol-guard',
+        npcId: 'sprite.npc.patrol-guard',
+        npcName: '巡谷守卫',
+        assetId: 'sprite.npc.patrol-guard',
+        locationId: 'spirit-vein',
+        x: 12,
+        y: 7,
+        birthday: false,
+        hasQuest: false,
+        questReady: false
+      },
+      {
+        placementKey: 'scheduled:npc.wandering-cultivator',
         npcId: 'npc.wandering-cultivator',
         npcName: '游方散修',
         assetId: 'sprite.npc.wandering-cultivator',
@@ -86,23 +92,25 @@ describe('npc world preview placements', () => {
         questReady: false
       },
       {
+        placementKey: 'ambient:valley-market:sprite.npc.market-merchant',
         npcId: 'sprite.npc.market-merchant',
         npcName: '集市商贩',
         assetId: 'sprite.npc.market-merchant',
         locationId: 'valley-market',
-        x: 13,
-        y: 1,
+        x: 12,
+        y: 2,
         birthday: false,
         hasQuest: false,
         questReady: false
       },
       {
+        placementKey: 'ambient:valley-outskirts:sprite.npc.patrol-guard',
         npcId: 'sprite.npc.patrol-guard',
         npcName: '巡谷守卫',
         assetId: 'sprite.npc.patrol-guard',
         locationId: 'valley-outskirts',
         x: 1,
-        y: 4,
+        y: 5,
         birthday: false,
         hasQuest: false,
         questReady: false
@@ -411,6 +419,16 @@ describe('npc world preview placements', () => {
         status: 'ready'
       }
     ]);
+  });
+
+  it('keeps the ambient farmstead artisan off the retained logistics props', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 39, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    const artisan = npcWorldPreviewPlacements(state).find(entry => entry.placementKey === 'ambient:farmstead:sprite.npc.processing-artisan');
+    const propTiles = farmsteadPropPlacements(state).map(prop => `${prop.x},${prop.y}`);
+
+    expect(artisan).toMatchObject({ x: 1, y: 3 });
+    expect(propTiles).not.toContain(`${artisan?.x},${artisan?.y}`);
   });
 
   it('surfaces birthday and npc quest readiness on the location landmark itself', () => {

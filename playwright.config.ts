@@ -23,6 +23,7 @@ export default defineConfig({
         env: {
           PUBLIC_BUILD: 'true',
           VITE_BASE_PATH: viteBasePath,
+          VITE_BUILD_REVISION: 'playwright-test',
           VITE_PRESERVE_DRAWING_BUFFER: 'true'
         }
       },

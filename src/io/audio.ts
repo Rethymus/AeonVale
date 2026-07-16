@@ -8,6 +8,13 @@
 export type SfxId = 'till' | 'sow' | 'water' | 'harvest' | 'brew' | 'explosion' | 'tribulation' | 'breakthrough' | 'eat-pill' | 'ui' | 'ending' | 'warn' | 'hurt' | 'beast-spawn' | 'season';
 export type BgmMode = 'calm' | 'tense' | 'off';
 
+export const DEFAULT_MASTER_VOLUME = 35;
+
+export function clampMasterVolume(value: number): number {
+  if (Number.isNaN(value)) return DEFAULT_MASTER_VOLUME;
+  return Math.round(Math.min(100, Math.max(0, value)));
+}
+
 export class AudioEngine {
   private ctx: AudioContext | null = null;
   private master: GainNode | null = null;
@@ -16,6 +23,7 @@ export class AudioEngine {
   private bgmOsc: OscillatorNode[] = [];
   private bgmGain: GainNode | null = null;
   private pulseTimer: ReturnType<typeof setInterval> | null = null;
+  private masterVolume = DEFAULT_MASTER_VOLUME;
 
   /** 首次用户手势后调用（浏览器策略）。无 Web Audio 则 no-op。 */
   init(): void {
@@ -24,13 +32,22 @@ export class AudioEngine {
     if (!Ctor) return;
     this.ctx = new Ctor();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.35;
+    this.master.gain.value = this.masterVolume / 100;
     this.master.connect(this.ctx.destination);
     this.noise = this.makeNoise(this.ctx);
   }
 
   resume(): void {
     this.ctx?.resume().catch(() => {});
+  }
+
+  setMasterVolume(value: number): void {
+    this.masterVolume = clampMasterVolume(value);
+    if (this.master) this.master.gain.value = this.masterVolume / 100;
+  }
+
+  getMasterVolume(): number {
+    return this.masterVolume;
   }
 
   private makeNoise(ctx: AudioContext): AudioBuffer {

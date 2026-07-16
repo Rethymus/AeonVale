@@ -10,7 +10,7 @@ import type { GameState } from './world/state';
 import { MILLI } from './world/types';
 import { DEFAULT_BALANCE } from './params';
 import { normalizeBodyCultivation } from './progression/bodyCultivation';
-import { createDefaultPostAscensionState, createDefaultStayingWorldState } from './world/state';
+import { createDefaultPostAscensionState, createDefaultStayingWorldState, createDefaultTutorialTribulationState } from './world/state';
 
 function shouldSerializeStayingWorld(state: GameState): boolean {
   if (state.postAscension.mode === 'stayed-in-world') return true;
@@ -19,12 +19,71 @@ function shouldSerializeStayingWorld(state: GameState): boolean {
   return current.wardingPressure !== defaults.wardingPressure || current.quietHarmony !== defaults.quietHarmony || current.neglectedWardingDays !== defaults.neglectedWardingDays || current.neglectedQuietDays !== defaults.neglectedQuietDays || current.greenhouseClimate !== defaults.greenhouseClimate || current.greenhouseCareStreak !== defaults.greenhouseCareStreak || current.stableDays !== defaults.stableDays || current.lastEvaluatedDay !== defaults.lastEvaluatedDay || current.currentIncidentId !== defaults.currentIncidentId || current.currentIncidentDay !== defaults.currentIncidentDay || current.resolvedIncidentDay !== defaults.resolvedIncidentDay;
 }
 
+function shouldSerializeTutorialTribulation(state: GameState): boolean {
+  return state.tutorialTribulation != null && state.tutorialTribulation.phase !== 'idle';
+}
+
 function normalizeTiles(state: GameState): GameState['tiles'] {
   return state.tiles.map(tile => ({
     ...tile,
     consecutiveSameCropSeasons: Math.max(0, Math.floor(tile.consecutiveSameCropSeasons ?? 0)),
     lastHarvestedCropDefId: typeof tile.lastHarvestedCropDefId === 'string' ? tile.lastHarvestedCropDefId : null
   }));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function hasFiniteNumbers(record: Record<string, unknown>, fields: readonly string[]): boolean {
+  return fields.every(field => typeof record[field] === 'number' && Number.isFinite(record[field]));
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(entry => typeof entry === 'string');
+}
+
+function isInventoryRecord(value: unknown): value is Record<string, { itemId: string; count: number; durability?: number }> {
+  if (!isRecord(value)) return false;
+  return Object.values(value).every(slot => {
+    if (!isRecord(slot) || typeof slot.itemId !== 'string' || typeof slot.count !== 'number' || !Number.isFinite(slot.count)) return false;
+    return slot.durability === undefined || (typeof slot.durability === 'number' && Number.isFinite(slot.durability));
+  });
+}
+
+function isSerializedEntryList(value: unknown): value is [string | number, unknown][] {
+  return (
+    Array.isArray(value) &&
+    value.every(entry => {
+      if (!Array.isArray(entry) || entry.length !== 2) return false;
+      const key = entry[0];
+      return (typeof key === 'number' && Number.isFinite(key)) || (typeof key === 'string' && key.trim() !== '' && Number.isFinite(Number(key)));
+    })
+  );
+}
+
+function assertSerializedStateShape(raw: unknown): asserts raw is Record<string, unknown> {
+  if (!isRecord(raw)) throw new TypeError('Invalid saved state root');
+  if (!hasFiniteNumbers(raw, ['version', 'masterSeed', 'tick', 'day', 'seasonDay', 'year', 'width', 'height', 'nextId'])) {
+    throw new TypeError('Invalid saved state counters');
+  }
+  if (!['spring', 'summer', 'autumn', 'winter'].includes(String(raw.season))) throw new TypeError('Invalid saved state season');
+  if (!Array.isArray(raw.tiles) || raw.tiles.length !== Number(raw.width) * Number(raw.height) || !raw.tiles.every(isRecord)) {
+    throw new TypeError('Invalid saved state tiles');
+  }
+  if (!isSerializedEntryList(raw.crops) || !isSerializedEntryList(raw.arrays)) throw new TypeError('Invalid saved state entity maps');
+  if (raw.facilities !== undefined && !isSerializedEntryList(raw.facilities)) throw new TypeError('Invalid saved state facilities');
+
+  const player = raw.player;
+  if (!isRecord(player) || !hasFiniteNumbers(player, ['hp', 'maxHp', 'pillPoison', 'cultivation', 'stage', 'stamina', 'inventoryCapacity'])) {
+    throw new TypeError('Invalid saved player state');
+  }
+  if (!isRecord(player.position) || !hasFiniteNumbers(player.position, ['x', 'y'])) throw new TypeError('Invalid saved player position');
+  if (!['up', 'down', 'left', 'right'].includes(String(player.facing))) throw new TypeError('Invalid saved player facing');
+  if (!isInventoryRecord(player.inventory) || !isStringArray(player.flags)) throw new TypeError('Invalid saved player inventory');
+  if (!isStringArray(raw.flags) || !isRecord(raw.rngSnapshot) || !Object.values(raw.rngSnapshot).every(value => typeof value === 'number' && Number.isFinite(value))) {
+    throw new TypeError('Invalid saved state metadata');
+  }
 }
 
 /** 递归规范序列化：key 字典序、数组保序、number 取整到 6 位小数。 */
@@ -112,13 +171,15 @@ export function serializeState(state: GameState): unknown {
   };
   if (state.guardBeastPatrols.length > 0) serialized.guardBeastPatrols = state.guardBeastPatrols;
   if (shouldSerializeStayingWorld(state)) serialized.stayingWorld = state.stayingWorld;
+  if (shouldSerializeTutorialTribulation(state)) serialized.tutorialTribulation = state.tutorialTribulation;
   if (Object.keys(state.social ?? {}).length > 0) serialized.social = state.social;
   return serialized;
 }
 
 /** 从纯 JSON 重建 GameState。 */
 export function deserializeState(raw: unknown): GameState {
-  const o = raw as Record<string, unknown>;
+  assertSerializedStateShape(raw);
+  const o = raw;
   const playerRaw = o.player as Record<string, unknown>;
   const crops = new Map<number, unknown>();
   for (const [k, v] of o.crops as [string, unknown][]) {
@@ -143,6 +204,16 @@ export function deserializeState(raw: unknown): GameState {
     ...createDefaultStayingWorldState(),
     ...((o.stayingWorld as GameState['stayingWorld'] | undefined) ?? {})
   } as GameState['stayingWorld'];
+  const tutorialDefaults = createDefaultTutorialTribulationState();
+  const tutorialRaw = (o.tutorialTribulation as Partial<GameState['tutorialTribulation']> | undefined) ?? {};
+  const tutorialTribulation = {
+    ...tutorialDefaults,
+    ...tutorialRaw,
+    hits: {
+      ...tutorialDefaults.hits,
+      ...(tutorialRaw.hits ?? {})
+    }
+  } as GameState['tutorialTribulation'];
   const state = {
     version: o.version as number,
     masterSeed: o.masterSeed as number,
@@ -171,6 +242,7 @@ export function deserializeState(raw: unknown): GameState {
       readyDays: 0,
       startedDay: null
     }) as GameState['tribulation'],
+    tutorialTribulation,
     postAscension: {
       ...createDefaultPostAscensionState(),
       ...((o.postAscension as GameState['postAscension'] | undefined) ?? {})

@@ -23,6 +23,15 @@ describe('NPC 社交与赠礼', () => {
     expect(getRelationship(state, 'npc.herb-gatherer').affection).toBe(0);
   });
 
+  it('只读列出 NPC 时不会把默认好感记录写回存档状态', () => {
+    const { state } = setup();
+
+    const npcs = getNpcList(state);
+
+    expect(npcs.every(npc => npc.affection === 0 && npc.lastGiftDay === 0)).toBe(true);
+    expect(state.social).toEqual({});
+  });
+
   it('偏好礼物增加好感、消耗物品、同日不可重复赠礼', () => {
     const { state } = setup();
     mutateItem(state.player, 'herb.dewroot', 2);
