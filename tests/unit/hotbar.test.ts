@@ -23,7 +23,8 @@ describe('热栏输入骨架', () => {
     );
     expect(text).toContain('热栏[5]');
     expect(text).toContain('青苔');
-    expect(text).toContain('空格/E主交互');
+    expect(text).toContain('Space/Q切换');
+    expect(text).toContain('1-0直选');
   });
 
   it('热栏切换提示可带出当前槽位的图像主语', () => {
@@ -34,7 +35,7 @@ describe('热栏输入骨架', () => {
         () => '翻地'
       )
     ).toEqual({
-      message: '热栏[1] 翻地｜空格/E主交互',
+      message: '热栏[1] 翻地｜Space/Q切换｜1-0直选',
       assetId: 'icon.item.rust-hoe'
     });
     expect(
@@ -44,7 +45,7 @@ describe('热栏输入骨架', () => {
         () => '翻地'
       )
     ).toEqual({
-      message: '热栏[5] 青苔｜空格/E主交互',
+      message: '热栏[5] 青苔｜Space/Q切换｜1-0直选',
       assetId: 'icon.seed.mossling'
     });
   });

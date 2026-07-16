@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gameEntryPath, type AeonDebugSnapshot } from './openGame';
+import { gameEntryPath, type AeonDebugSnapshot, waitForInitialSurface } from './openGame';
 
 async function debugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
   return page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__ ?? {});
@@ -21,6 +21,8 @@ async function clearWorldDialogue(page: Page): Promise<void> {
 
 test('title and prologue are real focusable surfaces before the world becomes interactive', async ({ page }) => {
   await page.goto(gameEntryPath());
+  const initial = await waitForInitialSurface(page);
+  expect(initial.appSurface).toBe('title');
 
   const newGame = page.locator('#flow-title-new-game');
   await expect(newGame).toBeVisible();
@@ -42,6 +44,7 @@ test('title and prologue are real focusable surfaces before the world becomes in
 
 test('settings and pause close with Escape and restore their trigger focus', async ({ page }) => {
   await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
 
   const settingsTrigger = page.locator('#flow-title-settings');
   await settingsTrigger.click();
@@ -66,6 +69,7 @@ test('settings and pause close with Escape and restore their trigger focus', asy
 
 test('world command bar and keyboard accelerators use the same flow surfaces', async ({ page }) => {
   await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
   await page.locator('#flow-title-new-game').click();
   await page.locator('#flow-prologue-skip').click();
 
@@ -109,6 +113,7 @@ test('world command bar and keyboard accelerators use the same flow surfaces', a
 
 test('screen-reader semantics follow the active page instead of leaking the world journey', async ({ page }) => {
   await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
   const surface = page.locator('#game-surface');
   const objective = page.locator('#game-objective');
   const actions = page.locator('#game-actions');

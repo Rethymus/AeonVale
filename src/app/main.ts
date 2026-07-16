@@ -623,7 +623,7 @@ async function main(): Promise<void> {
       case 'greenhouse':
         return t('ui.help.greenhouse');
       default:
-        return '方向移动 · 空格/E 行动 · M 农庄 · I 背包 · L 地点 · U 丹炉 · P 暂停';
+        return '方向移动 · 空格/E 行动 · Z 播种 · X 浇水 · Space/Q 切换热栏 · 1-0 直选 · M 农庄 · I 背包 · L 地点 · U 丹炉 · P 暂停';
     }
   }
 

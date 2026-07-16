@@ -21,13 +21,13 @@ const ONBOARDING_ROUTE_LINES: Readonly<Record<OnboardingObjectiveId, string>> = 
 
 const ONBOARDING_ACTION_LINES: Readonly<Record<OnboardingObjectiveId, string>> = {
   'first-till': '操作：站到空地前，按 空格 / E 翻地。',
-  'first-sow': '操作：保持站在已翻土地前，按 Z 播下热栏中的种子。',
+  'first-sow': '操作：保持站在已翻土地前，按 Z 直接播种；若要手动换种子，可按 Space / Q 切换热栏，或按 1-0 直选。',
   'first-water': '操作：面向刚播下的幼苗，按 X 浇第一轮水。',
   'first-harvest': '操作：先照料灵田，成熟后面向作物按 V 收获。',
   'first-ship': '操作：靠近出货箱，打开出货面板后按 Enter 投货。',
   'first-sleep': '操作：确认今日农务已收尾，直接按 Enter 过夜。',
   'first-market-restock': '操作：按 Shift+Tab 打开地点目录，选集市服务后确认补种。',
-  'first-second-sow': '操作：回农庄后面向已翻土地，按 Z 把新种子补回去。',
+  'first-second-sow': '操作：回农庄后面向已翻土地，按 Z 把新种子补回去；若要手动换种子，可按 Space / Q 切换热栏，或按 1-0 直选。',
   'first-second-water': '操作：刚补种完别停，面向新苗按 X 补第一轮水。',
   'first-loop-complete': '操作：继续补种浇水；有余货时按 Shift+M 打开农庄加工或阵法面板。'
 };

@@ -63,7 +63,7 @@ export function hotbarSlotDisplayName(slot: HotbarSlot, resolveSeedName: (seedId
 export function hotbarStatusText(index: number, resolveSeedName: (seedId: string) => string, resolveActionName: (kind: Exclude<HotbarSlotKind, 'seed'>) => string): string {
   const slot = HOTBAR_SLOTS[index] ?? HOTBAR_SLOTS[0]!;
   const digit = index === 9 ? '0' : String(index + 1);
-  return `热栏[${digit}] ${hotbarSlotDisplayName(slot, resolveSeedName, resolveActionName)}｜空格/E主交互`;
+  return `热栏[${digit}] ${hotbarSlotDisplayName(slot, resolveSeedName, resolveActionName)}｜Space/Q切换｜1-0直选`;
 }
 
 export function hotbarToastPresentation(index: number, resolveSeedName: (seedId: string) => string, resolveActionName: (kind: Exclude<HotbarSlotKind, 'seed'>) => string): HotbarToastPresentation {
