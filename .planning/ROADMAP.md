@@ -24,7 +24,7 @@
 
 ### Phase 2 — A1 教学天劫 PerfectBlock（P0）
 
-**Status:** implemented on master（2026-07-17）  
+**Status:** on main + Pages（2026-07-17，#8）  
 **Slices:**
 
 1. ✅ sim：`resolve-tutorial-bolt` + `perfectBlock`（区内 → `blockChance:1`，确定性）  
