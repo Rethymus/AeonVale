@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
+import { relative } from 'node:path';
 
 const failures = [];
 const tracked = execFileSync('git', ['ls-files', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
@@ -38,6 +39,27 @@ if (existsSync('CONTRIBUTING.md') && hasPrivateAgentEntryContract) {
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 if (packageJson.private !== true) failures.push('package.json must remain private to prevent accidental npm publication');
 if (packageJson.author !== 'AeonVale') failures.push('package.json author must use the public GitHub username');
+
+const grepTargets = tracked.filter(file => /\.(?:[cm]?js|ts|tsx|md|yml|yaml|json)$/i.test(file));
+const allowedTodoFiles = new Set(['docs/18-development-roadmap.md', 'docs/19-risk-register.md', 'docs/_QA-CHECKLIST.md', 'tools/governance-check.mjs']);
+const fakeCompletionPatterns = [
+  { label: 'test.skip', pattern: /\b(?:test|describe)\.skip\s*\(/g },
+  { label: 'test.only', pattern: /\b(?:test|describe)\.only\s*\(/g },
+  { label: 'bare TODO', pattern: /\bTODO\b/g },
+  { label: 'stub throw', pattern: /throw\s+new\s+Error\s*\(\s*['"`]\s*(?:TODO|Not implemented|stub)\b/gi }
+];
+
+for (const file of grepTargets) {
+  if (allowedTodoFiles.has(file)) continue;
+  const content = readFileSync(file, 'utf8');
+  for (const { label, pattern } of fakeCompletionPatterns) {
+    pattern.lastIndex = 0;
+    const match = pattern.exec(content);
+    if (!match) continue;
+    const line = content.slice(0, match.index).split('\n').length;
+    failures.push(`${label} found in ${relative(process.cwd(), file)}:${line}`);
+  }
+}
 
 if (failures.length) {
   console.error(failures.join('\n'));

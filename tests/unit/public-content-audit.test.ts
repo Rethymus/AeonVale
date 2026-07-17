@@ -23,7 +23,7 @@ describe('公开候选内容审查', () => {
     const report = auditPublicContentFiles([
       { path: 'tests/unit/prepare-public-tree.test.ts', content: "expect(excluded).toContain('docs/00-DESIGN-BRIEF.md');\nexpect(label).toContain('docs/15 §2');\nexpect(excluded).toContain('.omc/state.json');\n" },
       { path: 'tests/unit/portfolio-release-checklist.test.ts', content: "expect(output).toContain('AGENTS.md');\nexpect(output).toContain('assets/ART-ASSETS-STATUS.md');\n" },
-      { path: 'src/app/main.ts', content: '/* TODO: see docs/10-technical-architecture.md */\n' }
+      { path: 'src/app/main.ts', content: '/* follow-up: see docs/10-technical-architecture.md */\n' }
     ]);
 
     expect(report.counts.info).toBe(6);

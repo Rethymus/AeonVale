@@ -1,6 +1,6 @@
-const forbiddenPathPatterns = [/^docs\//, /^\.public-tree\//, /^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /^node_modules\//, /^\.git\//, /^\.tmp\.playwright-.*\.config\.ts$/, /(^|\/)\.env($|\.)/, /\.map$/];
+const forbiddenPathPatterns = [/^docs\//, /^assets\/references\//, /^\.public-tree\//, /^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /^node_modules\//, /^\.git\//, /^\.tmp\.playwright-.*\.config\.ts$/, /(^|\/)\.env($|\.)/, /\.map$/];
 
-const privateDesignPathPatterns = [/^docs\//, /^assets\/ART-ASSETS-STATUS\.md$/];
+const privateDesignPathPatterns = [/^docs\//, /^assets\/ART-ASSETS-STATUS\.md$/, /^assets\/references\//];
 
 const localStatePathPatterns = [/^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//];
 

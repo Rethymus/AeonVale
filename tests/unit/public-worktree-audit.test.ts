@@ -44,6 +44,14 @@ describe('公开工作区审查', () => {
     expect(classifyPublicCandidateGroup('tests/property/farm.property.test.ts')).toBe('tests-unit-integration');
   });
 
+  it('把私有 master reference 资产判为 private-design 而不是公开候选', () => {
+    const report = auditPublicWorktree([' M assets/references/master-cozy-warm-farm-v1.png', ''].join('\0'));
+
+    expect(report.counts['private-design']).toBe(1);
+    expect(report.counts['public-candidate']).toBe(0);
+    expect(report.byClass['private-design']).toEqual([' M assets/references/master-cozy-warm-farm-v1.png']);
+  });
+
   it('同时审查 rename/copy 记录的新旧路径', () => {
     const report = auditPublicWorktree(['R  src/app/new.ts', 'src/app/old.ts', 'C  README.md', 'docs/old-public-notes.md', ''].join('\0'));
 
