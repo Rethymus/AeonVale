@@ -1,6 +1,7 @@
 import { TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_ALCHEMY_KIT_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, resolveBrew, type GameState, type SimContext } from '@sim';
 import { lookupRelation } from '@sim/alchemy/compatibility';
 import { itemCount } from '@sim/world/player';
+import { alchemyHeatBand, type AlchemyHeatBand } from '@render/tutorialWarningZone';
 
 const TUTORIAL_RECIPE_ID = 'recipe.ward-pill';
 const TUTORIAL_PILL_ID = 'pill.ward-basic';
@@ -16,6 +17,12 @@ export interface PublicDemoAlchemyView {
   readonly materials: readonly PublicDemoMaterialView[];
   readonly heatPercent: number;
   readonly idealHeatLabel: string;
+  /** 理想火候下沿 %，供 DOM 区段可视化。 */
+  readonly idealHeatLo: number;
+  /** 理想火候上沿 %。 */
+  readonly idealHeatHi: number;
+  /** 当前火候相对理想区间的读图带。 */
+  readonly heatBand: AlchemyHeatBand;
   /** 七情配伍「一口」：教学丹方材料关系，供玩家读到修仙差异化。 */
   readonly pairingLabel: string;
   readonly previewLabel: string;
@@ -149,13 +156,18 @@ export function buildPublicDemoAlchemyView(state: GameState, ctx: SimContext, he
       )
     : null;
   const latestBrew = latestPayload<TutorialBrewPayload>(state, 'tutorial-brew-resolved');
+  const idealHeatLo = recipe ? Math.round(recipe.idealHeatRange[0] / 1_000) : 0;
+  const idealHeatHi = recipe ? Math.round(recipe.idealHeatRange[1] / 1_000) : 0;
 
   return {
     recipeName: recipe?.displayName ?? '教学丹方不可用',
     pillName: recipe ? (ctx.content.items.get(recipe.outputPillId)?.displayName ?? recipe.outputPillId) : '避雷丹',
     materials,
     heatPercent: normalizedHeat,
-    idealHeatLabel: recipe ? `${Math.round(recipe.idealHeatRange[0] / 1_000)}–${Math.round(recipe.idealHeatRange[1] / 1_000)}%` : '不可用',
+    idealHeatLabel: recipe ? `${idealHeatLo}–${idealHeatHi}%` : '不可用',
+    idealHeatLo,
+    idealHeatHi,
+    heatBand: alchemyHeatBand(normalizedHeat, idealHeatLo, idealHeatHi),
     pairingLabel: recipe ? tutorialAlchemyPairingLabel(recipe.inputs, ctx.content) : '七情配伍：丹方数据缺失。',
     previewLabel: preview ? outcomePreview(preview.outcome) : '丹方数据缺失，暂时无法炼制。',
     resultLabel: !brewed && !kitReady ? '先在灵田收获第一批灵草，山谷才会交付一次性教学药包。' : brewResultLabel(latestBrew, brewed),

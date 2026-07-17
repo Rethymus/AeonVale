@@ -23,6 +23,11 @@ describe('public demo panel view models', () => {
       { name: '寒潭莲', quantity: 1 }
     ]);
     expect(cold.idealHeatLabel).toBe('40–55%');
+    expect(cold.idealHeatLo).toBe(40);
+    expect(cold.idealHeatHi).toBe(55);
+    expect(cold.heatBand).toBe('low');
+    expect(buildPublicDemoAlchemyView(state, ctx, 47).heatBand).toBe('ideal');
+    expect(buildPublicDemoAlchemyView(state, ctx, 90).heatBand).toBe('high');
     expect(cold.pairingLabel).toContain('七情');
     expect(cold.pairingLabel).toContain('相使');
     expect(cold.pairingLabel).toMatch(/雷击木|寒潭莲/);

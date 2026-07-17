@@ -59,6 +59,20 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
     setDisabled(root, '#flow-alchemy-primary', view.primaryDisabled);
     if (heatInput && heatInput.value !== String(view.heatPercent)) heatInput.value = String(view.heatPercent);
 
+    const heatSection = root?.querySelector<HTMLElement>('[data-alchemy-heat-section]') ?? null;
+    if (heatSection) heatSection.dataset.heatBand = view.heatBand;
+    const heatTrack = root?.querySelector<HTMLElement>('#flow-alchemy-heat-track') ?? null;
+    if (heatTrack) {
+      heatTrack.style.setProperty('--heat-pct', String(view.heatPercent));
+      heatTrack.style.setProperty('--ideal-lo', String(view.idealHeatLo));
+      heatTrack.style.setProperty('--ideal-hi', String(view.idealHeatHi));
+    }
+    const furnaceMark = root?.querySelector<HTMLElement>('#flow-alchemy-furnace') ?? null;
+    if (furnaceMark) {
+      furnaceMark.dataset.heatBand = view.heatBand;
+      furnaceMark.dataset.brewed = view.brewed ? 'true' : 'false';
+    }
+
     for (const element of Array.from(root?.querySelectorAll<HTMLElement>('[data-alchemy-material]') ?? [])) {
       const index = Number(element.getAttribute('data-alchemy-material'));
       const material = view.materials[index];

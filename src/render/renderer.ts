@@ -27,6 +27,7 @@ import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { itemIconAssetId } from '@app/itemIcons';
 import { computeViewportLayout } from './viewportLayout';
 import { generateLightningBolt, strokeLightningBolt, type LightningBoltGeometry } from './lightningBolt';
+import { tutorialWarningPulse, tutorialWarningZoneTiles } from './tutorialWarningZone';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -1502,6 +1503,32 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     }
   }
   const p = state.player;
+  // 教学天劫落雷预警区（T1）：中心 + 八邻域脉动紫辉，替代纯文本坐标
+  const warnedId = state.tutorialTribulation?.phase === 'active' ? state.tutorialTribulation.warnedTileId : null;
+  if (warnedId != null) {
+    const warned = state.tiles.find(tile => tile.id === warnedId);
+    if (warned) {
+      const pulse = tutorialWarningPulse(ambientTimeMs);
+      for (const cell of tutorialWarningZoneTiles(warned.x, warned.y, state.width, state.height)) {
+        const zx = OX + cell.x * TILE;
+        const zy = OY + cell.y * TILE;
+        const fillA = cell.isCenter ? pulse * 0.42 : pulse * 0.18;
+        const strokeA = cell.isCenter ? Math.min(0.95, pulse + 0.25) : pulse * 0.7;
+        e.rect(zx + 1, zy + 1, TILE - 3, TILE - 3).fill({ color: 0x6a3cff, alpha: fillA });
+        e.rect(zx + 1, zy + 1, TILE - 3, TILE - 3).stroke({
+          width: cell.isCenter ? 2.5 : 1.5,
+          color: cell.isCenter ? 0xe8d6ff : 0xb49cff,
+          alpha: strokeA
+        });
+        if (cell.isCenter) {
+          const cx = zx + TILE / 2;
+          const cy = zy + TILE / 2;
+          e.circle(cx, cy, 7 + pulse * 4).stroke({ width: 1.5, color: 0xffffff, alpha: pulse * 0.85 });
+          e.circle(cx, cy, 3).fill({ color: 0xffffff, alpha: 0.55 + pulse * 0.35 });
+        }
+      }
+    }
+  }
   // 面前格高亮（操作目标）
   const fdx = p.facing === 'left' ? -1 : p.facing === 'right' ? 1 : 0;
   const fdy = p.facing === 'up' ? -1 : p.facing === 'down' ? 1 : 0;
