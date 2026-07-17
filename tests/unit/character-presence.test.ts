@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ensureReadablePlayerTint,
   facingIndicatorOffset,
   facingScaleX,
   footShadowSpec,
-  playerPresencePalette,
+  playerPresenceOverlay,
   qiSparklePhase,
-  shouldDrawQiSparkles
+  shouldDrawQiSparkles,
+  type Facing4
 } from '@render/characterPresence';
 
 describe('characterPresence', () => {
@@ -47,10 +49,58 @@ describe('characterPresence', () => {
     expect(shouldDrawQiSparkles(40_000, true)).toBe(true);
   });
 
-  it('exposes warm player presence palette (anti-silhouette)', () => {
-    const p = playerPresencePalette();
-    expect(p.robeAlpha).toBeGreaterThan(0.2);
-    expect(p.skinAlpha).toBeGreaterThan(0.3);
-    expect(p.spriteTint).not.toBe(0x000000);
+  it('uses a warm readable player tint (not pure black/white)', () => {
+    const tint = ensureReadablePlayerTint();
+    expect(tint).not.toBe(0x000000);
+    expect(tint).not.toBe(0xffffff);
+    const r = (tint >> 16) & 0xff;
+    const g = (tint >> 8) & 0xff;
+    const b = tint & 0xff;
+    // 暖调：R 最高，B 相对较低
+    expect(r).toBeGreaterThan(0xb0);
+    expect(r).toBeGreaterThan(b);
+    expect(g).toBeGreaterThan(0x80);
+  });
+
+  it('builds presence overlay with robe/head bands and translucent sprite alpha', () => {
+    const overlay = playerPresenceOverlay('down');
+    expect(overlay.tint).toBe(ensureReadablePlayerTint());
+    expect(overlay.spriteAlpha).toBeGreaterThan(0.3);
+    expect(overlay.spriteAlpha).toBeLessThan(1);
+    expect(overlay.bands.length).toBeGreaterThanOrEqual(4);
+
+    const kinds = new Set(overlay.bands.map(b => b.kind));
+    expect(kinds.has('robe')).toBe(true);
+    expect(kinds.has('head')).toBe(true);
+
+    const layers = new Set(overlay.bands.map(b => b.layer));
+    expect(layers.has('under')).toBe(true);
+    expect(layers.has('over')).toBe(true);
+
+    for (const band of overlay.bands) {
+      expect(band.alpha).toBeGreaterThan(0);
+      expect(band.alpha).toBeLessThanOrEqual(1);
+      expect(band.rx).toBeGreaterThan(0);
+      expect(band.ry).toBeGreaterThan(0);
+      // 朱砂/暖袍/肤色/鎏金：非纯黑
+      expect(band.color).not.toBe(0x000000);
+      expect(band.color).not.toBe(0x0e0e14);
+    }
+  });
+
+  it('shifts presence bands with facing for directional readability', () => {
+    const facings: Facing4[] = ['left', 'right', 'up', 'down'];
+    const overlays = Object.fromEntries(facings.map(f => [f, playerPresenceOverlay(f)])) as Record<
+      Facing4,
+      ReturnType<typeof playerPresenceOverlay>
+    >;
+
+    const leftRobe = overlays.left.bands.find(b => b.kind === 'robe' && b.layer === 'under')!;
+    const rightRobe = overlays.right.bands.find(b => b.kind === 'robe' && b.layer === 'under')!;
+    const upRobe = overlays.up.bands.find(b => b.kind === 'robe' && b.layer === 'under')!;
+    const downRobe = overlays.down.bands.find(b => b.kind === 'robe' && b.layer === 'under')!;
+
+    expect(leftRobe.ox).toBeLessThan(rightRobe.ox);
+    expect(upRobe.oy).toBeLessThan(downRobe.oy);
   });
 });

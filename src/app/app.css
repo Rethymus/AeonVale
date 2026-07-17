@@ -86,6 +86,87 @@ button {
   outline-offset: -3px;
 }
 
+/* —— V1-T6 HUD 密度软收：目标轨默认一行 + details 次要说明；命令栏次要入口默认折叠 —— */
+.objective-rail {
+  position: absolute;
+  top: max(12px, var(--safe-top));
+  right: max(12px, var(--safe-right));
+  z-index: 11;
+  display: grid;
+  gap: 4px;
+  width: min(280px, calc(24vw - 16px));
+  max-width: calc(100% - 24px);
+  padding: 8px 10px;
+  border: 1px solid rgba(215, 185, 95, 0.42);
+  border-radius: 6px;
+  background: rgba(13, 23, 20, 0.88);
+  color: #fff5d8;
+  pointer-events: auto;
+}
+
+.objective-rail[hidden] {
+  display: none !important;
+}
+
+.objective-rail[data-hud-density='compact'] .objective-rail-primary {
+  font-weight: 700;
+}
+
+.objective-rail-progress {
+  margin: 0;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.objective-rail-primary {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.objective-rail-details {
+  margin: 0;
+}
+
+.objective-rail-summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #d9c89a;
+  font-size: 13px;
+  font-weight: 600;
+  list-style: none;
+  touch-action: manipulation;
+}
+
+.objective-rail-summary::-webkit-details-marker {
+  display: none;
+}
+
+.objective-rail-summary:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.objective-rail-detail-body {
+  display: grid;
+  gap: 4px;
+  padding: 2px 0 4px;
+}
+
+.objective-rail-motivation,
+.objective-rail-cta {
+  margin: 0;
+  color: #e8dcc0;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 #world-command-bar {
   position: absolute;
   top: 38%;
@@ -1017,6 +1098,13 @@ button {
     grid-template-columns: minmax(0, 1fr);
     width: min(176px, calc(25vw - 16px));
     transform: none;
+  }
+
+  .objective-rail {
+    top: max(8px, var(--safe-top));
+    right: max(8px, var(--safe-right));
+    width: min(176px, calc(25vw - 16px));
+    padding: 6px 8px;
   }
 
   .world-command-primary {

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Tile } from '@sim/farm/tile';
 import type { CropInstance } from '@sim/farm/crop';
-import { tileReadinessState, tileVisualState } from '@render/tileVisuals';
+import {
+  harvestLiftRadiusBonus,
+  seedFallbackRadius,
+  tileReadinessState,
+  tileVisualState
+} from '@render/tileVisuals';
 
 function makeTile(overrides: Partial<Tile> = {}): Tile {
   return {
@@ -40,25 +45,38 @@ function makeCrop(overrides: Partial<CropInstance> = {}): CropInstance {
 }
 
 describe('tile visual state helper', () => {
-  it('keeps untouched ground visually quiet', () => {
+  it('keeps untouched ground visually quiet (empty)', () => {
     expect(tileVisualState(makeTile())).toEqual({
       dampAlpha: 0,
       qiGlowAlpha: 0,
       showWaterMark: false,
       showChannelMark: false,
-      tilledEdgeAlpha: 0,
+      tilledContrastAlpha: 0,
+      tilledBorderAlpha: 0,
       waterSheenAlpha: 0,
-      showSeedPip: false,
+      seedVisible: false,
+      seedScale: 1,
       harvestLift: false
     });
   });
 
-  it('shows explicit same-day care markers on tilled tiles', () => {
-    const state = tileVisualState(makeTile({ tilled: true, wateredToday: true, channeledToday: true }));
+  it('marks tilled soil with contrast and border (tilled, not watered)', () => {
+    const state = tileVisualState(makeTile({ tilled: true }));
+    expect(state.tilledContrastAlpha).toBeGreaterThan(0.4);
+    expect(state.tilledBorderAlpha).toBeGreaterThan(0.3);
+    expect(state.waterSheenAlpha).toBe(0);
+    expect(state.showWaterMark).toBe(false);
+    expect(state.seedVisible).toBe(false);
+    expect(state.harvestLift).toBe(false);
+  });
+
+  it('shows explicit same-day care markers and sheen on watered tilled tiles', () => {
+    const state = tileVisualState(makeTile({ tilled: true, wateredToday: true, channeledToday: true, moisture: 40_000 }));
     expect(state.showWaterMark).toBe(true);
     expect(state.showChannelMark).toBe(true);
-    expect(state.tilledEdgeAlpha).toBeGreaterThan(0.5);
+    expect(state.tilledContrastAlpha).toBeGreaterThan(0.6);
     expect(state.waterSheenAlpha).toBeGreaterThan(0.3);
+    expect(state.dampAlpha).toBeGreaterThan(0);
   });
 
   it('derives dampness and qi glow intensity from tile resources', () => {
@@ -68,16 +86,50 @@ describe('tile visual state helper', () => {
     expect(state.qiGlowAlpha).toBeGreaterThan(0.3);
     expect(state.showWaterMark).toBe(false);
     expect(state.showChannelMark).toBe(false);
-    expect(state.tilledEdgeAlpha).toBeGreaterThan(0.4);
+    expect(state.tilledContrastAlpha).toBeGreaterThan(0.4);
   });
 
-  it('emphasizes seed stage and mature harvest lift', () => {
+  it('makes empty < tilled < watered contrast progression distinct', () => {
+    const empty = tileVisualState(makeTile());
+    const tilled = tileVisualState(makeTile({ tilled: true }));
+    const watered = tileVisualState(makeTile({ tilled: true, wateredToday: true, moisture: 50_000 }));
+
+    expect(empty.tilledContrastAlpha).toBe(0);
+    expect(tilled.tilledContrastAlpha).toBeGreaterThan(empty.tilledContrastAlpha);
+    expect(watered.tilledContrastAlpha).toBeGreaterThan(tilled.tilledContrastAlpha);
+    expect(watered.waterSheenAlpha).toBeGreaterThan(tilled.waterSheenAlpha);
+    expect(watered.showWaterMark).toBe(true);
+    expect(tilled.showWaterMark).toBe(false);
+  });
+
+  it('emphasizes planted seed stage (sown)', () => {
     const seed = tileVisualState(makeTile({ tilled: true }), makeCrop({ stage: 'seed' }));
-    expect(seed.showSeedPip).toBe(true);
+    expect(seed.seedVisible).toBe(true);
+    expect(seed.seedScale).toBeGreaterThan(1);
     expect(seed.harvestLift).toBe(false);
+    expect(seedFallbackRadius(seed, 3)).toBeGreaterThan(3);
+
+    const emptyTilled = tileVisualState(makeTile({ tilled: true }));
+    expect(emptyTilled.seedVisible).toBe(false);
+    expect(emptyTilled.seedScale).toBe(1);
+  });
+
+  it('emphasizes mature harvest lift', () => {
     const mature = tileVisualState(makeTile({ tilled: true, cropId: 1 }), makeCrop({ stage: 'mature' }));
     expect(mature.harvestLift).toBe(true);
-    expect(mature.showSeedPip).toBe(false);
+    expect(mature.seedVisible).toBe(false);
+    expect(harvestLiftRadiusBonus(mature)).toBe(3);
+
+    const growing = tileVisualState(makeTile({ tilled: true, cropId: 1 }), makeCrop({ stage: 'growing' }));
+    expect(growing.harvestLift).toBe(false);
+    expect(harvestLiftRadiusBonus(growing)).toBe(0);
+  });
+
+  it('does not require crop for watered/tilled correctness', () => {
+    const watered = tileVisualState(makeTile({ tilled: true, wateredToday: true, moisture: 60_000 }));
+    expect(watered.waterSheenAlpha).toBeGreaterThan(0.3);
+    expect(watered.seedVisible).toBe(false);
+    expect(watered.harvestLift).toBe(false);
   });
 });
 
