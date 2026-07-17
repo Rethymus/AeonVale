@@ -19,4 +19,8 @@ describe('actionSfxQueue', () => {
   it('deduplicates repeated hurt-producing events in the same action batch', () => {
     expect(actionSfxQueue([event('beast-hunted', { damage: 4 }), event('beast-hunted', { damage: 4 }), event('ruin-delve', { damage: 8 })])).toEqual(['hurt']);
   });
+
+  it('maps array placement to the array-place SFX', () => {
+    expect(actionSfxQueue([event('place-array', { defId: 'array.lightning-rod' })])).toEqual(['array-place']);
+  });
 });

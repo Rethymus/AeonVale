@@ -31,6 +31,9 @@
     "replay:update": "node node_modules/tsx/dist/cli.mjs tools/update-golden-replay.ts",
     "coverage": "node node_modules/vitest/vitest.mjs run --coverage",
     "headless": "node node_modules/tsx/dist/cli.mjs tools/headless-run.ts",
+    "render:bgm": "node node_modules/tsx/dist/cli.mjs tools/render-bgm.ts",
+    "funnel": "node node_modules/tsx/dist/cli.mjs tools/onboarding-funnel.ts",
+    "playtest": "node node_modules/tsx/dist/cli.mjs tools/playtest-report.ts",
     "m5:check": "node node_modules/tsx/dist/cli.mjs tools/m5-certify.ts --profile pr --fail-on structural",
     "m5:report": "node node_modules/tsx/dist/cli.mjs tools/m5-certify.ts --profile local --fail-on never",
     "m5:certify": "node node_modules/tsx/dist/cli.mjs tools/m5-certify.ts --profile nightly --fail-on targets",
@@ -68,6 +71,7 @@
   },
   "dependencies": {
     "pixi.js": "^8.6.0",
+    "tone": "^15.1.22",
     "zod": "^3.23.8"
   },
   "devDependencies": {

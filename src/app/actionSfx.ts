@@ -11,6 +11,8 @@ export function actionSfxQueue(events: readonly GameEvent[]): SfxId[] {
   for (const event of events) {
     if (event.type === 'ruin-delve' && eventDamage(event) > 0) queued.add('hurt');
     if (event.type === 'beast-hunted' && eventDamage(event) > 0) queued.add('hurt');
+    // 布阵落位：jsfxr 风格短促仪式音（G4 扩展 SFX）。
+    if (event.type === 'place-array') queued.add('array-place');
   }
   return [...queued];
 }

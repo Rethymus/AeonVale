@@ -3129,6 +3129,8 @@ async function main(): Promise<void> {
     if (state.gameOver) {
       audio.playSfx(state.ending === 'ascension' ? 'ending' : 'explosion');
       audio.setBgmMode('off');
+      // 飞升：奏签名主题曲「大道之歌」（固定种子，同路生成、零委约、避 Suno/Udio）。
+      if (state.ending === 'ascension') audio.playSignatureTheme(true);
       const presentation = tribulationEndingToastPresentation(state.ending === 'ascension' ? 'ascension' : 'death');
       toast(presentation.message, presentation.assetId);
       return;
@@ -4522,9 +4524,14 @@ async function main(): Promise<void> {
     else if (worldSurfaceActive && dialogueBeat) drawDialogue(layers, dialogueBeat.lines, resolvePreviewTexture(renderAssets, dialogueBeat.assetId));
     else hideDialogue(layers);
     refreshAppPresentation();
-    // BGM 慢/急切换：体魄达极限、引劫在即→急，否则→慢
-    const mode = state.gameOver ? 'off' : readyForBreakthrough(state, DEFAULT_BALANCE) ? 'tense' : 'calm';
-    audio.setBgmMode(mode);
+    // BGM 自适应（Tone.js 四季调色板）：季节=state.season，分区=引劫在即→tribulation 否则 farm，张力随突破临近 calm→tense。
+    const tense = readyForBreakthrough(state, DEFAULT_BALANCE);
+    audio.setMusicContext({
+      season: state.season,
+      zone: tense ? 'tribulation' : 'farm',
+      tension: tense ? 'tense' : 'calm',
+      active: !state.gameOver
+    });
     app.renderer.render(app.stage);
   }
 
