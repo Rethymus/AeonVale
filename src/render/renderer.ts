@@ -911,15 +911,20 @@ export function updateParticles(layers: RenderLayers): void {
   }
 }
 
-/** 在屏幕坐标生成一条上飘短文案（纯渲染 juice）。 */
+/** 飘字定格期（帧，~0.3s）：在此期间不上飘、alpha 满值、做 punch 缩放，保证玩家读得清动作反馈。 */
+const FLOAT_TEXT_HOLD_FRAMES = 18;
+/** 定格期峰值放大（sin 包络，定格中点最大）。 */
+const FLOAT_TEXT_PUNCH = 0.32;
+
+/** 在屏幕坐标生成一条上飘短文案（纯渲染 juice）：先定格 punch，再上飘淡出。 */
 export function spawnFloatText(layers: RenderLayers, x: number, y: number, text: string, color = 0xffe066): void {
   if (layers.floatTexts.length > 24) layers.floatTexts.splice(0, layers.floatTexts.length - 24);
   layers.floatTexts.push({
     x,
     y,
     vy: -0.85,
-    life: 42,
-    maxLife: 42,
+    life: 64,
+    maxLife: 64,
     text,
     color
   });
@@ -936,7 +941,12 @@ export function updateFloatTexts(layers: RenderLayers): void {
   }
   for (let i = list.length - 1; i >= 0; i--) {
     const ft = list[i]!;
-    ft.y += ft.vy;
+    // 定格期（前 FLOAT_TEXT_HOLD_FRAMES 帧）不上飘，给玩家读清反馈的时间。
+    const elapsed = ft.maxLife - ft.life;
+    const inHold = elapsed < FLOAT_TEXT_HOLD_FRAMES;
+    if (!inHold) {
+      ft.y += ft.vy;
+    }
     ft.life -= 1;
     if (ft.life <= 0) {
       list.splice(i, 1);
@@ -959,8 +969,12 @@ export function updateFloatTexts(layers: RenderLayers): void {
     } else if (setTextIfChanged(label, ft.text)) {
       label.style.fill = ft.color;
     }
-    const alpha = Math.max(0, ft.life / ft.maxLife);
+    // 定格期 alpha 满值 + sin 包络 punch；之后在剩余寿命上线性淡出。
+    const fadeMax = ft.maxLife - FLOAT_TEXT_HOLD_FRAMES;
+    const alpha = inHold ? 1 : Math.max(0, ft.life / fadeMax);
     label.alpha = alpha;
+    const punch = inHold ? 1 + FLOAT_TEXT_PUNCH * Math.sin((elapsed / FLOAT_TEXT_HOLD_FRAMES) * Math.PI) : 1;
+    label.scale.set(punch);
     // 避免依赖 canvas measureText（headless unit 无 document）；用字数估算居中。
     const approxWidth = Math.min(280, Math.max(24, ft.text.length * 12));
     label.x = ft.x - approxWidth / 2;
