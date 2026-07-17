@@ -33,11 +33,12 @@ function expectLayoutContainsText(textHeight: number, hasPortrait: boolean): voi
 describe('dialogue layout', () => {
   it('keeps the compact dialogue footprint while growing upward for longer copy', () => {
     const compact = dialogueBoxLayout(80, false);
-    expect(compact).toMatchObject({ x: 40, y: 296, width: 600, height: 138 });
+    // minHeight 110 + paddingY 14 → compact box leaves more of the farm visible (player audit P1)
+    expect(compact).toMatchObject({ x: 40, y: 324, width: 600, height: 110 });
 
     const expanded = dialogueBoxLayout(176, false);
     expect(expanded.y).toBeLessThan(compact.y);
-    expect(expanded.height).toBe(212);
+    expect(expanded.height).toBe(204);
     expect(expanded.y + expanded.height).toBe(DIALOGUE_LAYOUT_LIMITS.bottom);
   });
 
@@ -63,6 +64,7 @@ describe('dialogue layout', () => {
     const maximumTextHeight = DIALOGUE_LAYOUT_LIMITS.bottom - DIALOGUE_LAYOUT_LIMITS.safeTop - DIALOGUE_LAYOUT_LIMITS.paddingY * 2;
 
     expect(dialogueBoxLayout(maximumTextHeight, false).y).toBe(DIALOGUE_LAYOUT_LIMITS.safeTop);
+    // bottom 434 - safeTop 70 = 364px available for the full plate including padding
     expect(() => dialogueBoxLayout(maximumTextHeight + 1, false)).toThrow(/only 364px is available/);
     expect(() => dialogueBoxLayout(Number.NaN, false)).toThrow(/finite non-negative/);
   });

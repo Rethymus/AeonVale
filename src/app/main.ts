@@ -55,7 +55,7 @@ import { farmActionMenuPreview, farmActionMenuToastPresentation, npcActionMenuPr
 import { activeSpecialOrderPanelPreview, archiveDonationFailureToastPresentation, archiveDonationToastPresentation, archiveEmptyToastPresentation, archiveMilestoneFailureToastPresentation, archiveMilestoneToastPresentation, commissionBoardEmptyToastPresentation, commissionCompleteToastPresentation, commissionIncompleteToastPresentation, commissionToastPresentation, dailyCommissionPanelPreview, dailySpecialOrderPanelPreview, mainlineQuestClaimFailureToastPresentation, mainlineQuestClaimToastPresentation, mainlineQuestPanelPreview, mainlineQuestUnavailableToastPresentation, ruinChapterClaimFailureToastPresentation, ruinChapterClaimToastPresentation, ruinChapterPanelPreview, ruinChapterUnavailableToastPresentation, specialOrderAcceptFailureToastPresentation, specialOrderAcceptToastPresentation, specialOrderClaimFailureToastPresentation, specialOrderClaimToastPresentation, specialOrderPendingToastPresentation, specialOrderProgressToastPresentation, specialOrderSubmitFailureToastPresentation, stayingWorldIncidentPanelPreview, stayingWorldIncidentResolveFailureToastPresentation, stayingWorldIncidentResolveToastPresentation } from './commissionPreview';
 import { resolvePreviewTexture } from './previewTexture';
 import { buildEncounterDialogueBeat, buildRelationshipDialogueBeat, type DialogueBeatWithAsset } from './dialoguePreview';
-import { buildJourneyGuide, formatJourneyGuideBody, isJourneyTeachingActive, isJourneyTeachingDialogueBeat } from './journeyGuide';
+import { buildJourneyGuide, formatJourneyGuideBody, isJourneyTeachingActive, isJourneyTeachingDialogueBeat, journeyGuideContextFromState } from './journeyGuide';
 import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
 import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState } from './appFlowMachine';
 import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
@@ -640,11 +640,12 @@ async function main(): Promise<void> {
   function currentOnboardingHelpText(): string {
     const objectiveId = getPublicDemoObjectiveId(state);
     if (!isJourneyTeachingActive(objectiveId)) {
-      const guide = buildJourneyGuide(objectiveId);
+      const journeyCtx = journeyGuideContextFromState(state);
+      const guide = buildJourneyGuide(objectiveId, journeyCtx);
       return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n回报：教学纵切片已完成，可按自由节奏经营农庄。\n操作：${guide.cta}。`;
     }
     if (objectiveId != null && objectiveId.startsWith('journey-')) {
-      const guide = buildJourneyGuide(objectiveId);
+      const guide = buildJourneyGuide(objectiveId, journeyGuideContextFromState(state));
       return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n回报：完成当前阶段会推进灵草、炼丹、引劫与战后成长的四段闭环。\n操作：${guide.cta}。`;
     }
     return onboardingHelpText(getOnboardingObjectiveId(state));
@@ -660,7 +661,7 @@ async function main(): Promise<void> {
   }
 
   function currentJourneyBriefing(): { title: string; body: string; compactBody: string; assetId?: string } {
-    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
+    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state), journeyGuideContextFromState(state));
     const legacy = buildTodayBriefing(state, ctx, currentOnboardingHelpText());
     return {
       title: guide.progressLabel,
@@ -690,7 +691,7 @@ async function main(): Promise<void> {
     if (objectiveRail) objectiveRail.hidden = !worldHudVisible;
 
     const semanticWorldActive = presentation?.surface === 'world';
-    const semanticJourney = semanticWorldActive && presentation.mode === 'world' ? buildJourneyGuide(getPublicDemoObjectiveId(state)) : undefined;
+    const semanticJourney = semanticWorldActive && presentation.mode === 'world' ? buildJourneyGuide(getPublicDemoObjectiveId(state), journeyGuideContextFromState(state)) : undefined;
     const alchemyHeat = presentation?.surface === 'alchemy' ? Number(document.querySelector<HTMLInputElement>('#flow-alchemy-heat')?.value ?? 47) : 47;
     responsiveShell?.updateSemanticState(
       deriveSemanticGameState({
@@ -3593,6 +3594,11 @@ async function main(): Promise<void> {
         performFarmAction('water');
         return;
       case 'first-harvest':
+        // 与 CTA 门控一致：未成熟时歇息推进日期，避免空收获反馈（player audit P2）
+        if (journeyGuideContextFromState(state).hasMatureCrop === false) {
+          if (!hotbarWheelBlocked() && !dialogueBeat) endDay();
+          return;
+        }
         performFarmAction('harvest');
         return;
       case 'journey-alchemy':
@@ -3760,10 +3766,10 @@ async function main(): Promise<void> {
   }
 
   const portraitMedia = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
+  if (BUILD_TITLE) document.title = `永恒山谷：大道之歌 · ${BUILD_TITLE}`;
   flowView = createAppFlowViewController({
     continueAvailable: deriveSaveHealthPresentation(saveHealth).continueAvailable,
     buildLabel: BUILD_LABEL,
-    buildTitle: BUILD_TITLE,
     onReloadRequest: () => window.location.reload(),
     onStateChange: handleFlowStateChange
   });

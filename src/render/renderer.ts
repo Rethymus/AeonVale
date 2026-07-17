@@ -95,10 +95,11 @@ export const DIALOGUE_LAYOUT_LIMITS = {
   safeTop: 70,
   bottom: 434,
   bottomUiTop: SCREEN_H - 90,
-  minHeight: 138,
+  // 首小时叙事：略压高度，给灵田「现身」留出更多画面（player audit P1）
+  minHeight: 110,
   radius: 8,
   paddingX: 18,
-  paddingY: 18,
+  paddingY: 14,
   portraitSize: 96,
   portraitTextOffset: 112,
   lineHeight: 22
@@ -1931,7 +1932,7 @@ export function drawDialogue(layers: RenderLayers, lines: string[], texture?: Te
   const layout = dialogueBoxLayout(layers.dialogue.height, hasPortrait);
 
   g.clear();
-  g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).fill({ color: 0x12121c, alpha: 0.96 });
+  g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).fill({ color: 0x12121c, alpha: 0.86 });
   g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).stroke({ width: 1.5, color: 0x6a5a2a });
   g.visible = true;
   if (texture) {
@@ -1955,11 +1956,17 @@ export function hideDialogue(layers: RenderLayers): void {
 /** 绘制轻量暂停层，复用底部对话覆盖区承载场景内暂停提示。 */
 export function drawPauseOverlay(layers: RenderLayers): void {
   const g = layers.dialogueBg;
-  g.clear().roundRect(40, 296, 600, 138, 8).fill({ color: 0x12121c, alpha: 0.96 }).roundRect(40, 296, 600, 138, 8).stroke({ width: 1.5, color: 0x5a6a8a });
+  const pauseHeight = DIALOGUE_LAYOUT_LIMITS.minHeight + 28;
+  const pauseY = DIALOGUE_LAYOUT_LIMITS.bottom - pauseHeight;
+  g.clear()
+    .roundRect(DIALOGUE_LAYOUT_LIMITS.x, pauseY, DIALOGUE_LAYOUT_LIMITS.width, pauseHeight, DIALOGUE_LAYOUT_LIMITS.radius)
+    .fill({ color: 0x12121c, alpha: 0.86 })
+    .roundRect(DIALOGUE_LAYOUT_LIMITS.x, pauseY, DIALOGUE_LAYOUT_LIMITS.width, pauseHeight, DIALOGUE_LAYOUT_LIMITS.radius)
+    .stroke({ width: 1.5, color: 0x5a6a8a });
   g.visible = true;
   layers.dialoguePortrait.visible = false;
-  layers.dialogue.x = 58;
-  layers.dialogue.y = 314;
+  layers.dialogue.x = DIALOGUE_LAYOUT_LIMITS.x + DIALOGUE_LAYOUT_LIMITS.paddingX;
+  layers.dialogue.y = pauseY + DIALOGUE_LAYOUT_LIMITS.paddingY;
   layers.dialogue.style.wordWrapWidth = 560;
   setTextIfChanged(layers.dialogue, '已暂停\n\nEsc / P 继续\nTab 背包，Shift+M 农庄操作，Shift+Tab 地点目录');
   layers.dialogue.visible = true;
