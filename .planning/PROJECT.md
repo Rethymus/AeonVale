@@ -20,11 +20,13 @@
 
 ### Active（本里程碑 Wave A）
 
-- [ ] A0 展示对齐：像素硬边 + ambient 进入公开展示轨并 live 复验
-- [ ] A1 教学天劫 PerfectBlock 峰值窗（站在落雷区时可擦弹）
-- [ ] A2 修仙 VFX 最小集（雷劫几何电光；可选丹炉焰）
-- [ ] A3 juice 增强 + 布局防溢出门
-- [ ] A4 体验门 + 5–10 人 playtest 映射（`humanHoursCertified` 仍诚实）
+- [x] A0 展示对齐：像素硬边 + ambient 进入公开展示轨并 live 复验
+- [x] A1 教学天劫 PerfectBlock 峰值窗（站在落雷区时可擦弹）
+- [x] A2 修仙 VFX 最小集（雷劫几何电光；可选丹炉焰）
+- [x] A3 juice 增强 + 布局防溢出门（软门 + DOM 硬门）
+- [x] A5 炼丹七情一口可见（教学丹方配伍文案）
+- [ ] A4 体验门：bot 漏斗 ✅；5–10 人 playtest 映射仍欠（`humanHoursCertified` 诚实）
+- [ ] A6 Feature lock 回归（对照 DoD + SKILL-AUTOMATION 队列）
 
 ### Out of Scope（本里程碑）
 

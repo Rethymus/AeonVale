@@ -15,9 +15,10 @@
 | **REQ-A1-03** ✅ | 战后可读 blocked | aftermath `hitLabel` 区分擦弹与走位/正面 | `tests/unit/public-demo-panels.test.ts` |
 | **REQ-A2-01** ✅ | 雷劫招牌镜头 | 教学落雷至少一次几何电光（非仅全屏白闪） | `lightningBolt.ts` + `triggerTribBolt`；unit 几何测 |
 | **REQ-A3-01** ✅ | 农务 juice 保持并加强 | 翻/浇/收：粒子+SFX+轻震+飘字；天劫擦弹飘字 | `spawnFloatText` + `triggerShake` + unit |
-| **REQ-A3-02** ◐ | 布局不溢出 | 文案宽度软门 + responsive-layout；DOM bbox 硬断言可后补 | `uiCopyBudget` + `tests/unit/ui-copy-budget.test.ts` |
+| **REQ-A3-02** ✅ | 布局不溢出 | 文案宽度软门 + responsive-layout DOM 硬门（无水平溢出 / 面板不互穿） | `uiCopyBudget` + `tests/unit/ui-copy-budget.test.ts` + `tests/browser/responsive-layout.spec.ts` |
 | **REQ-A4-01** ✅ | 漏斗无阻断 | bot N 局达 `first-loop-complete` | `pnpm funnel --seeds=6` → completeness PASS |
 | **REQ-A4-02** | 真人样本 | 5–10 人「美/好玩/清楚」；未完成前禁止 human certified | playtest 报告；`humanHoursCertified:false` |
+| **REQ-A5-01** ✅ | 炼丹七情一口可见 | 教学丹方面板展示配伍关系文案（相使/相须/…）；不扩 sim 规则 | `pairingLabel` + unit + vertical-slice |
 
 ## P1 / Wave B — Patch（草图稳后）
 
@@ -27,7 +28,7 @@
 | REQ-B02 | 暖棚/阵法日常深化 | 高频生活层 |
 | REQ-B03 | 正式主动引劫峰值窗 | 与教学同构，日级被动可仍简化 |
 
-## P2 / Wave C — DLC / TODO
+## P2 / Wave C — DLC / 远期封存
 
 | ID | 需求 | 备注 |
 |----|------|------|

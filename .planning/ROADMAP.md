@@ -50,15 +50,16 @@
 
 ### Phase 4 — A3 juice + 布局门（P0）
 
-**Status:** implemented on master（2026-07-17，软门为主）  
+**Status:** implemented on master（2026-07-17）  
 **Slices:**
 
 1. ✅ 农务成功：spawnBurst + SFX + `triggerShake`  
 2. ✅ 雷劫 `triggerTribBolt` 联动 shake  
 3. ✅ 飘字：`spawnFloatText` / `updateFloatTexts`（农务标签 + 擦弹/劫雷）  
-4. ✅ 文案宽度软门：`uiCopyBudget` + unit（Playwright bbox 全量仍可后补）
+4. ✅ 文案宽度软门：`uiCopyBudget` + unit  
+5. ✅ DOM 硬门：desktop world/alchemy 无水平溢出 + 关键框不互穿（`responsive-layout.spec`）
 
-**Exit:** REQ-A3-01 ✅；REQ-A3-02 ◐（软门齐，DOM 硬断言可后补）  
+**Exit:** REQ-A3-01 ✅；REQ-A3-02 ✅  
 
 ### Phase 5 — A4 体验门 + 真人样本（P0）
 
@@ -67,15 +68,35 @@
 
 1. ✅ 新手漏斗 completeness：6/6 全通 `first-loop-complete`  
 2. ✅ funnel CLI 支持 `--seeds=1..N` 区间解析（修 NaN）  
-3. ⏳ browser 纵切片全量 / pages-slice  
-4. ⏳ 5–10 人真人 playtest（保持 `humanHoursCertified:false`）
+3. ⏳ browser 纵切片全量 / pages-slice（本地路径已有；live pages-slice 待 AUTH）  
+4. ⏳ 5–10 人真人 playtest（**HUMAN**；保持 `humanHoursCertified:false`）
 
 **Exit:** REQ-A4-01 ✅（bot）；REQ-A4-02 待人  
 
+### Phase 5b — A5 炼丹七情一口（P0）
+
+**Status:** implemented on master（2026-07-17）  
+**Slices:**
+
+1. ✅ `pairingLabel` 读 `lookupRelation`（教学方 metalpine×frostmarrow → 相使）  
+2. ✅ `#flow-alchemy-pairing` DOM + panels view 接线  
+3. ✅ unit + vertical-slice 断言「七情 / 相使」
+
+**Exit:** REQ-A5-01 ✅  
+**OMC 切口:** 修仙招牌第二口可读（不扩配方系统）
+
 ### Phase 6 — Feature lock 打磨（P0 收口）
 
-**Status:** pending  
-只允许润色/回归；对照草图 DoD 检查表。
+**Status:** regression green on master（2026-07-17，本轮）  
+**Slices:**
+
+1. ✅ `pnpm governance:check`  
+2. ✅ `pnpm typecheck`  
+3. ✅ `pnpm funnel --seeds=6` completeness PASS  
+4. ✅ unit 关键面 + browser `responsive-layout` + `public-demo-vertical-slice`  
+5. ⏳ 全量 `pnpm test` / live pages-slice — 可选；HUMAN playtest 仍阻塞 DoD  
+
+只允许润色/回归；对照草图 DoD + `.planning/SKILL-AUTOMATION.md`。下一刀需 AUTH 或 HUMAN。
 
 ## Wave B / C
 
