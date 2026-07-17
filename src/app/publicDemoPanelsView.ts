@@ -1,6 +1,6 @@
 import type { Direction } from '@sim';
 import type { GameState, SimContext } from '@sim';
-import { buildJourneyGuide, journeyGuideDetailLines } from './journeyGuide';
+import { buildJourneyGuide, journeyGuideContextFromState, journeyGuideDetailLines } from './journeyGuide';
 import { buildPublicDemoAftermathView, buildPublicDemoAlchemyView, buildPublicDemoTribulationView } from './publicDemoPanels';
 import { getPublicDemoObjectiveId } from '@sim';
 
@@ -115,13 +115,13 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
   }
 
   function renderJourneyAction(state: GameState): void {
-    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
+    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state), journeyGuideContextFromState(state));
     setText(root, '#world-journey-action', guide.cta);
     setDisabled(root, '#world-journey-action', guide.completed);
   }
 
   function renderObjectiveRail(state: GameState): void {
-    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
+    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state), journeyGuideContextFromState(state));
     const [motivation = '', ctaLine = ''] = journeyGuideDetailLines(guide);
     setText(root, '#objective-rail-progress', guide.progressLabel);
     setText(root, '#objective-rail-primary', guide.currentAction);

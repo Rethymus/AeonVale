@@ -190,8 +190,10 @@ export function farmActionMenuPreview(kind: FarmActionKind, state: GameState, ct
 
 export function farmActionMenuToastPresentation(kind: FarmActionKind, indexLabel: string, confirmHint: string, state: GameState, ctx: SimContext): ActionMenuToastPresentation {
   const preview = farmActionMenuPreview(kind, state, ctx);
+  // 首行固定含「数字1-0 / Esc」，即便 confirmHint 省略返回提示也能自洽（player audit P2）
+  const escHint = /Esc/.test(confirmHint) ? confirmHint : `${confirmHint}·Esc返回`;
   return {
-    message: `农庄操作${indexLabel}：${preview.title}｜数字1-0直达·Tab切换·${confirmHint}`,
+    message: `农庄操作${indexLabel}：${preview.title}｜数字1-0直达·Tab切换·${escHint}`,
     assetId: preview.assetId
   };
 }

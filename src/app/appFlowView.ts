@@ -67,7 +67,6 @@ export interface AppFlowViewControllerOptions {
   readonly continueAvailable?: boolean;
   readonly portraitBlocked?: boolean;
   readonly buildLabel?: string;
-  readonly buildTitle?: string;
   readonly onStateChange?: (next: AppFlowState, previous: AppFlowState, event: AppFlowEvent) => void;
   readonly onReloadRequest?: () => void;
 }
@@ -200,7 +199,6 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   let portraitBlocked = options.portraitBlocked ?? false;
   let continueAvailable = options.continueAvailable ?? false;
   let buildLabel = options.buildLabel?.trim() || DEFAULT_BUILD_LABEL;
-  let buildTitle = options.buildTitle?.trim() || '';
   let worldAttention: AppWorldAttention = {};
   let presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable, ...worldAttention });
   let renderedSurface: AppSurfaceId | null = null;
@@ -242,20 +240,22 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   function updateContinueControl(): void {
     const button = root?.querySelector('[data-flow-action="continue-game"]') ?? null;
     if (button) {
+      // 无存档时隐藏整行，避免首进玩家把灰掉的「继续」当成主路径（player audit P1）
       button.disabled = !continueAvailable;
+      button.hidden = !continueAvailable;
       button.setAttribute('aria-disabled', String(!continueAvailable));
     }
     const status = root?.querySelector('#flow-continue-status') ?? null;
-    if (status) status.textContent = continueAvailable ? '已找到可继续的本地旅程。' : '尚未找到可继续的本地旅程。';
+    if (status) {
+      // 有存档时不必占位；无存档时显示「暂无存档」指引
+      status.textContent = continueAvailable ? '已找到可继续的本地旅程。' : '暂无存档 — 请从「新游戏」开始。';
+      status.hidden = continueAvailable;
+    }
   }
 
   function updateBuildLabel(): void {
     const element = root?.querySelector('#flow-title-version') ?? null;
-    if (element) {
-      element.textContent = buildLabel;
-      if (buildTitle) element.setAttribute('title', buildTitle);
-      else element.removeAttribute('title');
-    }
+    if (element) element.textContent = buildLabel;
   }
 
   function dispatch(event: AppFlowEvent): AppFlowState {
