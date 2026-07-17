@@ -26,5 +26,6 @@ export const UI_COPY_BUDGETS = {
   tribulationWarning: { fontSize: 15, maxWidth: 520 },
   tribulationPrimary: { fontSize: 15, maxWidth: 280 },
   farmToast: { fontSize: 14, maxWidth: 900 },
-  journeyCta: { fontSize: 14, maxWidth: 360 }
+  journeyCta: { fontSize: 14, maxWidth: 360 },
+  alchemyPairing: { fontSize: 14, maxWidth: 420 }
 } as const;
