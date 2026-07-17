@@ -936,8 +936,7 @@ export function updateFloatTexts(layers: RenderLayers): void {
         }
       });
       root.addChild(label);
-    } else if (label.text !== ft.text) {
-      label.text = ft.text;
+    } else if (setTextIfChanged(label, ft.text)) {
       label.style.fill = ft.color;
     }
     const alpha = Math.max(0, ft.life / ft.maxLife);
