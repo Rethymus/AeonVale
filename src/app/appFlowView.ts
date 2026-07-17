@@ -67,6 +67,7 @@ export interface AppFlowViewControllerOptions {
   readonly continueAvailable?: boolean;
   readonly portraitBlocked?: boolean;
   readonly buildLabel?: string;
+  readonly buildTitle?: string;
   readonly onStateChange?: (next: AppFlowState, previous: AppFlowState, event: AppFlowEvent) => void;
   readonly onReloadRequest?: () => void;
 }
@@ -199,6 +200,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   let portraitBlocked = options.portraitBlocked ?? false;
   let continueAvailable = options.continueAvailable ?? false;
   let buildLabel = options.buildLabel?.trim() || DEFAULT_BUILD_LABEL;
+  let buildTitle = options.buildTitle?.trim() || '';
   let worldAttention: AppWorldAttention = {};
   let presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable, ...worldAttention });
   let renderedSurface: AppSurfaceId | null = null;
@@ -249,7 +251,11 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
 
   function updateBuildLabel(): void {
     const element = root?.querySelector('#flow-title-version') ?? null;
-    if (element) element.textContent = buildLabel;
+    if (element) {
+      element.textContent = buildLabel;
+      if (buildTitle) element.setAttribute('title', buildTitle);
+      else element.removeAttribute('title');
+    }
   }
 
   function dispatch(event: AppFlowEvent): AppFlowState {
