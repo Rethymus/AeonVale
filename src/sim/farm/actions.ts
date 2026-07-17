@@ -391,7 +391,7 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       return;
     }
     case 'resolve-tutorial-bolt': {
-      resolveTutorialTribulationBolt(state, ctx);
+      resolveTutorialTribulationBolt(state, ctx, { perfectBlock: a.perfectBlock === true });
       return;
     }
     case 'acknowledge-tutorial-aftermath': {

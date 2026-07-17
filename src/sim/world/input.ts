@@ -51,7 +51,8 @@ export type PlayerAction =
   | { kind: 'brew-tutorial-pill'; avgHeatMilli: number }
   | { kind: 'eat-pill'; pillId: string }
   | { kind: 'start-tutorial-tribulation' }
-  | { kind: 'resolve-tutorial-bolt' }
+  /** perfectBlock：教学峰值窗显式擦弹；仅当玩家仍在本雷落点 blast 内时生效（sim 侧再校验）。 */
+  | { kind: 'resolve-tutorial-bolt'; perfectBlock?: boolean }
   | { kind: 'acknowledge-tutorial-aftermath' }
   | { kind: 'invoke-tribulation' }
   | { kind: 'hunt-beast' } // 主动猎杀一只妖兽：耗体力并承受反击，成功后才有内丹

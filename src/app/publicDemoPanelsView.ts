@@ -4,7 +4,11 @@ import { buildJourneyGuide } from './journeyGuide';
 import { buildPublicDemoAftermathView, buildPublicDemoAlchemyView, buildPublicDemoTribulationView } from './publicDemoPanels';
 import { getPublicDemoObjectiveId } from '@sim';
 
-export type PublicDemoPanelAction = { readonly kind: 'alchemy-primary'; readonly heatPercent: number } | { readonly kind: 'take-pill' } | { readonly kind: 'tribulation-primary' } | { readonly kind: 'move'; readonly direction: Direction };
+export type PublicDemoPanelAction =
+  | { readonly kind: 'alchemy-primary'; readonly heatPercent: number }
+  | { readonly kind: 'take-pill' }
+  | { readonly kind: 'tribulation-primary'; readonly perfectBlock?: boolean }
+  | { readonly kind: 'move'; readonly direction: Direction };
 
 export interface PublicDemoPanelsController {
   render(state: GameState, ctx: SimContext): void;
@@ -75,6 +79,8 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
     setText(root, '#flow-tribulation-primary', view.primaryLabel);
     setDisabled(root, '#flow-tribulation-primary', view.primaryDisabled);
     setDisabled(root, '#flow-tribulation-pill-action', view.takePillDisabled);
+    const primary = root?.querySelector<HTMLButtonElement>('#flow-tribulation-primary') ?? null;
+    if (primary) primary.dataset.perfectBlock = view.perfectBlockAvailable ? 'true' : 'false';
     for (const button of Array.from(root?.querySelectorAll<HTMLButtonElement>('[data-demo-action^="move-"]') ?? [])) {
       button.disabled = view.movementDisabled;
       button.setAttribute('aria-disabled', String(view.movementDisabled));
@@ -124,7 +130,9 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
       let command: PublicDemoPanelAction | null = null;
       if (action === 'alchemy-primary') command = { kind: 'alchemy-primary', heatPercent };
       else if (action === 'take-pill') command = { kind: 'take-pill' };
-      else if (action === 'tribulation-primary') command = { kind: 'tribulation-primary' };
+      else if (action === 'tribulation-primary') {
+        command = { kind: 'tribulation-primary', perfectBlock: button.dataset.perfectBlock === 'true' };
+      }
       else if (action === 'move-up' || action === 'move-down' || action === 'move-left' || action === 'move-right') {
         command = { kind: 'move', direction: action.slice('move-'.length) as Direction };
       }

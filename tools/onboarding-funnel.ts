@@ -180,12 +180,26 @@ function formatPct(x: number | null): string {
   return `${(x * 100).toFixed(0).padStart(3)}%`;
 }
 
+/** 解析 --seeds：支持整数 N，或文档中的 1..N 区间（取会话数 N）。 */
+function parseSeedCount(raw: string | undefined): number {
+  if (!raw) return 10;
+  const value = raw.slice('--seeds='.length);
+  const range = /^(\d+)\.\.(\d+)$/.exec(value);
+  if (range) {
+    const from = Number(range[1]);
+    const to = Number(range[2]);
+    if (Number.isFinite(from) && Number.isFinite(to) && to >= from) return to - from + 1;
+  }
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 10;
+}
+
 function main(): void {
   const args = process.argv.slice(2);
   const seedArg = args.find(a => a.startsWith('--seeds='));
   const dayArg = args.find(a => a.startsWith('--days='));
   const profileArg = args.find(a => a.startsWith('--profile='));
-  const seedCount = seedArg ? Number(seedArg.slice(8)) : 10;
+  const seedCount = parseSeedCount(seedArg);
   const days = dayArg ? Number(dayArg.slice(7)) : 50;
   const profile = profileArg ? profileArg.slice(9) : 'completeness';
 

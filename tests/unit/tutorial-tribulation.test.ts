@@ -201,6 +201,50 @@ describe('确定性教学天劫', () => {
     });
   });
 
+  it('区内显式擦弹：perfectBlock 将本雷 hitType 定为 blocked 且确定性', () => {
+    const { state, ctx } = setup(1, 1);
+    applyAction(state, { kind: 'start-tutorial-tribulation' }, ctx);
+    expect(state.tutorialTribulation.warnedTileId).not.toBeNull();
+    // 1×1 图上玩家必在落点 blast 内
+    applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: true }, ctx);
+    const resolved = [...state.events].reverse().find(event => event.type === 'tutorial-tribulation-bolt-resolved');
+    expect(resolved).toMatchObject({
+      payload: {
+        hitType: 'blocked',
+        perfectBlockAttempted: true,
+        perfectBlockApplied: true
+      }
+    });
+    expect(state.tutorialTribulation.hits.blocked).toBe(1);
+    // 续解两雷同样擦弹，战后统计可读
+    while (state.tutorialTribulation.phase === 'active') {
+      applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: true }, ctx);
+    }
+    expect(state.tutorialTribulation).toMatchObject({
+      phase: 'aftermath',
+      hits: { blocked: 3, direct: 0, miss: 0, rod: 0 }
+    });
+  });
+
+  it('区外请求擦弹无效：perfectBlock 不生效，走位 miss 仍成立', () => {
+    const { state, ctx } = setup(6, 6);
+    applyAction(state, { kind: 'start-tutorial-tribulation' }, ctx);
+    const targetTileId = state.tutorialTribulation.warnedTileId;
+    const target = state.tiles.find(tile => tile.id === targetTileId)!;
+    const safeTile = state.tiles.find(tile => tile.blockType === 'none' && chebyshev(tile, target) > 1)!;
+    applyAction(state, { kind: 'move', to: { x: safeTile.x, y: safeTile.y } }, ctx);
+    applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: true }, ctx);
+    const resolved = [...state.events].reverse().find(event => event.type === 'tutorial-tribulation-bolt-resolved');
+    expect(resolved).toMatchObject({
+      payload: {
+        hitType: 'miss',
+        perfectBlockAttempted: true,
+        perfectBlockApplied: false
+      }
+    });
+    expect(state.tutorialTribulation.hits.blocked).toBe(0);
+  });
+
   it('锁定预警后，正式走位与引雷阵规则决定本雷结果', () => {
     const { state, ctx } = setup(6, 6);
     applyAction(state, { kind: 'start-tutorial-tribulation' }, ctx);

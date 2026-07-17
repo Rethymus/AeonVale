@@ -54,9 +54,27 @@ describe('public demo panel view models', () => {
     expect(active.wardLabel).toContain('40%');
     expect(active.warningLabel).toContain('第 1/3 雷');
     expect(active.movementDisabled).toBe(false);
+    // 开局站位若在区内则提供擦弹峰值 CTA
+    if (active.perfectBlockAvailable) {
+      expect(active.primaryLabel).toContain('擦弹');
+      expect(active.warningLabel).toContain('擦弹');
+    } else {
+      expect(active.primaryLabel).toContain('确认第');
+    }
 
-    applyAction(state, { kind: 'resolve-tutorial-bolt' }, ctx);
+    applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: active.perfectBlockAvailable }, ctx);
     expect(buildPublicDemoTribulationView(state).lastBoltLabel).toContain('第 1 雷');
+  });
+
+  it('aftermath hit label 将 blocked 记为擦弹', () => {
+    const { state, ctx } = setup(1, 1);
+    applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
+    applyAction(state, { kind: 'brew-tutorial-pill', avgHeatMilli: 47_000 }, ctx);
+    applyAction(state, { kind: 'start-tutorial-tribulation' }, ctx);
+    while (state.tutorialTribulation.phase === 'active') {
+      applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: true }, ctx);
+    }
+    expect(buildPublicDemoAftermathView(state).hitLabel).toContain('擦弹 3');
   });
 
   it('turns the persisted aftermath summary into readable losses, hits, reward, and next action', () => {
