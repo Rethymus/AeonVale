@@ -175,7 +175,7 @@ export { MAINLINE_QUEST_CATALOG, claimMainlineQuest, getCurrentMainlineQuest, ge
 export type { MainlineQuestDef, MainlineQuestResult, MainlineQuestReward, MainlineQuestStatus } from './story/mainline';
 export { FIRST_HARVEST_FLAG, FIRST_MARKET_RESTOCK_FLAG, FIRST_SECOND_SOW_FLAG, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, FIRST_SHIPPING_SETTLEMENT_FLAG, TUTORIAL_AFTERMATH_VIEWED_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_ALCHEMY_KIT_FLAG, TUTORIAL_TRIBULATION_COMPLETED_FLAG, TUTORIAL_TRIBULATION_REWARDED_FLAG, getOnboardingObjectiveId, getPublicDemoObjectiveId } from './story/onboarding';
 export type { OnboardingObjectiveId, PublicDemoObjectiveId } from './story/onboarding';
-export { TUTORIAL_TRIBULATION_BOLT_COUNT, TUTORIAL_TRIBULATION_REWARD_MILLI, TUTORIAL_TRIBULATION_STAGE, acknowledgeTutorialAftermath, resolveTutorialTribulationBolt, startTutorialTribulation } from './tribulation/tutorialTribulation';
+export { TUTORIAL_TRIBULATION_BOLT_COUNT, TUTORIAL_TRIBULATION_REWARD_MILLI, TUTORIAL_TRIBULATION_STAGE, acknowledgeTutorialAftermath, isPlayerInTutorialWarningZone, resolveTutorialTribulationBolt, startTutorialTribulation } from './tribulation/tutorialTribulation';
 export { normalizeBodyCultivation, bodyFoundationCap, readyToInvokeTribulation, recordTribulationInvocation, invokeTribulation, startTribulationCountdown, shouldStartForcedTribulationCountdown, advanceTribulationDay, clearTribulationCountdown, advanceLifespanDay } from './progression/bodyCultivation';
 export { resolveDueTribulation, standardTribulationBoltCount } from './progression/tribulationFlow';
 export type { DueTribulationResolution } from './progression/tribulationFlow';
