@@ -22,11 +22,11 @@
 | **REQ-V1-T1-01** ✅ | 炼丹面板可见炉体与火候读图 | 面板含 `facility.talisman-furnace` 图；理想火候区+指针；`heatBand` low/ideal/high | main #11；`index.html` furnace + unit |
 | **REQ-V1-T1-02** ✅ | 教学天劫落雷区空间感 | active 阶段世界层绘制中心+八邻域脉动区（非仅坐标文案） | main #11；`tutorialWarningZone.ts` + unit |
 | **REQ-V1-T2-01** ✅ | 角色/NPC 在场感 | 玩家朝向可读（镜像+尖头）+脚影；NPC 脚影；高灵气 sparkle | main #12；`characterPresence.ts` + unit |
-| **REQ-V1-T3-01** ✅ | 场内地点感装饰 | 空地稀疏路径石/草/石/远雾/栅栏；确定性；不盖关键操作格 | main #13；`worldDecor.ts` + unit |
-| **REQ-V1-T4-01** ✅ | 农作四态可读 | 空/翻/播/浇视觉拉开（边框、水洼、种子点、收获抬升） | main #13；`tileVisuals` + unit |
-| **REQ-V1-T5-01** ✅ | 主角色块在场 | 非纯黑剪影：暖袍/肤色底层 + 贴图 tint | main #13；`playerPresencePalette` + unit |
-| **REQ-V1-T6-01** ✅ | HUD 密度软收 | 次要入口默折叠；完成后简报/帮助压缩 | main #13；`#world-command-more` |
-| **REQ-V1-L01** ✅ | journey-complete 无教学残留 | 完成后自由经营文案；停灌教学对白 | main #13；`isJourneyTeachingActive` + main 清对白 |
+| **REQ-V1-T3-01** ✅ | 场内地点感装饰 | 空地稀疏路径石/草/石/远雾/栅栏；确定性；不盖关键操作格 | `worldDecor.ts` + unit；drawWorld 接入 |
+| **REQ-V1-T4-01** ✅ | 农作四态可读 | 空/翻/播/浇视觉拉开（边框、水洼、种子点、收获抬升） | `tileVisuals` + unit；drawWorld |
+| **REQ-V1-T5-01** ✅ | 主角色块在场 | 非纯黑剪影：暖袍/肤色底层 + 贴图 tint | `playerPresencePalette` + unit |
+| **REQ-V1-T6-01** ✅ | HUD 密度软收 | 次要入口默折叠；完成后简报/帮助压缩 | `#world-command-more` + journey complete copy |
+| **REQ-V1-L01** ✅ | journey-complete 无教学残留 | 完成后自由经营文案；停灌教学对白 | `isJourneyTeachingActive` + main 清对白 |
 
 ## P1 / Wave B — Patch（草图稳后）
 

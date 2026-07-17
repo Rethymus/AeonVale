@@ -143,7 +143,7 @@ test('fresh desktop player completes the four-stage public demo without test hoo
   await page.locator('#flow-aftermath-continue').click();
   await expect(page.locator('canvas')).toBeVisible();
   await waitForObjective(page, 'journey-complete');
-  await expect(journey).toHaveText('返回农庄');
+  await expect(journey).toHaveText('自由经营');
   await expect(journey).toBeDisabled();
   expect((await debugSnapshot(page)).tutorialTribulationPhase).toBe('idle');
   expect(errors).toEqual([]);

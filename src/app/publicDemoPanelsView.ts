@@ -1,6 +1,6 @@
 import type { Direction } from '@sim';
 import type { GameState, SimContext } from '@sim';
-import { buildJourneyGuide } from './journeyGuide';
+import { buildJourneyGuide, journeyGuideDetailLines } from './journeyGuide';
 import { buildPublicDemoAftermathView, buildPublicDemoAlchemyView, buildPublicDemoTribulationView } from './publicDemoPanels';
 import { getPublicDemoObjectiveId } from '@sim';
 
@@ -120,6 +120,21 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
     setDisabled(root, '#world-journey-action', guide.completed);
   }
 
+  function renderObjectiveRail(state: GameState): void {
+    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
+    const [motivation = '', ctaLine = ''] = journeyGuideDetailLines(guide);
+    setText(root, '#objective-rail-progress', guide.progressLabel);
+    setText(root, '#objective-rail-primary', guide.currentAction);
+    setText(root, '#objective-rail-motivation', motivation);
+    setText(root, '#objective-rail-cta', ctaLine);
+    const rail = root?.querySelector<HTMLElement>('#objective-rail') ?? null;
+    if (rail) {
+      rail.dataset.hudDensity = 'compact';
+      rail.dataset.journeyStage = guide.stageId;
+      rail.dataset.journeyCompleted = guide.completed ? 'true' : 'false';
+    }
+  }
+
   function render(state: GameState, ctx: SimContext): void {
     if (destroyed) return;
     currentState = state;
@@ -128,6 +143,7 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
     renderTribulation(state);
     renderAftermath(state);
     renderJourneyAction(state);
+    renderObjectiveRail(state);
   }
 
   const onHeatInput: EventListener = () => {

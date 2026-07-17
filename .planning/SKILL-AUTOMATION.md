@@ -48,7 +48,7 @@
 | **V1-T5** | **主角色块在场**（防黑剪影） | **AUTO** | — | unit character-presence + drawWorld tint/overlay | ✅ 本波实现 |
 | **V1-T6** | **HUD 密度软收**（次要区默折叠） | **AUTO** | — | unit/app css + responsive-layout 不回归 | ✅ 本波实现 |
 | **V1-L01** | **journey-complete 清教学残留** | **AUTO** | — | unit journeyGuide + main 接线 | ✅ 本波实现 |
-| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；**T3–L01 main #13**；Pages 部署跟 |
+| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；T3–L01 AUTH 进行中 |
 
 ### P0 dogfood 映射（pages-deep 2026-07-17）
 
@@ -129,9 +129,8 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 9. ~~**V1-T5** 主角色块在场~~ ✅  
 10. ~~**V1-T6** HUD 密度软收~~ ✅  
 11. ~~**V1-L01** journey-complete 清残留~~ ✅  
-12. ~~**dual-track** AUTH port → main #13~~ ✅  
+12. **dual-track** AUTH port → main + Pages（本 goal 授权）— 进行中  
 13. **A4-human** — HUMAN，不自动  
-14. **Pages 复验** — 部署后 `mvp-preflight --include-live-pages`  
 
 ---
 

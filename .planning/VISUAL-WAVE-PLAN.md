@@ -1,7 +1,7 @@
 # 视觉身份 Wave V1 路线
 
 **Updated:** 2026-07-17  
-**Status:** T0 合入 main（#10 · `62f6f33`）；**T1 合入 main（#11 · `8d5d04d`）**；T0–T2 均已合入 main（#10/#11/#12）
+**Status:** T0 合入 main（#10 · `62f6f33`）；**T1 合入 main（#11 · `8d5d04d`）**；T2 已实现于 master（port 中）
 
 ## 核查结论（访客 60 秒）
 

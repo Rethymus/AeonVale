@@ -20,7 +20,15 @@ import { bodyFoundationCap, readyToInvokeTribulation, type FacilityKind, type Lo
 import { guardBeastPreviewAssetId, guardBeastPreviewPlacements } from './guardBeastPreview';
 import { farmsteadPropPlacements, locationWorldPreviewPlacements, npcWorldPreviewPlacements } from './npcWorldPreview';
 import { arrayWorldPreviewPlacements } from './arrayPreview';
-import { tileReadinessState, tileVisualState } from './tileVisuals';
+import {
+  harvestLiftRadiusBonus,
+  seedFallbackRadius,
+  tileReadinessState,
+  tileVisualState,
+  TILLED_SOIL_BORDER,
+  TILLED_SOIL_FILL,
+  WATER_SHEEN_COLOR
+} from './tileVisuals';
 import { inventoryIconStripEntries } from './inventoryIconStrip';
 import { tileAssetId } from './tileAsset';
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
@@ -32,12 +40,12 @@ import {
   facingIndicatorOffset,
   facingScaleX,
   footShadowSpec,
-  playerPresencePalette,
+  playerPresenceOverlay,
   qiSparklePhase,
   shouldDrawQiSparkles,
   type Facing4
 } from './characterPresence';
-import { worldDecorPlacements } from './worldDecor';
+import { paintWorldDecor, worldDecorPlacements } from './worldDecor';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -1128,33 +1136,38 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     } else {
       g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? 0x6b4f2a);
     }
+    // V1-T4：空/翻/播/浇 四态差分 —— 翻地对比、水洼、种子、成熟上扬
+    const tileState = tileVisualState(t, crop);
     if (t.tilled) {
-      // 翻地：更深土色 + 边缘描边，拉开空地/翻地
-      g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill(0x3a2810);
-      const tileStateEarly = tileVisualState(t, crop);
-      if (tileStateEarly.tilledEdgeAlpha > 0) {
+      // 翻地基色 + 对比暗层（浇水后更深）
+      g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill(TILLED_SOIL_FILL);
+      if (tileState.tilledContrastAlpha > 0) {
+        g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: 0x1c1008, alpha: tileState.tilledContrastAlpha * 0.35 });
+      }
+      if (tileState.tilledBorderAlpha > 0) {
         g.rect(x + 3, y + 3, TILE - 7, TILE - 7).stroke({
-          width: 1.4,
-          color: 0x8b6238,
-          alpha: tileStateEarly.tilledEdgeAlpha
+          width: 1.25,
+          color: TILLED_SOIL_BORDER,
+          alpha: tileState.tilledBorderAlpha
         });
       }
     }
-    const tileState = tileVisualState(t, crop);
     if (tileState.dampAlpha > 0) {
       g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: 0x2f5675, alpha: tileState.dampAlpha });
     }
-    // 浇水水洼高光（比 damp 更易扫读）
+    // 浇水水洼高光层（比 damp 更易扫读）
     if (tileState.waterSheenAlpha > 0) {
-      g.ellipse(x + TILE / 2, y + TILE - 12, 10, 4).fill({ color: 0x9ed4ff, alpha: tileState.waterSheenAlpha });
-      g.ellipse(x + TILE / 2 - 4, y + TILE - 14, 4, 1.5).fill({ color: 0xe8f6ff, alpha: tileState.waterSheenAlpha * 0.85 });
+      g.ellipse(x + TILE / 2, y + TILE - 12, TILE * 0.28, 4).fill({
+        color: WATER_SHEEN_COLOR,
+        alpha: tileState.waterSheenAlpha
+      });
+      g.ellipse(x + TILE / 2 + 4, y + TILE - 14, TILE * 0.14, 2.2).fill({
+        color: 0xbfe8ff,
+        alpha: tileState.waterSheenAlpha * 0.75
+      });
     }
     if (tileState.qiGlowAlpha > 0) {
       g.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.5, color: 0x66ddff, alpha: tileState.qiGlowAlpha });
-    }
-    if (tileState.showSeedPip) {
-      g.circle(x + TILE / 2, y + TILE / 2 + 2, 3.2).fill({ color: 0x6b4226, alpha: 0.95 });
-      g.circle(x + TILE / 2 - 1, y + TILE / 2 + 1, 1.1).fill({ color: 0xd9c38a, alpha: 0.9 });
     }
     // T2：高灵气地块轻量上浮微粒（纯 render 呼吸，不改 sim）
     if (shouldDrawQiSparkles(t.qiDensity, t.tilled)) {
@@ -1169,8 +1182,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       });
     }
     if (tileState.showWaterMark) {
-      g.circle(x + 11, y + TILE - 11, 3).fill({ color: 0x7ec8ff, alpha: 0.9 });
-      g.circle(x + 18, y + TILE - 14, 2).fill({ color: 0xbfe8ff, alpha: 0.82 });
+      g.circle(x + 11, y + TILE - 11, 3.4).fill({ color: 0x7ec8ff, alpha: 0.95 });
+      g.circle(x + 18, y + TILE - 14, 2.4).fill({ color: 0xbfe8ff, alpha: 0.88 });
+      g.circle(x + 14, y + TILE - 9, 1.6).fill({ color: 0xe8f6ff, alpha: 0.7 });
     }
     if (tileState.showChannelMark) {
       g.poly([x + TILE - 12, y + 9, x + TILE - 8, y + 15, x + TILE - 12, y + 21, x + TILE - 16, y + 15]).fill({ color: 0x66ddff, alpha: 0.88 });
@@ -1217,55 +1231,71 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
           .lineTo(cx - 6, cy + 6)
           .stroke({ width: 2, color: STAGE_COLOR.withered });
       } else {
-        const fallbackRadius = crop.stage === 'seed' ? 3 : crop.stage === 'sprout' ? 6 : crop.stage === 'growing' ? 9 : 12;
+        const liftBonus = harvestLiftRadiusBonus(tileState);
+        const baseRadius =
+          crop.stage === 'seed'
+            ? seedFallbackRadius(tileState, 3)
+            : crop.stage === 'sprout'
+              ? 6
+              : crop.stage === 'growing'
+                ? 9
+                : 12 + liftBonus;
+        const fallbackRadius = baseRadius;
         const texture = crop.stage === 'seed' ? assets?.cropSeeds[herb?.seedId ?? ''] : assets?.cropHerbs[crop.defId];
         if (texture) {
           const sprite = retainSceneSprite(layers, retainedSprites, `world:crop:${crop.id}`);
           const spec = cropWorldSpriteSpec(crop.stage);
+          const sizeMul = crop.stage === 'seed' ? tileState.seedScale : tileState.harvestLift ? 1.12 : 1;
+          const liftY = tileState.harvestLift ? -3 : 0;
           const bobOffset = crop.stage === 'seed' ? 0 : ambientBobOffset(ambientTimeMs, crop.id, 1.8, 3200);
-          applyWorldSprite(sprite, texture, cx, cy + spec.yOffset + bobOffset, spec.size);
+          applyWorldSprite(sprite, texture, cx, cy + spec.yOffset + bobOffset + liftY, spec.size * sizeMul);
           if (metal) sprite.tint = 0xc9d4ea;
+          if (tileState.harvestLift) sprite.tint = metal ? 0xd8e4f0 : 0xfff0a8;
         } else {
           // 回退路径：保留原始程序化图元，保证无贴图时仍可稳定演示
           const col = metal ? 0xb8b8c8 : (STAGE_COLOR[crop.stage] ?? 0x4a9a30);
-          if (crop.stage === 'growing' || crop.stage === 'mature') {
-            g.moveTo(cx, cy + fallbackRadius)
-              .lineTo(cx, y + TILE - 3)
-              .stroke({ width: 1.5, color: 0x3a6a28 });
+          if (crop.stage === 'seed' && tileState.seedVisible) {
+            // 刚播下：土中种子点 + 短茎两叶（T0-3 + V1-T4 放大）
+            const s = tileState.seedScale;
+            g.ellipse(cx, cy + 5, 3.2 * s, 1.6 * s).fill({ color: 0x2a1a0c, alpha: 0.55 });
+            g.circle(cx, cy + 4, 2.1 * s).fill(metal ? 0x8a9aa8 : 0x5a3a18);
+            g.moveTo(cx, cy + 3).lineTo(cx, cy - 4 * s).stroke({ width: 1.4 * s, color: 0x3a6a28 });
+            g.circle(cx - 3 * s, cy - 4 * s, 2.4 * s).fill(metal ? 0x9fb6c4 : 0x7ac050);
+            g.circle(cx + 3 * s, cy - 4 * s, 2.4 * s).fill(metal ? 0x9fb6c4 : 0x7ac050);
+          } else if (crop.stage === 'seed') {
+            g.moveTo(cx, cy + 3).lineTo(cx, cy - 4).stroke({ width: 1.4, color: 0x3a6a28 });
+            g.circle(cx - 3, cy - 4, 2.4).fill(metal ? 0x9fb6c4 : 0x7ac050);
+            g.circle(cx + 3, cy - 4, 2.4).fill(metal ? 0x9fb6c4 : 0x7ac050);
+          } else {
+            const drawCy = tileState.harvestLift ? cy - 3 : cy;
+            if (crop.stage === 'growing' || crop.stage === 'mature') {
+              g.moveTo(cx, drawCy + fallbackRadius)
+                .lineTo(cx, y + TILE - 3)
+                .stroke({ width: tileState.harvestLift ? 2 : 1.5, color: 0x3a6a28 });
+            }
+            g.circle(cx, drawCy, fallbackRadius).fill(col);
+            if (tileState.harvestLift) {
+              g.circle(cx, drawCy, fallbackRadius * 0.45).fill({ color: 0xfff6c8, alpha: 0.55 });
+            }
           }
-          g.circle(cx, cy, fallbackRadius).fill(col);
         }
         if (readiness.showHarvestHalo || tileState.harvestLift) {
-          const lift = tileState.harvestLift ? 2 : 0;
-          g.circle(cx, cy - lift, fallbackRadius + 3 + lift).stroke({ width: 1.5, color: 0xffe066, alpha: 0.82 });
-          g.circle(cx, cy - lift, fallbackRadius + 6 + lift).stroke({ width: 1, color: 0xfff2a8, alpha: 0.55 });
+          const haloCy = tileState.harvestLift ? cy - 3 : cy;
+          g.circle(cx, haloCy, fallbackRadius + 3).stroke({ width: 1.5, color: 0xffe066, alpha: 0.85 });
+          g.circle(cx, haloCy, fallbackRadius + 6).stroke({ width: 1, color: 0xfff2a8, alpha: 0.55 });
+          if (tileState.harvestLift) {
+            g.circle(cx, haloCy, fallbackRadius + 9).stroke({ width: 1, color: 0xffe066, alpha: 0.28 });
+          }
         }
       }
     }
   }
 
-  // V1-T3：地点感装饰（路径石/草/石/雾/栅栏）——瓦片后、实体前
-  for (const decor of worldDecorPlacements(state.width, state.height, state.tiles)) {
-    const x = OX + decor.x * TILE;
-    const y = OY + decor.y * TILE;
-    const jx = (decor.salt - 0.5) * 6;
-    const jy = ((decor.salt * 7) % 1 - 0.5) * 4;
-    if (decor.kind === 'path-stone') {
-      g.ellipse(x + TILE / 2 + jx, y + TILE - 10 + jy, 5, 3).fill({ color: 0x8a8a82, alpha: 0.55 + decor.salt * 0.25 });
-      g.ellipse(x + TILE / 2 + jx - 3, y + TILE - 12 + jy, 3, 2).fill({ color: 0xb0b0a8, alpha: 0.4 });
-    } else if (decor.kind === 'grass-tuft') {
-      g.moveTo(x + 12 + jx, y + TILE - 8)
-        .lineTo(x + 14 + jx, y + TILE - 16)
-        .lineTo(x + 16 + jx, y + TILE - 8)
-        .stroke({ width: 1.2, color: 0x6a8a48, alpha: 0.55 + decor.salt * 0.3 });
-    } else if (decor.kind === 'pebble') {
-      g.circle(x + 14 + jx, y + TILE - 11 + jy, 1.8).fill({ color: 0x7a6a58, alpha: 0.5 + decor.salt * 0.3 });
-    } else if (decor.kind === 'mist-band') {
-      g.ellipse(x + TILE / 2, y + 10, 14, 5).fill({ color: 0xd8e4e8, alpha: 0.12 + decor.salt * 0.1 });
-    } else if (decor.kind === 'fence-post') {
-      g.rect(x + TILE / 2 - 1, y + 12, 3, 16).fill({ color: 0x6b4f2a, alpha: 0.7 });
-      g.rect(x + TILE / 2 - 4, y + 12, 9, 2).fill({ color: 0x8b6a3f, alpha: 0.65 });
-    }
+  // —— 场所感装饰（V1-T3）：路径石 / 草丛 / 卵石 / 远雾 / 篱笆；叠在地砖之上、设施与实体之下 ——
+  for (const decor of worldDecorPlacements(state.width, state.height, state.tiles, {
+    hasFacilities: state.facilities.size > 0
+  })) {
+    paintWorldDecor(g, decor, OX + decor.x * TILE, OY + decor.y * TILE, TILE);
   }
 
   // —— 农庄设施：加工链从菜单入口落到具体地块 ——
@@ -1587,23 +1617,28 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     color: 0x0a1210,
     alpha: playerShadow.alpha
   });
-  // V1-T5：暖色在场底层，防止贴图黑剪影压过场景
-  const presence = playerPresencePalette();
-  e.ellipse(px, py + 6, 10, 12).fill({ color: presence.robe, alpha: presence.robeAlpha });
-  e.circle(px, py - 5, 7.5).fill({ color: presence.skin, alpha: presence.skinAlpha });
+  // V1-T5：暖袍/肤色条带 + 可读 tint，避免 assets.player 纯黑剪影（ISSUE-001）
+  const presence = playerPresenceOverlay(facing);
+  for (const band of presence.bands) {
+    if (band.layer !== 'under') continue;
+    e.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha });
+  }
   if (assets?.player) {
     const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
     applyWorldSprite(sprite, assets.player, px, py, TILE);
-    sprite.tint = presence.spriteTint;
     // 左右朝向镜像；上下保留原图 + 箭头指示
     const sx = Math.abs(sprite.scale.x) || 1;
     sprite.scale.x = sx * facingScaleX(facing);
-    e.circle(px, py - 5, 8).stroke({ width: 1.1, color: presence.rim, alpha: presence.rimAlpha });
+    sprite.tint = presence.tint;
+    // 半透明墨线叠在暖底下，让服色透出（纯黑像素无法靠 tint 变色）
+    sprite.alpha = presence.spriteAlpha;
   } else {
-    // 回退剪影：头 + 身，避免纯红圆
-    e.circle(px, py - 5, 7).fill(presence.skin);
-    e.ellipse(px, py + 6, 9, 11).fill(presence.robe);
+    // 回退：under 条带已是头+袍；补描边增强轮廓
     e.circle(px, py - 5, 7).stroke({ width: 1.2, color: 0x3a2418, alpha: 0.85 });
+  }
+  for (const band of presence.bands) {
+    if (band.layer !== 'over') continue;
+    e.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha });
   }
   // 朝向指示（尖头，比白点更易扫读）
   const tip = facingIndicatorOffset(facing, 13);
