@@ -3,7 +3,7 @@ import { createDefaultTutorialTribulationState, emit, type GameState, type Tutor
 import { Rng } from '@sim/world/rng';
 import { itemCount } from '@sim/world/player';
 import { TUTORIAL_AFTERMATH_VIEWED_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_ALCHEMY_KIT_FLAG, TUTORIAL_TRIBULATION_COMPLETED_FLAG, TUTORIAL_TRIBULATION_REWARDED_FLAG } from '@sim/story/onboarding';
-import { pickTarget, strikeableTiles } from './targeting';
+import { chebyshev, pickTarget, strikeableTiles } from './targeting';
 import { resolveTribulationBolt } from './tribulationSystem';
 
 export const TUTORIAL_TRIBULATION_BOLT_COUNT = 3;
@@ -122,17 +122,34 @@ function finalizeTutorialTribulation(state: GameState): void {
   });
 }
 
-export function resolveTutorialTribulationBolt(state: GameState, ctx: SimContext): boolean {
+export interface ResolveTutorialBoltOptions {
+  /** 玩家在峰值窗主动擦弹；仅当仍处于落点 blast 内时转为 blockChance=1（确定性，无隐藏技巧 RNG）。 */
+  perfectBlock?: boolean;
+}
+
+/** 玩家是否处于当前预警落点的默认 blast 内（与 resolveTribulationBolt 默认半径 1 一致）。 */
+export function isPlayerInTutorialWarningZone(state: GameState): boolean {
+  const tutorial = state.tutorialTribulation;
+  if (tutorial?.phase !== 'active' || tutorial.warnedTileId == null) return false;
+  const tile = state.tiles.find(entry => entry.id === tutorial.warnedTileId);
+  if (!tile) return false;
+  return chebyshev(tile, state.player.position) <= 1;
+}
+
+export function resolveTutorialTribulationBolt(state: GameState, ctx: SimContext, opts: ResolveTutorialBoltOptions = {}): boolean {
   const tutorial = ensureTutorialState(state);
   if (tutorial.phase !== 'active' || tutorial.warnedTileId == null) return false;
 
   const targetTileId = tutorial.warnedTileId;
+  const targetTile = state.tiles.find(entry => entry.id === targetTileId);
+  const inWarningZone = targetTile != null && chebyshev(targetTile, state.player.position) <= 1;
+  const perfectBlock = opts.perfectBlock === true && inWarningZone;
   const rng = new Rng(`${TUTORIAL_RNG_SEED}:resolve:${tutorial.boltIndex}`);
   const bolt = resolveTribulationBolt(
     state,
     {
       stage: TUTORIAL_TRIBULATION_STAGE,
-      policy: { blockChance: 0 },
+      policy: { blockChance: perfectBlock ? 1 : 0 },
       targetTileId,
       damageModOverride: 1
     },
@@ -154,7 +171,9 @@ export function resolveTutorialTribulationBolt(state: GameState, ctx: SimContext
     isViolet: bolt.isViolet,
     damageMilli: bolt.damageMilli,
     hpBeforeMilli: bolt.hpBeforeMilli,
-    hpAfterMilli: bolt.hpAfterMilli
+    hpAfterMilli: bolt.hpAfterMilli,
+    perfectBlockAttempted: opts.perfectBlock === true,
+    perfectBlockApplied: perfectBlock
   });
 
   if (tutorial.boltIndex >= TUTORIAL_TRIBULATION_BOLT_COUNT) {

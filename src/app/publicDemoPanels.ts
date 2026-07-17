@@ -34,6 +34,8 @@ export interface PublicDemoTribulationView {
   readonly primaryDisabled: boolean;
   readonly takePillDisabled: boolean;
   readonly movementDisabled: boolean;
+  /** 当前预警区内：主确认将尝试擦弹 PerfectBlock。 */
+  readonly perfectBlockAvailable: boolean;
 }
 
 export interface PublicDemoAftermathView {
@@ -138,7 +140,7 @@ function hitLabel(hitType: TutorialBoltPayload['hitType']): string {
     case 'miss':
       return '走位避开';
     case 'blocked':
-      return '阵法化解';
+      return '擦弹完美格挡';
     default:
       return '尚未落雷';
   }
@@ -153,19 +155,28 @@ export function buildPublicDemoTribulationView(state: GameState): PublicDemoTrib
   const pillCount = itemCount(state.player, TUTORIAL_PILL_ID);
   const activeBolt = Math.min(TUTORIAL_TRIBULATION_BOLT_COUNT, tutorial.boltIndex + 1);
   const canStart = state.player.flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG) && state.player.hp > 0;
+  const perfectBlockAvailable = tutorial.phase === 'active' && inWarningZone;
 
   return {
     phase: tutorial.phase,
     hpLabel: `${Math.max(0, Math.round(state.player.hp / 1_000))} / ${Math.round(state.player.maxHp / 1_000)}`,
     pillLabel: `避雷丹 ×${pillCount}`,
     wardLabel: state.player.wardMitigation > 0 ? `避雷护体 ${Math.round(state.player.wardMitigation * 100)}%` : '尚未服用备劫丹',
-    warningLabel: tutorial.phase === 'active' && warnedTile ? `第 ${activeBolt}/${TUTORIAL_TRIBULATION_BOLT_COUNT} 雷将落在 (${warnedTile.x}, ${warnedTile.y})。${inWarningZone ? '你仍在落雷区内。' : '你已离开落雷区。'}` : tutorial.phase === 'aftermath' ? '三雷已经结束，战后结算正在等待确认。' : '服丹后开始教学。每一雷都会先标出落点，再由你决定是否走位。',
+    warningLabel:
+      tutorial.phase === 'active' && warnedTile
+        ? `第 ${activeBolt}/${TUTORIAL_TRIBULATION_BOLT_COUNT} 雷将落在 (${warnedTile.x}, ${warnedTile.y})。${
+            inWarningZone ? '你仍在落雷区内——可就地擦弹，或先走位再确认落雷。' : '你已离开落雷区，确认后将安全避过本雷。'
+          }`
+        : tutorial.phase === 'aftermath'
+          ? '三雷已经结束，战后结算正在等待确认。'
+          : '服丹后开始教学。每一雷先标落点：可走位离开，或在区内确认时擦弹。',
     positionLabel: `当前位置 (${player.x}, ${player.y})`,
     lastBoltLabel: lastBolt ? `第 ${lastBolt.boltIndex ?? tutorial.boltIndex} 雷：${hitLabel(lastBolt.hitType)}，损失 ${Math.round((lastBolt.damageMilli ?? 0) / 1_000)} 气血。` : '尚无雷击结果。',
-    primaryLabel: tutorial.phase === 'active' ? `确认第 ${activeBolt} 雷` : '开始三雷教学',
+    primaryLabel: tutorial.phase === 'active' ? (perfectBlockAvailable ? `擦弹·第 ${activeBolt} 雷` : `确认第 ${activeBolt} 雷`) : '开始三雷教学',
     primaryDisabled: tutorial.phase === 'aftermath' || (tutorial.phase === 'idle' && !canStart),
     takePillDisabled: tutorial.phase !== 'idle' || pillCount <= 0 || state.player.wardMitigation > 0,
-    movementDisabled: tutorial.phase !== 'active'
+    movementDisabled: tutorial.phase !== 'active',
+    perfectBlockAvailable
   };
 }
 
@@ -178,7 +189,7 @@ export function buildPublicDemoAftermathView(state: GameState): PublicDemoAfterm
     heading: survived ? '三雷已过' : tutorial.outcome === 'rescued' ? '山谷将你救回' : '等待天劫结果',
     outcomeLabel: survived ? '你完成了教学小天劫，正式境界保持不变。' : '本次未能撑过三雷，但不会永久死亡，可以重新准备。',
     hpLabel: `${Math.round(tutorial.startingHpMilli / 1_000)} → ${Math.round((tutorial.finalHpBeforeRescueMilli ?? state.player.hp) / 1_000)}，当前 ${Math.round(state.player.hp / 1_000)}`,
-    hitLabel: `正面 ${hits.direct} · 走位 ${hits.miss} · 引雷 ${hits.rod} · 阵挡 ${hits.blocked}`,
+    hitLabel: `正面 ${hits.direct} · 走位 ${hits.miss} · 引雷 ${hits.rod} · 擦弹 ${hits.blocked}`,
     temperingLabel: `${Math.round(tutorial.rawTemperingMilli / 1_000)} 点雷劫淬炼记录`,
     rewardLabel: survived ? `淬体与修为各 +${Math.round(tutorial.rewardMilli / 1_000)}` : '本次不发放淬体奖励',
     nextLabel: survived ? '返回农庄，四段试玩旅程即告完成。' : '返回后会补回教学药包，可重新炼丹再试。',
