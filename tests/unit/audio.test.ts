@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 
-import { AudioEngine } from '@io/audio';
+import { AudioEngine, renderSfxrSamples, SFX_PRESETS, type SfxrParams } from '@io/audio';
 
 describe('AudioEngine', () => {
   afterEach(() => {
@@ -87,5 +87,67 @@ describe('AudioEngine', () => {
     audio.setMasterVolume(61.6);
     expect(audio.getMasterVolume()).toBe(62);
     expect(master.gain.value).toBe(0.62);
+  });
+});
+
+describe('sfxr renderer (bfxr/jsfxr-style)', () => {
+  const coinParams = SFX_PRESETS['coin']!;
+
+  it('renders deterministic samples: identical params ⇒ identical buffer', () => {
+    const a = renderSfxrSamples(44100, coinParams);
+    const b = renderSfxrSamples(44100, coinParams);
+    expect(b.length).toBe(a.length);
+    for (let i = 0; i < a.length; i++) expect(b[i]).toBe(a[i]);
+  });
+
+  it('keeps samples within ±gain bounds and correct length', () => {
+    const samples = renderSfxrSamples(44100, coinParams);
+    expect(samples.length).toBe(Math.floor(coinParams.duration * 44100));
+    const eps = 1e-6;
+    for (const s of samples) {
+      expect(s).toBeGreaterThanOrEqual(-coinParams.gain - eps);
+      expect(s).toBeLessThanOrEqual(coinParams.gain + eps);
+    }
+  });
+
+  it('different waveforms produce different renders', () => {
+    const sine = renderSfxrSamples(44100, { ...coinParams, wave: 'sine' });
+    const square = renderSfxrSamples(44100, { ...coinParams, wave: 'square' });
+    let diff = 0;
+    for (let i = 0; i < sine.length; i++) diff += Math.abs(sine[i]! - square[i]!);
+    expect(diff).toBeGreaterThan(0);
+  });
+
+  it('playSfx routes preset-driven SFX through sfxrSynth and skips hand-tuned tone/noise', () => {
+    const audio = new AudioEngine();
+    const sfxrSynth = vi.spyOn(audio as never, 'sfxrSynth').mockImplementation(() => {});
+    const tone = vi.spyOn(audio as never, 'tone');
+    const noiseBurst = vi.spyOn(audio as never, 'noiseBurst');
+    Object.assign(audio as object, { ctx: { currentTime: 2, sampleRate: 44100 }, master: {}, noise: {} });
+
+    audio.playSfx('coin');
+    expect(sfxrSynth).toHaveBeenCalledWith(SFX_PRESETS['coin'], 2);
+    expect(tone).not.toHaveBeenCalled();
+    expect(noiseBurst).not.toHaveBeenCalled();
+
+    sfxrSynth.mockClear();
+    audio.playSfx('cultivate');
+    expect(sfxrSynth).toHaveBeenCalledWith(SFX_PRESETS['cultivate'], 2);
+  });
+
+  it('registers all four new preset-driven SFX ids', () => {
+    expect(Object.keys(SFX_PRESETS).sort()).toStrictEqual(['array-place', 'coin', 'cultivate', 'spirit-stone']);
+  });
+
+  it('validates a preset satisfies the SfxrParams contract', () => {
+    const checked: SfxrParams[] = Object.values(SFX_PRESETS) as SfxrParams[];
+    expect(checked.length).toBe(4);
+    for (const p of checked) {
+      expect(p.duration).toBeGreaterThan(0);
+      expect(p.gain).toBeGreaterThan(0);
+      expect(p.gain).toBeLessThanOrEqual(1);
+      expect(p.startFreq).toBeGreaterThan(0);
+      expect(['square', 'sawtooth', 'sine', 'noise']).toContain(p.wave);
+    }
   });
 });
