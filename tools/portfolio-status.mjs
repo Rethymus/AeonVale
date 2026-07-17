@@ -14,8 +14,8 @@ const rows = [
   {
     scope: 'P0-B GitHub Pages 公开展示',
     status: '待复验：本地公开树 smoke 已通过；当前真实 Pages URL 必须在重新部署后再次通过 smoke 才能宣称闭环完成',
-    evidence: 'pnpm portfolio:pages-diagnose && pnpm test:browser:pages 访问真实 URL',
-    next: `先用 pnpm portfolio:pages-diagnose 区分部署漂移、旧 bundle 和真实布局问题；使用维护者授权的公开树产物重新部署后，复跑 pnpm test:browser:pages 并复核 ${pagesUrl}`
+    evidence: 'pnpm portfolio:pages-watch -- --wait --json && pnpm portfolio:pages-diagnose -- --json && pnpm test:browser:pages',
+    next: `每次维护者授权的新部署后，复跑 pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages；若失败先用 pnpm portfolio:pages-diagnose -- --json 归因，再复核 ${pagesUrl}`
   },
   {
     scope: 'P1 独立游戏首版循环',
@@ -117,9 +117,9 @@ const dimensions = [
     dimension: '公开发布可验证性',
     stardewReference: '间接：公开试玩链接必须像产品一样可访问、可试玩、可验证',
     xianxiaReference: '公开产物只展示可试玩表层，不泄露私有设定、剧情细案或长期路线图',
-    current: 'P0-A 本地检查链已建立；本地公开树 smoke 已通过；真实 Pages URL 当前需要重新部署后复验',
-    next: '转 Public、创建 Release、修改远端设置或重新部署前，重新取得维护者授权并复跑公开树检查；部署后先跑 Pages 诊断，再复跑真实 URL smoke',
-    evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree && pnpm portfolio:pages-diagnose && pnpm test:browser:pages',
+    current: 'P0-A 本地检查链与 P0-B 只读远端复验链已建立；真实 Pages 闭环仍须在每次部署后用 --include-live-pages 复验',
+    next: '转 Public、创建 Release、修改远端设置或重新部署前，重新取得维护者授权；部署后用 --include-live-pages 复跑本地公开树、Pages watcher 和真实 URL smoke，失败时先跑 pnpm portfolio:pages-diagnose -- --json 归因',
+    evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages',
     status: 'pages-redeploy-required'
   }
 ];
@@ -152,7 +152,7 @@ const evidenceArtifacts = [
     generatedBy: 'maintainer-authorized GitHub Pages deployment',
     requiredSignals: ['pnpm portfolio:pages-diagnose separates deployment drift, stale bundle, Action status, and live viewport failures without deploying', 'PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL', 'PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ route works on GitHub Pages', 'public dist has no production sourcemap or private design material'],
     publicTreePolicy: 'verified for private Pages; required after each deployment and before any Public/Release claim',
-    reviewCommand: 'pnpm portfolio:pages-diagnose && pnpm test:browser:pages'
+    reviewCommand: 'pnpm portfolio:pages-watch -- --wait --json && pnpm portfolio:pages-diagnose -- --json && pnpm test:browser:pages'
   }
 ];
 

@@ -3,6 +3,7 @@ import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
 
 const keepPublicTree = process.argv.includes('--keep-public-tree');
+const includeLivePages = process.argv.includes('--include-live-pages');
 
 const steps = [
   {
@@ -36,6 +37,21 @@ const steps = [
     args: ['portfolio:release-checklist']
   }
 ];
+
+if (includeLivePages) {
+  steps.push(
+    {
+      label: 'Verify current GitHub Pages chain without deploying',
+      command: 'pnpm',
+      args: ['portfolio:pages-watch', '--', '--wait', '--json']
+    },
+    {
+      label: 'Smoke current deployed GitHub Pages URL',
+      command: 'pnpm',
+      args: ['test:browser:pages']
+    }
+  );
+}
 
 const portfolioScreenshots = [
   { path: 'test-results/portfolio/01-farm-loop.png', width: 960, height: 542 },
@@ -223,6 +239,14 @@ console.log(`\n[portfolio:mvp-preflight] Verified generated public demo evidence
 if (!keepPublicTree) {
   rmSync('.public-tree', { recursive: true, force: true });
   console.log('\n[portfolio:mvp-preflight] Removed generated .public-tree. Use --keep-public-tree to inspect it after a successful run.');
+}
+
+if (includeLivePages) {
+  console.log('\n[portfolio:mvp-preflight] Verified current GitHub Pages chain and deployed URL smoke.');
+} else {
+  console.log(
+    '\n[portfolio:mvp-preflight] Skipped live Pages verification. Use --include-live-pages after a maintainer-authorized deployment to verify the remote chain.'
+  );
 }
 
 console.log('\n[portfolio:mvp-preflight] Public demo preflight passed. No deployment, commit, or push was performed.');

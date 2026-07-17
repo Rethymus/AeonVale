@@ -29,6 +29,16 @@ describe('可试玩 Demo 本地预检', () => {
     expect(script).toContain('Print non-deploying portfolio release checklist');
   });
 
+  it('可选串联 live Pages 只读复验，避免部署后盲等', () => {
+    expect(script).toContain("process.argv.includes('--include-live-pages')");
+    expect(script).toContain('Verify current GitHub Pages chain without deploying');
+    expect(script).toContain("args: ['portfolio:pages-watch', '--', '--wait', '--json']");
+    expect(script).toContain('Smoke current deployed GitHub Pages URL');
+    expect(script).toContain("args: ['test:browser:pages']");
+    expect(script).toContain('Verified current GitHub Pages chain and deployed URL smoke.');
+    expect(script).toContain('Skipped live Pages verification. Use --include-live-pages');
+  });
+
   it('清理旧截图、校验四张试玩验收截图，并默认移除公开树', () => {
     expect(script).toContain("rmSync('test-results/portfolio', { recursive: true, force: true })");
     expect(script).toContain("'test-results/portfolio/01-farm-loop.png'");

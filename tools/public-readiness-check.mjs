@@ -84,6 +84,7 @@ requireIncludes('tools/portfolio-status.mjs', 'screenshotEvidence paintedRatio a
 requireIncludes('tools/portfolio-status.mjs', 'PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL', 'Portfolio status must carry deployed Pages smoke evidence requirements');
 requireIncludes('tools/portfolio-status.mjs', 'pnpm portfolio:pages-diagnose', 'Portfolio status must route live Pages failures through the non-deploying diagnosis command');
 requireIncludes('tools/portfolio-status.mjs', 'pages-redeploy-required', 'Portfolio status must record that live Pages requires deployment and re-verification');
+requireIncludes('tools/portfolio-status.mjs', '--include-live-pages', 'Portfolio status must expose the combined local and live Pages preflight mode');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', '不提交、不推送、不部署、不修改远端设置', 'Pages diagnosis must be explicitly non-deploying');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'local-head-differs-from-origin-main', 'Pages diagnosis must detect local branch drift from origin/main');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'AbortController', 'Pages diagnosis must bound live Pages fetches with a timeout');
@@ -105,9 +106,12 @@ requireIncludes('tools/portfolio-pages-watch.mjs', 'deployed-bundle-uses-body-ap
 requireIncludes('tools/portfolio-pages-watch.mjs', 'local-head-differs-from-origin-main', 'Pages watch must detect local branch drift from origin/main');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'pages-run-behind-ci', 'Pages watch must detect Pages Action lag behind CI');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'deployment-behind-origin-main', 'Pages watch must detect deployments behind origin/main');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'pages-config-fetch-failed', 'Pages watch must flag GitHub Pages source API failures instead of treating live HTML as enough');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'deployment-fetch-failed', 'Pages watch must flag deployment API failures instead of treating live HTML as enough');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'gh run watch', 'Pages watch must point short waits to gh run watch without triggering workflows');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'remote-pages-chain-current', 'Pages watch must report a settled happy path');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'", 'Public demo preflight must fail on secret-risk worktree paths');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "process.argv.includes('--include-live-pages')", 'Public demo preflight must expose optional live Pages verification');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-high-risk'", 'Public demo preflight must fail on high-risk public content findings');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'portfolio:capture'", 'Public demo preflight must run screenshot capture');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'verify:public-tree'", 'Public demo preflight must verify the public tree');

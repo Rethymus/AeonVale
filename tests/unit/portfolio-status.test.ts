@@ -21,8 +21,10 @@ describe('公开试玩状态矩阵', () => {
     expect(output).toContain('pnpm portfolio:mvp-preflight -- --keep-public-tree');
     expect(output).toContain('P0-B GitHub Pages 公开展示');
     expect(output).toContain('维护者当次明确授权');
-    expect(output).toContain('pnpm portfolio:pages-diagnose');
+    expect(output).toContain('pnpm portfolio:pages-watch -- --wait --json');
+    expect(output).toContain('pnpm portfolio:pages-diagnose -- --json');
     expect(output).toContain('pnpm test:browser:pages');
+    expect(output).toContain('pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages');
     expect(output).toContain('https://Rethymus.github.io/AeonVale/');
     expect(output).toContain('P1 独立游戏首版循环');
     expect(output).toContain('P2 Patch / DLC 内容厚度');
@@ -92,7 +94,7 @@ describe('公开试玩状态矩阵', () => {
       expect.objectContaining({
         id: 'publishability',
         priority: 'P0',
-        evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree && pnpm portfolio:pages-diagnose && pnpm test:browser:pages',
+        evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages',
         status: 'pages-redeploy-required'
       })
     );
@@ -128,7 +130,7 @@ describe('公开试玩状态矩阵', () => {
         priority: 'P0-B',
         path: 'https://Rethymus.github.io/AeonVale/',
         generatedBy: 'maintainer-authorized GitHub Pages deployment',
-        reviewCommand: 'pnpm portfolio:pages-diagnose && pnpm test:browser:pages',
+        reviewCommand: 'pnpm portfolio:pages-watch -- --wait --json && pnpm portfolio:pages-diagnose -- --json && pnpm test:browser:pages',
         publicTreePolicy: expect.stringContaining('verified for private Pages')
       })
     );

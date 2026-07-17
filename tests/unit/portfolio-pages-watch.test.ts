@@ -38,12 +38,15 @@ describe('GitHub Pages 只读 watch 工具', () => {
     expect(script).toContain('pages-run-behind-ci');
     expect(script).toContain('deployment-sha-differs-from-pages-run');
     expect(script).toContain('latest-deployment-status-not-success');
+    expect(script).toContain('pages-config-fetch-failed');
+    expect(script).toContain('deployment-fetch-failed');
     expect(script).toContain('pages-source-not-actions-workflow');
     expect(script).toContain('live-pages-fetch-failed');
     expect(script).toContain('deployed-bundle-uses-body-append');
     expect(script).toContain('deployment-behind-origin-main');
     expect(script).toContain('remote-pages-chain-current');
     expect(script).toContain('gh run watch');
+    expect(script).toContain('不要把 live HTML 200 单独当作完整部署链证明');
     expect(script).toContain('不要继续盲改当前本地布局');
   });
 });
