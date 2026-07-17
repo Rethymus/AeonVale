@@ -119,6 +119,23 @@ describe('exploration toast', () => {
     });
   });
 
+  it('does not leak literal Infinity/NaN when the body-foundation cap is the out-of-range sentinel', () => {
+    // stage 越界（默认凡骨 stage=0 或飞升后）时 stageQiCap 返回 Infinity；
+    // 玩家可见文案绝不能吐出「还差 Infinity」。
+    expect(
+      tribulationBlockedToastPresentation('body-not-ready', {
+        requiredFoundation: Number.POSITIVE_INFINITY,
+        currentFoundation: 0
+      }).message
+    ).toBe('体魄根基未满｜先收灵草、炼丹或修行再引劫');
+
+    const nanMessage = tribulationBlockedToastPresentation('body-not-ready', {
+      requiredFoundation: Number.NaN
+    }).message;
+    expect(nanMessage).not.toContain('NaN');
+    expect(nanMessage).toContain('体魄根基未满');
+  });
+
   it('keeps tribulation non-ending results on the tribulation thread art', () => {
     expect(tribulationResultToastPresentation('death')).toEqual({
       message: '陨于天劫！',

@@ -110,7 +110,10 @@ export function tribulationBlockedToastPresentation(kind: 'purple-omen' | 'body-
   }
 
   const current = Math.floor((options?.currentFoundation ?? 0) / 1000);
-  const required = Math.floor((options?.requiredFoundation ?? 0) / 1000);
+  const rawRequired = options?.requiredFoundation ?? 0;
+  // 体魄根基上限在 stage 越界（默认凡骨 stage=0，或飞升后）时会取到 Infinity 哨兵；
+  // 这里必须做有限性守卫，否则会向玩家吐出「还差 Infinity」这种字面泄露。
+  const required = Number.isFinite(rawRequired) ? Math.floor(rawRequired / 1000) : 0;
   const missing = Math.max(0, required - current);
   return {
     message: required > 0 ? `体魄根基未满，还差 ${missing}｜先收灵草、炼丹或修行再引劫` : '体魄根基未满｜先收灵草、炼丹或修行再引劫',
