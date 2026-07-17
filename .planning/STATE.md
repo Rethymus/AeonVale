@@ -6,23 +6,24 @@
 
 ## Now
 
-- **Player audit P1/P2 AUTO 修复已落地（本地 master）**
-  - P1 command-bar 右下锚定 + 高度上限（`app.css`）
-  - P1 标题「继续旅程」无存档隐藏 +「暂无存档」文案
+- **Player audit P1/P2 AUTO 修复已合入 main**
+  - **#16** `25662e1` squash · branch `fix/player-audit-p1-p2`
+  - P1 command-bar 右下锚定 + 高度上限
+  - P1 标题「继续旅程」无存档隐藏 +「暂无存档」
   - P1 对话盒 minHeight/padding 下调 + alpha 0.86
-  - P2 收获 CTA 成熟门控 + journey 热键标签 + 农庄 Esc 提示
-- 证据：`dogfood-output/player-audit-20260717-221638/`（gitignore）
-- unit 全量 **2103** 通过 · `tsc --noEmit` 绿
-- **dual-track：** 待 AUTH port → main PR + Pages
+  - P2 收获 CTA 成熟门控 + journey 热键 + 农庄 Esc
+- master 记录：`9424766`（fix）· planning `08a37b1`+
+- CI main push `29591576560` SUCCESS
+- Pages deploy `29591749441` SUCCESS
 - **仍停手：** REQ-A4-02 HUMAN playtest（`humanHoursCertified:false`）
 
 ## Gates
 
-- 相关 unit（dialogue-layout / journey-guide / app-flow-view / action-panel-preview）80 pass
-- full unit suite 2103 pass · typecheck ok
-- 合入 main 前：governance + typecheck + 相关 browser keypath
+- unit 相关 80 · full unit 2103 · tsc ok
+- PR CI all SUCCESS → squash merge ✅
+- Pages deploy success ✅
 
 ## Autonomy
 
-- 用户 goal 授权：分级 + 多 agent + 无监管开发 + **全部权限（含 commit/push/PR）**
+- 用户 goal 授权 AUTH 已用于 commit / push / PR #16
 - HUMAN 项仍不得伪造 certified
