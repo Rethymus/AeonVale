@@ -1310,7 +1310,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   for (const decor of worldDecorPlacements(state.width, state.height, state.tiles, {
     hasFacilities: state.facilities.size > 0
   })) {
-    paintWorldDecor(g, decor, OX + decor.x * TILE, OY + decor.y * TILE, TILE);
+    paintWorldDecor(g, decor, OX + decor.x * TILE, OY + decor.y * TILE, TILE, performance.now());
   }
 
   // —— 农庄设施：加工链从菜单入口落到具体地块 ——
