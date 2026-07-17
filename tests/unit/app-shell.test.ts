@@ -250,6 +250,10 @@ describe('public demo application shell', () => {
     expect(css).toContain('transition-duration: 0.01ms !important');
     expect(css).not.toMatch(/gradient\s*\(/i);
     expect(css).not.toMatch(/animation\s*:/i);
+    // T1 炼丹炉氛围：静态设施图 + 火候带（无动画声明）
+    expect(css).toContain('.demo-alchemy-furnace');
+    expect(css).toContain('.demo-heat-track');
+    expect(css).toContain("[data-heat-band='ideal']");
   });
 
   it('computes safe-area placement and 44px minimum controls from parsed CSS rules', () => {
