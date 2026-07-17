@@ -26,6 +26,7 @@ import { tileAssetId } from './tileAsset';
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { itemIconAssetId } from '@app/itemIcons';
 import { computeViewportLayout } from './viewportLayout';
+import { generateLightningBolt, strokeLightningBolt, type LightningBoltGeometry } from './lightningBolt';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -169,12 +170,19 @@ export interface RenderLayers {
   furnaceHeat: number; // 玩家炉温 0..100（app 设置，HUD 显示）
   tribFlash: Graphics; // 天劫全屏闪光（T3b）
   tribFlashTtl: number; // 闪光剩余帧（0=无）
+  tribBoltGeom: LightningBoltGeometry | null; // 当前招牌电光折线（渲染层瞬态）
+  tribBoltTtl: number; // 电光剩余帧
+  tribBoltMaxTtl: number;
+  shakeTtl: number; // 世界层屏震剩余帧（仅渲染）
+  shakeMagnitude: number; // 像素振幅
   dialogueBg: Graphics; // 叙事对话盒背景（T4）
   dialoguePortrait: Sprite; // 对话立绘（P0 资产接入）
   dialogue: Text; // 叙事对白文本
   seasonTint: Graphics; // 季节环境色调（T5）
   particles: Graphics; // 程序化粒子（T9）
   particleList: Particle[]; // 活跃粒子（渲染层非确定性，sim 不受影响）
+  floatTexts: FloatText[]; // 活跃飘字（渲染层）
+  floatTextLayer: Container; // 飘字容器（screenFx）
   ambientTimeMs: number; // 世界层环境动效时间轴（仅渲染层使用）
 }
 
@@ -203,6 +211,17 @@ export interface Particle {
   maxLife: number;
   color: number;
   size: number;
+}
+
+/** 世界层飘字（juice）。仅渲染层，不进 sim。 */
+export interface FloatText {
+  x: number;
+  y: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  text: string;
+  color: number;
 }
 
 function panelBoxHeight(textHeight: number, minHeight: number, paddingY: number): number {
@@ -317,6 +336,8 @@ export function createLayers(app: Application): RenderLayers {
   screenFxRoot.addChild(seasonTint);
   const particles = new Graphics();
   screenFxRoot.addChild(particles);
+  const floatTextLayer = new Container({ label: 'float-text-layer' });
+  screenFxRoot.addChild(floatTextLayer);
   const locationPreviewBg = new Graphics();
   locationPreviewBg.visible = false;
   focusRoot.addChild(locationPreviewBg);
@@ -478,12 +499,19 @@ export function createLayers(app: Application): RenderLayers {
     furnaceHeat: 50,
     tribFlash,
     tribFlashTtl: 0,
+    tribBoltGeom: null,
+    tribBoltTtl: 0,
+    tribBoltMaxTtl: 0,
+    shakeTtl: 0,
+    shakeMagnitude: 0,
     dialogueBg,
     dialoguePortrait,
     dialogue,
     seasonTint,
     particles,
     particleList: [],
+    floatTexts: [],
+    floatTextLayer,
     ambientTimeMs: 0
   };
 }
@@ -794,6 +822,44 @@ export function triggerTribFlash(layers: RenderLayers, frames = 30): void {
   layers.tribFlashTtl = frames;
 }
 
+/**
+ * 触发招牌雷劫电光（分形折线 + 命中点）。
+ * 纯渲染层；screenImpact 为屏幕像素坐标（可用 screenPointForTile）。
+ */
+export function triggerTribBolt(layers: RenderLayers, screenImpact: { x: number; y: number }, frames = 28): void {
+  const start = { x: screenImpact.x + (Math.random() * 2 - 1) * 40, y: -12 };
+  layers.tribBoltGeom = generateLightningBolt(start, { x: screenImpact.x, y: screenImpact.y }, { iterations: 5, amplitude: 44 });
+  layers.tribBoltTtl = frames;
+  layers.tribBoltMaxTtl = frames;
+  // 同步保留轻量全屏闪，避免电光过短时「完全无冲击」
+  if (layers.tribFlashTtl < Math.min(18, frames)) layers.tribFlashTtl = Math.min(18, frames);
+  triggerShake(layers, Math.max(frames - 8, 10), 3.5);
+}
+
+/** 世界层轻量屏震（不改 sim；与 HUD/focus 解耦）。 */
+export function triggerShake(layers: RenderLayers, frames = 12, magnitude = 2.5): void {
+  layers.shakeTtl = Math.max(layers.shakeTtl, frames);
+  layers.shakeMagnitude = Math.max(layers.shakeMagnitude, magnitude);
+}
+
+function advanceWorldShake(layers: RenderLayers): void {
+  if (layers.shakeTtl <= 0) {
+    layers.worldRoot.x = 0;
+    layers.worldRoot.y = 0;
+    layers.shakeMagnitude = 0;
+    return;
+  }
+  const mag = layers.shakeMagnitude * (layers.shakeTtl / Math.max(layers.shakeTtl, 12));
+  layers.worldRoot.x = (Math.random() * 2 - 1) * mag;
+  layers.worldRoot.y = (Math.random() * 2 - 1) * mag;
+  layers.shakeTtl -= 1;
+  if (layers.shakeTtl <= 0) {
+    layers.worldRoot.x = 0;
+    layers.worldRoot.y = 0;
+    layers.shakeMagnitude = 0;
+  }
+}
+
 /** 在 (x,y) 迸发 count 个粒子（T9 程序化视效）。渲染层非确定性，不影响 sim。 */
 export function spawnBurst(layers: RenderLayers, x: number, y: number, count: number, color: number, speed = 2.5): void {
   // 上限保护：避免长时间堆积拖慢渲染
@@ -822,6 +888,81 @@ export function updateParticles(layers: RenderLayers): void {
       continue;
     }
     g.circle(p.x, p.y, p.size).fill({ color: p.color, alpha: Math.max(0, p.life / p.maxLife) });
+  }
+}
+
+/** 在屏幕坐标生成一条上飘短文案（纯渲染 juice）。 */
+export function spawnFloatText(layers: RenderLayers, x: number, y: number, text: string, color = 0xffe066): void {
+  if (layers.floatTexts.length > 24) layers.floatTexts.splice(0, layers.floatTexts.length - 24);
+  layers.floatTexts.push({
+    x,
+    y,
+    vy: -0.85,
+    life: 42,
+    maxLife: 42,
+    text,
+    color
+  });
+}
+
+/** 推进飘字并同步 Text 节点（每帧）。 */
+export function updateFloatTexts(layers: RenderLayers): void {
+  const root = layers.floatTextLayer;
+  const list = layers.floatTexts;
+  while (root.children.length > list.length) {
+    const child = root.children[root.children.length - 1]!;
+    root.removeChild(child);
+    child.destroy();
+  }
+  for (let i = list.length - 1; i >= 0; i--) {
+    const ft = list[i]!;
+    ft.y += ft.vy;
+    ft.life -= 1;
+    if (ft.life <= 0) {
+      list.splice(i, 1);
+      continue;
+    }
+    let label = root.children[i] as Text | undefined;
+    if (!label) {
+      label = new Text({
+        text: ft.text,
+        style: {
+          fontFamily: CJK_FONT,
+          fontSize: 14,
+          fontWeight: '700',
+          fill: ft.color,
+          stroke: { color: 0x12121c, width: 3 },
+          dropShadow: { color: 0x000000, blur: 2, distance: 1, alpha: 0.45 }
+        }
+      });
+      root.addChild(label);
+    } else if (label.text !== ft.text) {
+      label.text = ft.text;
+      label.style.fill = ft.color;
+    }
+    const alpha = Math.max(0, ft.life / ft.maxLife);
+    label.alpha = alpha;
+    // 避免依赖 canvas measureText（headless unit 无 document）；用字数估算居中。
+    const approxWidth = Math.min(280, Math.max(24, ft.text.length * 12));
+    label.x = ft.x - approxWidth / 2;
+    label.y = ft.y;
+  }
+  // 列表变短后上面已裁；若变长需补节点（上面循环仅处理现有 index）
+  while (root.children.length < list.length) {
+    const ft = list[root.children.length]!;
+    const label = new Text({
+      text: ft.text,
+      style: {
+        fontFamily: CJK_FONT,
+        fontSize: 14,
+        fontWeight: '700',
+        fill: ft.color,
+        stroke: { color: 0x12121c, width: 3 }
+      }
+    });
+    label.x = ft.x - 12;
+    label.y = ft.y;
+    root.addChild(label);
   }
 }
 
@@ -1439,13 +1580,23 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     if (!layers.cultivation.visible) setTextIfChanged(layers.cultivation, '');
   }
 
-  // 天劫全屏闪光（衰减，T3b 视听冲击）
+  // 天劫全屏闪光 + 招牌电光（衰减，T3b / Phase A2）
   const tf = layers.tribFlash;
   tf.clear();
   if (layers.tribFlashTtl > 0) {
-    tf.rect(0, 0, SCREEN_W, SCREEN_H).fill({ color: 0xffffff, alpha: (layers.tribFlashTtl / 30) * 0.55 });
+    // 压低全屏白闪占比，把「可识别招牌」让给电光几何
+    tf.rect(0, 0, SCREEN_W, SCREEN_H).fill({ color: 0xffffff, alpha: (layers.tribFlashTtl / 30) * 0.22 });
     layers.tribFlashTtl -= 1;
   }
+  if (layers.tribBoltTtl > 0 && layers.tribBoltGeom) {
+    const maxTtl = layers.tribBoltMaxTtl > 0 ? layers.tribBoltMaxTtl : 28;
+    const alpha = Math.max(0, layers.tribBoltTtl / maxTtl);
+    strokeLightningBolt(tf, layers.tribBoltGeom, { alpha });
+    layers.tribBoltTtl -= 1;
+    if (layers.tribBoltTtl <= 0) layers.tribBoltGeom = null;
+  }
+
+  advanceWorldShake(layers);
 }
 
 export function setToast(layers: RenderLayers, msg: string, texture?: Texture): void {
