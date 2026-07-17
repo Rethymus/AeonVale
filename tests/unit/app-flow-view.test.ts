@@ -280,7 +280,7 @@ describe('app flow DOM presentation', () => {
     controller.destroy();
   });
 
-  it('binds native actions, keeps continue disabled until enabled, and reports accepted transitions', () => {
+  it('binds native actions, keeps continue hidden until a save exists, and reports accepted transitions', () => {
     const { root, buttons, buildLabel } = createFixture();
     const transitions: AppFlowEvent[] = [];
     const controller = createAppFlowViewController({
@@ -291,12 +291,15 @@ describe('app flow DOM presentation', () => {
 
     controller.dispatch({ type: 'boot-ready' });
     expect(buttons.continueGame.disabled).toBe(true);
+    expect(buttons.continueGame.hidden).toBe(true);
+    expect(root.querySelector('#flow-continue-status')?.textContent).toContain('暂无存档');
     buttons.continueGame.emit('click');
     expect(controller.getState().screen).toBe('title');
 
     controller.setContinueAvailable(true);
     controller.setBuildLabel('版本 test-revision · 本地构建');
     expect(buttons.continueGame.disabled).toBe(false);
+    expect(buttons.continueGame.hidden).toBe(false);
     expect(buildLabel.textContent).toBe('版本 test-revision · 本地构建');
     buttons.newGame.emit('click');
     expect(controller.getState().screen).toBe('prologue');

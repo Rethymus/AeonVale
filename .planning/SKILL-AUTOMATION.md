@@ -48,7 +48,12 @@
 | **V1-T5** | **主角色块在场**（防黑剪影） | **AUTO** | — | unit character-presence + drawWorld tint/overlay | ✅ 本波实现 |
 | **V1-T6** | **HUD 密度软收**（次要区默折叠） | **AUTO** | — | unit/app css + responsive-layout 不回归 | ✅ 本波实现 |
 | **V1-L01** | **journey-complete 清教学残留** | **AUTO** | — | unit journeyGuide + main 接线 | ✅ 本波实现 |
-| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；T3–L01 AUTH 进行中 |
+| **PA-P1-hud** | **command-bar 右下锚 + 高度帽** | **AUTO** | — | app.css + responsive landscape | ✅ player-audit |
+| **PA-P1-continue** | **无存档隐藏继续 + 暂无存档** | **AUTO** | — | appFlowView + index + unit | ✅ player-audit |
+| **PA-P1-dialogue** | **对话盒更矮更透** | **AUTO** | — | renderer DIALOGUE_LAYOUT + unit | ✅ player-audit |
+| **PA-P2-harvest** | **成熟前门控收获 CTA** | **AUTO** | — | journeyGuide context + main journey action | ✅ player-audit |
+| **PA-P2-hotkey** | **旅程 CTA 热键 + 农庄 Esc** | **AUTO** | — | journeyGuide hotkey + actionPanelPreview | ✅ player-audit |
+| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；player-audit AUTH 进行中 |
 
 ### P0 dogfood 映射（pages-deep 2026-07-17）
 
@@ -59,7 +64,11 @@
 | ISSUE-003 农作四态辨识不足 | V1-T4 | P0 AUTO |
 | ISSUE-004 炼丹/天劫表单感 | V1-T1 已部分；再收为 P1 polish | P1（本波不主切） |
 | ISSUE-005 journey-complete 残留 | V1-L01 | P0 AUTO |
-| ISSUE-006 继续旅程无说明 | 已有 `#flow-continue-status`；可选文案增强 | P2 低优 |
+| ISSUE-006 继续旅程无说明 | **PA-P1-continue** 无存档隐藏 +「暂无存档」 | ✅ AUTO |
+| AUDIT-P1 右侧 HUD 遮挡 | **PA-P1-hud** | ✅ AUTO |
+| AUDIT-P1 对话盒过重 | **PA-P1-dialogue** | ✅ AUTO |
+| AUDIT-P2 未成熟收获 CTA | **PA-P2-harvest** | ✅ AUTO |
+| AUDIT-P2 热键未镜像 / 农庄 Esc | **PA-P2-hotkey** | ✅ AUTO |
 
 ### P1 / Wave B（Wave A 稳后再自动扩）
 
@@ -129,8 +138,9 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 9. ~~**V1-T5** 主角色块在场~~ ✅  
 10. ~~**V1-T6** HUD 密度软收~~ ✅  
 11. ~~**V1-L01** journey-complete 清残留~~ ✅  
-12. **dual-track** AUTH port → main + Pages（本 goal 授权）— 进行中  
-13. **A4-human** — HUMAN，不自动  
+12. ~~**player-audit P1/P2** HUD/继续/对话/收获/热键~~ ✅  
+13. **dual-track** AUTH port player-audit → main + Pages — 进行中  
+14. **A4-human** — HUMAN，不自动  
 
 ---
 

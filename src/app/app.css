@@ -167,18 +167,23 @@ button {
   line-height: 1.4;
 }
 
+/* 锚定画布右下，避免与顶栏目标轨叠成右侧遮挡带（player audit P1） */
 #world-command-bar {
   position: absolute;
-  top: 38%;
+  top: auto;
+  bottom: max(12px, var(--safe-bottom));
   right: max(12px, var(--safe-right));
   z-index: 12;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  width: min(320px, calc(25vw - 20px));
+  width: min(280px, calc(24vw - 16px));
+  max-height: min(42vh, 280px);
   gap: 6px;
   padding: 6px;
   border: 1px solid rgba(215, 185, 95, 0.58);
   background: rgba(13, 23, 20, 0.94);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* V1-T6：次要入口默认折叠，减少常驻控制台感 */
@@ -202,6 +207,9 @@ button {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   margin-top: 6px;
+  max-height: min(28vh, 148px);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .world-command-more:not([open]) .world-command-more-panel {
@@ -1090,13 +1098,14 @@ button {
   }
 
   #world-command-bar {
-    top: 38%;
+    top: auto;
     right: max(8px, var(--safe-right));
-    bottom: auto;
+    bottom: max(8px, var(--safe-bottom));
     left: auto;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     width: min(176px, calc(25vw - 16px));
+    max-height: min(48vh, 260px);
     transform: none;
   }
 

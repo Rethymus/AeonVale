@@ -18,6 +18,32 @@ export interface JourneyGuide {
   readonly completed: boolean;
 }
 
+/** Optional world state that can refine CTA copy without changing objective id. */
+export interface JourneyGuideContext {
+  /** True when at least one crop is harvest-ready (mature). */
+  readonly hasMatureCrop?: boolean;
+}
+
+/**
+ * Hotkey hints mirrored onto journey CTAs so mouse and keyboard paths stay aligned
+ * (player audit P2). Keep labels short; keys match world shortcuts Z/X/V/Space.
+ */
+const JOURNEY_CTA_HOTKEY: Readonly<Partial<Record<JourneyGuideObjectiveId, string>>> = {
+  'first-till': 'Space/E',
+  'first-sow': 'Z',
+  'first-water': 'X',
+  'first-harvest': 'V',
+  'first-second-sow': 'Z',
+  'first-second-water': 'X'
+};
+
+function withHotkey(cta: string, objectiveId: JourneyGuideObjectiveId | null): string {
+  if (objectiveId == null) return cta;
+  const key = JOURNEY_CTA_HOTKEY[objectiveId];
+  if (!key || cta.includes(`(${key})`)) return cta;
+  return `${cta} (${key})`;
+}
+
 type ActiveJourneyGuide = Omit<JourneyGuide, 'totalStages' | 'completed'>;
 
 function activeGuide(guide: ActiveJourneyGuide): JourneyGuide {
@@ -59,6 +85,7 @@ const GUIDES: Readonly<Record<JourneyGuideObjectiveId, JourneyGuide>> = {
     motivation: '收获会开启炼丹与教学天劫的准备路线',
     cta: '收获灵草'
   }),
+  // Growing-but-not-mature variant is applied at build time when hasMatureCrop is false.
   'first-ship': activeGuide({
     stage: 1,
     stageId: 'herbs',
@@ -160,9 +187,37 @@ export function isJourneyTeachingDialogueBeat(beatId: string): boolean {
   return (JOURNEY_TEACHING_DIALOGUE_BEAT_IDS as readonly string[]).includes(beatId);
 }
 
-export function buildJourneyGuide(objectiveId: JourneyGuideObjectiveId | null): JourneyGuide {
+/** Derive CTA-refining context from live world state. */
+export function journeyGuideContextFromState(state: { readonly crops: ReadonlyMap<number, { readonly stage: string }> }): JourneyGuideContext {
+  let hasMatureCrop = false;
+  for (const crop of state.crops.values()) {
+    if (crop.stage === 'mature') {
+      hasMatureCrop = true;
+      break;
+    }
+  }
+  return { hasMatureCrop };
+}
+
+export function buildJourneyGuide(objectiveId: JourneyGuideObjectiveId | null, context: JourneyGuideContext = {}): JourneyGuide {
   if (objectiveId == null || objectiveId === 'journey-complete') return COMPLETED_GUIDE;
-  return GUIDES[objectiveId] ?? COMPLETED_GUIDE;
+  const base = GUIDES[objectiveId] ?? COMPLETED_GUIDE;
+  if (base.completed) return base;
+
+  // P2：成熟前不要把主 CTA 写成「收获」，避免玩家狂点空反馈
+  if (objectiveId === 'first-harvest' && context.hasMatureCrop === false) {
+    return Object.freeze({
+      ...base,
+      currentAction: '照料灵田，等待灵草成熟',
+      motivation: '幼苗还需生长；歇息推进日期，或再浇水稳住长势',
+      cta: withHotkey('等待成熟 · 歇息', null)
+    });
+  }
+
+  return Object.freeze({
+    ...base,
+    cta: withHotkey(base.cta, objectiveId)
+  });
 }
 
 /** Always-visible primary objective line for cozy HUD density (V1-T6). */

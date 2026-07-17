@@ -240,11 +240,17 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   function updateContinueControl(): void {
     const button = root?.querySelector('[data-flow-action="continue-game"]') ?? null;
     if (button) {
+      // 无存档时隐藏整行，避免首进玩家把灰掉的「继续」当成主路径（player audit P1）
       button.disabled = !continueAvailable;
+      button.hidden = !continueAvailable;
       button.setAttribute('aria-disabled', String(!continueAvailable));
     }
     const status = root?.querySelector('#flow-continue-status') ?? null;
-    if (status) status.textContent = continueAvailable ? '已找到可继续的本地旅程。' : '尚未找到可继续的本地旅程。';
+    if (status) {
+      // 有存档时不必占位；无存档时显示「暂无存档」指引
+      status.textContent = continueAvailable ? '已找到可继续的本地旅程。' : '暂无存档 — 请从「新游戏」开始。';
+      status.hidden = continueAvailable;
+    }
   }
 
   function updateBuildLabel(): void {
