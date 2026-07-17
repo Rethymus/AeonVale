@@ -1,0 +1,243 @@
+From 01bf653a33ae8281105a2007e349ba3d5433232e Mon Sep 17 00:00:00 2001
+From: Aeon Vale Dev <dev@aeonvale.local>
+Date: Fri, 17 Jul 2026 13:10:40 +0800
+Subject: [PATCH] =?UTF-8?q?perf(render):=20=E5=83=8F=E7=B4=A0=E7=A1=AC?=
+ =?UTF-8?q?=E8=BE=B9=E6=B8=B2=E6=9F=93=E4=B8=8E=E4=B8=96=E7=95=8C=E5=B1=82?=
+ =?UTF-8?q?=E7=8E=AF=E5=A2=83=E5=91=BC=E5=90=B8=E5=8A=A8=E6=95=88?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+像素硬边：关闭抗锯齿、纹理 nearest 缩放、roundPixels、canvas imageRendering=pixelated。
+环境动效：renderer 引入 ambientTimeMs + ambientBobOffset，作物/守兽/设施/地点/NPC/
+阵法/玩家依各自相位轻微呼吸浮动，避免画面僵死；render scheduler 透传时间戳；
+smoke 适配"空闲仍持续渲染"的断言。
+---
+ src/app/main.ts                     | 15 ++++++++++-----
+ src/render/renderer.ts              | 27 ++++++++++++++++++---------
+ tests/browser/smoke.spec.ts         |  4 ++--
+ tests/unit/render-scheduler.test.ts | 28 ++++++++++++++++++++++++++++
+ 4 files changed, 58 insertions(+), 16 deletions(-)
+
+diff --git a/src/app/main.ts b/src/app/main.ts
+index 43ef6ce..be6945f 100644
+--- a/src/app/main.ts
++++ b/src/app/main.ts
+@@ -117,6 +117,7 @@ async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets>
+       const url = assetUrlForId(store, id);
+       if (!url) return [id, undefined] as const;
+       const texture = await loadTextureWithTimeout(url);
++      if (texture?.source) texture.source.scaleMode = 'nearest';
+       return [id, texture] as const;
+     })
+   );
+@@ -223,12 +224,14 @@ async function main(): Promise<void> {
+     width: 960,
+     height: 540,
+     background: 0x10101a,
+-    antialias: true,
++    antialias: false,
++    roundPixels: true,
+     preserveDrawingBuffer: import.meta.env.VITE_PRESERVE_DRAWING_BUFFER === 'true'
+   });
+   const mount = document.querySelector('#app');
+   (mount ?? document.body).appendChild(app.canvas);
+   app.canvas.id = 'game-canvas';
++  app.canvas.style.imageRendering = 'pixelated';
+   app.canvas.tabIndex = 0;
+   app.canvas.setAttribute('aria-label', '永恒山谷游戏画面');
+   app.canvas.setAttribute('aria-describedby', 'game-instructions game-surface game-objective game-actions');
+@@ -4473,8 +4476,9 @@ async function main(): Promise<void> {
+     refreshAppPresentation();
+   });
+ 
+-  function renderFrame(): void {
++  function renderFrame(timestamp: number): void {
+     const worldSurfaceActive = flowAllowsWorldInput();
++    layers.ambientTimeMs = worldSurfaceActive ? timestamp : 0;
+     drawWorld(layers, state, reg, ctx, renderAssets);
+     const hotbarSlot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
+     drawHotbarIcon(layers, renderAssets.hotbarIcons[hotbarSlotAssetId(hotbarSlot) ?? '']);
+@@ -4539,10 +4543,11 @@ async function main(): Promise<void> {
+   renderScheduler = createRenderScheduler({
+     requestFrame: callback => window.requestAnimationFrame(callback),
+     cancelFrame: handle => window.cancelAnimationFrame(handle as number),
+-    onFrame: () => {
+-      renderFrame();
++    onFrame: frame => {
++      renderFrame(frame.timestamp);
++      const worldSurfaceActive = flowAllowsWorldInput();
+       return {
+-        particlesActive: layers.particleList.length > 0,
++        particlesActive: worldSurfaceActive || layers.particleList.length > 0,
+         flashActive: layers.tribFlashTtl > 0
+       };
+     }
+diff --git a/src/render/renderer.ts b/src/render/renderer.ts
+index 2a9a56d..e99335e 100644
+--- a/src/render/renderer.ts
++++ b/src/render/renderer.ts
+@@ -175,6 +175,7 @@ export interface RenderLayers {
+   seasonTint: Graphics; // 季节环境色调（T5）
+   particles: Graphics; // 程序化粒子（T9）
+   particleList: Particle[]; // 活跃粒子（渲染层非确定性，sim 不受影响）
++  ambientTimeMs: number; // 世界层环境动效时间轴（仅渲染层使用）
+ }
+ 
+ export interface RuntimeRenderAssets {
+@@ -482,10 +483,16 @@ export function createLayers(app: Application): RenderLayers {
+     dialogue,
+     seasonTint,
+     particles,
+-    particleList: []
++    particleList: [],
++    ambientTimeMs: 0
+   };
+ }
+ 
++function ambientBobOffset(timeMs: number, key: number, amplitude: number, cycleMs: number): number {
++  const phase = key * 0.61803398875;
++  return Math.sin((timeMs / cycleMs) * Math.PI * 2 + phase) * amplitude;
++}
++
+ export function screenPointForTile(x: number, y: number): { x: number; y: number } {
+   return {
+     x: OX + x * TILE + TILE / 2,
+@@ -953,6 +960,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+   // —— 瓦片 + 作物 ——
+   const g = layers.tiles;
+   const retainedSprites = beginRetainedWorldFrame(layers);
++  const ambientTimeMs = layers.ambientTimeMs;
+   g.clear();
+   for (const t of state.tiles) {
+     const x = OX + t.x * TILE;
+@@ -1031,7 +1039,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+         if (texture) {
+           const sprite = retainSceneSprite(layers, retainedSprites, `world:crop:${crop.id}`);
+           const spec = cropWorldSpriteSpec(crop.stage);
+-          applyWorldSprite(sprite, texture, cx, cy + spec.yOffset, spec.size);
++          const bobOffset = crop.stage === 'seed' ? 0 : ambientBobOffset(ambientTimeMs, crop.id, 1.8, 3200);
++          applyWorldSprite(sprite, texture, cx, cy + spec.yOffset + bobOffset, spec.size);
+           if (metal) sprite.tint = 0xc9d4ea;
+         } else {
+           // 回退路径：保留原始程序化图元，保证无贴图时仍可稳定演示
+@@ -1058,7 +1067,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+     const guardTexture = assets?.guardBeastVariants?.[guardBeastPreviewAssetId(placement.beastId)] ?? assets?.guardBeast;
+     if (guardTexture) {
+       const sprite = retainSceneSprite(layers, retainedSprites, `world:guard-beast:${placement.beastId}`);
+-      applyWorldSprite(sprite, guardTexture, x + TILE / 2, y + TILE / 2 + 2, TILE - 6);
++      applyWorldSprite(sprite, guardTexture, x + TILE / 2, y + TILE / 2 + 2 + ambientBobOffset(ambientTimeMs, placement.beastId * 7, 1.4, 2800), TILE - 6);
+       sprite.alpha = 0.7 + placement.vigorRatio * 0.3;
+     } else {
+       g.circle(x + TILE / 2, y + TILE / 2 + 2, 11).fill({ color: 0x8ac4ff, alpha: 0.82 });
+@@ -1107,7 +1116,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+     const texture = assets?.facilities[prop.assetId.slice('facility.'.length)];
+     if (texture) {
+       const sprite = retainSceneSprite(layers, retainedSprites, `world:farmstead-prop:${prop.assetId}`);
+-      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1, TILE - 8);
++      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, prop.assetId.length * 11, 1.1, 3600), TILE - 8);
+       sprite.alpha = 0.9;
+     } else {
+       const color = prop.assetId === 'facility.storage-chest' ? 0x8b6a3f : 0x7a4f2a;
+@@ -1139,7 +1148,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+     const facilityTexture = assets?.facilities[facility.kind];
+     if (facilityTexture) {
+       const sprite = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}`);
+-      applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2);
++      applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, facility.id, 1, 4000));
+     } else {
+       g.rect(x + 7, y + 9, TILE - 15, TILE - 14).fill({ color, alpha: 0.92 });
+       g.rect(x + 7, y + 9, TILE - 15, TILE - 14).stroke({ width: 1.5, color: 0x2a1a0a });
+@@ -1195,7 +1204,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+ 
+     if (locationTexture) {
+       const sprite = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}`);
+-      applyWorldSprite(sprite, locationTexture, x + TILE / 2, y + TILE / 2, TILE - 4);
++      applyWorldSprite(sprite, locationTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, placement.locationId.length * 13, 0.9, 5200), TILE - 4);
+       sprite.alpha = 0.24;
+     } else {
+       e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).fill({ color: 0x181824, alpha: 0.28 });
+@@ -1256,7 +1265,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+     const npcTexture = assets?.npcs[placement.assetId];
+     if (npcTexture) {
+       const sprite = retainSceneSprite(layers, retainedSprites, `world:npc:${placement.placementKey}`);
+-      applyWorldSprite(sprite, npcTexture, x + TILE / 2, y + TILE / 2 + 1, TILE - 8);
++      applyWorldSprite(sprite, npcTexture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, placement.placementKey.length * 17, 1.6, 3400), TILE - 8);
+       sprite.alpha = 0.92;
+     } else {
+       e.circle(x + TILE / 2, y + TILE / 2 + 1, 10).fill({ color: 0xd7c3a0, alpha: 0.88 });
+@@ -1301,7 +1310,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+     const arrayTexture = assets?.facilities[arr.assetId.slice('facility.'.length)];
+     if (arrayTexture) {
+       const sprite = retainSceneSprite(layers, retainedSprites, `world:array:${arr.arrayId}`);
+-      applyWorldSprite(sprite, arrayTexture, cx, cy, TILE - 8);
++      applyWorldSprite(sprite, arrayTexture, cx, cy + ambientBobOffset(ambientTimeMs, arr.arrayId, 1.2, 3000), TILE - 8);
+       sprite.alpha = active ? 0.88 : 0.52;
+       e.circle(cx, cy, 7).stroke({ width: 1.5, color, alpha: active ? 0.75 : 0.42 });
+     } else {
+@@ -1331,7 +1340,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
+   const py = OY + p.position.y * TILE + TILE / 2;
+   if (assets?.player) {
+     const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
+-    applyWorldSprite(sprite, assets.player, px, py, TILE);
++    applyWorldSprite(sprite, assets.player, px, py + ambientBobOffset(ambientTimeMs, 1, 1, 2400), TILE);
+   } else {
+     e.circle(px, py, TILE / 3).fill(0xff5a5a);
+   }
+diff --git a/tests/browser/smoke.spec.ts b/tests/browser/smoke.spec.ts
+index 7580281..b64430b 100644
+--- a/tests/browser/smoke.spec.ts
++++ b/tests/browser/smoke.spec.ts
+@@ -84,8 +84,8 @@ test('loads the public demo first screen without page errors', async ({ page })
+   expect(debug.starterDewrootHerbCount).toBe(2);
+   expect(debug.starterSpiritStoneCount).toBe(2);
+   expect(debug.shippingBinItemCount).toBe(0);
+-  const idleFrameCount = debug.renderFrameCount;
++  const idleFrameCount = debug.renderFrameCount ?? 0;
+   await page.waitForTimeout(160);
+-  expect((await gameDebugSnapshot(page)).renderFrameCount).toBe(idleFrameCount);
++  expect((await gameDebugSnapshot(page)).renderFrameCount ?? 0).toBeGreaterThan(idleFrameCount);
+   expect(errors).toEqual([]);
+ });
+diff --git a/tests/unit/render-scheduler.test.ts b/tests/unit/render-scheduler.test.ts
+index f3a3166..41251ed 100644
+--- a/tests/unit/render-scheduler.test.ts
++++ b/tests/unit/render-scheduler.test.ts
+@@ -78,6 +78,34 @@ describe('render scheduler', () => {
+     expect(frameCount).toBe(3);
+   });
+ 
++  it('keeps ticking while ambient world rendering reports active frames', () => {
++    const harness = createFrameHarness();
++    let frameCount = 0;
++    const scheduler = createRenderScheduler({
++      requestFrame: harness.request,
++      cancelFrame: harness.cancel,
++      onFrame: () => {
++        frameCount += 1;
++        return {
++          particlesActive: frameCount < 4,
++          flashActive: false
++        };
++      }
++    });
++
++    scheduler.invalidate('world');
++    harness.runNext(16);
++    expect(harness.pendingCount).toBe(1);
++    harness.runNext(32);
++    expect(harness.pendingCount).toBe(1);
++    harness.runNext(48);
++    expect(harness.pendingCount).toBe(1);
++    harness.runNext(64);
++
++    expect(frameCount).toBe(4);
++    expect(harness.pendingCount).toBe(0);
++  });
++
+   it('merges invalidation raised while an effect frame is already scheduled', () => {
+     const harness = createFrameHarness();
+     const frames: RenderSection[][] = [];
+-- 
+2.53.0
+

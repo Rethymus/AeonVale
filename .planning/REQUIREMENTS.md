@@ -1,0 +1,48 @@
+# REQUIREMENTS · Milestone portfolio-sketch-wave-a
+
+> GSD 作用域需求。ID 稳定，供 phase plan / 验收引用。  
+> 分级：`P0` = Wave A MVP 必要；`P1` = Wave B；`P2` = Wave C。
+
+## P0 / Wave A — 作品集草图可感闭环
+
+| ID | 需求 | 退出标准（执行式） | 证据命令 / 产物 |
+|----|------|-------------------|-----------------|
+| **REQ-A0-01** | 公开展示轨具备像素硬边渲染 | live/local public tree：`antialias:false` + `roundPixels` + texture `nearest` | PR port `01bf653`；截图无 LINEAR 发虚 |
+| **REQ-A0-02** | 世界层空闲仍有环境呼吸 | smoke idle 帧门：空闲后 `renderFrameCount` 继续增长；作物/角色 bob 可见 | `pnpm test tests/browser/smoke.spec.ts`；`tests/unit/render-scheduler.test.ts` |
+| **REQ-A0-03** | 部署后 Pages 复验 | `mvp-preflight --include-live-pages` 绿（维护者部署后） | `pnpm portfolio:mvp-preflight -- --include-live-pages` |
+| **REQ-A1-01** ✅ | 教学天劫支持玩家擦弹 | 在预警区内确认落雷且 `perfectBlock:true` → `hitType==='blocked'`；区外 → 非 blocked（走位/承伤规则不变） | `tests/unit/tutorial-tribulation.test.ts` |
+| **REQ-A1-02** ✅ | 擦弹为显式峰值输入 | UI 文案/按钮在「区内」提示擦弹；不引入全动作层；确定性（无隐藏技巧 RNG） | `publicDemoPanels` + `resolve-tutorial-bolt.perfectBlock` |
+| **REQ-A1-03** ✅ | 战后可读 blocked | aftermath `hitLabel` 区分擦弹与走位/正面 | `tests/unit/public-demo-panels.test.ts` |
+| **REQ-A2-01** ✅ | 雷劫招牌镜头 | 教学落雷至少一次几何电光（非仅全屏白闪） | `lightningBolt.ts` + `triggerTribBolt`；unit 几何测 |
+| **REQ-A3-01** ✅ | 农务 juice 保持并加强 | 翻/浇/收：粒子+SFX+轻震+飘字；天劫擦弹飘字 | `spawnFloatText` + `triggerShake` + unit |
+| **REQ-A3-02** ◐ | 布局不溢出 | 文案宽度软门 + responsive-layout；DOM bbox 硬断言可后补 | `uiCopyBudget` + `tests/unit/ui-copy-budget.test.ts` |
+| **REQ-A4-01** ✅ | 漏斗无阻断 | bot N 局达 `first-loop-complete` | `pnpm funnel --seeds=6` → completeness PASS |
+| **REQ-A4-02** | 真人样本 | 5–10 人「美/好玩/清楚」；未完成前禁止 human certified | playtest 报告；`humanHoursCertified:false` |
+
+## P1 / Wave B — Patch（草图稳后）
+
+| ID | 需求 | 备注 |
+|----|------|------|
+| REQ-B01 | Windows/Linux 桌面封装 | 不阻塞 P0 |
+| REQ-B02 | 暖棚/阵法日常深化 | 高频生活层 |
+| REQ-B03 | 正式主动引劫峰值窗 | 与教学同构，日级被动可仍简化 |
+
+## P2 / Wave C — DLC / TODO
+
+| ID | 需求 | 备注 |
+|----|------|------|
+| REQ-C01 | NPC/节日/内容厚度 | 封存 |
+| REQ-C02 | 留世终局深挖 | 封存 |
+| REQ-C03 | 移动端 | 封存 |
+
+## OMC 切片约束（每轮必答）
+
+1. 属于 `P0 / P1 / P2` 哪一级？  
+2. 服务哪条真实玩家高频路径？  
+3. 哪条门禁证明没有打断首轮演示？
+
+## 非目标（写入避免回流）
+
+- 不做全即时弹幕战斗  
+- 不横向加系统替代打磨  
+- 不伪造 Pages 已验证 / 人类已认证  
