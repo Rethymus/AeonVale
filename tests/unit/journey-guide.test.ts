@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildJourneyGuide, JOURNEY_STAGE_COUNT, type JourneyGuideObjectiveId } from '@app/journeyGuide';
+import { buildJourneyGuide, isJourneyTeachingActive, JOURNEY_STAGE_COUNT, type JourneyGuideObjectiveId } from '@app/journeyGuide';
 import type { OnboardingObjectiveId } from '@sim/story/onboarding';
 
 const LEGACY_OBJECTIVES: readonly OnboardingObjectiveId[] = ['first-till', 'first-sow', 'first-water', 'first-harvest', 'first-ship', 'first-sleep', 'first-market-restock', 'first-second-sow', 'first-second-water', 'first-loop-complete'];
@@ -79,9 +79,14 @@ describe('journey guide', () => {
       stageId: 'aftermath',
       progressLabel: '4/4 · 纵切片完成',
       completed: true,
-      cta: '返回农庄'
+      cta: '自由修行'
     });
+    expect(explicit.currentAction).toContain('自由经营');
+    expect(explicit.motivation).toContain('教学已完成');
     expect(Object.isFrozen(explicit)).toBe(true);
+    expect(isJourneyTeachingActive('journey-complete')).toBe(false);
+    expect(isJourneyTeachingActive(null)).toBe(false);
+    expect(isJourneyTeachingActive('first-till')).toBe(true);
   });
 
   it('keeps guide copy independent of concrete keyboard, touch, or DOM controls', () => {

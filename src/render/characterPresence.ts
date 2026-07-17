@@ -53,3 +53,27 @@ export function shouldDrawQiSparkles(qiDensityMilli: number, tilled: boolean): b
   if (!tilled) return false;
   return qiDensityMilli >= 40_000;
 }
+
+/** 玩家在场色：防止贴图黑剪影压过场景。 */
+export interface PlayerPresencePalette {
+  readonly robe: number;
+  readonly robeAlpha: number;
+  readonly skin: number;
+  readonly skinAlpha: number;
+  readonly rim: number;
+  readonly rimAlpha: number;
+  /** 贴图乘色（暖褐，避免纯黑） */
+  readonly spriteTint: number;
+}
+
+export function playerPresencePalette(): PlayerPresencePalette {
+  return {
+    robe: 0xc46a3a,
+    robeAlpha: 0.42,
+    skin: 0xe8c4a0,
+    skinAlpha: 0.55,
+    rim: 0xffe066,
+    rimAlpha: 0.35,
+    spriteTint: 0xffe0c8
+  };
+}

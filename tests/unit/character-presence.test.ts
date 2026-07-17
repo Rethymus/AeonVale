@@ -3,6 +3,7 @@ import {
   facingIndicatorOffset,
   facingScaleX,
   footShadowSpec,
+  playerPresencePalette,
   qiSparklePhase,
   shouldDrawQiSparkles
 } from '@render/characterPresence';
@@ -44,5 +45,12 @@ describe('characterPresence', () => {
     expect(shouldDrawQiSparkles(50_000, false)).toBe(false);
     expect(shouldDrawQiSparkles(10_000, true)).toBe(false);
     expect(shouldDrawQiSparkles(40_000, true)).toBe(true);
+  });
+
+  it('exposes warm player presence palette (anti-silhouette)', () => {
+    const p = playerPresencePalette();
+    expect(p.robeAlpha).toBeGreaterThan(0.2);
+    expect(p.skinAlpha).toBeGreaterThan(0.3);
+    expect(p.spriteTint).not.toBe(0x000000);
   });
 });

@@ -45,17 +45,20 @@ describe('tile visual state helper', () => {
       dampAlpha: 0,
       qiGlowAlpha: 0,
       showWaterMark: false,
-      showChannelMark: false
+      showChannelMark: false,
+      tilledEdgeAlpha: 0,
+      waterSheenAlpha: 0,
+      showSeedPip: false,
+      harvestLift: false
     });
   });
 
   it('shows explicit same-day care markers on tilled tiles', () => {
-    expect(tileVisualState(makeTile({ tilled: true, wateredToday: true, channeledToday: true }))).toEqual({
-      dampAlpha: 0,
-      qiGlowAlpha: 0,
-      showWaterMark: true,
-      showChannelMark: true
-    });
+    const state = tileVisualState(makeTile({ tilled: true, wateredToday: true, channeledToday: true }));
+    expect(state.showWaterMark).toBe(true);
+    expect(state.showChannelMark).toBe(true);
+    expect(state.tilledEdgeAlpha).toBeGreaterThan(0.5);
+    expect(state.waterSheenAlpha).toBeGreaterThan(0.3);
   });
 
   it('derives dampness and qi glow intensity from tile resources', () => {
@@ -65,6 +68,16 @@ describe('tile visual state helper', () => {
     expect(state.qiGlowAlpha).toBeGreaterThan(0.3);
     expect(state.showWaterMark).toBe(false);
     expect(state.showChannelMark).toBe(false);
+    expect(state.tilledEdgeAlpha).toBeGreaterThan(0.4);
+  });
+
+  it('emphasizes seed stage and mature harvest lift', () => {
+    const seed = tileVisualState(makeTile({ tilled: true }), makeCrop({ stage: 'seed' }));
+    expect(seed.showSeedPip).toBe(true);
+    expect(seed.harvestLift).toBe(false);
+    const mature = tileVisualState(makeTile({ tilled: true, cropId: 1 }), makeCrop({ stage: 'mature' }));
+    expect(mature.harvestLift).toBe(true);
+    expect(mature.showSeedPip).toBe(false);
   });
 });
 
