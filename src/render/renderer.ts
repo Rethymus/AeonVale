@@ -1096,12 +1096,44 @@ export function renderCultivationOverview(state: GameState, ctx: SimContext): st
   return ['—— 功法 / 修炼 ——', '《偷天换劫诀》', `阶段：${stageName}`, `体魄根基：${foundationText}`, `耐力：${Math.round(p.endurance / 1000)}｜意志：${Math.round(p.willpower / 1000)}`, `寿元：${p.lifespanRemainingDays}日`, `命数：${fateState}`, `劫势：${tribulationState}`, ...(victoryText ? [victoryText] : []), '', 'C / Esc 关闭', 'T 主动引劫，Shift+1/2/3/0 苦练'].join('\n');
 }
 
+function drawConifer(g: Graphics, x: number, baseY: number, size: number): void {
+  const trunk = Math.max(2, size * 0.16);
+  g.rect(x - trunk / 2, baseY - size * 0.34, trunk, size * 0.34).fill(0x241408);
+  g.poly([x, baseY - size, x - size * 0.52, baseY - size * 0.36, x + size * 0.52, baseY - size * 0.36]).fill(0x123620);
+  g.poly([x, baseY - size * 0.68, x - size * 0.44, baseY - size * 0.08, x + size * 0.44, baseY - size * 0.08]).fill(0x174027);
+}
+
+/**
+ * 世界层背景：水墨山谷纵深（T0-2）。绘入 tiles Graphics 的最底层，
+ * 瓦片 / 设施 / 精灵叠在其上；网格左右边距与瓦片间隙处露出「山谷」而非虚空。
+ * 纯 render 层、零随机、不随 sim 状态变化，确定性 / 回放安全。
+ */
+function drawWorldBackdrop(g: Graphics): void {
+  // 天空带（顶部，多被状态栏遮挡，边缘透气）
+  g.rect(0, 0, SCREEN_W, 96).fill(0x0e1a16);
+  g.rect(0, 60, SCREEN_W, 40).fill(0x163026);
+  // 远山黛 · 两层脊
+  g.poly([0, 156, 90, 108, 200, 132, 320, 96, 440, 124, 560, 100, 680, 126, 800, 104, 960, 130, 960, 168, 0, 168]).fill(0x1f3a2c);
+  g.poly([0, 178, 120, 142, 260, 162, 400, 136, 540, 160, 680, 138, 820, 160, 960, 144, 960, 186, 0, 186]).fill(0x172e21);
+  // 山谷地底（瓦片叠在其上，边距处露出草地 / 泥地）
+  g.rect(0, 168, SCREEN_W, SCREEN_H - 168).fill(0x1a2e1f);
+  g.rect(0, 168, SCREEN_W, 10).fill(0x244030);
+  // 左 / 右林缘剪影（落在瓦片网格外的左右边距，定可见）
+  drawConifer(g, 28, 250, 30);
+  drawConifer(g, 50, 332, 24);
+  drawConifer(g, 36, 412, 28);
+  drawConifer(g, 688, 270, 26);
+  drawConifer(g, 670, 352, 30);
+  drawConifer(g, 692, 428, 22);
+}
+
 export function drawWorld(layers: RenderLayers, state: GameState, content: ContentRegistry, ctx?: SimContext, assets?: RuntimeRenderAssets): void {
   // —— 瓦片 + 作物 ——
   const g = layers.tiles;
   const retainedSprites = beginRetainedWorldFrame(layers);
   const ambientTimeMs = layers.ambientTimeMs;
   g.clear();
+  drawWorldBackdrop(g);
   for (const t of state.tiles) {
     const x = OX + t.x * TILE;
     const y = OY + t.y * TILE;
