@@ -147,7 +147,8 @@ async function main(): Promise<void> {
   const SEED = 20260710;
   const SAVE_KEY = 'aeonvale-save-v1';
   const BUILD_REVISION = import.meta.env.VITE_BUILD_REVISION ?? 'dev';
-  const BUILD_LABEL = BUILD_REVISION === 'dev' ? '版本 0.1.0 · 本地试玩' : `版本 0.1.0 · ${BUILD_REVISION}`;
+  const BUILD_LABEL = BUILD_REVISION === 'dev' ? '版本 0.1.0 · 本地试玩' : '版本 0.1.0 · 试玩构建';
+  const BUILD_TITLE = BUILD_REVISION === 'dev' ? '' : `构建 ${BUILD_REVISION}`;
   let requestRender: (() => void) | null = null;
   let renderScheduler: RenderScheduler | null = null;
   let publicDemoPanels: PublicDemoPanelsController | null = null;
@@ -3746,6 +3747,7 @@ async function main(): Promise<void> {
   flowView = createAppFlowViewController({
     continueAvailable: deriveSaveHealthPresentation(saveHealth).continueAvailable,
     buildLabel: BUILD_LABEL,
+    buildTitle: BUILD_TITLE,
     onReloadRequest: () => window.location.reload(),
     onStateChange: handleFlowStateChange
   });

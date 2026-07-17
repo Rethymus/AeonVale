@@ -166,6 +166,30 @@ button {
   color: var(--ink);
 }
 
+/* —— 标题屏：水墨山谷纵深（T0-1），替代纯色虚空。
+   护栏：app-shell.test 限定本文件不出现渐变函数与动画声明，
+   故纵深由纯色 + 内嵌 SVG 实色剪影呈现；动态留给 canvas。 —— */
+.title-surface {
+  position: absolute;
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  z-index: var(--z-surface);
+  display: grid;
+  min-height: calc(100dvh - var(--safe-top) - var(--safe-bottom));
+  padding: clamp(16px, 4vw, 44px);
+  place-items: center;
+  overflow: hidden;
+  background-color: #102a20;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 800' preserveAspectRatio='xMidYMid slice'><rect width='1280' height='800' fill='%23102a20'/><rect width='1280' height='300' fill='%230c1a14'/><path d='M0,800 L0,360 L120,300 L240,350 L360,270 L490,330 L620,250 L760,320 L880,280 L1000,330 L1130,290 L1280,340 L1280,800 Z' fill='%231d3a2c'/><path d='M0,800 L0,470 L150,420 L300,460 L460,400 L620,450 L790,410 L940,450 L1090,420 L1280,455 L1280,800 Z' fill='%23163327'/><path d='M0,800 L0,560 L160,520 L320,555 L480,500 L640,548 L800,510 L960,550 L1120,515 L1280,548 L1280,800 Z' fill='%230e2418'/><ellipse cx='640' cy='300' rx='540' ry='92' fill='%23e8e0c4' opacity='0.05'/></svg>");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  color: var(--ink);
+}
+
+.title-surface .flow-frame-title {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42), 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
 .flow-frame {
   position: relative;
   width: min(100%, 680px);
@@ -221,15 +245,22 @@ button {
 
 .flow-title-mark {
   display: grid;
-  width: 64px;
-  height: 64px;
+  width: 104px;
+  height: 104px;
   margin: 0 auto 18px;
+  padding: 0;
   place-items: center;
-  border: 2px solid var(--cinnabar);
-  color: var(--cinnabar);
-  font-family: 'Noto Serif CJK SC', 'Songti SC', serif;
-  font-size: 30px;
-  font-weight: 700;
+  border: none;
+  color: transparent;
+  background: none;
+  filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.5));
+}
+
+.flow-title-mark > img {
+  width: 104px;
+  height: 104px;
+  display: block;
+  image-rendering: auto;
 }
 
 .flow-kicker {
