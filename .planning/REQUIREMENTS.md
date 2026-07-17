@@ -21,6 +21,7 @@
 | **REQ-A5-01** ✅ | 炼丹七情一口可见 | 教学丹方面板展示配伍关系文案（相使/相须/…）；不扩 sim 规则 | `pairingLabel` + unit + vertical-slice |
 | **REQ-V1-T1-01** ✅ | 炼丹面板可见炉体与火候读图 | 面板含 `facility.talisman-furnace` 图；理想火候区+指针；`heatBand` low/ideal/high | main #11；`index.html` furnace + unit |
 | **REQ-V1-T1-02** ✅ | 教学天劫落雷区空间感 | active 阶段世界层绘制中心+八邻域脉动区（非仅坐标文案） | main #11；`tutorialWarningZone.ts` + unit |
+| **REQ-V1-T2-01** ✅ | 角色/NPC 在场感 | 玩家朝向可读（镜像+尖头）+脚影；NPC 脚影；高灵气 sparkle | main #12；`characterPresence.ts` + unit |
 
 ## P1 / Wave B — Patch（草图稳后）
 
