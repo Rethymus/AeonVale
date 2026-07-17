@@ -6,17 +6,17 @@
 
 ## Now
 
-- P0 Wave A：Phase **2–5(bot) 完成**；browser 纵切片擦弹 **PASS**  
-- 仍欠：A0 **授权后** PR+部署；真人 playtest  
-- **未 commit / 未 push**
+- P0 Wave A：**A0 已合 main 并部署**（`074d86d` / PR #7）；live 包含 `antialias:!1` + `ambientTimeMs`  
+- master 尖端仍领先 main（PerfectBlock/VFX/juice 未 port 展示轨）  
+- 仍欠：真人 playtest；master→main 后续体验 PR；可选修 portfolio-capture 对白 `stage-3` 卡死
 
 ## Done this session
 
 - 调研 + OMC/GSD/ECC 分级落盘  
-- A1 PerfectBlock / A2 电光 / A3 屏震+飘字+文案软门  
-- A4 funnel completeness；修 `--seeds=1..N`  
-- browser `public-demo-vertical-slice`：dpad 走位 + ≥1 擦弹（31.7s PASS）  
-- A0 patch 备份 + checklist 
+- A1–A4（bot）实现 + master 5 commits + push  
+- **PR #7 squash merge → Pages deploy success**  
+- live smoke `test:browser:pages` 2/2 PASS；bundle 校验像素硬边字段  
+- funnel / vertical-slice 此前 PASS 
 
 ## Blocked / Needs human
 

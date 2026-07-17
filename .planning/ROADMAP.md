@@ -11,14 +11,15 @@
 
 ### Phase 1 — A0 展示对齐（P0）
 
-**Status:** ready to PR（patch 已备；未 push）  
+**Status:** done on main + Pages（2026-07-17）  
 **Slices:**
 
-1. ✅ master 已有像素+ambient；`.planning/patches/01bf653-pixel-ambient.patch`  
-2. ✅ port 清单：`.planning/PORT-A0-CHECKLIST.md`  
-3. ⏳ 从 `origin/main` 开 PR / 部署 / live 复验（需维护者授权）
+1. ✅ PR #7 squash → `074d86d`  
+2. ✅ Deploy GitHub Pages success（run 29563689797）  
+3. ✅ live JS：`antialias:!1` / `roundPixels:!0` / `ambientTimeMs`  
+4. ✅ `pnpm test:browser:pages` 2/2 PASS  
 
-**Exit:** REQ-A0-01..03（live 待授权）  
+**Exit:** REQ-A0-01..03 ✅（本地完整 preflight 截图链另见 capture 对白 flaky）  
 **OMC 切口:** 世界层读图链（渲染采样 + 常驻帧）
 
 ### Phase 2 — A1 教学天劫 PerfectBlock（P0）
