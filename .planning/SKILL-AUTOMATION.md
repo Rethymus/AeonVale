@@ -42,7 +42,7 @@
 | V1-T0 | 标题/世界/播种视觉身份 | AUTO 实现 · AUTH port | — | app-shell + live pages | ✅ main #10 |
 | V1-T1-alchemy | 炼丹炉 DOM 氛围 + 火候读图 | AUTO | —（读 heatBand，不扩 sim） | app-shell + public-demo-panels + unit heatBand | ✅ main #11 |
 | V1-T1-zone | 教学天劫落雷区脉动辉光 | AUTO | — | unit warning-zone + drawWorld 接入 | ✅ main #11 |
-| V1-T2 | 角色/NPC 辨识度 | AUTO 窄切片 | — | unit + browser 可见性 | ⏳ 下一刀 |
+| V1-T2 | 角色/NPC 辨识度 | AUTO 窄切片 | — | unit character-presence + drawWorld | ✅ master（port AUTH） |
 | dual-track | main port / Pages | **AUTH** | portfolio 工具链 | PR + preflight --include-live-pages | A0–A5/T0/T1 已合入 main |
 
 ### P1 / Wave B（Wave A 稳后再自动扩）
@@ -106,7 +106,7 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 3. ~~**A6** 纵切片 + funnel + governance/typecheck 回归锁~~ ✅  
 4. ~~**V1-T0** 标题/世界/播种~~ ✅ main  
 5. ~~**V1-T1** 炼丹炉氛围 + 落雷区辉光~~ ✅ main #11（`8d5d04d`）  
-6. **V1-T2** 角色/NPC 辨识度 — 下一 AUTO  
+6. ~~**V1-T2** 角色/NPC 辨识度~~ ✅ master；port AUTH  
 7. **A4-human** — HUMAN，不自动（停手）  
 
 ---

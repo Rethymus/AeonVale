@@ -1,7 +1,7 @@
 # 视觉身份 Wave V1 路线
 
 **Updated:** 2026-07-17  
-**Status:** T0 合入 main（#10 · `62f6f33`）；**T1 合入 main（#11 · `8d5d04d`）**；T2 待办
+**Status:** T0 合入 main（#10 · `62f6f33`）；**T1 合入 main（#11 · `8d5d04d`）**；T2 已实现于 master（port 中）
 
 ## 核查结论（访客 60 秒）
 
@@ -26,6 +26,13 @@
 - **炼丹**：`index.html` 挂 `./facilities/talisman-furnace.png`；`demo-heat-track` 用 CSS 变量画理想区 + 指针；`data-heat-band=low|ideal|high` 驱动火焰块色/高（**无** `gradient()` / `animation:`）
 - **天劫**：`tutorialWarningZone.ts` + `drawWorld` 在 `tutorialTribulation.phase==='active'` 时画中心+八邻域脉动区；与 `isPlayerInTutorialWarningZone` Chebyshev r≤1 对齐
 - **sim 零改**；确定性 / 回放路径未动
+
+## T2 实现要点
+
+- 玩家：脚底阴影 + left 镜像 + 金色朝向尖头（替代白点）
+- NPC：脚底阴影；无贴图回退头+袍剪影
+- 环境：`qiDensity≥40k` 且 tilled 时轻量灵气微粒（ambient 相位）
+- sim 零改
 
 ## 约束
 

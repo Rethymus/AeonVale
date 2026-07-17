@@ -28,6 +28,14 @@ import { itemIconAssetId } from '@app/itemIcons';
 import { computeViewportLayout } from './viewportLayout';
 import { generateLightningBolt, strokeLightningBolt, type LightningBoltGeometry } from './lightningBolt';
 import { tutorialWarningPulse, tutorialWarningZoneTiles } from './tutorialWarningZone';
+import {
+  facingIndicatorOffset,
+  facingScaleX,
+  footShadowSpec,
+  qiSparklePhase,
+  shouldDrawQiSparkles,
+  type Facing4
+} from './characterPresence';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -1126,6 +1134,18 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     if (tileState.qiGlowAlpha > 0) {
       g.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.5, color: 0x66ddff, alpha: tileState.qiGlowAlpha });
     }
+    // T2：高灵气地块轻量上浮微粒（纯 render 呼吸，不改 sim）
+    if (shouldDrawQiSparkles(t.qiDensity, t.tilled)) {
+      const phase = qiSparklePhase(ambientTimeMs, t.id);
+      const sparkX = x + TILE / 2 + Math.sin(phase * Math.PI * 2 + t.id) * 7;
+      const sparkY = y + TILE / 2 + 6 - phase * 14;
+      g.circle(sparkX, sparkY, 1.6).fill({ color: 0xb8f4ff, alpha: 0.28 + (1 - phase) * 0.45 });
+      const phase2 = qiSparklePhase(ambientTimeMs, t.id + 11);
+      g.circle(x + TILE / 2 - 6 + phase2 * 10, y + 10 + (1 - phase2) * 8, 1.2).fill({
+        color: 0x7ad0e8,
+        alpha: 0.22 + (1 - phase2) * 0.35
+      });
+    }
     if (tileState.showWaterMark) {
       g.circle(x + 11, y + TILE - 11, 3).fill({ color: 0x7ec8ff, alpha: 0.9 });
       g.circle(x + 18, y + TILE - 14, 2).fill({ color: 0xbfe8ff, alpha: 0.82 });
@@ -1403,14 +1423,23 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   for (const placement of npcWorldPreviewPlacements(state)) {
     const x = OX + placement.x * TILE;
     const y = OY + placement.y * TILE;
+    const ncx = x + TILE / 2;
+    const ncy = y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, placement.placementKey.length * 17, 1.6, 3400);
+    const npcShadow = footShadowSpec('npc');
+    e.ellipse(ncx, ncy + npcShadow.yOffset - 1, npcShadow.width / 2, npcShadow.height / 2).fill({
+      color: 0x0a1210,
+      alpha: npcShadow.alpha
+    });
     const npcTexture = assets?.npcs[placement.assetId];
     if (npcTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:npc:${placement.placementKey}`);
-      applyWorldSprite(sprite, npcTexture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, placement.placementKey.length * 17, 1.6, 3400), TILE - 8);
+      applyWorldSprite(sprite, npcTexture, ncx, ncy, TILE - 8);
       sprite.alpha = 0.92;
     } else {
-      e.circle(x + TILE / 2, y + TILE / 2 + 1, 10).fill({ color: 0xd7c3a0, alpha: 0.88 });
-      e.circle(x + TILE / 2, y + TILE / 2 + 1, 10).stroke({ width: 1.5, color: 0x33261a, alpha: 0.95 });
+      // 回退剪影：头 + 袍，避免「无名圆点」
+      e.circle(ncx, ncy - 4, 6).fill({ color: 0xd7c3a0, alpha: 0.92 });
+      e.ellipse(ncx, ncy + 6, 8, 9).fill({ color: 0x4a6a58, alpha: 0.9 });
+      e.circle(ncx, ncy - 4, 6).stroke({ width: 1.2, color: 0x33261a, alpha: 0.9 });
     }
 
     if (placement.birthday || placement.hasQuest) {
@@ -1504,15 +1533,35 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     e.rect(OX + fx * TILE, OY + fy * TILE, TILE - 1, TILE - 1).stroke({ width: frontReadiness?.actionable ? 2.5 : 2, color: frontStroke, alpha: frontAlpha });
   }
   const px = OX + p.position.x * TILE + TILE / 2;
-  const py = OY + p.position.y * TILE + TILE / 2;
+  const py = OY + p.position.y * TILE + TILE / 2 + ambientBobOffset(ambientTimeMs, 1, 1, 2400);
+  const facing = p.facing as Facing4;
+  const playerShadow = footShadowSpec('player');
+  e.ellipse(px, py + playerShadow.yOffset, playerShadow.width / 2, playerShadow.height / 2).fill({
+    color: 0x0a1210,
+    alpha: playerShadow.alpha
+  });
   if (assets?.player) {
     const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
-    applyWorldSprite(sprite, assets.player, px, py + ambientBobOffset(ambientTimeMs, 1, 1, 2400), TILE);
+    applyWorldSprite(sprite, assets.player, px, py, TILE);
+    // 左右朝向镜像；上下保留原图 + 箭头指示
+    const sx = Math.abs(sprite.scale.x) || 1;
+    sprite.scale.x = sx * facingScaleX(facing);
   } else {
-    e.circle(px, py, TILE / 3).fill(0xff5a5a);
+    // 回退剪影：头 + 身，避免纯红圆
+    e.circle(px, py - 5, 7).fill(0xe8c4a0);
+    e.ellipse(px, py + 6, 9, 11).fill(0xc46a3a);
+    e.circle(px, py - 5, 7).stroke({ width: 1.2, color: 0x3a2418, alpha: 0.85 });
   }
-  // 朝向指示
-  e.circle(px + fdx * 10, py + fdy * 10, 4).fill(0xffffff);
+  // 朝向指示（尖头，比白点更易扫读）
+  const tip = facingIndicatorOffset(facing, 13);
+  const base = facingIndicatorOffset(facing, 5);
+  if (facing === 'left' || facing === 'right') {
+    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).fill({ color: 0xffe066, alpha: 0.95 });
+    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).stroke({ width: 1, color: 0x3a2a10, alpha: 0.75 });
+  } else {
+    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).fill({ color: 0xffe066, alpha: 0.95 });
+    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).stroke({ width: 1, color: 0x3a2a10, alpha: 0.75 });
+  }
   finishRetainedWorldFrame(layers, retainedSprites);
 
   // 季节环境色调（T5）：全屏低透明叠色，渲染于 tiles/entities 之上、HUD 之下

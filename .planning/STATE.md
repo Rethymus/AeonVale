@@ -11,8 +11,12 @@
   - `tutorialWarningZone` + alchemy furnace DOM + heatBand
   - CI 三门全绿后合入；Pages 随 main 自动部署
 - 视觉身份 Wave V1（T0）：**已合入 main**（`62f6f33`）
+- **T2（本轮 AUTO）**：角色朝向/脚影/灵气微粒 — **master 已实现**
+  - `characterPresence.ts` + player 镜像朝向 + 尖头指示 + 脚底阴影
+  - NPC 脚影 + 无贴图剪影回退；高灵气 tilled 地块 sparkle
 - **仍停手 / 后续：**
-  - T2：角色/NPC 辨识度（下一 AUTO）
+  - T2 dual-track port → main
+  - 更完整 4 向行走帧（仍可后置）
   - `REQ-A4-02` HUMAN playtest（`humanHoursCertified:false`）
   - live Pages 视觉复验（网络稳定后 `mvp-preflight --include-live-pages`）
   - 未跟踪 `tests/browser/live-player-depth-audit.spec.ts`（可选）
