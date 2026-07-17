@@ -97,15 +97,47 @@ test('fresh desktop player completes the four-stage public demo without test hoo
   await expect(page.locator('#flow-tribulation-ward')).toContainText('40%');
   await page.locator('#flow-tribulation-primary').click();
 
+  /** 天劫 surface 不放行全局方向键，须点面板 dpad 走位（纯 UI，无测试钩子）。 */
+  async function stepTowardWarnedTile(): Promise<boolean> {
+    for (let step = 0; step < 12; step += 1) {
+      const snap = await debugSnapshot(page);
+      if (snap.tutorialPerfectBlockAvailable) return true;
+      const tx = snap.tutorialWarnedX;
+      const ty = snap.tutorialWarnedY;
+      const px = snap.playerX;
+      const py = snap.playerY;
+      if (tx == null || ty == null || px == null || py == null) return false;
+      if (Math.max(Math.abs(px - tx), Math.abs(py - ty)) <= 1) return true;
+      if (px < tx) await page.locator('[data-demo-action="move-right"]').click();
+      else if (px > tx) await page.locator('[data-demo-action="move-left"]').click();
+      else if (py < ty) await page.locator('[data-demo-action="move-down"]').click();
+      else if (py > ty) await page.locator('[data-demo-action="move-up"]').click();
+      else return true;
+    }
+    return (await debugSnapshot(page)).tutorialPerfectBlockAvailable === true;
+  }
+
+  let blockedBolts = 0;
   for (let bolt = 1; bolt <= 3; bolt += 1) {
     await expect(page.locator('#flow-tribulation-warning')).toContainText(`第 ${bolt}/3 雷`);
-    await page.locator('#flow-tribulation-primary').click();
+    const inZone = await stepTowardWarnedTile();
+    if (inZone || (await debugSnapshot(page)).tutorialPerfectBlockAvailable) {
+      await expect(page.locator('#flow-tribulation-primary')).toContainText('擦弹');
+      await page.locator('#flow-tribulation-primary').click();
+      blockedBolts += 1;
+    } else {
+      await page.locator('#flow-tribulation-primary').click();
+    }
   }
 
   await expect(page.locator('[data-app-surface="aftermath"]')).toBeVisible();
   await expect(page.locator('#flow-aftermath-result-heading')).toHaveText('三雷已过');
   await expect(page.locator('#flow-aftermath-reward')).toContainText('淬体与修为各 +5');
+  // 招牌擦弹：至少 1 雷 blocked（dpad 走入预警区后主按钮擦弹）
+  expect(blockedBolts).toBeGreaterThanOrEqual(1);
+  await expect(page.locator('#flow-aftermath-hits')).toContainText('擦弹');
   expect((await debugSnapshot(page)).tutorialBoltIndex).toBe(3);
+  expect((await debugSnapshot(page)).tutorialHitsBlocked ?? 0).toBeGreaterThanOrEqual(1);
   await page.locator('#flow-aftermath-continue').click();
   await expect(page.locator('canvas')).toBeVisible();
   await waitForObjective(page, 'journey-complete');

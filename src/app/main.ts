@@ -10,7 +10,7 @@ import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { t } from '@content/i18n';
 import manifestJson from '../../assets/manifest.json';
 import { itemCount } from '@sim/world/player';
-import { createLayers, drawWorld, setToast, setHotbar, setTextIfChanged, triggerTribFlash, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, spawnBurst, updateParticles, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, drawTodayBriefing, hideTodayBriefing, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
+import { createLayers, drawWorld, setToast, setHotbar, setTextIfChanged, triggerTribFlash, triggerTribBolt, triggerShake, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, spawnBurst, spawnFloatText, updateParticles, updateFloatTexts, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, drawTodayBriefing, hideTodayBriefing, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
 import { GUARD_BEAST_ASSET_IDS } from '@render/guardBeastPreview';
 import { nextPendingBeat, markSeen, type NarrativeBeat } from '@content/narrative';
 import { createFurnaceLayer, drawFurnace } from '@render/furnacePanel';
@@ -521,11 +521,15 @@ async function main(): Promise<void> {
   }
 
   function spawnFarmActionBurst(kind: FarmActionFeedbackKind, affectedTiles: ReadonlyArray<{ x: number; y: number }>): void {
-    const style = kind === 'till' ? { color: 0xd8b070, count: 8, speed: 2.1 } : kind === 'water' ? { color: 0x7ec8ff, count: 8, speed: 2.4 } : kind === 'harvest' ? { color: 0xffe066, count: 12, speed: 2.8 } : { color: 0x66ddff, count: 10, speed: 2.6 };
+    const style = kind === 'till' ? { color: 0xd8b070, count: 8, speed: 2.1, label: '翻地', labelColor: 0xd8b070 } : kind === 'water' ? { color: 0x7ec8ff, count: 8, speed: 2.4, label: '浇水', labelColor: 0x9ed8ff } : kind === 'harvest' ? { color: 0xffe066, count: 12, speed: 2.8, label: '收获', labelColor: 0xffe066 } : { color: 0x66ddff, count: 10, speed: 2.6, label: '供灵', labelColor: 0x88eeff };
     for (const tile of affectedTiles) {
       const point = screenPointForTile(tile.x, tile.y);
       spawnBurst(layers, point.x, point.y, style.count, style.color, style.speed);
+      spawnFloatText(layers, point.x, point.y - 8, style.label, style.labelColor);
     }
+    // 轻量世界屏震：收获稍重，浇/翻更克制（纯渲染 juice）
+    const shake = kind === 'harvest' ? { frames: 10, mag: 2.2 } : kind === 'till' ? { frames: 7, mag: 1.6 } : { frames: 6, mag: 1.2 };
+    triggerShake(layers, shake.frames, shake.mag);
   }
 
   function performFarmAction(kind: DirectFarmActionKind, at = frontTile()): boolean {
@@ -735,6 +739,10 @@ async function main(): Promise<void> {
         tutorialBoltIndex: number;
         tutorialBoltCount: number;
         tutorialWarnedTileId: number | null;
+        tutorialWarnedX: number | null;
+        tutorialWarnedY: number | null;
+        tutorialHitsBlocked: number;
+        tutorialPerfectBlockAvailable: boolean;
         tutorialPillCount: number;
         tutorialWardMitigation: number;
         tutorialOutcome: string | null;
@@ -835,6 +843,24 @@ async function main(): Promise<void> {
       tutorialBoltIndex: state.tutorialTribulation.boltIndex,
       tutorialBoltCount: TUTORIAL_TRIBULATION_BOLT_COUNT,
       tutorialWarnedTileId: state.tutorialTribulation.warnedTileId,
+      tutorialWarnedX: (() => {
+        const warnedId = state.tutorialTribulation.warnedTileId;
+        if (warnedId == null) return null;
+        return state.tiles.find(entry => entry.id === warnedId)?.x ?? null;
+      })(),
+      tutorialWarnedY: (() => {
+        const warnedId = state.tutorialTribulation.warnedTileId;
+        if (warnedId == null) return null;
+        return state.tiles.find(entry => entry.id === warnedId)?.y ?? null;
+      })(),
+      tutorialHitsBlocked: state.tutorialTribulation.hits.blocked,
+      tutorialPerfectBlockAvailable: (() => {
+        const warnedId = state.tutorialTribulation.warnedTileId;
+        if (state.tutorialTribulation.phase !== 'active' || warnedId == null) return false;
+        const tile = state.tiles.find(entry => entry.id === warnedId);
+        if (!tile) return false;
+        return Math.max(Math.abs(state.player.position.x - tile.x), Math.abs(state.player.position.y - tile.y)) <= 1;
+      })(),
       tutorialPillCount: itemCount(state.player, 'pill.ward-basic'),
       tutorialWardMitigation: state.player.wardMitigation,
       tutorialOutcome: state.tutorialTribulation.outcome,
@@ -1222,6 +1248,12 @@ async function main(): Promise<void> {
       return false;
     }
     audio.playSfx('sow'); // G4: 播种音效
+    for (const tile of outcome.affectedTiles) {
+      const point = screenPointForTile(tile.x, tile.y);
+      spawnBurst(layers, point.x, point.y, 8, 0xa8d070, 2.0);
+      spawnFloatText(layers, point.x, point.y - 8, '播种', 0xc8e890);
+    }
+    triggerShake(layers, 6, 1.3);
 
     const objectiveAfter = getOnboardingObjectiveId(state);
     if (objectiveBefore === 'first-second-sow' && objectiveAfter === 'first-second-water') {
@@ -3124,7 +3156,8 @@ async function main(): Promise<void> {
     }
     recordTribulationInvocation(state, ctx);
     const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
-    triggerTribFlash(layers);
+    // 正式劫暂无逐雷落点 UI：屏幕中心一道招牌电光 + 粒子（与教学同语言）
+    triggerTribBolt(layers, { x: app.screen.width / 2, y: app.screen.height * 0.42 }, 34);
     spawnBurst(layers, app.screen.width / 2, app.screen.height / 2, 45, 0xffe066); // 天劫金芒迸发（T9）
     audio.playSfx('tribulation');
     const br = breakthrough(state, ctx, res.survived);
@@ -3607,10 +3640,22 @@ async function main(): Promise<void> {
       case 'tribulation-primary':
         if (state.tutorialTribulation.phase === 'idle') {
           applyAction(state, { kind: 'start-tutorial-tribulation' }, ctx);
-          triggerTribFlash(layers);
+          // 开场：用当前预警格做第一道招牌电光预告
+          {
+            const warnedId = state.tutorialTribulation.warnedTileId;
+            const tile = warnedId == null ? null : state.tiles.find(entry => entry.id === warnedId);
+            if (tile) triggerTribBolt(layers, screenPointForTile(tile.x, tile.y), 22);
+            else triggerTribFlash(layers, 18);
+          }
         } else if (state.tutorialTribulation.phase === 'active') {
-          applyAction(state, { kind: 'resolve-tutorial-bolt' }, ctx);
-          triggerTribFlash(layers);
+          const warnedId = state.tutorialTribulation.warnedTileId;
+          const tile = warnedId == null ? null : state.tiles.find(entry => entry.id === warnedId);
+          applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: action.perfectBlock === true }, ctx);
+          if (tile) triggerTribBolt(layers, screenPointForTile(tile.x, tile.y), action.perfectBlock ? 32 : 26);
+          else triggerTribFlash(layers);
+          const impact = tile ? screenPointForTile(tile.x, tile.y) : { x: app.screen.width / 2, y: app.screen.height / 2 };
+          spawnBurst(layers, impact.x, impact.y, action.perfectBlock ? 28 : 16, action.perfectBlock ? 0xc8b0ff : 0xffe066);
+          spawnFloatText(layers, impact.x, impact.y - 12, action.perfectBlock ? '完美擦弹' : '劫雷', action.perfectBlock ? 0xe0d0ff : 0xffe066);
         }
         if (state.tutorialTribulation.phase === 'aftermath') flowView?.dispatch({ type: 'finish-tribulation' });
         break;
@@ -4505,6 +4550,7 @@ async function main(): Promise<void> {
       layers.cultivation.visible = true;
     }
     updateParticles(layers); // 程序化粒子推进（T9）
+    updateFloatTexts(layers); // 农务/天劫飘字
     // 丹炉面板（可见时 resolveBrew 实时预览当前火候+丹方的产出）
     const fr = worldSurfaceActive && furnace.visible ? reg.recipes.get(brewRecipes[recipeIdx % brewRecipes.length]!) : null;
     if (fr) {
@@ -4547,8 +4593,8 @@ async function main(): Promise<void> {
       renderFrame(frame.timestamp);
       const worldSurfaceActive = flowAllowsWorldInput();
       return {
-        particlesActive: worldSurfaceActive || layers.particleList.length > 0,
-        flashActive: layers.tribFlashTtl > 0
+        particlesActive: worldSurfaceActive || layers.particleList.length > 0 || layers.floatTexts.length > 0,
+        flashActive: layers.tribFlashTtl > 0 || layers.tribBoltTtl > 0 || layers.shakeTtl > 0
       };
     }
   });

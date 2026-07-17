@@ -53,6 +53,10 @@ export interface AeonDebugSnapshot {
   tutorialBoltIndex?: number;
   tutorialBoltCount?: number;
   tutorialWarnedTileId?: number | null;
+  tutorialWarnedX?: number | null;
+  tutorialWarnedY?: number | null;
+  tutorialHitsBlocked?: number;
+  tutorialPerfectBlockAvailable?: boolean;
   tutorialPillCount?: number;
   tutorialWardMitigation?: number;
   tutorialOutcome?: string | null;
