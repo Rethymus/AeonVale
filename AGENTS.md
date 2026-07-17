@@ -22,3 +22,13 @@ Bespoke workflow skills live in `.claude/skills/` (each is a self-contained `SKI
 - `sim-invariant` — derive fast-check properties from `docs/14` math (conservation/normalization/bounded/monotone/deterministic); keep the sim pure.
 
 Note: `.claude/` is gitignored, so these are local-only. To persist them for the team/Codex across clones, mirror them into a tracked directory — see wiki page "纯代码无引擎游戏开发——前沿方向与 Agent Skill 适配".
+
+## Vibe-coding playbook (token / quality / deploy)
+
+Before multi-session feature work, read `.omc/research/vibe-coding-playbook.md`. Highest-ROI rules:
+
+1. **Cap retry loops** — same failing fix ≤2 attempts, then stop and report (retry storms = #1 token leak).
+2. **Route by difficulty** — hard/research/debug on `gpt-5.6-sol` (`--profile sol`, high reasoning); routine dev on `gpt-5.5` (`--profile dev`); set via `~/.codex/<name>.config.toml` (model/profile/auth keys are user-level only). Pin AGENTS.md+skills as a GPT-5.6 cache breakpoint — don't edit them often (edits invalidate the ~87.5% cache saving).
+3. **"Tests green" ≠ playable** — add a CDP state-injection gate per critical input (e.g., set `semanticGameState`→seed-sow, fire Z, assert plant fired). Details: playbook §B.
+
+Note: `.omc/` is gitignored (local-only, like `.claude/`). To share the playbook across clones, mirror it into a tracked dir.
