@@ -55,7 +55,7 @@ import { farmActionMenuPreview, farmActionMenuToastPresentation, npcActionMenuPr
 import { activeSpecialOrderPanelPreview, archiveDonationFailureToastPresentation, archiveDonationToastPresentation, archiveEmptyToastPresentation, archiveMilestoneFailureToastPresentation, archiveMilestoneToastPresentation, commissionBoardEmptyToastPresentation, commissionCompleteToastPresentation, commissionIncompleteToastPresentation, commissionToastPresentation, dailyCommissionPanelPreview, dailySpecialOrderPanelPreview, mainlineQuestClaimFailureToastPresentation, mainlineQuestClaimToastPresentation, mainlineQuestPanelPreview, mainlineQuestUnavailableToastPresentation, ruinChapterClaimFailureToastPresentation, ruinChapterClaimToastPresentation, ruinChapterPanelPreview, ruinChapterUnavailableToastPresentation, specialOrderAcceptFailureToastPresentation, specialOrderAcceptToastPresentation, specialOrderClaimFailureToastPresentation, specialOrderClaimToastPresentation, specialOrderPendingToastPresentation, specialOrderProgressToastPresentation, specialOrderSubmitFailureToastPresentation, stayingWorldIncidentPanelPreview, stayingWorldIncidentResolveFailureToastPresentation, stayingWorldIncidentResolveToastPresentation } from './commissionPreview';
 import { resolvePreviewTexture } from './previewTexture';
 import { buildEncounterDialogueBeat, buildRelationshipDialogueBeat, type DialogueBeatWithAsset } from './dialoguePreview';
-import { buildJourneyGuide, isJourneyTeachingActive } from './journeyGuide';
+import { buildJourneyGuide, formatJourneyGuideBody, isJourneyTeachingActive, isJourneyTeachingDialogueBeat } from './journeyGuide';
 import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
 import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState } from './appFlowMachine';
 import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
@@ -639,13 +639,13 @@ async function main(): Promise<void> {
 
   function currentOnboardingHelpText(): string {
     const objectiveId = getPublicDemoObjectiveId(state);
-    if (objectiveId?.startsWith('journey-') || objectiveId == null) {
+    if (!isJourneyTeachingActive(objectiveId)) {
       const guide = buildJourneyGuide(objectiveId);
-      // 完成后只保留一行目标，降低 HUD 密度（ISSUE-002 / V1-T6）
-      if (guide.completed || !isJourneyTeachingActive(objectiveId)) {
-        return `当前：${guide.currentAction} · ${guide.cta}`;
-      }
-      return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n操作：${guide.cta}。`;
+      return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n回报：教学纵切片已完成，可按自由节奏经营农庄。\n操作：${guide.cta}。`;
+    }
+    if (objectiveId != null && objectiveId.startsWith('journey-')) {
+      const guide = buildJourneyGuide(objectiveId);
+      return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n回报：完成当前阶段会推进灵草、炼丹、引劫与战后成长的四段闭环。\n操作：${guide.cta}。`;
     }
     return onboardingHelpText(getOnboardingObjectiveId(state));
   }
@@ -659,20 +659,14 @@ async function main(): Promise<void> {
     return { panel, objective: `使用${panel}`, actions: currentHelpText() };
   }
 
-  function currentJourneyBriefing(): { title: string; body: string; assetId?: string } {
-    const objectiveId = getPublicDemoObjectiveId(state);
-    const guide = buildJourneyGuide(objectiveId);
+  function currentJourneyBriefing(): { title: string; body: string; compactBody: string; assetId?: string } {
+    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
     const legacy = buildTodayBriefing(state, ctx, currentOnboardingHelpText());
-    if (guide.completed || !isJourneyTeachingActive(objectiveId)) {
-      return {
-        title: guide.progressLabel,
-        body: `${guide.currentAction}\n${guide.cta}`,
-        assetId: legacy.assetId
-      };
-    }
     return {
       title: guide.progressLabel,
-      body: `${guide.currentAction}\n${guide.motivation}\n行动：${guide.cta}`,
+      // Full body for a11y/debug — info is never deleted (ISSUE-002 progressive disclosure).
+      body: formatJourneyGuideBody(guide, 'full'),
+      compactBody: formatJourneyGuideBody(guide, 'compact'),
       assetId: legacy.assetId
     };
   }
@@ -689,8 +683,11 @@ async function main(): Promise<void> {
     });
     const flow = flowView?.getState() ?? null;
     const presentation = flowView?.getPresentation() ?? null;
+    const worldHudVisible = presentation?.mode === 'world';
     const commandBar = document.querySelector<HTMLElement>('#world-command-bar');
-    if (commandBar) commandBar.hidden = presentation?.mode !== 'world';
+    if (commandBar) commandBar.hidden = !worldHudVisible;
+    const objectiveRail = document.querySelector<HTMLElement>('#objective-rail');
+    if (objectiveRail) objectiveRail.hidden = !worldHudVisible;
 
     const semanticWorldActive = presentation?.surface === 'world';
     const semanticJourney = semanticWorldActive && presentation.mode === 'world' ? buildJourneyGuide(getPublicDemoObjectiveId(state)) : undefined;
@@ -1234,6 +1231,7 @@ async function main(): Promise<void> {
   }
 
   function toastOnboardingAdvance(objectiveBefore: ReturnType<typeof getOnboardingObjectiveId>): void {
+    if (!isJourneyTeachingActive(getPublicDemoObjectiveId(state))) return;
     const objectiveAfter = getOnboardingObjectiveId(state);
     if (!objectiveAfter || objectiveAfter === objectiveBefore) return;
     const presentation = onboardingObjectiveAdvanceToastPresentation(objectiveAfter);
@@ -1270,8 +1268,9 @@ async function main(): Promise<void> {
     }
     triggerShake(layers, 6, 1.3);
 
+    const teachingActive = isJourneyTeachingActive(getPublicDemoObjectiveId(state));
     const objectiveAfter = getOnboardingObjectiveId(state);
-    if (objectiveBefore === 'first-second-sow' && objectiveAfter === 'first-second-water') {
+    if (teachingActive && objectiveBefore === 'first-second-sow' && objectiveAfter === 'first-second-water') {
       focusWaterHotbar();
       const presentation = sowSuccessToastPresentation({
         seedId,
@@ -1282,7 +1281,7 @@ async function main(): Promise<void> {
       toast(presentation.message, presentation.assetId);
       return true;
     }
-    if (objectiveAfter !== objectiveBefore) {
+    if (teachingActive && objectiveAfter !== objectiveBefore) {
       const nextStep = onboardingObjectiveAdvanceToast(objectiveAfter);
       if (nextStep) {
         const presentation = sowSuccessToastPresentation({
@@ -3138,18 +3137,21 @@ async function main(): Promise<void> {
   }
 
   function endDay(): void {
+    const teachingActive = isJourneyTeachingActive(getPublicDemoObjectiveId(state));
     const objectiveBefore = getOnboardingObjectiveId(state);
-    const endDayWarning = onboardingEndDayWarningToastPresentation(objectiveBefore);
-    if (endDayWarning) {
-      toast(endDayWarning.message, endDayWarning.assetId);
-      return;
+    if (teachingActive) {
+      const endDayWarning = onboardingEndDayWarningToastPresentation(objectiveBefore);
+      if (endDayWarning) {
+        toast(endDayWarning.message, endDayWarning.assetId);
+        return;
+      }
     }
     state.events.length = 0;
     advanceDay(state, ctx);
     for (const sfxId of endDaySfxQueue(state.events)) audio.playSfx(sfxId);
     const summary = daySummaryPresentation(state.day, state.events, ctx.content, readyForBreakthrough(state, DEFAULT_BALANCE), currentOnboardingHelpText());
     const objectiveAfter = getOnboardingObjectiveId(state);
-    const nextStep = objectiveAfter !== objectiveBefore ? onboardingObjectiveAdvanceToast(objectiveAfter) : null;
+    const nextStep = teachingActive && objectiveAfter !== objectiveBefore ? onboardingObjectiveAdvanceToast(objectiveAfter) : null;
     toast(composeEndDayToastMessage(summary.message, nextStep), summary.assetId);
   }
 
@@ -3603,7 +3605,7 @@ async function main(): Promise<void> {
         showTutorialAftermathSurface();
         return;
       case 'journey-complete':
-        toast('四段试玩旅程已经完成。农庄仍可继续经营。', 'logo.full');
+        toast('四段试玩旅程已经完成。可自由经营农庄：播种、炼丹、备劫与外出。', 'logo.full');
         return;
       default:
         performDefaultConfirm();
@@ -4547,7 +4549,8 @@ async function main(): Promise<void> {
     const focusedOverlayActive = !worldSurfaceActive || locationSelectionActive || interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible || paused || dialogueBeat !== null || state.postAscension.mode === 'choice-pending';
     if (!state.gameOver && !focusedOverlayActive) {
       const briefing = currentJourneyBriefing();
-      drawTodayBriefing(layers, briefing.title, briefing.body, resolvePreviewTexture(renderAssets, briefing.assetId), briefing.assetId);
+      // Canvas shows the compact primary line only; full detail lives in #objective-rail details.
+      drawTodayBriefing(layers, briefing.title, briefing.compactBody, resolvePreviewTexture(renderAssets, briefing.assetId), briefing.assetId);
     } else {
       hideTodayBriefing(layers);
     }
@@ -4577,14 +4580,22 @@ async function main(): Promise<void> {
     } else {
       drawFurnace(furnace, state, reg, null);
     }
-    // 叙事节拍（T4）：无对白时寻找下一待浮现节拍；游戏结束 / 旅程完成后清空教学残留
-    const journeyDone = getPublicDemoObjectiveId(state) === 'journey-complete';
-    if (worldSurfaceActive && !state.gameOver && !journeyDone) {
+    // 叙事节拍（T4）：无对白时寻找下一待浮现节拍；游戏结束清空
+    // 纵切片完成后抑制 day-1 教学对白（first-till / first-mature），避免残影重现。
+    if (worldSurfaceActive && !state.gameOver) {
       if (!dialogueBeat) {
+        const teachingActive = isJourneyTeachingActive(getPublicDemoObjectiveId(state));
         const nextBeat = nextPendingBeat(state);
-        if (nextBeat) openDialogueBeat(nextBeat);
+        if (nextBeat && (teachingActive || !isJourneyTeachingDialogueBeat(nextBeat.id))) {
+          openDialogueBeat(nextBeat);
+        } else if (nextBeat && !teachingActive && isJourneyTeachingDialogueBeat(nextBeat.id)) {
+          markSeen(state, nextBeat.id);
+        }
+      } else if (!isJourneyTeachingActive(getPublicDemoObjectiveId(state)) && isJourneyTeachingDialogueBeat(dialogueBeat.id)) {
+        markSeen(state, dialogueBeat.id);
+        dialogueBeat = null;
       }
-    } else if (state.gameOver || journeyDone) {
+    } else if (state.gameOver) {
       dialogueBeat = null;
     }
     if (worldSurfaceActive && paused) drawPauseOverlay(layers);

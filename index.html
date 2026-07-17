@@ -13,6 +13,17 @@
   <body>
     <main id="game-shell">
       <div id="app" data-app-surface="world" tabindex="-1" aria-label="永恒山谷游戏画面" aria-describedby="game-instructions" aria-hidden="true" hidden inert>
+        <aside id="objective-rail" class="objective-rail" data-hud-density="compact" aria-label="当前旅程目标" hidden>
+          <p id="objective-rail-progress" class="objective-rail-progress">旅程进度将在载入后显示</p>
+          <p id="objective-rail-primary" class="objective-rail-primary">当前目标将在载入后显示</p>
+          <details id="objective-rail-details" class="objective-rail-details" data-hud-secondary="true">
+            <summary id="objective-rail-summary" class="objective-rail-summary" data-flow-focusable="true">旅程说明</summary>
+            <div class="objective-rail-detail-body">
+              <p id="objective-rail-motivation" class="objective-rail-motivation"></p>
+              <p id="objective-rail-cta" class="objective-rail-cta"></p>
+            </div>
+          </details>
+        </aside>
         <nav id="world-command-bar" aria-label="农庄主要入口">
           <button id="world-journey-action" class="world-command world-command-primary" type="button" data-game-command="journey">开始翻地</button>
           <button class="world-command world-command-secondary" type="button" data-game-command="farm">农务</button>

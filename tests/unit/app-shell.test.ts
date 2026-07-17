@@ -111,6 +111,12 @@ describe('public demo application shell', () => {
 
   it('exposes native world navigation and complete public-demo controls', () => {
     expect(html).toContain('id="world-command-bar"');
+    expect(html).toContain('id="objective-rail"');
+    expect(html).toContain('data-hud-density="compact"');
+    expect(html).toContain('id="objective-rail-primary"');
+    expect(html).toContain('id="objective-rail-details"');
+    expect(html).toContain('data-hud-secondary="true"');
+    expect(html).toContain('id="flow-continue-status"');
     for (const command of ['journey', 'farm', 'inventory', 'map', 'cultivation', 'alchemy', 'end-day', 'pause', 'settings']) {
       expect(html).toContain(`data-game-command="${command}"`);
     }
@@ -150,9 +156,11 @@ describe('public demo application shell', () => {
     expect(refreshStart).toBeGreaterThan(debugStart);
     expect(syncSource).toContain('setWorldAttention');
     expect(syncSource).toContain('commandBar.hidden');
+    expect(syncSource).toContain('objectiveRail.hidden');
     expect(syncSource).toContain('updateSemanticState');
     expect(debugSource).not.toContain('setWorldAttention');
     expect(debugSource).not.toContain('commandBar.hidden');
+    expect(debugSource).not.toContain('objectiveRail.hidden');
     expect(debugSource).not.toContain('updateSemanticState');
   });
 
@@ -271,6 +279,11 @@ describe('public demo application shell', () => {
       expect(minimumPixels(declarations['min-width']), selector).toBeGreaterThanOrEqual(44);
       expect(minimumPixels(declarations['min-height']), selector).toBeGreaterThanOrEqual(44);
     }
+
+    const objectiveSummary = cssDeclarations('.objective-rail-summary');
+    expect(minimumPixels(objectiveSummary['min-height'])).toBeGreaterThanOrEqual(44);
+    expect(css).toContain('.objective-rail[hidden]');
+    expect(css).toContain('data-hud-density');
 
     const worldSurface = parseOpeningTags(html).find(tag => tag.attributes.id === 'app');
     expect(worldSurface?.attributes['data-app-surface']).toBe('world');

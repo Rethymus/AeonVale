@@ -131,27 +131,59 @@ const GUIDES: Readonly<Record<JourneyGuideObjectiveId, JourneyGuide>> = {
     motivation: '结算会解释本次选择如何改变下一轮准备',
     cta: '查看战后结算'
   }),
+  // V1-L01：完成后用自由经营文案，避免 day-1 教学残留
   'journey-complete': Object.freeze({
     stage: 4,
     totalStages: JOURNEY_STAGE_COUNT,
     stageId: 'aftermath',
     progressLabel: '4/4 · 纵切片完成',
-    currentAction: '自由经营：照料灵田、炼丹与备劫',
-    motivation: '教学已完成。不必再做「翻地开田」的新手提示。',
-    cta: '自由修行',
+    currentAction: '自由经营：播种、炼丹、备劫与外出都可自选',
+    motivation: '教学纵切片已结束，后续节奏由你安排，不再强制教学引导',
+    cta: '自由经营',
     completed: true
   })
 };
 
 const COMPLETED_GUIDE = GUIDES['journey-complete'];
 
-/** 教学目标是否仍应驱动「第一轮」翻地/播种文案。 */
+/** Day-1 farm teaching narrative beats that must not reappear after journey-complete. */
+export const JOURNEY_TEACHING_DIALOGUE_BEAT_IDS = Object.freeze(['first-till', 'first-mature'] as const);
+
+export type JourneyTeachingDialogueBeatId = (typeof JOURNEY_TEACHING_DIALOGUE_BEAT_IDS)[number];
+
+/** True while the public-demo / onboarding journey still drives forced teaching steps. */
 export function isJourneyTeachingActive(objectiveId: JourneyGuideObjectiveId | null): boolean {
-  if (objectiveId == null) return false;
-  return objectiveId !== 'journey-complete';
+  return objectiveId != null && objectiveId !== 'journey-complete';
+}
+
+export function isJourneyTeachingDialogueBeat(beatId: string): boolean {
+  return (JOURNEY_TEACHING_DIALOGUE_BEAT_IDS as readonly string[]).includes(beatId);
 }
 
 export function buildJourneyGuide(objectiveId: JourneyGuideObjectiveId | null): JourneyGuide {
   if (objectiveId == null || objectiveId === 'journey-complete') return COMPLETED_GUIDE;
   return GUIDES[objectiveId] ?? COMPLETED_GUIDE;
+}
+
+/** Always-visible primary objective line for cozy HUD density (V1-T6). */
+export function journeyGuidePrimaryLine(guide: JourneyGuide): string {
+  return guide.currentAction;
+}
+
+/** Secondary log/detail lines — default-collapsed in progressive disclosure UI. */
+export function journeyGuideDetailLines(guide: JourneyGuide): readonly string[] {
+  return [`意义：${guide.motivation}`, `行动：${guide.cta}`];
+}
+
+/**
+ * Full body keeps every line for a11y/debug; compact shows only the primary objective.
+ * Info is never removed — only presentation density changes.
+ */
+export function formatJourneyGuideBody(guide: JourneyGuide, density: 'compact' | 'full' = 'full'): string {
+  if (density === 'compact') return journeyGuidePrimaryLine(guide);
+  return [journeyGuidePrimaryLine(guide), ...journeyGuideDetailLines(guide)].join('\n');
+}
+
+export function formatJourneyGuideSummary(guide: JourneyGuide): string {
+  return `${guide.progressLabel} · ${journeyGuidePrimaryLine(guide)}`;
 }

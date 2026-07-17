@@ -43,11 +43,11 @@
 | V1-T1-alchemy | 炼丹炉 DOM 氛围 + 火候读图 | AUTO | — | app-shell + public-demo-panels + unit heatBand | ✅ main #11 |
 | V1-T1-zone | 教学天劫落雷区脉动辉光 | AUTO | — | unit warning-zone + drawWorld 接入 | ✅ main #11 |
 | V1-T2 | 角色/NPC 辨识度 | AUTO 窄切片 | — | unit character-presence + drawWorld | ✅ main #12 |
-| **V1-T3** | **场内地点感装饰**（路径/杂草/石/雾） | **AUTO** | — | unit world-decor + drawWorld 纯 render | ✅ 本波实现 |
+| **V1-T3** | **场内地点感装饰**（路径/杂草/石/雾/篱笆） | **AUTO** | — | unit world-decor +  | ✅ dual-track 完整 |
 | **V1-T4** | **农作四态可读性**（翻/播/浇/成活拉开） | **AUTO** | — | unit tile-visuals 强化 + drawWorld | ✅ 本波实现 |
 | **V1-T5** | **主角色块在场**（防黑剪影） | **AUTO** | — | unit character-presence + drawWorld tint/overlay | ✅ 本波实现 |
-| **V1-T6** | **HUD 密度软收**（次要区默折叠） | **AUTO** | — | unit/app css + responsive-layout 不回归 | ✅ 本波实现 |
-| **V1-L01** | **journey-complete 清教学残留** | **AUTO** | — | unit journeyGuide + main 接线 | ✅ 本波实现 |
+| **V1-T6** | **HUD 密度软收**（objective-rail + 次要区默折叠） | **AUTO** | — | unit/app css +  | ✅ dual-track 完整 |
+| **V1-L01** | **journey-complete 清教学残留** | **AUTO** | — | unit journeyGuide + 自由经营 CTA | ✅ dual-track 完整 |
 | dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；T3–L01 AUTH 进行中 |
 
 ### P0 dogfood 映射（pages-deep 2026-07-17）
