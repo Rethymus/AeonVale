@@ -84,8 +84,8 @@ test('loads the public demo first screen without page errors', async ({ page }) 
   expect(debug.starterDewrootHerbCount).toBe(2);
   expect(debug.starterSpiritStoneCount).toBe(2);
   expect(debug.shippingBinItemCount).toBe(0);
-  const idleFrameCount = debug.renderFrameCount;
+  const idleFrameCount = debug.renderFrameCount ?? 0;
   await page.waitForTimeout(160);
-  expect((await gameDebugSnapshot(page)).renderFrameCount).toBe(idleFrameCount);
+  expect((await gameDebugSnapshot(page)).renderFrameCount ?? 0).toBeGreaterThan(idleFrameCount);
   expect(errors).toEqual([]);
 });

@@ -78,6 +78,34 @@ describe('render scheduler', () => {
     expect(frameCount).toBe(3);
   });
 
+  it('keeps ticking while ambient world rendering reports active frames', () => {
+    const harness = createFrameHarness();
+    let frameCount = 0;
+    const scheduler = createRenderScheduler({
+      requestFrame: harness.request,
+      cancelFrame: harness.cancel,
+      onFrame: () => {
+        frameCount += 1;
+        return {
+          particlesActive: frameCount < 4,
+          flashActive: false
+        };
+      }
+    });
+
+    scheduler.invalidate('world');
+    harness.runNext(16);
+    expect(harness.pendingCount).toBe(1);
+    harness.runNext(32);
+    expect(harness.pendingCount).toBe(1);
+    harness.runNext(48);
+    expect(harness.pendingCount).toBe(1);
+    harness.runNext(64);
+
+    expect(frameCount).toBe(4);
+    expect(harness.pendingCount).toBe(0);
+  });
+
   it('merges invalidation raised while an effect frame is already scheduled', () => {
     const harness = createFrameHarness();
     const frames: RenderSection[][] = [];
