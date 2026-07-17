@@ -53,7 +53,7 @@
 | **PA-P1-dialogue** | **对话盒更矮更透** | **AUTO** | — | renderer DIALOGUE_LAYOUT + unit | ✅ player-audit |
 | **PA-P2-harvest** | **成熟前门控收获 CTA** | **AUTO** | — | journeyGuide context + main journey action | ✅ player-audit |
 | **PA-P2-hotkey** | **旅程 CTA 热键 + 农庄 Esc** | **AUTO** | — | journeyGuide hotkey + actionPanelPreview | ✅ player-audit |
-| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；player-audit AUTH 进行中 |
+| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | player-audit **#16** ✅ main |
 
 ### P0 dogfood 映射（pages-deep 2026-07-17）
 
@@ -139,8 +139,9 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 10. ~~**V1-T6** HUD 密度软收~~ ✅  
 11. ~~**V1-L01** journey-complete 清残留~~ ✅  
 12. ~~**player-audit P1/P2** HUD/继续/对话/收获/热键~~ ✅  
-13. **dual-track** AUTH port player-audit → main + Pages — 进行中  
+13. ~~**dual-track** player-audit → main #16~~ ✅  
 14. **A4-human** — HUMAN，不自动  
+ 
 
 ---
 
