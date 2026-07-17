@@ -2,6 +2,25 @@
  "version": 1,
  "sprites": [
  {
+ "id": "reference.master.cozy-warm-farm-v1",
+ "path": "references/master-cozy-warm-farm-v1.png",
+ "type": "png",
+ "checksum": "0d7c31ddf03b7bbbf9a265730e759e019f6ff36943572311988317cb285cb4ad",
+ "license": "AI-Generated",
+ "source": "gpt-image-2 via relay; Phase 1 cozy warm ink-wash master reference draft; pending human sign-off",
+ "src": {
+ "model": "gpt-image-2",
+ "endpoint": "https://fast.qianxing.us.ci/v1",
+ "prompt": "Master style reference concept art for a cozy xianxia farming game. Scene: a tiny spirit-herb field beside a humble timber hut in a mountain valley at late-afternoon golden light, one narrow tilled plot, fresh green herb sprouts, a small bronze alchemy furnace, a paper talisman fluttering from a wooden post, distant rounded hills and a soft ink-brush sky. Mood: warm, gentle, lived-in, inviting, handcrafted, slightly magical, the world feels quietly alive. Style: warm Chinese ink-wash and gouache hybrid, low saturation, soft diffuse light, rounded silhouettes, clean composition, cozy negative space, painterly rice-paper texture, subtle motion cues in grasses and cloth, not cold monochrome scholar painting, not grim wuxia realism, not tactical colony-sim framing, not a hard grid, not isometric, no UI, no text, no logo, no border, no characters staring at camera.",
+ "seed": null,
+ "master_ref": [],
+ "ref_imgs": [],
+ "generated_at": "2026-07-17T03:32:09.186Z"
+ },
+ "human_edits": [],
+ "ai_disclosed": true
+ },
+ {
  "id": "cg.ending-ascension",
  "path": "cg/cg.ending-ascension.png",
  "type": "png",

@@ -25,6 +25,22 @@ export type AssetLicense = (typeof ALLOWED_ASSET_LICENSES)[number];
 export type AssetFileType = (typeof ALLOWED_ASSET_TYPES)[number];
 export type AssetKind = 'sprites' | 'audio' | 'fonts' | 'shaders';
 
+/**
+ * 私有资产 provenance。
+ * 仅源仓保留完整 prompt / seed / master reference / reference images；
+ * public-tree 会在复制时清洗，避免把视觉设计细案带进公开产物。
+ */
+export const assetSourceDetailsSchema = z.object({
+  model: z.string().min(1),
+  endpoint: z.string().min(1),
+  prompt: z.string().min(1),
+  seed: z.string().min(1).nullable().optional(),
+  master_ref: z.array(z.string().min(1)).default([]),
+  ref_imgs: z.array(z.string().min(1)).default([]),
+  generated_at: z.string().min(1).optional()
+});
+export type AssetSourceDetails = z.infer<typeof assetSourceDetailsSchema>;
+
 /** 单条资产登记。 */
 export const assetEntrySchema = z.object({
   /** AssetId：引用键，如 'font.ark-pixel'、'sprite.herb.frostmarrow'。 */
@@ -36,7 +52,13 @@ export const assetEntrySchema = z.object({
   checksum: z.string().regex(/^[0-9a-f]{64}$/i, 'checksum 必须是 SHA-256 hex（64 位）'),
   license: z.enum(ALLOWED_ASSET_LICENSES),
   /** 来源 URL 或取得说明，版权留痕。 */
-  source: z.string().min(1)
+  source: z.string().min(1),
+  /** 私有仓保留的详细来源参数；公开树会清洗。 */
+  src: assetSourceDetailsSchema.optional(),
+  /** 人眼/像素工具做过的实际修改，诚实记录，可为空数组。 */
+  human_edits: z.array(z.string().min(1)).optional(),
+  /** 是否已在资产登记中明确披露 AI 参与。 */
+  ai_disclosed: z.boolean().optional()
 });
 export type AssetEntry = z.infer<typeof assetEntrySchema>;
 
