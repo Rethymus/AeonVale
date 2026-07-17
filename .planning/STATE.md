@@ -13,6 +13,7 @@
 - 视觉身份 Wave V1（T0）：**已合入 main**（`62f6f33`）
 - **T2**：角色朝向/脚影/灵气微粒 — **main #12 · `bfe6440`**
   - `characterPresence.ts` + player 镜像/尖头/脚影；NPC 脚影+剪影；高灵气 sparkle
+- Pages：T1 deploy `29575549157`；T2 deploy `29576339049` success；live last-modified 2026-07-17 11:17 UTC；HTML 含 talisman-furnace / demo-heat-track；bundle `index-Bs0M6jeB.js`
 - **仍停手 / 后续：**
   - 更完整 4 向行走帧（后置）
   - `REQ-A4-02` HUMAN playtest
