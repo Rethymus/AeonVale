@@ -117,6 +117,7 @@ async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets>
       const url = assetUrlForId(store, id);
       if (!url) return [id, undefined] as const;
       const texture = await loadTextureWithTimeout(url);
+      if (texture?.source) texture.source.scaleMode = 'nearest';
       return [id, texture] as const;
     })
   );
@@ -223,12 +224,14 @@ async function main(): Promise<void> {
     width: 960,
     height: 540,
     background: 0x10101a,
-    antialias: true,
+    antialias: false,
+    roundPixels: true,
     preserveDrawingBuffer: import.meta.env.VITE_PRESERVE_DRAWING_BUFFER === 'true'
   });
   const mount = document.querySelector('#app');
   (mount ?? document.body).appendChild(app.canvas);
   app.canvas.id = 'game-canvas';
+  app.canvas.style.imageRendering = 'pixelated';
   app.canvas.tabIndex = 0;
   app.canvas.setAttribute('aria-label', '永恒山谷游戏画面');
   app.canvas.setAttribute('aria-describedby', 'game-instructions game-surface game-objective game-actions');
@@ -4473,8 +4476,9 @@ async function main(): Promise<void> {
     refreshAppPresentation();
   });
 
-  function renderFrame(): void {
+  function renderFrame(timestamp: number): void {
     const worldSurfaceActive = flowAllowsWorldInput();
+    layers.ambientTimeMs = worldSurfaceActive ? timestamp : 0;
     drawWorld(layers, state, reg, ctx, renderAssets);
     const hotbarSlot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
     drawHotbarIcon(layers, renderAssets.hotbarIcons[hotbarSlotAssetId(hotbarSlot) ?? '']);
@@ -4539,10 +4543,11 @@ async function main(): Promise<void> {
   renderScheduler = createRenderScheduler({
     requestFrame: callback => window.requestAnimationFrame(callback),
     cancelFrame: handle => window.cancelAnimationFrame(handle as number),
-    onFrame: () => {
-      renderFrame();
+    onFrame: frame => {
+      renderFrame(frame.timestamp);
+      const worldSurfaceActive = flowAllowsWorldInput();
       return {
-        particlesActive: layers.particleList.length > 0,
+        particlesActive: worldSurfaceActive || layers.particleList.length > 0,
         flashActive: layers.tribFlashTtl > 0
       };
     }

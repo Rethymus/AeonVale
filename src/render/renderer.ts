@@ -175,6 +175,7 @@ export interface RenderLayers {
   seasonTint: Graphics; // 季节环境色调（T5）
   particles: Graphics; // 程序化粒子（T9）
   particleList: Particle[]; // 活跃粒子（渲染层非确定性，sim 不受影响）
+  ambientTimeMs: number; // 世界层环境动效时间轴（仅渲染层使用）
 }
 
 export interface RuntimeRenderAssets {
@@ -482,8 +483,14 @@ export function createLayers(app: Application): RenderLayers {
     dialogue,
     seasonTint,
     particles,
-    particleList: []
+    particleList: [],
+    ambientTimeMs: 0
   };
+}
+
+function ambientBobOffset(timeMs: number, key: number, amplitude: number, cycleMs: number): number {
+  const phase = key * 0.61803398875;
+  return Math.sin((timeMs / cycleMs) * Math.PI * 2 + phase) * amplitude;
 }
 
 export function screenPointForTile(x: number, y: number): { x: number; y: number } {
@@ -953,6 +960,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   // —— 瓦片 + 作物 ——
   const g = layers.tiles;
   const retainedSprites = beginRetainedWorldFrame(layers);
+  const ambientTimeMs = layers.ambientTimeMs;
   g.clear();
   for (const t of state.tiles) {
     const x = OX + t.x * TILE;
@@ -1031,7 +1039,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         if (texture) {
           const sprite = retainSceneSprite(layers, retainedSprites, `world:crop:${crop.id}`);
           const spec = cropWorldSpriteSpec(crop.stage);
-          applyWorldSprite(sprite, texture, cx, cy + spec.yOffset, spec.size);
+          const bobOffset = crop.stage === 'seed' ? 0 : ambientBobOffset(ambientTimeMs, crop.id, 1.8, 3200);
+          applyWorldSprite(sprite, texture, cx, cy + spec.yOffset + bobOffset, spec.size);
           if (metal) sprite.tint = 0xc9d4ea;
         } else {
           // 回退路径：保留原始程序化图元，保证无贴图时仍可稳定演示
@@ -1058,7 +1067,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const guardTexture = assets?.guardBeastVariants?.[guardBeastPreviewAssetId(placement.beastId)] ?? assets?.guardBeast;
     if (guardTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:guard-beast:${placement.beastId}`);
-      applyWorldSprite(sprite, guardTexture, x + TILE / 2, y + TILE / 2 + 2, TILE - 6);
+      applyWorldSprite(sprite, guardTexture, x + TILE / 2, y + TILE / 2 + 2 + ambientBobOffset(ambientTimeMs, placement.beastId * 7, 1.4, 2800), TILE - 6);
       sprite.alpha = 0.7 + placement.vigorRatio * 0.3;
     } else {
       g.circle(x + TILE / 2, y + TILE / 2 + 2, 11).fill({ color: 0x8ac4ff, alpha: 0.82 });
@@ -1107,7 +1116,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const texture = assets?.facilities[prop.assetId.slice('facility.'.length)];
     if (texture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:farmstead-prop:${prop.assetId}`);
-      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1, TILE - 8);
+      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, prop.assetId.length * 11, 1.1, 3600), TILE - 8);
       sprite.alpha = 0.9;
     } else {
       const color = prop.assetId === 'facility.storage-chest' ? 0x8b6a3f : 0x7a4f2a;
@@ -1139,7 +1148,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const facilityTexture = assets?.facilities[facility.kind];
     if (facilityTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}`);
-      applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2);
+      applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, facility.id, 1, 4000));
     } else {
       g.rect(x + 7, y + 9, TILE - 15, TILE - 14).fill({ color, alpha: 0.92 });
       g.rect(x + 7, y + 9, TILE - 15, TILE - 14).stroke({ width: 1.5, color: 0x2a1a0a });
@@ -1195,7 +1204,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
 
     if (locationTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}`);
-      applyWorldSprite(sprite, locationTexture, x + TILE / 2, y + TILE / 2, TILE - 4);
+      applyWorldSprite(sprite, locationTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, placement.locationId.length * 13, 0.9, 5200), TILE - 4);
       sprite.alpha = 0.24;
     } else {
       e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).fill({ color: 0x181824, alpha: 0.28 });
@@ -1256,7 +1265,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const npcTexture = assets?.npcs[placement.assetId];
     if (npcTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:npc:${placement.placementKey}`);
-      applyWorldSprite(sprite, npcTexture, x + TILE / 2, y + TILE / 2 + 1, TILE - 8);
+      applyWorldSprite(sprite, npcTexture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, placement.placementKey.length * 17, 1.6, 3400), TILE - 8);
       sprite.alpha = 0.92;
     } else {
       e.circle(x + TILE / 2, y + TILE / 2 + 1, 10).fill({ color: 0xd7c3a0, alpha: 0.88 });
@@ -1301,7 +1310,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const arrayTexture = assets?.facilities[arr.assetId.slice('facility.'.length)];
     if (arrayTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:array:${arr.arrayId}`);
-      applyWorldSprite(sprite, arrayTexture, cx, cy, TILE - 8);
+      applyWorldSprite(sprite, arrayTexture, cx, cy + ambientBobOffset(ambientTimeMs, arr.arrayId, 1.2, 3000), TILE - 8);
       sprite.alpha = active ? 0.88 : 0.52;
       e.circle(cx, cy, 7).stroke({ width: 1.5, color, alpha: active ? 0.75 : 0.42 });
     } else {
@@ -1331,7 +1340,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   const py = OY + p.position.y * TILE + TILE / 2;
   if (assets?.player) {
     const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
-    applyWorldSprite(sprite, assets.player, px, py, TILE);
+    applyWorldSprite(sprite, assets.player, px, py + ambientBobOffset(ambientTimeMs, 1, 1, 2400), TILE);
   } else {
     e.circle(px, py, TILE / 3).fill(0xff5a5a);
   }
