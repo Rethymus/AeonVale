@@ -39,7 +39,11 @@
 | A4-human | 5–10 人 playtest | **HUMAN** | `llm-playtester` judge 仅作 proxy，不可替代 | 报告；`humanHoursCertified:false` 直至真人 | ⏳ 停手 |
 | A5-alchemy-pair | 炼丹**七情一口可见** | AUTO | —（读 `compatibility`，不扩 sim 规则） | unit + vertical-slice 文案含配伍 | ✅ 本轮 |
 | A6-lock | Feature lock 回归 | AUTO | `golden-replay-update` 仅当行为变更已接受 | governance + typecheck + test + browser keypath | ✅ 本轮门绿（真人/AUTH 除外） |
-| dual-track | main port / Pages | **AUTH** | portfolio 工具链 | PR + preflight --include-live-pages | 已完成 A0/A1 合入 |
+| V1-T0 | 标题/世界/播种视觉身份 | AUTO 实现 · AUTH port | — | app-shell + live pages | ✅ main #10 |
+| V1-T1-alchemy | 炼丹炉 DOM 氛围 + 火候读图 | AUTO | —（读 heatBand，不扩 sim） | app-shell + public-demo-panels + unit heatBand | ✅ master（port AUTH） |
+| V1-T1-zone | 教学天劫落雷区脉动辉光 | AUTO | — | unit warning-zone + drawWorld 接入 | ✅ master（port AUTH） |
+| V1-T2 | 角色/NPC 辨识度 | AUTO 窄切片 | — | unit + browser 可见性 | ⏳ 下一刀 |
+| dual-track | main port / Pages | **AUTH** | portfolio 工具链 | PR + preflight --include-live-pages | 已完成 A0–A5/T0；**T1 待 port** |
 
 ### P1 / Wave B（Wave A 稳后再自动扩）
 
@@ -99,9 +103,11 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 
 1. ~~**A5** 炼丹七情一口可见~~ ✅  
 2. ~~**A3-layout** DOM 硬断言~~ ✅  
-3. ~~**A6** 纵切片 + funnel + governance/typecheck 回归锁~~ ✅（本轮）  
-4. **A4-human** — HUMAN，不自动（停手）  
-5. **P1+ / dual-track port 本轮 diff** — AUTH 后再做  
+3. ~~**A6** 纵切片 + funnel + governance/typecheck 回归锁~~ ✅  
+4. ~~**V1-T0** 标题/世界/播种~~ ✅ main  
+5. ~~**V1-T1** 炼丹炉氛围 + 落雷区辉光~~ ✅ master 实现；**dual-track port = AUTH**（用户 goal 已授权）  
+6. **V1-T2** 角色/NPC 辨识度 — 下一 AUTO  
+7. **A4-human** — HUMAN，不自动（停手）  
 
 ---
 

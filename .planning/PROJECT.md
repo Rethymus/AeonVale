@@ -25,8 +25,11 @@
 - [x] A2 修仙 VFX 最小集（雷劫几何电光；可选丹炉焰）
 - [x] A3 juice 增强 + 布局防溢出门（软门 + DOM 硬门）
 - [x] A5 炼丹七情一口可见（教学丹方配伍文案）
+- [x] V1-T0 标题/世界/播种视觉身份（main #10）
+- [x] V1-T1 炼丹炉氛围 + 落雷区辉光（master 实现；port 展示轨）
 - [ ] A4 体验门：bot 漏斗 ✅；5–10 人 playtest 映射仍欠（`humanHoursCertified` 诚实）
-- [ ] A6 Feature lock 回归（对照 DoD + SKILL-AUTOMATION 队列）
+- [ ] V1-T2 角色/NPC 辨识度
+- [ ] A6 Feature lock 全量回归 / live pages 可选
 
 ### Out of Scope（本里程碑）
 

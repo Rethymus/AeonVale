@@ -87,7 +87,7 @@
 
 ### Phase 6 — Feature lock 打磨（P0 收口）
 
-**Status:** regression green on master（2026-07-17，本轮）  
+**Status:** regression green on master（2026-07-17）  
 **Slices:**
 
 1. ✅ `pnpm governance:check`  
@@ -96,7 +96,18 @@
 4. ✅ unit 关键面 + browser `responsive-layout` + `public-demo-vertical-slice`  
 5. ⏳ 全量 `pnpm test` / live pages-slice — 可选；HUMAN playtest 仍阻塞 DoD  
 
-只允许润色/回归；对照草图 DoD + `.planning/SKILL-AUTOMATION.md`。下一刀需 AUTH 或 HUMAN。
+### Phase 7 — V1-T1 炼丹/天劫表现层（P0 视觉）
+
+**Status:** implemented on master（2026-07-17）  
+**Slices:**
+
+1. ✅ 炼丹 DOM：`talisman-furnace` 精灵 + 火候轨/针 + `data-heat-band` 火焰块  
+2. ✅ 天劫：`tutorialWarningZone` + drawWorld 脉动落雷区（Chebyshev r≤1）  
+3. ✅ unit：warning-zone / heatBand / app-shell 护栏  
+4. ⏳ dual-track port → main + Pages（AUTH；本 goal 已授权）  
+
+**Exit:** REQ-V1-T1-01..02  
+**OMC 切口:** 修仙招牌第二/三口「看得见」
 
 ## Wave B / C
 

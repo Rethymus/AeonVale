@@ -518,6 +518,125 @@ button {
   font-weight: 700;
 }
 
+/* T1 炼丹炉氛围：静态设施图 + 纯色火焰块（遵守 app-shell 禁渐变/禁声明式动效护栏） */
+.demo-alchemy-hero {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: start;
+}
+
+.demo-alchemy-hero > .demo-alchemy-furnace {
+  grid-row: 1 / span 6;
+  grid-column: 1;
+  align-self: center;
+}
+
+.demo-alchemy-hero > :not(.demo-alchemy-furnace) {
+  grid-column: 2;
+}
+
+.demo-alchemy-furnace {
+  position: relative;
+  display: grid;
+  width: 104px;
+  height: 120px;
+  margin: 0;
+  place-items: center;
+  border: 1px solid #b9aa86;
+  background: #1a120c;
+  box-shadow: inset 0 0 0 1px rgba(215, 185, 95, 0.22);
+}
+
+.demo-alchemy-furnace > img {
+  width: 88px;
+  height: 88px;
+  display: block;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+
+.demo-alchemy-flame {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  width: 28px;
+  height: 18px;
+  margin-left: -14px;
+  border-radius: 14px 14px 4px 4px;
+  background: #c46a3a;
+  box-shadow: 0 0 0 2px rgba(215, 185, 95, 0.35);
+  opacity: 0.72;
+}
+
+.demo-alchemy-furnace[data-heat-band='low'] .demo-alchemy-flame {
+  height: 12px;
+  background: #7a4a2a;
+  opacity: 0.45;
+}
+
+.demo-alchemy-furnace[data-heat-band='ideal'] .demo-alchemy-flame {
+  height: 18px;
+  background: #d77832;
+  opacity: 0.82;
+  box-shadow: 0 0 0 2px rgba(215, 185, 95, 0.55);
+}
+
+.demo-alchemy-furnace[data-heat-band='high'] .demo-alchemy-flame {
+  height: 24px;
+  background: #c43a28;
+  opacity: 0.92;
+  box-shadow: 0 0 0 2px rgba(169, 71, 50, 0.55);
+}
+
+.demo-alchemy-furnace[data-brewed='true'] {
+  border-color: var(--gold);
+  box-shadow: inset 0 0 0 1px rgba(215, 185, 95, 0.55);
+}
+
+.demo-heat-track {
+  position: relative;
+  width: 100%;
+  height: 14px;
+  margin: 12px 0 4px;
+  overflow: hidden;
+  border: 1px solid #8d7a50;
+  background: #2a2218;
+}
+
+.demo-heat-ideal {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--ideal-lo, 40) * 1%);
+  width: calc((var(--ideal-hi, 55) - var(--ideal-lo, 40)) * 1%);
+  background: #3d5a32;
+  opacity: 0.9;
+}
+
+.demo-heat-needle {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  left: calc(var(--heat-pct, 47) * 1%);
+  width: 3px;
+  margin-left: -1px;
+  background: var(--cinnabar);
+  box-shadow: 0 0 0 1px rgba(242, 234, 215, 0.35);
+}
+
+[data-alchemy-heat-section][data-heat-band='low'] .demo-heat-needle {
+  background: #7a5a32;
+}
+
+[data-alchemy-heat-section][data-heat-band='ideal'] .demo-heat-needle {
+  background: #2f7a3a;
+}
+
+[data-alchemy-heat-section][data-heat-band='high'] .demo-heat-needle {
+  background: var(--cinnabar);
+}
+
 .demo-heat-slider {
   width: 100%;
   min-height: 44px;
@@ -930,6 +1049,26 @@ button {
 
   #flow-alchemy-recipe {
     display: none;
+  }
+
+  .demo-alchemy-hero {
+    grid-template-columns: 64px minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .demo-alchemy-furnace {
+    width: 64px;
+    height: 72px;
+  }
+
+  .demo-alchemy-furnace > img {
+    width: 52px;
+    height: 52px;
+  }
+
+  .demo-heat-track {
+    height: 10px;
+    margin: 6px 0 2px;
   }
 
   .demo-announcement {
