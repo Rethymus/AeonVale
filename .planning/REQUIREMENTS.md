@@ -19,8 +19,8 @@
 | **REQ-A4-01** ✅ | 漏斗无阻断 | bot N 局达 `first-loop-complete` | `pnpm funnel --seeds=6` → completeness PASS |
 | **REQ-A4-02** | 真人样本 | 5–10 人「美/好玩/清楚」；未完成前禁止 human certified | playtest 报告；`humanHoursCertified:false` |
 | **REQ-A5-01** ✅ | 炼丹七情一口可见 | 教学丹方面板展示配伍关系文案（相使/相须/…）；不扩 sim 规则 | `pairingLabel` + unit + vertical-slice |
-| **REQ-V1-T1-01** ✅ master | 炼丹面板可见炉体与火候读图 | 面板含 `facility.talisman-furnace` 图；理想火候区+指针；`heatBand` low/ideal/high | `index.html` furnace figure + `demo-heat-track` + unit |
-| **REQ-V1-T1-02** ✅ master | 教学天劫落雷区空间感 | active 阶段世界层绘制中心+八邻域脉动区（非仅坐标文案） | `tutorialWarningZone.ts` + `drawWorld` + unit |
+| **REQ-V1-T1-01** ✅ | 炼丹面板可见炉体与火候读图 | 面板含 `facility.talisman-furnace` 图；理想火候区+指针；`heatBand` low/ideal/high | main #11；`index.html` furnace + unit |
+| **REQ-V1-T1-02** ✅ | 教学天劫落雷区空间感 | active 阶段世界层绘制中心+八邻域脉动区（非仅坐标文案） | main #11；`tutorialWarningZone.ts` + unit |
 
 ## P1 / Wave B — Patch（草图稳后）
 

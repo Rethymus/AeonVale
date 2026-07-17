@@ -6,15 +6,15 @@
 
 ## Now
 
-- **T1（本轮 AUTO）**：炼丹炉 DOM 氛围 + 教学天劫落雷区脉动辉光 — **已实现于 master，门禁本地绿**
-  - `src/render/tutorialWarningZone.ts` + `drawWorld` 预警区
-  - alchemy surface：`talisman-furnace` 精灵 + 火候带/针 + `data-heat-band`
-  - unit：`tutorial-warning-zone` / `public-demo-panels` heatBand / `app-shell` 护栏
-- 视觉身份 Wave V1（T0）：**已合入 main 并 Pages 复验**（`62f6f33`）
+- **T1**：炼丹炉 DOM 氛围 + 教学天劫落雷区脉动辉光 — **main #11 · `8d5d04d`**
+  - PR https://github.com/Rethymus/AeonVale/pull/11 squash-merge
+  - `tutorialWarningZone` + alchemy furnace DOM + heatBand
+  - CI 三门全绿后合入；Pages 随 main 自动部署
+- 视觉身份 Wave V1（T0）：**已合入 main**（`62f6f33`）
 - **仍停手 / 后续：**
-  - T1 → **AUTH** dual-track port（从 `origin/main` 开 feat PR + Pages）
-  - T2：角色/NPC 辨识度
+  - T2：角色/NPC 辨识度（下一 AUTO）
   - `REQ-A4-02` HUMAN playtest（`humanHoursCertified:false`）
+  - live Pages 视觉复验（网络稳定后 `mvp-preflight --include-live-pages`）
   - 未跟踪 `tests/browser/live-player-depth-audit.spec.ts`（可选）
   - `ART-ASSETS-STATUS.md` SFX G4/G9 条目过期（留给维护者）
 

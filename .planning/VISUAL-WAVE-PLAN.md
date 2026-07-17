@@ -1,7 +1,7 @@
 # 视觉身份 Wave V1 路线
 
 **Updated:** 2026-07-17  
-**Status:** T0 合入 main（#10 · `62f6f33`）；**T1 已实现于 master**；T2 待办
+**Status:** T0 合入 main（#10 · `62f6f33`）；**T1 合入 main（#11 · `8d5d04d`）**；T2 待办
 
 ## 核查结论（访客 60 秒）
 
@@ -18,7 +18,7 @@
 ## 分级
 
 - **T0（#10）**：标题 / 世界 / 播种 —— 合入 main ✅  
-- **T1（本轮）**：炼丹炉 DOM 氛围、天劫空间感（canvas juice） —— master ✅ · port AUTH  
+- **T1（#11）**：炼丹炉 DOM 氛围、天劫空间感（canvas juice） —— main ✅  
 - **T2**：角色/NPC 辨识度、环境 hum  
 
 ## T1 实现要点
