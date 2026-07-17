@@ -4,15 +4,191 @@
  * 慢→急切换服务 Pillar 3 张力曲线。无音频文件依赖（C7 程序化优先）。
  *
  * 安全：无 AudioContext（Node/测试环境）时全部 no-op，不抛错。
+ *
+ * BGM 升级：calm/tense 现由 {@link GenerativeBgm}（Tone.js 程序化自适应，四季调色板 +
+ * 马尔可夫/生成式文法）驱动；setMusicContext 提供季节/分区/张力富 context。
  */
-export type SfxId = 'till' | 'sow' | 'water' | 'harvest' | 'brew' | 'explosion' | 'tribulation' | 'breakthrough' | 'eat-pill' | 'ui' | 'ending' | 'warn' | 'hurt' | 'beast-spawn' | 'season';
+import { GenerativeBgm } from './bgm';
+import type { MusicSeason, MusicZone, MusicTension } from './generativeMusic';
+
+export type SfxId =
+  | 'till'
+  | 'sow'
+  | 'water'
+  | 'harvest'
+  | 'brew'
+  | 'explosion'
+  | 'tribulation'
+  | 'breakthrough'
+  | 'eat-pill'
+  | 'ui'
+  | 'ending'
+  | 'warn'
+  | 'hurt'
+  | 'beast-spawn'
+  | 'season'
+  | 'coin'
+  | 'spirit-stone'
+  | 'cultivate'
+  | 'array-place';
 export type BgmMode = 'calm' | 'tense' | 'off';
+
+/**
+ * jsfxr/bfxr 风格的程序化 SFX 参数（DrPetr sfxr 算法的实时化精简版，公有领域）。
+ * 由 {@link AudioEngine.renderSfxrBuffer} 离线渲染为 AudioBuffer，再以 BufferSource 回放，
+ * 每次回放可叠加微量 playbackRate 抖动以"避单调"。SFX 走数据驱动，便于后续扩声。
+ */
+export interface SfxrParams {
+  readonly wave: 'square' | 'sawtooth' | 'sine' | 'noise';
+  /** 包络：attack/sustain/decay 占总时长的比例（0..1，三者之和≈1）。 */
+  readonly attack: number;
+  readonly sustain: number;
+  readonly decay: number;
+  /** sustain 起点的力度凹陷（0..1），模拟 sfxr 的 punch。 */
+  readonly punch: number;
+  /** 起始频率 Hz。 */
+  readonly startFreq: number;
+  /** 滑音目标频率 Hz（最小频率）。 */
+  readonly minFreq: number;
+  /** 频率指数滑移速率（>0 向下滑，<0 向上滑）；0 则不滑。 */
+  readonly slide: number;
+  readonly vibratoDepth: number;
+  readonly vibratoSpeed: number;
+  /** 方波占空比 0..1（仅 wave=square 生效）。 */
+  readonly duty: number;
+  /** 峰值增益 0..1。 */
+  readonly gain: number;
+  /** 总时长（秒）。 */
+  readonly duration: number;
+}
+
+/** 数据驱动的 SFX 预设：新增音效只需在此登记参数，无需写合成代码。 */
+export const SFX_PRESETS: Readonly<Partial<Record<SfxId, SfxrParams>>> = Object.freeze({
+  // 灵石/出货入账：方波短促上行，明亮"叮"。
+  coin: {
+    wave: 'square',
+    attack: 0.02,
+    sustain: 0.5,
+    decay: 0.48,
+    punch: 0.2,
+    startFreq: 880,
+    minFreq: 1320,
+    slide: -0.6,
+    vibratoDepth: 0,
+    vibratoSpeed: 0,
+    duty: 0.5,
+    gain: 0.18,
+    duration: 0.18
+  },
+  // 获得灵石：正弦滑下，带轻微闪烁。
+  'spirit-stone': {
+    wave: 'sine',
+    attack: 0.04,
+    sustain: 0.5,
+    decay: 0.46,
+    punch: 0.1,
+    startFreq: 660,
+    minFreq: 440,
+    slide: 0.8,
+    vibratoDepth: 6,
+    vibratoSpeed: 24,
+    duty: 0.5,
+    gain: 0.2,
+    duration: 0.32
+  },
+  // 修行/打坐：低频正弦慢呼吸 + 颤音，安定。
+  cultivate: {
+    wave: 'sine',
+    attack: 0.25,
+    sustain: 0.55,
+    decay: 0.2,
+    punch: 0,
+    startFreq: 220,
+    minFreq: 196,
+    slide: 0.4,
+    vibratoDepth: 4,
+    vibratoSpeed: 5,
+    duty: 0.5,
+    gain: 0.16,
+    duration: 1.2
+  },
+  // 布阵：锯齿短促落位 + 噪点，仪式感。
+  'array-place': {
+    wave: 'sawtooth',
+    attack: 0.02,
+    sustain: 0.4,
+    decay: 0.58,
+    punch: 0.3,
+    startFreq: 330,
+    minFreq: 247,
+    slide: 0.5,
+    vibratoDepth: 0,
+    vibratoSpeed: 0,
+    duty: 0.5,
+    gain: 0.18,
+    duration: 0.26
+  }
+});
 
 export const DEFAULT_MASTER_VOLUME = 35;
 
 export function clampMasterVolume(value: number): number {
   if (Number.isNaN(value)) return DEFAULT_MASTER_VOLUME;
   return Math.round(Math.min(100, Math.max(0, value)));
+}
+
+/**
+ * 离线渲染一段 jsfxr 风格 SFX 为单声道采样（无 AudioContext 依赖，纯函数）。
+ * 确定性：相同 sampleRate + 相同 params ⇒ 相同 Float32Array（噪声走内嵌 LCG，非 Math.random）。
+ * 用于实时回放（sfxrSynth）与离线烘焙（render-bgm 工具 / 单测）。
+ */
+export function renderSfxrSamples(sampleRate: number, params: SfxrParams): Float32Array {
+  const duration = Math.max(0.01, params.duration);
+  const len = Math.max(1, Math.floor(duration * sampleRate));
+  const out = new Float32Array(len);
+  const ratio = params.minFreq / params.startFreq;
+  const aSamp = Math.max(0, Math.floor(params.attack * len));
+  const sSamp = Math.max(0, Math.floor(params.sustain * len));
+  const dStart = aSamp + sSamp;
+  // 内嵌 LCG 噪声，保证渲染确定性。
+  let nstate = (Math.abs(Math.floor(params.startFreq)) * 2654435761 + 12345) >>> 0;
+  const noiseRand = (): number => {
+    nstate = (Math.imul(nstate, 1664525) + 1013904223) >>> 0;
+    return nstate / 4294967296;
+  };
+  let phase = 0;
+  for (let i = 0; i < len; i++) {
+    const t = i / sampleRate;
+    const lin = t / duration;
+    const prog = params.slide === 0 ? lin : Math.pow(lin, 1 / (1 + Math.abs(params.slide)));
+    const vib = params.vibratoDepth * Math.sin(2 * Math.PI * params.vibratoSpeed * t);
+    const freq = params.startFreq * Math.pow(ratio, prog) + vib;
+    phase = (phase + freq / sampleRate) % 1;
+    let sample: number;
+    switch (params.wave) {
+      case 'square':
+        sample = phase < params.duty ? 1 : -1;
+        break;
+      case 'sawtooth':
+        sample = 2 * phase - 1;
+        break;
+      case 'sine':
+        sample = Math.sin(2 * Math.PI * phase);
+        break;
+      case 'noise':
+      default:
+        sample = noiseRand() * 2 - 1;
+        break;
+    }
+    let env: number;
+    if (i < aSamp) env = aSamp > 0 ? i / aSamp : 1;
+    else if (i < dStart) {
+      const into = (i - aSamp) / Math.max(1, sSamp);
+      env = 1 - params.punch * (1 - into) * (1 - into);
+    } else env = len - dStart > 0 ? Math.max(0, 1 - (i - dStart) / (len - dStart)) : 0;
+    out[i] = sample * env * params.gain;
+  }
+  return out;
 }
 
 export class AudioEngine {
@@ -24,6 +200,10 @@ export class AudioEngine {
   private bgmGain: GainNode | null = null;
   private pulseTimer: ReturnType<typeof setInterval> | null = null;
   private masterVolume = DEFAULT_MASTER_VOLUME;
+  /** Tone.js 自适应 BGM 驱动（懒加载，仅浏览器激活后载入）。 */
+  private bgm = new GenerativeBgm();
+  private musicSeason: MusicSeason = 'spring';
+  private musicZone: MusicZone = 'farm';
 
   /** 首次用户手势后调用（浏览器策略）。无 Web Audio 则 no-op。 */
   init(): void {
@@ -39,11 +219,13 @@ export class AudioEngine {
 
   resume(): void {
     this.ctx?.resume().catch(() => {});
+    void this.bgm.resume();
   }
 
   setMasterVolume(value: number): void {
     this.masterVolume = clampMasterVolume(value);
     if (this.master) this.master.gain.value = this.masterVolume / 100;
+    this.bgm.setMasterVolume(this.masterVolume);
   }
 
   getMasterVolume(): number {
@@ -64,6 +246,12 @@ export class AudioEngine {
     const master = this.master;
     if (!ctx || !master) return;
     const now = ctx.currentTime;
+    // 数据驱动预设优先：新增 SFX 只登记 SFX_PRESETS 即可（bfxr/jsfxr 风格）。
+    const preset = SFX_PRESETS[id];
+    if (preset) {
+      this.sfxrSynth(preset, now);
+      return;
+    }
     switch (id) {
       case 'till':
         // 翻地：先给低频落锄，再叠一层短促土屑噪声，避免在真实浏览器里过轻。
@@ -266,42 +454,47 @@ export class AudioEngine {
     src.stop(start + dur);
   }
 
-  /** 切换 BGM 模式（calm 慢治愈 / tense 急紧张 / off）。 */
+  /** 回放一段 jsfxr 风格 SFX；每次叠加 ±2% playbackRate 抖动以"避单调"。 */
+  private sfxrSynth(params: SfxrParams, start: number): void {
+    const ctx = this.ctx!;
+    const master = this.master!;
+    const samples = renderSfxrSamples(ctx.sampleRate, params);
+    const buf = ctx.createBuffer(1, samples.length, ctx.sampleRate);
+    buf.getChannelData(0).set(samples);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = 1 + (Math.random() - 0.5) * 0.04;
+    const g = ctx.createGain();
+    g.gain.value = 1;
+    src.connect(g);
+    g.connect(master);
+    src.start(start);
+    src.stop(start + params.duration + 0.02);
+  }
+
+  /** 切换 BGM 模式（calm/tense/off）；现委托给 Tone.js 自适应驱动。 */
   setBgmMode(mode: BgmMode): void {
     if (mode === this.bgmMode) return;
-    this.stopBgm();
     this.bgmMode = mode;
-    const ctx = this.ctx;
-    const master = this.master;
-    if (!ctx || !master || mode === 'off') return;
-    if (mode === 'calm') {
-      // 慢 pad：低音 + 五度，轻音量
-      const g = ctx.createGain();
-      g.gain.value = 0.06;
-      g.connect(master);
-      for (const f of [110, 165]) {
-        const o = ctx.createOscillator();
-        o.type = 'sine';
-        o.frequency.value = f;
-        o.connect(g);
-        o.start();
-        this.bgmOsc.push(o);
-      }
-      this.bgmGain = g;
-    } else {
-      // tense：低频脉冲 + 周期雷鸣
-      const g = ctx.createGain();
-      g.gain.value = 0.08;
-      g.connect(master);
-      const o = ctx.createOscillator();
-      o.type = 'sawtooth';
-      o.frequency.value = 55;
-      o.connect(g);
-      o.start();
-      this.bgmOsc.push(o);
-      this.bgmGain = g;
-      this.pulseTimer = setInterval(() => this.playSfx('tribulation'), 1200);
+    this.stopBgm(); // 清理遗留 osc/pulse
+    if (mode === 'off') {
+      void this.bgm.setContext({ season: this.musicSeason, zone: this.musicZone, tension: 'calm', active: false });
+      return;
     }
+    void this.bgm.setContext({ season: this.musicSeason, zone: this.musicZone, tension: mode, active: true });
+  }
+
+  /** 富 context：季节/分区/张力 + active，驱动 Tone.js 四季自适应 BGM（仿星露谷）。 */
+  setMusicContext(ctx: { season: MusicSeason; zone: MusicZone; tension: MusicTension; active: boolean }): void {
+    this.musicSeason = ctx.season;
+    this.musicZone = ctx.zone;
+    this.bgmMode = ctx.active ? ctx.tension : 'off';
+    void this.bgm.setContext(ctx);
+  }
+
+  /** 播放/停止签名主题曲（固定种子，同路生成、零委约、避 Suno/Udio）。 */
+  playSignatureTheme(active: boolean): void {
+    void this.bgm.playSignature(active);
   }
 
   private stopBgm(): void {
