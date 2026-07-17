@@ -543,7 +543,7 @@ function applyWorldSprite(sprite: Sprite, texture: Texture, x: number, y: number
 function cropWorldSpriteSpec(stage: string): { size: number; yOffset: number } {
   switch (stage) {
     case 'seed':
-      return { size: 16, yOffset: 7 };
+      return { size: 20, yOffset: 6 };
     case 'sprout':
       return { size: 20, yOffset: 6 };
     case 'growing':
@@ -1217,12 +1217,19 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         } else {
           // 回退路径：保留原始程序化图元，保证无贴图时仍可稳定演示
           const col = metal ? 0xb8b8c8 : (STAGE_COLOR[crop.stage] ?? 0x4a9a30);
-          if (crop.stage === 'growing' || crop.stage === 'mature') {
-            g.moveTo(cx, cy + fallbackRadius)
-              .lineTo(cx, y + TILE - 3)
-              .stroke({ width: 1.5, color: 0x3a6a28 });
+          if (crop.stage === 'seed') {
+            // 嫩芽：短茎 + 两片小叶，让「刚播下」一眼可读（T0-3）
+            g.moveTo(cx, cy + 3).lineTo(cx, cy - 4).stroke({ width: 1.4, color: 0x3a6a28 });
+            g.circle(cx - 3, cy - 4, 2.4).fill(metal ? 0x9fb6c4 : 0x7ac050);
+            g.circle(cx + 3, cy - 4, 2.4).fill(metal ? 0x9fb6c4 : 0x7ac050);
+          } else {
+            if (crop.stage === 'growing' || crop.stage === 'mature') {
+              g.moveTo(cx, cy + fallbackRadius)
+                .lineTo(cx, y + TILE - 3)
+                .stroke({ width: 1.5, color: 0x3a6a28 });
+            }
+            g.circle(cx, cy, fallbackRadius).fill(col);
           }
-          g.circle(cx, cy, fallbackRadius).fill(col);
         }
         if (readiness.showHarvestHalo) {
           g.circle(cx, cy, fallbackRadius + 3).stroke({ width: 1.5, color: 0xffe066, alpha: 0.75 });
