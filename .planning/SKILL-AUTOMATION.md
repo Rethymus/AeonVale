@@ -2,9 +2,9 @@
 
 > 把「作品集草图推荐方案」压成 **P0/P1/P2 × 可自动 / 须人门 × skill** 矩阵。  
 > Agent 无人监管时**只自动推进 `AUTO` 行**；碰到 `HUMAN` / `AUTH` 停手并写 STATE。  
-> 对齐：`docs/18` OMC/GSD/ECC、`.omc/research/LONG_TERM_GOAL`、`.claude/skills/*`。
+> 对齐：`docs/18` OMC/GSD/ECC、`.omc/research/LONG_TERM_GOAL`、`.claude/skills/*`、dogfood `pages-deep`。
 
-**Updated:** 2026-07-17
+**Updated:** 2026-07-17（dogfood 分级后第二波）
 
 ---
 
@@ -18,9 +18,9 @@
 
 ### Autonomy 细则
 
-- **AUTO**：有执行式门（unit / browser / funnel / governance）；不改审美锚；不 commit/push；不伪造 human certified。
+- **AUTO**：有执行式门（unit / browser / funnel / governance）；不改审美锚；不伪造 human certified。
 - **HUMAN**：fun/手感/审美/master ref/版权/5–10 人 playtest。
-- **AUTH**：`commit` / `push` / Pages 部署 / 转 Public / 双轨 PR 合并（CONTRIBUTING）。
+- **AUTH**：`commit` / `push` / Pages 部署 / 转 Public / 双轨 PR 合并（CONTRIBUTING）。本 goal 用户已授权全部权限 → AUTH 可执行。
 
 ---
 
@@ -31,19 +31,35 @@
 | ID | 切片 | Autonomy | Skill / 工具 | 退出门 | 状态 |
 |----|------|----------|--------------|--------|------|
 | A0 | 像素硬边 + ambient | AUTO 实现 · AUTH port/live | — | preflight + live pages | ✅ main+Pages |
-| A1 | PerfectBlock 峰值窗 | AUTO | 可选 `sim-invariant`（若扩 sim 数学） | unit + public-demo panels + vertical-slice | ✅ |
+| A1 | PerfectBlock 峰值窗 | AUTO | 可选 `sim-invariant` | unit + public-demo panels + vertical-slice | ✅ |
 | A2 | 雷劫分形电光 | AUTO | — | unit geometry + 接入 draw | ✅ |
 | A3-juice | 粒子/震/飘字 | AUTO | — | unit + 动作反馈 | ✅ |
-| A3-layout | 文案软门 + **DOM 硬断言** | AUTO | — | `ui-copy-budget` + browser layout hard gate | ✅ 本轮 |
+| A3-layout | 文案软门 + **DOM 硬断言** | AUTO | — | `ui-copy-budget` + browser layout hard gate | ✅ |
 | A4-funnel | 新手漏斗 bot | AUTO | 可选 `llm-playtester` bot | `pnpm funnel --seeds=6` | ✅ |
-| A4-human | 5–10 人 playtest | **HUMAN** | `llm-playtester` judge 仅作 proxy，不可替代 | 报告；`humanHoursCertified:false` 直至真人 | ⏳ 停手 |
-| A5-alchemy-pair | 炼丹**七情一口可见** | AUTO | —（读 `compatibility`，不扩 sim 规则） | unit + vertical-slice 文案含配伍 | ✅ 本轮 |
-| A6-lock | Feature lock 回归 | AUTO | `golden-replay-update` 仅当行为变更已接受 | governance + typecheck + test + browser keypath | ✅ 本轮门绿（真人/AUTH 除外） |
+| A4-human | 5–10 人 playtest | **HUMAN** | `llm-playtester` judge 仅 proxy | 报告；`humanHoursCertified:false` 直至真人 | ⏳ 停手 |
+| A5-alchemy-pair | 炼丹七情一口可见 | AUTO | — | unit + vertical-slice 文案含配伍 | ✅ |
+| A6-lock | Feature lock 回归 | AUTO | `golden-replay-update` 仅行为变更已接受 | governance + typecheck + test + browser keypath | ✅ |
 | V1-T0 | 标题/世界/播种视觉身份 | AUTO 实现 · AUTH port | — | app-shell + live pages | ✅ main #10 |
-| V1-T1-alchemy | 炼丹炉 DOM 氛围 + 火候读图 | AUTO | —（读 heatBand，不扩 sim） | app-shell + public-demo-panels + unit heatBand | ✅ main #11 |
+| V1-T1-alchemy | 炼丹炉 DOM 氛围 + 火候读图 | AUTO | — | app-shell + public-demo-panels + unit heatBand | ✅ main #11 |
 | V1-T1-zone | 教学天劫落雷区脉动辉光 | AUTO | — | unit warning-zone + drawWorld 接入 | ✅ main #11 |
 | V1-T2 | 角色/NPC 辨识度 | AUTO 窄切片 | — | unit character-presence + drawWorld | ✅ main #12 |
-| dual-track | main port / Pages | **AUTH** | portfolio 工具链 | PR + preflight --include-live-pages | A0–A5/T0/T1 已合入 main |
+| **V1-T3** | **场内地点感装饰**（路径/杂草/石/雾） | **AUTO** | — | unit world-decor + drawWorld 纯 render | ✅ 本波实现 |
+| **V1-T4** | **农作四态可读性**（翻/播/浇/成活拉开） | **AUTO** | — | unit tile-visuals 强化 + drawWorld | ✅ 本波实现 |
+| **V1-T5** | **主角色块在场**（防黑剪影） | **AUTO** | — | unit character-presence + drawWorld tint/overlay | ✅ 本波实现 |
+| **V1-T6** | **HUD 密度软收**（次要区默折叠） | **AUTO** | — | unit/app css + responsive-layout 不回归 | ✅ 本波实现 |
+| **V1-L01** | **journey-complete 清教学残留** | **AUTO** | — | unit journeyGuide + main 接线 | ✅ 本波实现 |
+| dual-track | main port / Pages | **AUTH**（本 goal 已授） | portfolio 工具链 | PR + preflight --include-live-pages | T0–T2 已合；T3–L01 AUTH 进行中 |
+
+### P0 dogfood 映射（pages-deep 2026-07-17）
+
+| Dogfood | 矩阵 ID | 分级 |
+|---------|---------|------|
+| ISSUE-001 场内 vs 标题质感落差 | V1-T3 + V1-T5 | P0 AUTO |
+| ISSUE-002 HUD 过密 | V1-T6 | P0 AUTO（默认折叠；不删信息） |
+| ISSUE-003 农作四态辨识不足 | V1-T4 | P0 AUTO |
+| ISSUE-004 炼丹/天劫表单感 | V1-T1 已部分；再收为 P1 polish | P1（本波不主切） |
+| ISSUE-005 journey-complete 残留 | V1-L01 | P0 AUTO |
+| ISSUE-006 继续旅程无说明 | 已有 `#flow-continue-status`；可选文案增强 | P2 低优 |
 
 ### P1 / Wave B（Wave A 稳后再自动扩）
 
@@ -52,6 +68,7 @@
 | B01 | Win/Linux 桌面封装 | AUTO 脚本 · AUTH 发版 | — | 不阻塞 P0 |
 | B02 | 暖棚/阵法日常深化 | AUTO 窄切片 | 可选 `sim-invariant` | 高频生活层 |
 | B03 | 正式引劫峰值窗 | AUTO | 同 A1 模式 | 与教学同构 |
+| B04 | 炼丹/天劫仪式感再收 | AUTO 窄 | — | ISSUE-004 余量 |
 
 ### P2 / Wave C（封存，不自动扩主链）
 
@@ -91,23 +108,29 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 
 ### 禁止（自动推进）
 
-- commit / push / 部署 / 转 Public（无当次授权）
-- `git merge master` → `main`（双轨无共同祖先）
 - 伪造 `humanHoursCertified:true` 或「Pages 已验证」而无命令证据
+- `git merge master` → `main`（双轨无共同祖先）
 - 横向加系统替代打磨；全即时动作战斗层
 - 为绿而改 golden replay / 加 `test.skip` / 裸占位桩
+- `app.css` 使用 `gradient()` / `animation:`（含注释字面量）
 
 ---
 
-## 5. 当前自动推进队列（2026-07-17）
+## 5. 当前自动推进队列（2026-07-17 dogfood 后）
 
 1. ~~**A5** 炼丹七情一口可见~~ ✅  
 2. ~~**A3-layout** DOM 硬断言~~ ✅  
 3. ~~**A6** 纵切片 + funnel + governance/typecheck 回归锁~~ ✅  
 4. ~~**V1-T0** 标题/世界/播种~~ ✅ main  
-5. ~~**V1-T1** 炼丹炉氛围 + 落雷区辉光~~ ✅ main #11（`8d5d04d`）  
-6. ~~**V1-T2** 角色/NPC 辨识度~~ ✅ main #12（`bfe6440`）  
-7. **A4-human** — HUMAN，不自动（停手）  
+5. ~~**V1-T1** 炼丹炉氛围 + 落雷区辉光~~ ✅ main #11  
+6. ~~**V1-T2** 角色/NPC 辨识度~~ ✅ main #12  
+7. ~~**V1-T3** 场内地点感装饰~~ ✅  
+8. ~~**V1-T4** 农作四态可读性~~ ✅  
+9. ~~**V1-T5** 主角色块在场~~ ✅  
+10. ~~**V1-T6** HUD 密度软收~~ ✅  
+11. ~~**V1-L01** journey-complete 清残留~~ ✅  
+12. **dual-track** AUTH port → main + Pages（本 goal 授权）— 进行中  
+13. **A4-human** — HUMAN，不自动  
 
 ---
 
@@ -118,8 +141,8 @@ Skill 产出必须落到**仓库文件 / 测试 / 脚本**；对话里的建议�
 | master ref 定调、关键像素润色 | 程序化 VFX/juice、配伍文案接线、门禁 |
 | 5–10 人 playtest 签字 | funnel bot、llm-playtester judge（proxy） |
 | sim 数学最终签字 | sim-invariant 草稿、unit/PBT |
-| commit/push/发布授权 | 本地实现 + 测试绿 + 规划落盘 |
+| commit/push/发布授权（若未授） | 本地实现 + 测试绿 + 规划落盘；**本 goal 已授 AUTH** |
 
 ---
 
-*Agent：完成一刀后若队列仍有 AUTO 项，继续下一刀；仅 HUMAN/AUTH 阻塞时停止。*
+*Agent：完成一刀后若队列仍有 AUTO 项，继续下一刀；仅 HUMAN 阻塞时停止。*

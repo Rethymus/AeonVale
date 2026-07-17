@@ -136,15 +136,22 @@ const GUIDES: Readonly<Record<JourneyGuideObjectiveId, JourneyGuide>> = {
     totalStages: JOURNEY_STAGE_COUNT,
     stageId: 'aftermath',
     progressLabel: '4/4 · 纵切片完成',
-    currentAction: '返回农庄继续自己的修行路线',
-    motivation: '灵草、炼丹、引劫与成长已经形成完整闭环',
-    cta: '返回农庄',
+    currentAction: '自由经营：照料灵田、炼丹与备劫',
+    motivation: '教学已完成。不必再做「翻地开田」的新手提示。',
+    cta: '自由修行',
     completed: true
   })
 };
 
 const COMPLETED_GUIDE = GUIDES['journey-complete'];
 
+/** 教学目标是否仍应驱动「第一轮」翻地/播种文案。 */
+export function isJourneyTeachingActive(objectiveId: JourneyGuideObjectiveId | null): boolean {
+  if (objectiveId == null) return false;
+  return objectiveId !== 'journey-complete';
+}
+
 export function buildJourneyGuide(objectiveId: JourneyGuideObjectiveId | null): JourneyGuide {
-  return objectiveId == null ? COMPLETED_GUIDE : GUIDES[objectiveId];
+  if (objectiveId == null || objectiveId === 'journey-complete') return COMPLETED_GUIDE;
+  return GUIDES[objectiveId] ?? COMPLETED_GUIDE;
 }

@@ -55,7 +55,7 @@ import { farmActionMenuPreview, farmActionMenuToastPresentation, npcActionMenuPr
 import { activeSpecialOrderPanelPreview, archiveDonationFailureToastPresentation, archiveDonationToastPresentation, archiveEmptyToastPresentation, archiveMilestoneFailureToastPresentation, archiveMilestoneToastPresentation, commissionBoardEmptyToastPresentation, commissionCompleteToastPresentation, commissionIncompleteToastPresentation, commissionToastPresentation, dailyCommissionPanelPreview, dailySpecialOrderPanelPreview, mainlineQuestClaimFailureToastPresentation, mainlineQuestClaimToastPresentation, mainlineQuestPanelPreview, mainlineQuestUnavailableToastPresentation, ruinChapterClaimFailureToastPresentation, ruinChapterClaimToastPresentation, ruinChapterPanelPreview, ruinChapterUnavailableToastPresentation, specialOrderAcceptFailureToastPresentation, specialOrderAcceptToastPresentation, specialOrderClaimFailureToastPresentation, specialOrderClaimToastPresentation, specialOrderPendingToastPresentation, specialOrderProgressToastPresentation, specialOrderSubmitFailureToastPresentation, stayingWorldIncidentPanelPreview, stayingWorldIncidentResolveFailureToastPresentation, stayingWorldIncidentResolveToastPresentation } from './commissionPreview';
 import { resolvePreviewTexture } from './previewTexture';
 import { buildEncounterDialogueBeat, buildRelationshipDialogueBeat, type DialogueBeatWithAsset } from './dialoguePreview';
-import { buildJourneyGuide } from './journeyGuide';
+import { buildJourneyGuide, isJourneyTeachingActive } from './journeyGuide';
 import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
 import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState } from './appFlowMachine';
 import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
@@ -462,6 +462,8 @@ async function main(): Promise<void> {
       saveState(state);
     } else if (event.type === 'continue-aftermath') {
       applyAction(state, { kind: 'acknowledge-tutorial-aftermath' }, ctx);
+      // V1-L01：战后回世界清教学对白队列，避免残留翻地提示
+      dialogueBeat = null;
       saveState(state);
     }
 
@@ -636,9 +638,13 @@ async function main(): Promise<void> {
 
   function currentOnboardingHelpText(): string {
     const objectiveId = getPublicDemoObjectiveId(state);
-    if (objectiveId?.startsWith('journey-')) {
+    if (objectiveId?.startsWith('journey-') || objectiveId == null) {
       const guide = buildJourneyGuide(objectiveId);
-      return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n回报：完成当前阶段会推进灵草、炼丹、引劫与战后成长的四段闭环。\n操作：${guide.cta}。`;
+      // 完成后只保留一行目标，降低 HUD 密度（ISSUE-002 / V1-T6）
+      if (guide.completed || !isJourneyTeachingActive(objectiveId)) {
+        return `当前：${guide.currentAction} · ${guide.cta}`;
+      }
+      return `当前目标：${guide.currentAction}。\n意义：${guide.motivation}。\n操作：${guide.cta}。`;
     }
     return onboardingHelpText(getOnboardingObjectiveId(state));
   }
@@ -653,8 +659,16 @@ async function main(): Promise<void> {
   }
 
   function currentJourneyBriefing(): { title: string; body: string; assetId?: string } {
-    const guide = buildJourneyGuide(getPublicDemoObjectiveId(state));
+    const objectiveId = getPublicDemoObjectiveId(state);
+    const guide = buildJourneyGuide(objectiveId);
     const legacy = buildTodayBriefing(state, ctx, currentOnboardingHelpText());
+    if (guide.completed || !isJourneyTeachingActive(objectiveId)) {
+      return {
+        title: guide.progressLabel,
+        body: `${guide.currentAction}\n${guide.cta}`,
+        assetId: legacy.assetId
+      };
+    }
     return {
       title: guide.progressLabel,
       body: `${guide.currentAction}\n${guide.motivation}\n行动：${guide.cta}`,
@@ -4561,13 +4575,14 @@ async function main(): Promise<void> {
     } else {
       drawFurnace(furnace, state, reg, null);
     }
-    // 叙事节拍（T4）：无对白时寻找下一待浮现节拍；游戏结束清空
-    if (worldSurfaceActive && !state.gameOver) {
+    // 叙事节拍（T4）：无对白时寻找下一待浮现节拍；游戏结束 / 旅程完成后清空教学残留
+    const journeyDone = getPublicDemoObjectiveId(state) === 'journey-complete';
+    if (worldSurfaceActive && !state.gameOver && !journeyDone) {
       if (!dialogueBeat) {
         const nextBeat = nextPendingBeat(state);
         if (nextBeat) openDialogueBeat(nextBeat);
       }
-    } else if (state.gameOver) {
+    } else if (state.gameOver || journeyDone) {
       dialogueBeat = null;
     }
     if (worldSurfaceActive && paused) drawPauseOverlay(layers);

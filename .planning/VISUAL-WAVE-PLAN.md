@@ -21,6 +21,15 @@
 - **T1（#11）**：炼丹炉 DOM 氛围、天劫空间感（canvas juice） —— main ✅  
 - **T2**：角色/NPC 辨识度、环境 hum  
 
+## T3–T6 / L01（dogfood 第二波 · 2026-07-17）
+
+- **T3 地点感**：`worldDecor.ts` 路径石/草/石/远雾/栅栏（纯 Graphics，确定性 seed）
+- **T4 农作四态**：`tileVisuals` 扩 tilledEdge / waterSheen / seedPip / harvestLift；drawWorld 拉开对比
+- **T5 主角色块**：`playerPresencePalette` 暖袍/肤色底层 + 贴图 tint
+- **T6 HUD 密度**：`#world-command-more` 次要入口默认折叠；完成后简报/帮助压缩
+- **L01 journey-complete**：自由经营文案；`isJourneyTeachingActive`；完成后停灌教学对白
+- **sim 零改**；确定性 / 回放路径未动
+
 ## T1 实现要点
 
 - **炼丹**：`index.html` 挂 `./facilities/talisman-furnace.png`；`demo-heat-track` 用 CSS 变量画理想区 + 指针；`data-heat-band=low|ideal|high` 驱动火焰块色/高（**无** `gradient()` / `animation:`）

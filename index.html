@@ -16,10 +16,15 @@
         <nav id="world-command-bar" aria-label="农庄主要入口">
           <button id="world-journey-action" class="world-command world-command-primary" type="button" data-game-command="journey">开始翻地</button>
           <button class="world-command world-command-secondary" type="button" data-game-command="farm">农务</button>
-          <button class="world-command world-command-secondary" type="button" data-game-command="inventory">背包</button>
-          <button class="world-command world-command-secondary" type="button" data-game-command="map">地点</button>
-          <button class="world-command world-command-secondary" type="button" data-game-command="cultivation">修行</button>
-          <button class="world-command world-command-secondary" type="button" data-game-command="alchemy">丹炉</button>
+          <details id="world-command-more" class="world-command-more">
+            <summary class="world-command world-command-secondary" data-flow-focusable="false">更多入口</summary>
+            <div class="world-command-more-panel" role="group" aria-label="次要农庄入口">
+              <button class="world-command world-command-secondary" type="button" data-game-command="inventory">背包</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="map">地点</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="cultivation">修行</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="alchemy">丹炉</button>
+            </div>
+          </details>
           <button class="world-command world-command-rest" type="button" data-game-command="end-day">歇息</button>
           <button class="world-command world-command-secondary" type="button" data-game-command="pause">系统</button>
         </nav>

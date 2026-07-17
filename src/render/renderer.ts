@@ -32,10 +32,12 @@ import {
   facingIndicatorOffset,
   facingScaleX,
   footShadowSpec,
+  playerPresencePalette,
   qiSparklePhase,
   shouldDrawQiSparkles,
   type Facing4
 } from './characterPresence';
+import { worldDecorPlacements } from './worldDecor';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -1126,13 +1128,33 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     } else {
       g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? 0x6b4f2a);
     }
-    if (t.tilled) g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill(0x4a3318);
-    const tileState = tileVisualState(t);
+    if (t.tilled) {
+      // 翻地：更深土色 + 边缘描边，拉开空地/翻地
+      g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill(0x3a2810);
+      const tileStateEarly = tileVisualState(t, crop);
+      if (tileStateEarly.tilledEdgeAlpha > 0) {
+        g.rect(x + 3, y + 3, TILE - 7, TILE - 7).stroke({
+          width: 1.4,
+          color: 0x8b6238,
+          alpha: tileStateEarly.tilledEdgeAlpha
+        });
+      }
+    }
+    const tileState = tileVisualState(t, crop);
     if (tileState.dampAlpha > 0) {
       g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: 0x2f5675, alpha: tileState.dampAlpha });
     }
+    // 浇水水洼高光（比 damp 更易扫读）
+    if (tileState.waterSheenAlpha > 0) {
+      g.ellipse(x + TILE / 2, y + TILE - 12, 10, 4).fill({ color: 0x9ed4ff, alpha: tileState.waterSheenAlpha });
+      g.ellipse(x + TILE / 2 - 4, y + TILE - 14, 4, 1.5).fill({ color: 0xe8f6ff, alpha: tileState.waterSheenAlpha * 0.85 });
+    }
     if (tileState.qiGlowAlpha > 0) {
       g.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.5, color: 0x66ddff, alpha: tileState.qiGlowAlpha });
+    }
+    if (tileState.showSeedPip) {
+      g.circle(x + TILE / 2, y + TILE / 2 + 2, 3.2).fill({ color: 0x6b4226, alpha: 0.95 });
+      g.circle(x + TILE / 2 - 1, y + TILE / 2 + 1, 1.1).fill({ color: 0xd9c38a, alpha: 0.9 });
     }
     // T2：高灵气地块轻量上浮微粒（纯 render 呼吸，不改 sim）
     if (shouldDrawQiSparkles(t.qiDensity, t.tilled)) {
@@ -1213,11 +1235,36 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
           }
           g.circle(cx, cy, fallbackRadius).fill(col);
         }
-        if (readiness.showHarvestHalo) {
-          g.circle(cx, cy, fallbackRadius + 3).stroke({ width: 1.5, color: 0xffe066, alpha: 0.75 });
-          g.circle(cx, cy, fallbackRadius + 6).stroke({ width: 1, color: 0xfff2a8, alpha: 0.45 });
+        if (readiness.showHarvestHalo || tileState.harvestLift) {
+          const lift = tileState.harvestLift ? 2 : 0;
+          g.circle(cx, cy - lift, fallbackRadius + 3 + lift).stroke({ width: 1.5, color: 0xffe066, alpha: 0.82 });
+          g.circle(cx, cy - lift, fallbackRadius + 6 + lift).stroke({ width: 1, color: 0xfff2a8, alpha: 0.55 });
         }
       }
+    }
+  }
+
+  // V1-T3：地点感装饰（路径石/草/石/雾/栅栏）——瓦片后、实体前
+  for (const decor of worldDecorPlacements(state.width, state.height, state.tiles)) {
+    const x = OX + decor.x * TILE;
+    const y = OY + decor.y * TILE;
+    const jx = (decor.salt - 0.5) * 6;
+    const jy = ((decor.salt * 7) % 1 - 0.5) * 4;
+    if (decor.kind === 'path-stone') {
+      g.ellipse(x + TILE / 2 + jx, y + TILE - 10 + jy, 5, 3).fill({ color: 0x8a8a82, alpha: 0.55 + decor.salt * 0.25 });
+      g.ellipse(x + TILE / 2 + jx - 3, y + TILE - 12 + jy, 3, 2).fill({ color: 0xb0b0a8, alpha: 0.4 });
+    } else if (decor.kind === 'grass-tuft') {
+      g.moveTo(x + 12 + jx, y + TILE - 8)
+        .lineTo(x + 14 + jx, y + TILE - 16)
+        .lineTo(x + 16 + jx, y + TILE - 8)
+        .stroke({ width: 1.2, color: 0x6a8a48, alpha: 0.55 + decor.salt * 0.3 });
+    } else if (decor.kind === 'pebble') {
+      g.circle(x + 14 + jx, y + TILE - 11 + jy, 1.8).fill({ color: 0x7a6a58, alpha: 0.5 + decor.salt * 0.3 });
+    } else if (decor.kind === 'mist-band') {
+      g.ellipse(x + TILE / 2, y + 10, 14, 5).fill({ color: 0xd8e4e8, alpha: 0.12 + decor.salt * 0.1 });
+    } else if (decor.kind === 'fence-post') {
+      g.rect(x + TILE / 2 - 1, y + 12, 3, 16).fill({ color: 0x6b4f2a, alpha: 0.7 });
+      g.rect(x + TILE / 2 - 4, y + 12, 9, 2).fill({ color: 0x8b6a3f, alpha: 0.65 });
     }
   }
 
@@ -1540,16 +1587,22 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     color: 0x0a1210,
     alpha: playerShadow.alpha
   });
+  // V1-T5：暖色在场底层，防止贴图黑剪影压过场景
+  const presence = playerPresencePalette();
+  e.ellipse(px, py + 6, 10, 12).fill({ color: presence.robe, alpha: presence.robeAlpha });
+  e.circle(px, py - 5, 7.5).fill({ color: presence.skin, alpha: presence.skinAlpha });
   if (assets?.player) {
     const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
     applyWorldSprite(sprite, assets.player, px, py, TILE);
+    sprite.tint = presence.spriteTint;
     // 左右朝向镜像；上下保留原图 + 箭头指示
     const sx = Math.abs(sprite.scale.x) || 1;
     sprite.scale.x = sx * facingScaleX(facing);
+    e.circle(px, py - 5, 8).stroke({ width: 1.1, color: presence.rim, alpha: presence.rimAlpha });
   } else {
     // 回退剪影：头 + 身，避免纯红圆
-    e.circle(px, py - 5, 7).fill(0xe8c4a0);
-    e.ellipse(px, py + 6, 9, 11).fill(0xc46a3a);
+    e.circle(px, py - 5, 7).fill(presence.skin);
+    e.ellipse(px, py + 6, 9, 11).fill(presence.robe);
     e.circle(px, py - 5, 7).stroke({ width: 1.2, color: 0x3a2418, alpha: 0.85 });
   }
   // 朝向指示（尖头，比白点更易扫读）
