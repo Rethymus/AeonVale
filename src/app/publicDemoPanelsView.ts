@@ -52,6 +52,7 @@ export function createPublicDemoPanelsController(options: PublicDemoPanelsOption
     setText(root, '#flow-alchemy-recipe', view.recipeName);
     setText(root, '#flow-alchemy-heat-output', `${view.heatPercent}%`);
     setText(root, '#flow-alchemy-ideal', `理想火候 ${view.idealHeatLabel}`);
+    setText(root, '#flow-alchemy-pairing', view.pairingLabel);
     setText(root, '#flow-alchemy-preview', view.previewLabel);
     setText(root, '#flow-alchemy-result', view.resultLabel);
     setText(root, '#flow-alchemy-primary', view.primaryLabel);

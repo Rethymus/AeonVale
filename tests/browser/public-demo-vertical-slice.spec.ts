@@ -71,6 +71,8 @@ test('fresh desktop player completes the four-stage public demo without test hoo
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-alchemy-primary');
   await expect(page.locator('#flow-alchemy-materials')).toContainText('雷击木');
   await expect(page.locator('#flow-alchemy-materials')).toContainText('寒潭莲');
+  await expect(page.locator('#flow-alchemy-pairing')).toContainText('七情');
+  await expect(page.locator('#flow-alchemy-pairing')).toContainText('相使');
   await expect(page.locator('#flow-alchemy-ideal')).toContainText('40–55%');
   await page.locator('#flow-alchemy-primary').click();
   await expect(page.locator('#flow-alchemy-result')).toContainText('首枚避雷丹已经出炉');

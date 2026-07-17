@@ -1,4 +1,5 @@
 import { TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_ALCHEMY_KIT_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, resolveBrew, type GameState, type SimContext } from '@sim';
+import { lookupRelation } from '@sim/alchemy/compatibility';
 import { itemCount } from '@sim/world/player';
 
 const TUTORIAL_RECIPE_ID = 'recipe.ward-pill';
@@ -15,6 +16,8 @@ export interface PublicDemoAlchemyView {
   readonly materials: readonly PublicDemoMaterialView[];
   readonly heatPercent: number;
   readonly idealHeatLabel: string;
+  /** 七情配伍「一口」：教学丹方材料关系，供玩家读到修仙差异化。 */
+  readonly pairingLabel: string;
   readonly previewLabel: string;
   readonly resultLabel: string;
   readonly primaryLabel: string;
@@ -95,6 +98,36 @@ function brewResultLabel(payload: TutorialBrewPayload | null, brewed: boolean): 
   }
 }
 
+/** 教学丹方两味药的七情关系文案（只读 compatibility 表，不改 sim 规则）。 */
+export function tutorialAlchemyPairingLabel(
+  inputs: readonly { herbId: string }[],
+  content: SimContext['content']
+): string {
+  if (inputs.length < 2) return '七情配伍：单味药方，暂无对药关系。';
+  const a = inputs[0]!;
+  const b = inputs[1]!;
+  const nameA = content.items.get(a.herbId)?.displayName ?? a.herbId;
+  const nameB = content.items.get(b.herbId)?.displayName ?? b.herbId;
+  const rule = lookupRelation(a.herbId, b.herbId);
+  if (!rule) return `七情配伍：${nameA} 与 ${nameB} 平和同炉，火候仍是成败关键。`;
+  switch (rule.relation) {
+    case '相使':
+      return `七情配伍：${nameA} 相使 ${nameB}，辅药引经，略增药力。`;
+    case '相须':
+      return `七情配伍：${nameA} 与 ${nameB} 相须，同气增效。`;
+    case '相畏':
+      return `七情配伍：${nameA} 相畏 ${nameB}，可制毒势。`;
+    case '相杀':
+      return `七情配伍：${nameA} 相杀 ${nameB}，净化解毒。`;
+    case '相恶':
+      return `七情配伍：${nameA} 与 ${nameB} 相恶，药力相减，易成废丹。`;
+    case '相反':
+      return `七情配伍：${nameA} 与 ${nameB} 相反——强行同炉必炸炉。`;
+    default:
+      return `七情配伍：${nameA} 与 ${nameB} · ${rule.relation}。`;
+  }
+}
+
 export function buildPublicDemoAlchemyView(state: GameState, ctx: SimContext, heatPercent: number): PublicDemoAlchemyView {
   const recipe = ctx.content.recipes.get(TUTORIAL_RECIPE_ID);
   const normalizedHeat = Math.max(0, Math.min(100, Math.round(Number.isFinite(heatPercent) ? heatPercent : 0)));
@@ -123,6 +156,7 @@ export function buildPublicDemoAlchemyView(state: GameState, ctx: SimContext, he
     materials,
     heatPercent: normalizedHeat,
     idealHeatLabel: recipe ? `${Math.round(recipe.idealHeatRange[0] / 1_000)}–${Math.round(recipe.idealHeatRange[1] / 1_000)}%` : '不可用',
+    pairingLabel: recipe ? tutorialAlchemyPairingLabel(recipe.inputs, ctx.content) : '七情配伍：丹方数据缺失。',
     previewLabel: preview ? outcomePreview(preview.outcome) : '丹方数据缺失，暂时无法炼制。',
     resultLabel: !brewed && !kitReady ? '先在灵田收获第一批灵草，山谷才会交付一次性教学药包。' : brewResultLabel(latestBrew, brewed),
     primaryLabel: brewed ? '携丹返回农庄' : latestBrew?.retryable ? '重新炼制' : '炼制备劫丹',

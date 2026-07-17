@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildRegistry } from '@content/registry';
-import { buildPublicDemoTribulationView, buildPublicDemoAftermathView } from '@app/publicDemoPanels';
+import { buildPublicDemoAlchemyView, buildPublicDemoTribulationView, buildPublicDemoAftermathView } from '@app/publicDemoPanels';
 import { farmActionSuccessToastPresentation } from '@app/actionFeedback';
 import { textFitsWidth, UI_COPY_BUDGETS } from '@app/uiCopyBudget';
 import { applyAction, createSimContext, createWorld, DEFAULT_BALANCE, FIRST_HARVEST_FLAG } from '@sim';
@@ -11,6 +11,19 @@ describe('UI copy width budgets (overflow soft gate)', () => {
       const msg = farmActionSuccessToastPresentation(kind).message;
       expect(textFitsWidth(msg, UI_COPY_BUDGETS.farmToast.fontSize, UI_COPY_BUDGETS.farmToast.maxWidth)).toBe(true);
     }
+  });
+
+  it('tutorial alchemy pairing line fits panel budget', () => {
+    const content = buildRegistry();
+    const state = createWorld({ seed: 9, width: 6, height: 6, content, params: DEFAULT_BALANCE });
+    const ctx = createSimContext(9, content, DEFAULT_BALANCE);
+    state.player.flags.add(FIRST_HARVEST_FLAG);
+    applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
+    const alchemy = buildPublicDemoAlchemyView(state, ctx, 47);
+    expect(alchemy.pairingLabel.length).toBeGreaterThan(0);
+    expect(
+      textFitsWidth(alchemy.pairingLabel, UI_COPY_BUDGETS.alchemyPairing.fontSize, UI_COPY_BUDGETS.alchemyPairing.maxWidth)
+    ).toBe(true);
   });
 
   it('tutorial tribulation labels fit panel budgets in idle/active/aftermath', () => {
