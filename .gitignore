@@ -39,5 +39,9 @@ dogfood-output/
 *.tsbuildinfo
 .tmp.playwright-*.config.ts
 
+# Local-only live audit / dogfood specs (do not publish)
+tests/browser/live-player-depth-audit.spec.ts
+tests/browser/live-*.spec.ts
+
 # 程序化音频烘焙产物（pnpm render:bgm 生成，可复现，不入库）
 assets/audio/bgm/
