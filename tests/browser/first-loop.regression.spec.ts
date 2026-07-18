@@ -129,11 +129,12 @@ test('fresh player can complete the first farm economy loop from the first scree
   expect(mature.onboardingObjectiveId).toBe('first-harvest');
 
   await pressUntilDebugState(page, '3', 'harvest tool selected', debug => debug.hotbarSlotKind === 'harvest');
-  await pressUntilDebugState(page, 'Space', 'first crop harvested', debug => debug.frontTileCropId == null && debug.onboardingObjectiveId === 'first-ship' && (debug.starterMosslingHerbCount ?? 0) > 3);
+  await pressUntilDebugState(page, 'Space', 'first crop harvested', debug => debug.frontTileCropId == null && debug.farmOnboardingObjectiveId === 'first-ship' && (debug.starterMosslingHerbCount ?? 0) > 3);
 
   const harvested = await gameDebugSnapshot(page);
   expect(harvested.frontTileCropId).toBeNull();
-  expect(harvested.onboardingObjectiveId).toBe('first-ship');
+  expect(harvested.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(harvested.farmOnboardingObjectiveId).toBe('first-ship');
   expect(harvested.starterMosslingHerbCount).toBeGreaterThan(before.starterMosslingHerbCount ?? 0);
   await clearIntroDialogue(page);
 
@@ -146,10 +147,11 @@ test('fresh player can complete the first farm economy loop from the first scree
     await page.waitForTimeout(50);
   }
   expect((await gameDebugSnapshot(page)).shippingItemId).toBe('herb.mossling');
-  await pressUntilDebugState(page, 'Enter', 'mossling herb added to shipping bin', debug => debug.interactionPanelKind === 'shipping' && debug.onboardingObjectiveId === 'first-sleep' && debug.shippingBinItemCount === 1 && (debug.starterMosslingHerbCount ?? 0) > 0, { attempts: 3, timeoutMs: 3_000 });
+  await pressUntilDebugState(page, 'Enter', 'mossling herb added to shipping bin', debug => debug.interactionPanelKind === 'shipping' && debug.farmOnboardingObjectiveId === 'first-sleep' && debug.shippingBinItemCount === 1 && (debug.starterMosslingHerbCount ?? 0) > 0, { attempts: 3, timeoutMs: 3_000 });
 
   const shipped = await gameDebugSnapshot(page);
-  expect(shipped.onboardingObjectiveId).toBe('first-sleep');
+  expect(shipped.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(shipped.farmOnboardingObjectiveId).toBe('first-sleep');
   expect(shipped.shippingBinItemCount).toBe(1);
   expect(shipped.starterMosslingHerbCount).toBe((harvested.starterMosslingHerbCount ?? 0) - 1);
   await clearIntroDialogue(page);
@@ -158,10 +160,11 @@ test('fresh player can complete the first farm economy loop from the first scree
     target.__AEON_TEST__?.closePanels?.();
     target.__AEON_TEST__?.advanceOneDay?.();
   });
-  await waitForDebugState(page, 'shipping settlement after advancing one day', debug => (debug.day ?? 0) > (shipped.day ?? 0) && debug.onboardingObjectiveId === 'first-market-restock' && debug.shippingBinItemCount === 0 && (debug.starterSpiritStoneCount ?? 0) > (shipped.starterSpiritStoneCount ?? 0));
+  await waitForDebugState(page, 'shipping settlement after advancing one day', debug => (debug.day ?? 0) > (shipped.day ?? 0) && debug.farmOnboardingObjectiveId === 'first-market-restock' && debug.shippingBinItemCount === 0 && (debug.starterSpiritStoneCount ?? 0) > (shipped.starterSpiritStoneCount ?? 0));
 
   const settled = await gameDebugSnapshot(page);
-  expect(settled.onboardingObjectiveId).toBe('first-market-restock');
+  expect(settled.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(settled.farmOnboardingObjectiveId).toBe('first-market-restock');
   expect(settled.shippingBinItemCount).toBe(0);
   expect(settled.starterSpiritStoneCount).toBeGreaterThan(shipped.starterSpiritStoneCount ?? 0);
 
@@ -174,34 +177,38 @@ test('fresh player can complete the first farm economy loop from the first scree
   });
   expect(restockedDebug.ok).toBe(true);
   expect(restockedDebug.debug.interactionPanelKind).toBe('none');
-  expect(restockedDebug.debug.onboardingObjectiveId).toBe('first-second-sow');
+  expect(restockedDebug.debug.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(restockedDebug.debug.farmOnboardingObjectiveId).toBe('first-second-sow');
   expect(restockedDebug.debug.starterMosslingSeedCount).toBeGreaterThan(settled.starterMosslingSeedCount ?? 0);
   expect(restockedDebug.debug.hotbarSlotKind).toBe('seed');
   expect(restockedDebug.debug.hotbarSeedId).toBe('seed.mossling');
 
   const restocked = await gameDebugSnapshot(page);
-  expect(restocked.onboardingObjectiveId).toBe('first-second-sow');
+  expect(restocked.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(restocked.farmOnboardingObjectiveId).toBe('first-second-sow');
   expect(restocked.starterMosslingSeedCount).toBeGreaterThan(settled.starterMosslingSeedCount ?? 0);
   expect(restocked.hotbarSlotKind).toBe('seed');
   expect(restocked.hotbarSeedId).toBe('seed.mossling');
-  expect(restocked.helpText).toEqual(expect.stringContaining('播'));
+  expect(restocked.helpText).toEqual(expect.stringContaining('炼丹'));
 
-  await pressUntilDebugState(page, 'Space', 'second-round seed sown through the visible hotbar action', debug => debug.frontTileCropId != null && debug.onboardingObjectiveId === 'first-second-water' && debug.hotbarSlotKind === 'water' && (debug.starterMosslingSeedCount ?? 0) === (restocked.starterMosslingSeedCount ?? 0) - 1);
+  await pressUntilDebugState(page, 'Space', 'second-round seed sown through the visible hotbar action', debug => debug.frontTileCropId != null && debug.farmOnboardingObjectiveId === 'first-second-water' && debug.hotbarSlotKind === 'water' && (debug.starterMosslingSeedCount ?? 0) === (restocked.starterMosslingSeedCount ?? 0) - 1);
 
   const secondSown = await gameDebugSnapshot(page);
-  expect(secondSown.onboardingObjectiveId).toBe('first-second-water');
+  expect(secondSown.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(secondSown.farmOnboardingObjectiveId).toBe('first-second-water');
   expect(secondSown.hotbarSlotKind).toBe('water');
   expect(secondSown.frontTileCropId).not.toBeNull();
   expect(secondSown.frontTileWateredToday).toBe(false);
 
-  await pressUntilDebugState(page, 'Space', 'second-round crop watered and first loop completed', debug => debug.frontTileWateredToday === true && debug.onboardingObjectiveId === 'first-loop-complete');
+  await pressUntilDebugState(page, 'Space', 'second-round crop watered and first loop completed', debug => debug.frontTileWateredToday === true && debug.farmOnboardingObjectiveId === 'first-loop-complete');
 
   const completed = await gameDebugSnapshot(page);
-  expect(completed.onboardingObjectiveId).toBe('first-loop-complete');
+  expect(completed.onboardingObjectiveId).toBe('journey-alchemy');
+  expect(completed.farmOnboardingObjectiveId).toBe('first-loop-complete');
   expect(completed.frontTileCropId).toBe(secondSown.frontTileCropId);
   expect(completed.frontTileWateredToday).toBe(true);
   expect(completed.helpText).toEqual(expect.stringContaining('炼丹'));
   expect(completed.helpText).toEqual(expect.stringContaining('引劫'));
-  expect(completed.todayBriefingBody).toEqual(expect.stringContaining('首轮进度：10/10'));
+  expect(completed.todayBriefingBody).toEqual(expect.stringContaining('开始炼丹'));
   expect(errors).toEqual([]);
 });

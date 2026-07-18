@@ -3,6 +3,8 @@
  * 视觉语言：白芯 + 紫边 + 命中点光晕，替代「只有全屏白闪」。
  */
 
+import { ColorPalette } from './ColorPalette';
+
 export interface LightningPoint {
   readonly x: number;
   readonly y: number;
@@ -71,15 +73,11 @@ export interface LightningDrawStyle {
 }
 
 /** 在 Pixi Graphics 上描电光（白芯紫边 + 命中点）。 */
-export function strokeLightningBolt(
-  g: { moveTo(x: number, y: number): unknown; lineTo(x: number, y: number): unknown; stroke(style: object): unknown; circle(x: number, y: number, r: number): { fill(style: object): unknown } },
-  geom: LightningBoltGeometry,
-  style: LightningDrawStyle
-): void {
+export function strokeLightningBolt(g: { moveTo(x: number, y: number): unknown; lineTo(x: number, y: number): unknown; stroke(style: object): unknown; circle(x: number, y: number, r: number): { fill(style: object): unknown } }, geom: LightningBoltGeometry, style: LightningDrawStyle): void {
   const alpha = Math.max(0, Math.min(1, style.alpha));
   if (alpha <= 0) return;
-  const glowColor = style.glowColor ?? 0xb48cff;
-  const coreColor = style.coreColor ?? 0xffffff;
+  const glowColor = style.glowColor ?? ColorPalette.purpleBolt;
+  const coreColor = style.coreColor ?? ColorPalette.trueWhite;
   const glowWidth = style.glowWidth ?? 5.5;
   const coreWidth = style.coreWidth ?? 2.2;
 

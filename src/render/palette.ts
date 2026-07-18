@@ -1,9 +1,11 @@
 /**
- * 全局限定调色板。
+ * 资产像素用的 16 色索引表。
  *
- * 索引 0 保留为「透明」（精灵像素 0 = 不绘制）；1–15 为可见色。
- * 程序化精灵（sprites.ts）与未来手绘资产都引用这些索引，保证全场色彩统一、色盲友好。
+ * 颜色真源在 ColorPalette.ts；本文件只负责把语义色映射为稳定索引，
+ * 保持程序化精灵的存档/回放与像素合法性契约不变。
  */
+import { ColorPalette, type ColorPaletteKey } from './ColorPalette';
+
 export interface PaletteEntry {
   idx: number;
   name: string;
@@ -12,24 +14,21 @@ export interface PaletteEntry {
   rgb: readonly [number, number, number];
 }
 
-export const PALETTE: readonly PaletteEntry[] = [
-  { idx: 0, name: 'transparent', hex: '#00000000', rgb: [0, 0, 0] }, // 透明（精灵留白）
-  { idx: 1, name: 'paper', hex: '#F4ECD8', rgb: [244, 236, 216] }, // 宣纸底
-  { idx: 2, name: 'ink', hex: '#1A1A1F', rgb: [26, 26, 31] }, // 墨黑（文字/描边/夜）
-  { idx: 3, name: 'mountain', hex: '#5C6B73', rgb: [92, 107, 115] }, // 远山黛
-  { idx: 4, name: 'moss', hex: '#7A8C5A', rgb: [122, 140, 90] }, // 苔青（草地/灵气/茎）
-  { idx: 5, name: 'qi', hex: '#4A8C9C', rgb: [74, 140, 156] }, // 灵气青（阵法）
-  { idx: 6, name: 'cinnabar', hex: '#B5482F', rgb: [181, 72, 47] }, // 朱砂（警示/丹炉火）
-  { idx: 7, name: 'gilt', hex: '#C9A14A', rgb: [201, 161, 74] }, // 鎏金（修为/突破/稀有）
-  { idx: 8, name: 'loess', hex: '#A88B5C', rgb: [168, 139, 92] }, // 玄黄（土壤）
-  { idx: 9, name: 'palepurple', hex: '#7B6C8A', rgb: [123, 108, 138] }, // 雪青（紫雷/危险）
-  { idx: 10, name: 'moonwhite', hex: '#E8E8E0', rgb: [232, 232, 224] }, // 月白（清冷/月光）
-  { idx: 11, name: 'leafdark', hex: '#3A6A28', rgb: [58, 106, 40] }, // 深叶
-  { idx: 12, name: 'soil', hex: '#6B4F2A', rgb: [107, 79, 42] }, // 深土/根
-  { idx: 13, name: 'frost', hex: '#9FB6C4', rgb: [159, 182, 196] }, // 寒霜（寒性）
-  { idx: 14, name: 'ember', hex: '#D98641', rgb: [217, 134, 65] }, // 余烬（热性）
-  { idx: 15, name: 'shadow', hex: '#0E0E14', rgb: [14, 14, 20] } // 极夜（最深阴影）
-];
+function rgb(color: number): readonly [number, number, number] {
+  const value = color >>> 0;
+  return [(value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff];
+}
+
+function hex(color: number, alpha = 0xff): string {
+  return `#${((color >>> 0) & 0xffffff).toString(16).padStart(6, '0').toUpperCase()}${alpha === 0xff ? '' : alpha.toString(16).padStart(2, '0').toUpperCase()}`;
+}
+
+function entry(idx: number, name: string, key: ColorPaletteKey): PaletteEntry {
+  const color = ColorPalette[key];
+  return { idx, name, hex: hex(color, idx === 0 ? 0 : 0xff), rgb: rgb(color) };
+}
+
+export const PALETTE: readonly PaletteEntry[] = [entry(0, 'transparent', 'transparent'), entry(1, 'paper', 'paper'), entry(2, 'ink', 'inkDark'), entry(3, 'mountain', 'mountain'), entry(4, 'moss', 'moss'), entry(5, 'qi', 'qiFlow'), entry(6, 'cinnabar', 'danger'), entry(7, 'gilt', 'gilt'), entry(8, 'loess', 'loess'), entry(9, 'palepurple', 'palePurple'), entry(10, 'moonwhite', 'moonWhite'), entry(11, 'leafdark', 'leafDark'), entry(12, 'soil', 'soil'), entry(13, 'frost', 'frost'), entry(14, 'ember', 'emberWarm'), entry(15, 'shadow', 'inkDeep')];
 
 /** 调色板索引是否合法。 */
 export function isPaletteIndex(idx: number): boolean {

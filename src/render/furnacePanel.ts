@@ -9,6 +9,7 @@ import type { GameState } from '@sim/world/state';
 import type { ContentRegistry, RecipeDef } from '@content/defs';
 import type { BrewResult } from '@sim/alchemy/alchemySystem';
 import { CJK_FONT, RENDER_ROOT_LABELS, setTextIfChanged } from './renderer';
+import { ColorPalette } from './ColorPalette';
 import { itemIconAssetId } from '@app/itemIcons';
 
 export interface FurnaceLayer {
@@ -22,7 +23,7 @@ export function createFurnaceLayer(app: Application, parent?: Container): Furnac
   const root = parent ?? app.stage.getChildByLabel(RENDER_ROOT_LABELS.focus) ?? app.stage;
   const container = new Graphics();
   const icons = new Container();
-  const lines = new Text({ text: '', style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8, lineHeight: 18 } });
+  const lines = new Text({ text: '', style: { fontFamily: CJK_FONT, fontSize: 13, fill: ColorPalette.paperText, lineHeight: 18 } });
   lines.x = 300;
   lines.y = 96;
   root.addChild(container, icons, lines);
@@ -66,13 +67,13 @@ const OUTCOME_CN: Record<BrewResult['outcome'], string> = {
 };
 
 function bar(g: Graphics, x: number, y: number, w: number, h: number, pct: number, fill: number, zoneLo?: number, zoneHi?: number): void {
-  g.rect(x, y, w, h).fill({ color: 0x1a1a22, alpha: 0.95 });
+  g.rect(x, y, w, h).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.95 });
   if (zoneLo !== undefined && zoneHi !== undefined) {
-    g.rect(x + Math.max(0, zoneLo) * w, y, Math.min(1, zoneHi) - Math.max(0, zoneLo) * w, h).fill({ color: 0x3a3a2a, alpha: 0.9 });
+    g.rect(x + Math.max(0, zoneLo) * w, y, Math.min(1, zoneHi) - Math.max(0, zoneLo) * w, h).fill({ color: ColorPalette.borderMuted, alpha: 0.9 });
   }
   const fw = Math.max(0, Math.min(1, pct)) * w;
   if (fw > 0) g.rect(x, y, fw, h).fill(fill);
-  g.rect(x, y, w, h).stroke({ width: 1, color: 0x3a3a44 });
+  g.rect(x, y, w, h).stroke({ width: 1, color: ColorPalette.borderDark });
 }
 
 function applyPanelSprite(sprite: Sprite, texture: Texture, x: number, y: number, size: number): void {
@@ -100,8 +101,8 @@ export function drawFurnace(layer: FurnaceLayer, _state: GameState, content: Con
     return;
   }
   // 背景框
-  g.rect(286, 84, 388, 312).fill({ color: 0x12121c, alpha: 0.94 });
-  g.rect(286, 84, 388, 312).stroke({ width: 1.5, color: 0x6a5a2a });
+  g.rect(286, 84, 388, 312).fill({ color: ColorPalette.inkPanel, alpha: 0.94 });
+  g.rect(286, 84, 388, 312).stroke({ width: 1.5, color: ColorPalette.badgeGold });
 
   const { recipe, heat, preview } = din;
   const [lo, hi] = recipe.idealHeatRange;
@@ -109,17 +110,17 @@ export function drawFurnace(layer: FurnaceLayer, _state: GameState, content: Con
   const heatPct = heat / 100;
   const zoneLo = lo / 100_000,
     zoneHi = hi / 100_000;
-  bar(g, 300, 112, 360, 14, heatPct, 0xff8a3a, zoneLo, zoneHi);
+  bar(g, 300, 112, 360, 14, heatPct, ColorPalette.ember, zoneLo, zoneHi);
   // 火候标记线
   const hx = 300 + heatPct * 360;
-  g.moveTo(hx, 108).lineTo(hx, 130).stroke({ width: 2, color: 0xffffff });
+  g.moveTo(hx, 108).lineTo(hx, 130).stroke({ width: 2, color: ColorPalette.trueWhite });
 
   // 四轴药性：目标（暗框）+ 当前炉内 furnaceVec（亮条）
   const axes: Array<{ key: keyof typeof recipe.targetProperty; label: string; color: number }> = [
-    { key: 'cold', label: '寒', color: 0x66bbff },
-    { key: 'hot', label: '热', color: 0xff5a5a },
-    { key: 'warm', label: '温', color: 0xffb04a },
-    { key: 'neutral', label: '平', color: 0x7ac050 }
+    { key: 'cold', label: '寒', color: ColorPalette.propertyCold },
+    { key: 'hot', label: '热', color: ColorPalette.dangerBright },
+    { key: 'warm', label: '温', color: ColorPalette.propertyWarm },
+    { key: 'neutral', label: '平', color: ColorPalette.mossBright }
   ];
   const maxProp = 12_000; // 药性毫点显示上限
   const ax = 300,
@@ -171,7 +172,7 @@ export function drawFurnace(layer: FurnaceLayer, _state: GameState, content: Con
         layer.icons.addChild(sprite);
         const qty = new Text({
           text: `x${entry.count}`,
-          style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xeae0c8 }
+          style: { fontFamily: CJK_FONT, fontSize: 11, fill: ColorPalette.paperText }
         });
         qty.x = x + 32;
         qty.y = y + 7;

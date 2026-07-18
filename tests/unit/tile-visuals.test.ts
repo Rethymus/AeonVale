@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Tile } from '@sim/farm/tile';
 import type { CropInstance } from '@sim/farm/crop';
-import {
-  harvestLiftRadiusBonus,
-  seedFallbackRadius,
-  tileReadinessState,
-  tileVisualState
-} from '@render/tileVisuals';
+import { cropGrowthFeedbackState, harvestLiftRadiusBonus, qiFlowVisualState, seedFallbackRadius, tileSelectionVisualState, tileReadinessState, tileSurfaceGrainSample, tileSurfaceVisualState, tileVisualState } from '@render/tileVisuals';
 
 function makeTile(overrides: Partial<Tile> = {}): Tile {
   return {
@@ -195,5 +190,172 @@ describe('tile readiness helper', () => {
       showBlockedCue: false,
       actionable: false
     });
+  });
+});
+
+describe('tile surface semantic helper', () => {
+  it('classifies tillable, plantable, occupied, and blocked ground', () => {
+    expect(tileSurfaceVisualState(makeTile()).surfaceKind).toBe('tillable');
+    expect(tileSurfaceVisualState(makeTile({ tilled: true })).surfaceKind).toBe('plantable');
+    expect(tileSurfaceVisualState(makeTile({ tilled: true, cropId: 1 }), makeCrop()).surfaceKind).toBe('occupied');
+    expect(tileSurfaceVisualState(makeTile({ soilType: 'rock' })).surfaceKind).toBe('blocked');
+  });
+
+  it('uses fine dense grain for farmable soil and coarse sparse grain for blocked ground', () => {
+    const tillable = tileSurfaceVisualState(makeTile());
+    const blocked = tileSurfaceVisualState(makeTile({ soilType: 'water', blockType: 'water' }));
+
+    expect(tillable.grainKind).toBe('fine');
+    expect(tillable.grainDensity).toBeGreaterThan(blocked.grainDensity);
+    expect(blocked.grainKind).toBe('coarse');
+    expect(blocked.baseTone).toBe('mountainMuted');
+  });
+
+  it('makes prepared soil darker and more orderly than raw tillable ground', () => {
+    const tillable = tileSurfaceVisualState(makeTile());
+    const plantable = tileSurfaceVisualState(makeTile({ tilled: true }));
+
+    expect(plantable.baseTone).toBe('soilDeep');
+    expect(plantable.baseToneAlpha).toBeGreaterThan(tillable.baseToneAlpha);
+    expect(plantable.furrowAlpha).toBeGreaterThan(0);
+    expect(tillable.furrowAlpha).toBe(0);
+  });
+
+  it('generates deterministic grain that varies by tile', () => {
+    const tile = makeTile({ id: 17, x: 3, y: 1 });
+    const same = tileSurfaceGrainSample(tile, 'fine', 2);
+    const repeat = tileSurfaceGrainSample(tile, 'fine', 2);
+    const neighbor = tileSurfaceGrainSample(makeTile({ id: 18, x: 4, y: 1 }), 'fine', 2);
+
+    expect(repeat).toEqual(same);
+    expect(neighbor).not.toEqual(same);
+    expect(same.ox).toBeGreaterThanOrEqual(0.12);
+    expect(same.ox).toBeLessThanOrEqual(0.88);
+    expect(same.oy).toBeGreaterThanOrEqual(0.12);
+    expect(same.oy).toBeLessThanOrEqual(0.88);
+  });
+});
+
+describe('tile selection semantic helper', () => {
+  it('returns zero visual output when the tile is not selected', () => {
+    expect(tileSelectionVisualState({ selected: false, actionable: true, ambientTimeMs: 900, reducedMotion: false })).toEqual({
+      selectionMaskAlpha: 0,
+      selectionEdgeAlpha: 0,
+      breathPhase: 0
+    });
+  });
+
+  it('uses a moon-white mask and stronger breathing edge for actionable targets', () => {
+    const actionable = tileSelectionVisualState({ selected: true, actionable: true, ambientTimeMs: 450, reducedMotion: false });
+    const blocked = tileSelectionVisualState({ selected: true, actionable: false, ambientTimeMs: 450, reducedMotion: false });
+
+    expect(actionable.selectionMaskAlpha).toBeCloseTo(0.125);
+    expect(actionable.selectionEdgeAlpha).toBeGreaterThan(blocked.selectionEdgeAlpha);
+    expect(actionable.breathPhase).toBeCloseTo(0.25);
+  });
+
+  it('freezes the breathing phase while reduced motion is enabled', () => {
+    const early = tileSelectionVisualState({ selected: true, actionable: true, ambientTimeMs: 100, reducedMotion: true });
+    const late = tileSelectionVisualState({ selected: true, actionable: true, ambientTimeMs: 50_000, reducedMotion: true });
+
+    expect(early).toEqual(late);
+    expect(early.breathPhase).toBe(0.5);
+  });
+});
+
+describe('qi flow visual helper', () => {
+  it('keeps sub-threshold or blocked ground visually quiet', () => {
+    expect(qiFlowVisualState(makeTile({ qiDensity: 20_000 }), 1000, false).lineCount).toBe(0);
+    expect(qiFlowVisualState(makeTile({ qiDensity: 100_000, soilType: 'rock' }), 1000, false)).toMatchObject({
+      lineCount: 0,
+      alpha: 0,
+      phase: 0
+    });
+  });
+
+  it('keeps untouched baseline fields quiet while prepared soil breathes', () => {
+    expect(qiFlowVisualState(makeTile({ qiDensity: 30_000, tilled: false }), 1000, false).lineCount).toBe(0);
+    expect(qiFlowVisualState(makeTile({ qiDensity: 30_000, tilled: true }), 1000, false).lineCount).toBe(1);
+  });
+
+  it('maps rising concentration monotonically to denser and deeper flow', () => {
+    const low = qiFlowVisualState(makeTile({ qiDensity: 30_000, tilled: true }), 1000, false);
+    const medium = qiFlowVisualState(makeTile({ qiDensity: 60_000, tilled: true }), 1000, false);
+    const high = qiFlowVisualState(makeTile({ qiDensity: 100_000, tilled: true }), 1000, false);
+
+    expect([low.lineCount, medium.lineCount, high.lineCount]).toEqual([1, 2, 3]);
+    expect(medium.alpha).toBeGreaterThan(low.alpha);
+    expect(high.alpha).toBeGreaterThan(medium.alpha);
+    expect(high.lineWidth).toBeGreaterThanOrEqual(medium.lineWidth);
+    expect(high.speed).toBeGreaterThanOrEqual(medium.speed);
+    expect(high.amplitude).toBeGreaterThanOrEqual(medium.amplitude);
+    expect(high.lineCount).toBeLessThanOrEqual(3);
+  });
+
+  it('is deterministic for the same tile/time and moves at another time', () => {
+    const tile = makeTile({ id: 33, x: 5, y: 2, qiDensity: 70_000 });
+    const first = qiFlowVisualState(tile, 1200, false);
+    const repeat = qiFlowVisualState(tile, 1200, false);
+    const later = qiFlowVisualState(tile, 2400, false);
+
+    expect(repeat).toEqual(first);
+    expect(later.phase).not.toBe(first.phase);
+    expect(later.lineCount).toBe(first.lineCount);
+    expect(later.alpha).toBe(first.alpha);
+  });
+
+  it('freezes phase under reduced motion while preserving density', () => {
+    const tile = makeTile({ id: 44, x: 2, y: 3, qiDensity: 100_000 });
+    const early = qiFlowVisualState(tile, 100, true);
+    const late = qiFlowVisualState(tile, 50_000, true);
+
+    expect(late).toEqual(early);
+    expect(early.lineCount).toBe(3);
+    expect(early.alpha).toBeGreaterThan(0);
+  });
+});
+
+describe('crop growth feedback state', () => {
+  it('reports zero progress and no overlays at seed (growth 0)', () => {
+    const fb = cropGrowthFeedbackState(makeCrop({ growth: 0, stage: 'seed' }), 100_000, 0, false);
+    expect(fb.progress).toBe(0);
+    expect(fb.qiGatherAlpha).toBe(0);
+    expect(fb.temperTintAlpha).toBe(0);
+    expect(fb.matureGlowAlpha).toBe(0);
+    expect(fb.maturePulsePhase).toBe(0);
+  });
+
+  it('clamps progress to 1 and marks mature at full growth even if sim stage lags', () => {
+    const fb = cropGrowthFeedbackState(makeCrop({ growth: 100_000, stage: 'growing' }), 100_000, 0, false);
+    expect(fb.progress).toBe(1);
+    expect(fb.matureGlowAlpha).toBeGreaterThan(0);
+  });
+
+  it('keeps qi-gather and temper alpha monotonic and on-bounds across 25/50/75/100', () => {
+    const ratios = [0.249, 0.25, 0.5, 0.749, 0.75, 0.99, 1];
+    let prevQi = -1;
+    let prevTemper = -1;
+    for (const r of ratios) {
+      const fb = cropGrowthFeedbackState(makeCrop({ growth: r * 100_000, stage: r >= 1 ? 'mature' : 'growing' }), 100_000, 0, false);
+      expect(fb.qiGatherAlpha).toBeGreaterThanOrEqual(prevQi);
+      expect(fb.temperTintAlpha).toBeGreaterThanOrEqual(prevTemper);
+      prevQi = fb.qiGatherAlpha;
+      prevTemper = fb.temperTintAlpha;
+    }
+    expect(cropGrowthFeedbackState(makeCrop({ growth: 0.249 * 100_000, stage: 'growing' }), 100_000, 0, false).qiGatherAlpha).toBe(0);
+    expect(cropGrowthFeedbackState(makeCrop({ growth: 0.3 * 100_000, stage: 'growing' }), 100_000, 0, false).qiGatherAlpha).toBeGreaterThan(0);
+    expect(cropGrowthFeedbackState(makeCrop({ growth: 0.749 * 100_000, stage: 'growing' }), 100_000, 0, false).temperTintAlpha).toBe(0);
+    expect(cropGrowthFeedbackState(makeCrop({ growth: 0.8 * 100_000, stage: 'growing' }), 100_000, 0, false).temperTintAlpha).toBeGreaterThan(0);
+  });
+
+  it('freezes mature pulse phase under reduced motion and varies it otherwise', () => {
+    const crop = makeCrop({ growth: 100_000, stage: 'mature' });
+    expect(cropGrowthFeedbackState(crop, 100_000, 100, true).maturePulsePhase).toBe(cropGrowthFeedbackState(crop, 100_000, 50_000, true).maturePulsePhase);
+    expect(cropGrowthFeedbackState(crop, 100_000, 100, false).maturePulsePhase).not.toBe(cropGrowthFeedbackState(crop, 100_000, 50_000, false).maturePulsePhase);
+  });
+
+  it('treats non-positive threshold safely without NaN', () => {
+    const fb = cropGrowthFeedbackState(makeCrop({ growth: 50_000, stage: 'growing' }), 0, 0, false);
+    expect(Number.isFinite(fb.progress)).toBe(true);
   });
 });
