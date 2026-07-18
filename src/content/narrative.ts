@@ -105,6 +105,11 @@ export const NARRATIVE_BEATS: readonly NarrativeBeat[] = [
     lines: ['凝血。', '天劫愈烈，你却愈从容——这是偷天者的从容。']
   },
   {
+    id: 'shennong-reveal',
+    trigger: s => s.player.stage >= 5,
+    lines: ['残卷末页，一行小字随你修为浮出：「吾名已忘，世人唤我神农。」', '「以凡骨承天雷，是为体修；辟灵田、改良灵米，是为还凡人一饭之恩。」', '「此诀留予后来无灵根者——天道弃你，你便偷天。」', '你合上残卷。原来这山谷、这灵田、这卷《偷天换劫诀》，都是同一个人留下的。']
+  },
+  {
     id: 'stage-7',
     trigger: s => s.player.stage >= 7,
     lines: ['飞升前夜。紫雷劫池，已在地平线上聚集。', '吞下飞升丹，引劫，白日飞升——或，化为劫灰。']
