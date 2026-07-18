@@ -101,6 +101,24 @@ function createRetentionFixture() {
 }
 
 describe('renderer retained world objects', () => {
+  it('hides every world semantic layer on game over and restores the world afterwards', () => {
+    const app = createFakeApplication();
+    const layers = createLayers(app);
+    const { content, state } = createRetentionFixture();
+    const { assets } = createRenderAssets();
+
+    drawWorld(layers, state, content, undefined, assets);
+    expect(layers.worldRoot.visible).toBe(true);
+
+    state.gameOver = true;
+    drawWorld(layers, state, content, undefined, assets);
+    expect(layers.worldRoot.visible).toBe(false);
+
+    state.gameOver = false;
+    drawWorld(layers, state, content, undefined, assets);
+    expect(layers.worldRoot.visible).toBe(true);
+  });
+
   it('preserves every labeled tile and scene display object across identical draws', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);

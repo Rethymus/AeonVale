@@ -70,6 +70,7 @@ export interface AeonDebugSnapshot {
   frontTileWateredToday?: boolean;
   frontTileMoisture?: number;
   onboardingObjectiveId?: string | null;
+  farmOnboardingObjectiveId?: string | null;
   helpText?: string;
   renderedHelpText?: string;
   dialogueBackdropVisible?: boolean;

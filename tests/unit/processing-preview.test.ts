@@ -114,17 +114,17 @@ describe('processing panel preview', () => {
     });
 
     expect(brewResultToastPresentation('exploded', { name: '避雷丹', furnaceHeat: 90 })).toEqual({
-      message: '炸炉！丹毒反噬，先调火候再耗药材',
+      message: '炉崩丹毁｜药性相冲、寒热失御——丹炉轰然炸裂，毒火反噬入体。（炉温90）｜撤去相冲之料，或调火候压住寒热再试。',
       assetId: 'facility.talisman-furnace'
     });
 
     expect(brewResultToastPresentation('flawed', { name: '避雷丹', furnaceHeat: 20 })).toEqual({
-      message: '残丹：炉温偏离，药力不足以稳妥备劫',
+      message: '残丹尚可｜火候略偏，丹成而质劣——勉强能用，却不如重炼。（炉温20）｜炉温再贴近丹方理想区间，可得正丹、上丹。',
       assetId: 'facility.talisman-furnace'
     });
 
     expect(brewResultToastPresentation('waste', { name: '避雷丹', furnaceHeat: 0 })).toEqual({
-      message: '废丹：火候不当，材料已损耗',
+      message: '废丹一枚｜火候不当、药性离散——出炉只得一枚无用的废丹。（炉温0）｜核对此料对应的丹方，并把炉温挪进理想区间。',
       assetId: 'facility.talisman-furnace'
     });
   });

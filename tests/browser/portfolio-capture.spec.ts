@@ -49,7 +49,11 @@ function buildShowcaseSave(): string {
   const state = createWorld({ seed: 20260714, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
   const ctx = createSimContext(state.masterSeed, reg, DEFAULT_BALANCE);
 
-  for (const beat of ['awaken', 'spirit-test', 'intro', 'first-till']) state.player.flags.add(`narr-${beat}`);
+  // showcase 处于 stage=3 + temperingStack>0 的发展态；stage-3 与 first-tribulation 节拍会因此触发，
+  // 但展示存档应代表玩家已阅过它们，预标 seen 以免截图时弹出对白（本夹具是截图用，非叙事流测试）。
+  for (const beat of ['awaken', 'spirit-test', 'intro', 'first-till', 'first-tribulation', 'stage-3']) {
+    state.player.flags.add(`narr-${beat}`);
+  }
   state.player.flags.add('onboarding-first-second-water');
   state.day = 9;
   state.seasonDay = 9;
@@ -257,7 +261,7 @@ async function expectPortfolioFarmLoopState(page: Page): Promise<void> {
   expect(debug.helpText).toEqual(expect.stringContaining('目标'));
   expect(debug.helpText).toEqual(expect.stringContaining('炼丹'));
   expect(debug.helpText).toEqual(expect.stringContaining('引劫'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('方向键移动'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('方向移动'));
   expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('\n'));
   expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('function'));
   expect(debug.todayBriefingTitle).toBe('今日简报');
