@@ -20,7 +20,10 @@ describe('renderer layout sizing', () => {
 
     expect(app.stage.children).toEqual([layers.worldRoot, layers.screenFxRoot, layers.hudRoot, layers.focusRoot, layers.toastRoot]);
     expect(app.stage.children.map(child => child.label)).toEqual(Object.values(RENDER_ROOT_LABELS));
-    expect(layers.worldRoot.children).toEqual([layers.tiles, layers.tileSprites, layers.entities, layers.sceneSprites, layers.npcMarkers]);
+    expect(layers.worldRoot.children).toEqual([layers.tiles, layers.tileSprites, layers.terrainSemanticOverlay, layers.qiFlow, layers.entities, layers.sceneSprites, layers.npcMarkers]);
+    expect(layers.worldRoot.getChildIndex(layers.terrainSemanticOverlay)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.tileSprites));
+    expect(layers.worldRoot.getChildIndex(layers.qiFlow)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.terrainSemanticOverlay));
+    expect(layers.worldRoot.getChildIndex(layers.qiFlow)).toBeLessThan(layers.worldRoot.getChildIndex(layers.entities));
     expect(layers.worldRoot.getChildIndex(layers.npcMarkers)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.sceneSprites));
     expect(layers.screenFxRoot.children).toEqual([layers.seasonTint, layers.particles, layers.floatTextLayer, layers.tribFlash]);
     expect(layers.hudRoot.children).toEqual([layers.hotbarIconBg, layers.hotbarIcon, layers.hud, layers.briefingBg, layers.briefingImage, layers.briefingIcon, layers.briefing, layers.help, layers.hotbar, layers.bars, ...layers.barLabels]);

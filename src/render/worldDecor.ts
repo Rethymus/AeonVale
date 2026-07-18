@@ -5,6 +5,7 @@
  */
 
 import type { Graphics } from 'pixi.js';
+import { ColorPalette } from './ColorPalette';
 
 /** 装饰种类。 */
 export type WorldDecorKind = 'path-stone' | 'grass-tuft' | 'pebble' | 'mist-band' | 'fence-post';
@@ -119,12 +120,7 @@ function isFarmsteadEdge(x: number, y: number, width: number, height: number): b
 /**
  * 计算全图装饰落点。确定性：同宽高 + 同瓦片态 ⇒ 同结果。
  */
-export function worldDecorPlacements(
-  stateWidth: number,
-  stateHeight: number,
-  tiles: readonly WorldDecorTileView[],
-  options: WorldDecorPlacementOptions = {}
-): WorldDecorPlacement[] {
+export function worldDecorPlacements(stateWidth: number, stateHeight: number, tiles: readonly WorldDecorTileView[], options: WorldDecorPlacementOptions = {}): WorldDecorPlacement[] {
   if (stateWidth <= 0 || stateHeight <= 0 || tiles.length === 0) return [];
 
   const hasFacilities = options.hasFacilities === true;
@@ -193,17 +189,17 @@ export function worldDecorPlacements(
   return out;
 }
 
-/** 调色板色（hex 数值，对齐 palette.ts 1–15）。 */
+/** 调色板色（对齐 palette.ts 1–15）。 */
 const C = {
-  mountain: 0x5c6b73,
-  moss: 0x7a8c5a,
-  leafdark: 0x3a6a28,
-  loess: 0xa88b5c,
-  soil: 0x6b4f2a,
-  frost: 0x9fb6c4,
-  moonwhite: 0xe8e8e0,
-  ink: 0x1a1a1f,
-  paper: 0xf4ecd8
+  mountain: ColorPalette.mountain,
+  moss: ColorPalette.moss,
+  leafdark: ColorPalette.leafDark,
+  loess: ColorPalette.loess,
+  soil: ColorPalette.soil,
+  frost: ColorPalette.frost,
+  moonwhite: ColorPalette.moonWhite,
+  ink: ColorPalette.ink,
+  paper: ColorPalette.paper
 } as const;
 
 /**

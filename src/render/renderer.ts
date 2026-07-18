@@ -11,6 +11,7 @@ import { stageQiCap } from '@sim/progression/progression';
 import { DEFAULT_BALANCE } from '@sim/params';
 import { t, tList } from '@content/i18n';
 import type { CropQuality } from '@sim/farm/quality';
+import type { Tile } from '@sim/farm/tile';
 import { storageUsed } from '@sim/storage/storage';
 import { shippingLines } from '@sim/economy/shipping';
 import { marketDemandForItem } from '@sim/economy/market';
@@ -20,32 +21,18 @@ import { bodyFoundationCap, readyToInvokeTribulation, type FacilityKind, type Lo
 import { guardBeastPreviewAssetId, guardBeastPreviewPlacements } from './guardBeastPreview';
 import { farmsteadPropPlacements, locationWorldPreviewPlacements, npcWorldPreviewPlacements } from './npcWorldPreview';
 import { arrayWorldPreviewPlacements } from './arrayPreview';
-import {
-  harvestLiftRadiusBonus,
-  seedFallbackRadius,
-  tileReadinessState,
-  tileVisualState,
-  TILLED_SOIL_BORDER,
-  TILLED_SOIL_FILL,
-  WATER_SHEEN_COLOR
-} from './tileVisuals';
+import { cropGrowthFeedbackState, harvestLiftRadiusBonus, qiFlowVisualState, seedFallbackRadius, tileReadinessState, tileSelectionVisualState, tileSurfaceGrainSample, tileSurfaceVisualState, tileVisualState, TILLED_SOIL_BORDER, TILLED_SOIL_FILL, WATER_SHEEN_COLOR, type QiFlowVisualState } from './tileVisuals';
 import { inventoryIconStripEntries } from './inventoryIconStrip';
 import { tileAssetId } from './tileAsset';
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { itemIconAssetId } from '@app/itemIcons';
+import { bodyLeakPresentation } from '@app/bodyLeakPresentation';
 import { computeViewportLayout } from './viewportLayout';
 import { generateLightningBolt, strokeLightningBolt, type LightningBoltGeometry } from './lightningBolt';
 import { tutorialWarningPulse, tutorialWarningZoneTiles } from './tutorialWarningZone';
-import {
-  facingIndicatorOffset,
-  facingScaleX,
-  footShadowSpec,
-  playerPresenceOverlay,
-  qiSparklePhase,
-  shouldDrawQiSparkles,
-  type Facing4
-} from './characterPresence';
+import { facingIndicatorOffset, facingScaleX, footShadowSpec, playerPresenceOverlay, qiSparklePhase, shouldDrawQiSparkles, type Facing4 } from './characterPresence';
 import { paintWorldDecor, worldDecorPlacements } from './worldDecor';
+import { ColorPalette } from './ColorPalette';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -109,44 +96,44 @@ export const DIALOGUE_CONTINUE_PROMPT = '　　…空格 / 回车键 继续…';
 
 /** 季节环境色调（T5 / B-gap #2）：全屏低透明叠色，让四季有视觉差异。 */
 const SEASON_TINT: Record<Season, { color: number; alpha: number }> = {
-  spring: { color: 0x335533, alpha: 0.05 }, // 春·青绿
-  summer: { color: 0x664422, alpha: 0.06 }, // 夏·暖黄
-  autumn: { color: 0x663322, alpha: 0.07 }, // 秋·金橙
-  winter: { color: 0x223366, alpha: 0.09 } // 冬·冷蓝（略强，肃杀感）
+  spring: { color: ColorPalette.seasonSpring, alpha: 0.05 }, // 春·青绿
+  summer: { color: ColorPalette.seasonSummer, alpha: 0.06 }, // 夏·暖黄
+  autumn: { color: ColorPalette.seasonAutumn, alpha: 0.07 }, // 秋·金橙
+  winter: { color: ColorPalette.seasonWinter, alpha: 0.09 } // 冬·冷蓝（略强，肃杀感）
 };
 
 const SOIL_COLOR: Record<string, number> = {
-  loam: 0x6b4f2a,
-  'wet-loam': 0x4a3520,
-  'dry-sand': 0x9b7b3f,
-  insulated: 0x4a4a52,
-  scorched: 0x2a1a0a,
-  'spirit-loam': 0x4a6a2a,
-  rock: 0x3a3a3a,
-  water: 0x2a4a6b,
-  'metal-ore': 0x5a5a6a
+  loam: ColorPalette.soil,
+  'wet-loam': ColorPalette.soilWet,
+  'dry-sand': ColorPalette.sand,
+  insulated: ColorPalette.insulated,
+  scorched: ColorPalette.soilShadow,
+  'spirit-loam': ColorPalette.soilSpirit,
+  rock: ColorPalette.grayDark,
+  water: ColorPalette.water,
+  'metal-ore': ColorPalette.metalOre
 };
 
 const STAGE_COLOR: Record<string, number> = {
-  seed: 0x3a2a10,
-  sprout: 0x7ac050,
-  growing: 0x4a9a30,
-  mature: 0xffe066,
-  withered: 0x6a4a20
+  seed: ColorPalette.seedDark,
+  sprout: ColorPalette.mossBright,
+  growing: ColorPalette.leaf,
+  mature: ColorPalette.giltBright,
+  withered: ColorPalette.withered
 };
 
 const FACILITY_COLOR: Record<string, number> = {
-  'drying-rack': 0xd2a85a,
-  'sealing-cabinet': 0x7aa6c2,
-  'talisman-furnace': 0xc46a3a
+  'drying-rack': ColorPalette.facilityGold,
+  'sealing-cabinet': ColorPalette.facilityBlue,
+  'talisman-furnace': ColorPalette.cinnabarOrange
 };
 
 type GuardBeastSpecialtyMarker = 'field-ward' | 'array-warden' | 'courier';
 
 const GUARD_BEAST_SPECIALTY_MARKER: Record<GuardBeastSpecialtyMarker, { color: number; accent: number }> = {
-  'field-ward': { color: 0x7fe38b, accent: 0xe9ffd9 },
-  'array-warden': { color: 0x66ddff, accent: 0xe8f8ff },
-  courier: { color: 0xffd36b, accent: 0xfff4bf }
+  'field-ward': { color: ColorPalette.success, accent: ColorPalette.successPaper },
+  'array-warden': { color: ColorPalette.qiBright, accent: ColorPalette.qiPaper },
+  courier: { color: ColorPalette.warning, accent: ColorPalette.giltPaper }
 };
 
 export interface RenderLayers {
@@ -157,6 +144,8 @@ export interface RenderLayers {
   toastRoot: Container;
   tiles: Graphics;
   tileSprites: Container;
+  terrainSemanticOverlay: Graphics;
+  qiFlow: Graphics;
   entities: Graphics;
   sceneSprites: Container;
   npcMarkers: Container;
@@ -204,6 +193,7 @@ export interface RenderLayers {
   floatTexts: FloatText[]; // 活跃飘字（渲染层）
   floatTextLayer: Container; // 飘字容器（screenFx）
   ambientTimeMs: number; // 世界层环境动效时间轴（仅渲染层使用）
+  reducedMotion: boolean;
 }
 
 export interface RuntimeRenderAssets {
@@ -327,6 +317,10 @@ export function createLayers(app: Application): RenderLayers {
   worldRoot.addChild(tiles);
   const tileSprites = new Container();
   worldRoot.addChild(tileSprites);
+  const terrainSemanticOverlay = new Graphics();
+  worldRoot.addChild(terrainSemanticOverlay);
+  const qiFlow = new Graphics();
+  worldRoot.addChild(qiFlow);
   const entities = new Graphics();
   worldRoot.addChild(entities);
   const sceneSprites = new Container();
@@ -346,7 +340,7 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(panelPreviewIcon);
   const panelPreviewText = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0xeae0c8, wordWrap: true, breakWords: true, wordWrapWidth: 148, lineHeight: 18 }
+    style: { fontFamily: CJK_FONT, fontSize: 12, fill: ColorPalette.paperText, wordWrap: true, breakWords: true, wordWrapWidth: 148, lineHeight: 18 }
   });
   panelPreviewText.x = 780;
   panelPreviewText.y = 332;
@@ -372,7 +366,7 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(locationPreviewNpcSecondary);
   const locationPreviewText = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xeae0c8, wordWrap: true, breakWords: true, wordWrapWidth: 144, lineHeight: 15 }
+    style: { fontFamily: CJK_FONT, fontSize: 11, fill: ColorPalette.paperText, wordWrap: true, breakWords: true, wordWrapWidth: 144, lineHeight: 15 }
   });
   locationPreviewText.x = 776;
   locationPreviewText.y = 86;
@@ -380,7 +374,7 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(locationPreviewText);
   const hud = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 15, fill: 0xeae0c8 }
+    style: { fontFamily: CJK_FONT, fontSize: 15, fill: ColorPalette.paperText }
   });
   hud.x = 10;
   hud.y = 8;
@@ -395,7 +389,7 @@ export function createLayers(app: Application): RenderLayers {
   hudRoot.addChild(briefingIcon);
   const briefing = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xeae0c8, wordWrap: true, breakWords: true, wordWrapWidth: 176, lineHeight: 16 }
+    style: { fontFamily: CJK_FONT, fontSize: 11, fill: ColorPalette.paperText, wordWrap: true, breakWords: true, wordWrapWidth: 176, lineHeight: 16 }
   });
   briefing.x = BRIEFING_BOX.x + 40;
   briefing.y = BRIEFING_BOX.y + BRIEFING_BOX.paddingY;
@@ -407,21 +401,21 @@ export function createLayers(app: Application): RenderLayers {
   toastRoot.addChild(toastIcon);
   const toast = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 14, fill: 0xffe066, wordWrap: true, breakWords: true, wordWrapWidth: SCREEN_W - 56, lineHeight: 17 }
+    style: { fontFamily: CJK_FONT, fontSize: 14, fill: ColorPalette.giltBright, wordWrap: true, breakWords: true, wordWrapWidth: SCREEN_W - 56, lineHeight: 17 }
   });
   toast.x = 10;
   toast.y = app.screen.height - 88;
   toastRoot.addChild(toast);
   const help = new Text({
     text: t('ui.help.default'),
-    style: { fontFamily: CJK_FONT, fontSize: 10, fill: 0x9090a0 }
+    style: { fontFamily: CJK_FONT, fontSize: 10, fill: ColorPalette.stoneGray }
   });
   help.x = 10;
   help.y = app.screen.height - 20;
   hudRoot.addChild(help);
   const ending = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 52, fill: 0xffe066, align: 'center', stroke: { color: 0x000000, width: 4 } }
+    style: { fontFamily: CJK_FONT, fontSize: 52, fill: ColorPalette.giltBright, align: 'center', stroke: { color: ColorPalette.black, width: 4 } }
   });
   ending.anchor.set(0.5);
   ending.x = app.screen.width / 2;
@@ -430,7 +424,7 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(ending);
   const inv = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8 }
+    style: { fontFamily: CJK_FONT, fontSize: 13, fill: ColorPalette.paperText }
   });
   inv.x = app.screen.width - 190;
   inv.y = 70;
@@ -441,7 +435,7 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(invIcons);
   const cultivation = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 13, fill: 0xeae0c8, lineHeight: 20 }
+    style: { fontFamily: CJK_FONT, fontSize: 13, fill: ColorPalette.paperText, lineHeight: 20 }
   });
   cultivation.x = app.screen.width - 286;
   cultivation.y = 70;
@@ -449,7 +443,7 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(cultivation);
   const hotbar = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 12, fill: 0xd8d0ba }
+    style: { fontFamily: CJK_FONT, fontSize: 12, fill: ColorPalette.paperMuted }
   });
   hotbar.x = 46;
   hotbar.y = app.screen.height - 42;
@@ -466,13 +460,13 @@ export function createLayers(app: Application): RenderLayers {
   focusRoot.addChild(dialoguePortrait);
   const dialogue = new Text({
     text: '',
-    style: { fontFamily: CJK_FONT, fontSize: 15, fill: 0xeae0c8, ...dialogueTextLayoutStyle(false) }
+    style: { fontFamily: CJK_FONT, fontSize: 15, fill: ColorPalette.paperText, ...dialogueTextLayoutStyle(false) }
   });
   dialogue.x = 58;
   dialogue.y = 314;
   focusRoot.addChild(dialogue);
   const barLabels = [t('ui.hud.hp'), t('ui.hud.pillPoison'), t('ui.hud.cultivation'), t('ui.hud.stamina')].map((label, i) => {
-    const t = new Text({ text: label, style: { fontFamily: CJK_FONT, fontSize: 11, fill: 0xb0b0c8 } });
+    const t = new Text({ text: label, style: { fontFamily: CJK_FONT, fontSize: 11, fill: ColorPalette.moonGray } });
     t.x = 12 + i * 152;
     t.y = 26;
     hudRoot.addChild(t);
@@ -486,6 +480,8 @@ export function createLayers(app: Application): RenderLayers {
     toastRoot,
     tiles,
     tileSprites,
+    terrainSemanticOverlay,
+    qiFlow,
     entities,
     sceneSprites,
     npcMarkers,
@@ -532,13 +528,41 @@ export function createLayers(app: Application): RenderLayers {
     particleList: [],
     floatTexts: [],
     floatTextLayer,
-    ambientTimeMs: 0
+    ambientTimeMs: 0,
+    reducedMotion: false
   };
 }
 
 function ambientBobOffset(timeMs: number, key: number, amplitude: number, cycleMs: number): number {
   const phase = key * 0.61803398875;
   return Math.sin((timeMs / cycleMs) * Math.PI * 2 + phase) * amplitude;
+}
+
+/** 每格最多 3 条、每条 6 段的轻量正弦流线。 */
+function drawQiFlowLines(target: Graphics, tile: Pick<Tile, 'id' | 'x' | 'y'>, x: number, y: number, flow: QiFlowVisualState): void {
+  if (flow.lineCount === 0) return;
+  const segmentCount = 6;
+
+  for (let lineIndex = 0; lineIndex < flow.lineCount; lineIndex++) {
+    const anchor = tileSurfaceGrainSample(tile, 'fine', 80 + lineIndex);
+    const direction = (tile.id + lineIndex) % 2 === 0 ? 1 : -1;
+    const baseY = y + 8 + ((lineIndex + 1) / (flow.lineCount + 1)) * (TILE - 16) + (anchor.oy - 0.5) * 3;
+    const drift = Math.sin(flow.phase * Math.PI * 2) * 2.5 * direction;
+
+    for (let segment = 0; segment <= segmentCount; segment++) {
+      const progress = segment / segmentCount;
+      const rawX = x + 7 + progress * (TILE - 14) + drift;
+      const pointX = Math.max(x + 4, Math.min(x + TILE - 5, rawX));
+      const wave = Math.sin((progress * 1.35 + flow.phase + lineIndex * 0.23) * Math.PI * 2);
+      const slope = direction * (progress - 0.5) * 2.2;
+      const pointY = baseY + wave * flow.amplitude + slope;
+      if (segment === 0) target.moveTo(pointX, pointY);
+      else target.lineTo(pointX, pointY);
+    }
+    const color = lineIndex % 2 === 0 ? ColorPalette.qiFlow : ColorPalette.moonWhite;
+    const alpha = lineIndex % 2 === 0 ? flow.alpha : flow.alpha * 0.72;
+    target.stroke({ width: flow.lineWidth, color, alpha, cap: 'round', join: 'round' });
+  }
 }
 
 export function screenPointForTile(x: number, y: number): { x: number; y: number } {
@@ -556,7 +580,7 @@ function applyWorldSprite(sprite: Sprite, texture: Texture, x: number, y: number
   sprite.width = size;
   sprite.height = size;
   sprite.alpha = 1;
-  sprite.tint = 0xffffff;
+  sprite.tint = ColorPalette.trueWhite;
   sprite.visible = true;
 }
 
@@ -791,9 +815,9 @@ function drawInventoryIconStrip(layers: RenderLayers, state: GameState, content:
   const startY = 78;
   const gapY = 34;
   const qualityTint: Record<string, number> = {
-    treasure: 0xf4d35e,
-    spirit: 0x7ad7f0,
-    mortal: 0xb8a98a
+    treasure: ColorPalette.warningSoft,
+    spirit: ColorPalette.qiPale,
+    mortal: ColorPalette.loessMuted
   };
 
   entries.forEach((entry, index) => {
@@ -801,8 +825,8 @@ function drawInventoryIconStrip(layers: RenderLayers, state: GameState, content:
     if (!texture) return;
     const y = startY + index * gapY;
     const bg = new Graphics();
-    const sectionColor = entry.section === 'inventory' ? 0x3e6b3b : entry.section === 'storage' ? 0x5a4e8a : 0x8a5a3a;
-    bg.roundRect(startX, y, 28, 28, 6).fill({ color: 0x12121c, alpha: 0.94 });
+    const sectionColor = entry.section === 'inventory' ? ColorPalette.grayGreenDark : entry.section === 'storage' ? ColorPalette.accentPurple : ColorPalette.woodDark;
+    bg.roundRect(startX, y, 28, 28, 6).fill({ color: ColorPalette.inkPanel, alpha: 0.94 });
     bg.roundRect(startX, y, 28, 28, 6).stroke({ width: 1.1, color: sectionColor, alpha: 0.92 });
     root.addChild(bg);
 
@@ -815,12 +839,12 @@ function drawInventoryIconStrip(layers: RenderLayers, state: GameState, content:
     root.addChild(sprite);
 
     const countBg = new Graphics();
-    countBg.roundRect(startX + 16, y + 16, 16, 12, 4).fill({ color: 0x0d0d14, alpha: 0.92 });
+    countBg.roundRect(startX + 16, y + 16, 16, 12, 4).fill({ color: ColorPalette.inkVoid, alpha: 0.92 });
     root.addChild(countBg);
 
     const countText = new Text({
       text: `${entry.count}`,
-      style: { fontFamily: CJK_FONT, fontSize: 9, fill: 0xeae0c8, align: 'center' }
+      style: { fontFamily: CJK_FONT, fontSize: 9, fill: ColorPalette.paperText, align: 'center' }
     });
     countText.anchor.set(0.5);
     countText.x = startX + 24;
@@ -829,7 +853,7 @@ function drawInventoryIconStrip(layers: RenderLayers, state: GameState, content:
 
     if (entry.quality) {
       const quality = new Graphics();
-      quality.circle(startX + 4, y + 4, 3).fill({ color: qualityTint[entry.quality] ?? 0xeae0c8, alpha: 0.95 });
+      quality.circle(startX + 4, y + 4, 3).fill({ color: qualityTint[entry.quality] ?? ColorPalette.paperText, alpha: 0.95 });
       root.addChild(quality);
     }
   });
@@ -917,7 +941,7 @@ const FLOAT_TEXT_HOLD_FRAMES = 18;
 const FLOAT_TEXT_PUNCH = 0.32;
 
 /** 在屏幕坐标生成一条上飘短文案（纯渲染 juice）：先定格 punch，再上飘淡出。 */
-export function spawnFloatText(layers: RenderLayers, x: number, y: number, text: string, color = 0xffe066): void {
+export function spawnFloatText(layers: RenderLayers, x: number, y: number, text: string, color: number = ColorPalette.giltBright): void {
   if (layers.floatTexts.length > 24) layers.floatTexts.splice(0, layers.floatTexts.length - 24);
   layers.floatTexts.push({
     x,
@@ -961,8 +985,8 @@ export function updateFloatTexts(layers: RenderLayers): void {
           fontSize: 14,
           fontWeight: '700',
           fill: ft.color,
-          stroke: { color: 0x12121c, width: 3 },
-          dropShadow: { color: 0x000000, blur: 2, distance: 1, alpha: 0.45 }
+          stroke: { color: ColorPalette.inkPanel, width: 3 },
+          dropShadow: { color: ColorPalette.black, blur: 2, distance: 1, alpha: 0.45 }
         }
       });
       root.addChild(label);
@@ -990,7 +1014,7 @@ export function updateFloatTexts(layers: RenderLayers): void {
         fontSize: 14,
         fontWeight: '700',
         fill: ft.color,
-        stroke: { color: 0x12121c, width: 3 }
+        stroke: { color: ColorPalette.inkPanel, width: 3 }
       }
     });
     label.x = ft.x - 12;
@@ -1001,10 +1025,10 @@ export function updateFloatTexts(layers: RenderLayers): void {
 
 /** 画一根水平条（背景 + 填充 + 描边）。pct 钳到 [0,1]。 */
 function drawBar(g: Graphics, x: number, y: number, w: number, h: number, pct: number, fill: number): void {
-  g.rect(x, y, w, h).fill({ color: 0x1a1a22, alpha: 0.9 });
+  g.rect(x, y, w, h).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.9 });
   const fw = Math.max(0, Math.min(1, pct)) * (w - 2);
   if (fw > 0) g.rect(x + 1, y + 1, fw, h - 2).fill(fill);
-  g.rect(x, y, w, h).stroke({ width: 1, color: 0x3a3a44 });
+  g.rect(x, y, w, h).stroke({ width: 1, color: ColorPalette.borderDark });
 }
 
 const INV_GROUPS: Array<{ prefix: string; titleKey: string }> = [
@@ -1127,15 +1151,35 @@ export function renderCultivationOverview(state: GameState, ctx: SimContext): st
   const tribulationState = frozen ? '留驻此界后境界已止步' : readyToInvokeTribulation(state, ctx.params) ? '可主动引劫' : state.tribulation.status === 'countdown' ? `天劫将至：${state.tribulation.daysRemaining}日` : state.tribulation.status === 'due' ? '天劫已临门' : '尚未满足引劫条件';
   const fateState = frozen ? (victoryRecorded ? '已登天门｜留世守境' : '留世守境') : `因果债 ${Math.round(p.heavenDebt / 1000)}｜天道注视 ${Math.round(p.daoAttention / 1000)}`;
   const victoryText = frozen && victoryRecorded ? '胜后存档：已完成飞升，可继续留世经营' : null;
-  return ['—— 功法 / 修炼 ——', '《偷天换劫诀》', `阶段：${stageName}`, `体魄根基：${foundationText}`, `耐力：${Math.round(p.endurance / 1000)}｜意志：${Math.round(p.willpower / 1000)}`, `寿元：${p.lifespanRemainingDays}日`, `命数：${fateState}`, `劫势：${tribulationState}`, ...(victoryText ? [victoryText] : []), '', 'C / Esc 关闭', 'T 主动引劫，Shift+1/2/3/0 苦练'].join('\n');
+  const leak = bodyLeakPresentation(p, ctx.params);
+  const progressingLayer = leak.layers.find(l => l.status === 'progressing');
+  const bodyLeakLine = frozen
+    ? '肉身：留世止步·七层已定'
+    : progressingLayer
+      ? `肉身（漏勺）：封堵 ${leak.sealedCount}/7｜${progressingLayer.name}压实 ${Math.round(progressingLayer.progress * 100)}%｜${7 - leak.sealedCount - 1} 层仍漏`
+      : `肉身（漏勺）：封堵 ${leak.sealedCount}/7｜${7 - leak.sealedCount} 层仍漏`;
+  return ['—— 功法 / 修炼 ——', '《偷天换劫诀》', `阶段：${stageName}`, `体魄根基：${foundationText}`, bodyLeakLine, `耐力：${Math.round(p.endurance / 1000)}｜意志：${Math.round(p.willpower / 1000)}`, `寿元：${p.lifespanRemainingDays}日`, `命数：${fateState}`, `劫势：${tribulationState}`, ...(victoryText ? [victoryText] : []), '', 'C / Esc 关闭', 'T 主动引劫，Shift+1/2/3/0 苦练'].join('\n');
 }
 
 export function drawWorld(layers: RenderLayers, state: GameState, content: ContentRegistry, ctx?: SimContext, assets?: RuntimeRenderAssets): void {
   // —— 瓦片 + 作物 ——
   const g = layers.tiles;
+  const terrain = layers.terrainSemanticOverlay;
+  const qiFlowLayer = layers.qiFlow;
+  const e = layers.entities;
   const retainedSprites = beginRetainedWorldFrame(layers);
   const ambientTimeMs = layers.ambientTimeMs;
+  const selectionDx = state.player.facing === 'left' ? -1 : state.player.facing === 'right' ? 1 : 0;
+  const selectionDy = state.player.facing === 'up' ? -1 : state.player.facing === 'down' ? 1 : 0;
+  const selectionX = state.player.position.x + selectionDx;
+  const selectionY = state.player.position.y + selectionDy;
+  const selectionTile = selectionX >= 0 && selectionY >= 0 && selectionX < state.width && selectionY < state.height ? state.tiles[selectionY * state.width + selectionX] : undefined;
+  const selectionCrop = selectionTile?.cropId != null ? state.crops.get(selectionTile.id) : undefined;
+  const selectionReadiness = selectionTile ? tileReadinessState(selectionTile, selectionCrop) : null;
   g.clear();
+  terrain.clear();
+  qiFlowLayer.clear();
+  e.clear();
   for (const t of state.tiles) {
     const x = OX + t.x * TILE;
     const y = OY + t.y * TILE;
@@ -1146,21 +1190,38 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     if (tileTexture) {
       const sprite = retainTileSprite(layers, retainedSprites, `world:tile:${t.id}`);
       applyWorldSprite(sprite, tileTexture, x + TILE / 2, y + TILE / 2, TILE - 1);
-      sprite.alpha = 0.96;
-      g.rect(x, y, TILE - 1, TILE - 1).fill({ color: 0x111118, alpha: 0.18 });
+      sprite.alpha = 0.92;
+      g.rect(x, y, TILE - 1, TILE - 1).fill({ color: ColorPalette.tileShade, alpha: 0.18 });
     } else {
-      g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? 0x6b4f2a);
+      g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? ColorPalette.soil);
     }
-    // V1-T4：空/翻/播/浇 四态差分 —— 翻地对比、水洼、种子、成熟上扬
+    // P0-2：地表语义层位于地砖精灵之上、作物与实体之下。
     const tileState = tileVisualState(t, crop);
+    const surfaceState = tileSurfaceVisualState(t, crop);
+    terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).fill({
+      color: ColorPalette[surfaceState.baseTone],
+      alpha: surfaceState.baseToneAlpha
+    });
+    for (let grainIndex = 0; grainIndex < surfaceState.grainDensity; grainIndex++) {
+      const grain = tileSurfaceGrainSample(t, surfaceState.grainKind, grainIndex);
+      const grainX = x + Math.round(grain.ox * (TILE - 1));
+      const grainY = y + Math.round(grain.oy * (TILE - 1));
+      const grainAlpha = surfaceState.grainAlpha * grain.alphaScale;
+      if (surfaceState.grainKind === 'coarse' && grainIndex % 2 === 0) {
+        terrain.rect(grainX - 1, grainY, grain.size + 2, 1).fill({ color: ColorPalette[surfaceState.grainTone], alpha: grainAlpha });
+      } else {
+        terrain.rect(grainX, grainY, grain.size, grain.size).fill({ color: ColorPalette[surfaceState.grainTone], alpha: grainAlpha });
+      }
+    }
+    // 空/翻/播/浇 四态差分 —— 翻地对比、水洼、种子、成熟上扬
     if (t.tilled) {
-      // 翻地基色 + 对比暗层（浇水后更深）
-      g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill(TILLED_SOIL_FILL);
+      // 翻地基色 + 对比暗层（浇水后更深），保留底图纹理而不整块盖死。
+      terrain.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: TILLED_SOIL_FILL, alpha: 0.28 + tileState.tilledContrastAlpha * 0.18 });
       if (tileState.tilledContrastAlpha > 0) {
-        g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: 0x1c1008, alpha: tileState.tilledContrastAlpha * 0.35 });
+        terrain.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: ColorPalette.soilDampShadow, alpha: tileState.tilledContrastAlpha * 0.24 });
       }
       if (tileState.tilledBorderAlpha > 0) {
-        g.rect(x + 3, y + 3, TILE - 7, TILE - 7).stroke({
+        terrain.rect(x + 3, y + 3, TILE - 7, TILE - 7).stroke({
           width: 1.25,
           color: TILLED_SOIL_BORDER,
           alpha: tileState.tilledBorderAlpha
@@ -1168,93 +1229,99 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       }
     }
     if (tileState.dampAlpha > 0) {
-      g.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: 0x2f5675, alpha: tileState.dampAlpha });
+      terrain.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: ColorPalette.waterDamp, alpha: tileState.dampAlpha });
+    }
+    if (surfaceState.furrowAlpha > 0) {
+      for (let row = 0; row < 3; row++) {
+        const inset = 8 + ((t.id + row) % 3);
+        const furrowY = y + 12 + row * 9;
+        terrain
+          .moveTo(x + inset, furrowY + 1)
+          .lineTo(x + TILE - inset, furrowY + 1)
+          .stroke({ width: 2, color: ColorPalette.soilShadow, alpha: surfaceState.furrowAlpha * 0.62 });
+        terrain
+          .moveTo(x + inset, furrowY)
+          .lineTo(x + TILE - inset, furrowY)
+          .stroke({ width: 1, color: ColorPalette.soilHighlight, alpha: surfaceState.furrowAlpha });
+      }
     }
     // 浇水水洼高光层（比 damp 更易扫读）
     if (tileState.waterSheenAlpha > 0) {
-      g.ellipse(x + TILE / 2, y + TILE - 12, TILE * 0.28, 4).fill({
+      terrain.ellipse(x + TILE / 2, y + TILE - 12, TILE * 0.28, 4).fill({
         color: WATER_SHEEN_COLOR,
         alpha: tileState.waterSheenAlpha
       });
-      g.ellipse(x + TILE / 2 + 4, y + TILE - 14, TILE * 0.14, 2.2).fill({
-        color: 0xbfe8ff,
+      terrain.ellipse(x + TILE / 2 + 4, y + TILE - 14, TILE * 0.14, 2.2).fill({
+        color: ColorPalette.waterHighlight,
         alpha: tileState.waterSheenAlpha * 0.75
       });
     }
     if (tileState.qiGlowAlpha > 0) {
-      g.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.5, color: 0x66ddff, alpha: tileState.qiGlowAlpha });
+      terrain.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.5, color: ColorPalette.qiBright, alpha: tileState.qiGlowAlpha });
     }
     // T2：高灵气地块轻量上浮微粒（纯 render 呼吸，不改 sim）
     if (shouldDrawQiSparkles(t.qiDensity, t.tilled)) {
-      const phase = qiSparklePhase(ambientTimeMs, t.id);
+      const sparkleTimeMs = layers.reducedMotion ? 0 : ambientTimeMs;
+      const phase = qiSparklePhase(sparkleTimeMs, t.id);
       const sparkX = x + TILE / 2 + Math.sin(phase * Math.PI * 2 + t.id) * 7;
       const sparkY = y + TILE / 2 + 6 - phase * 14;
-      g.circle(sparkX, sparkY, 1.6).fill({ color: 0xb8f4ff, alpha: 0.28 + (1 - phase) * 0.45 });
-      const phase2 = qiSparklePhase(ambientTimeMs, t.id + 11);
-      g.circle(x + TILE / 2 - 6 + phase2 * 10, y + 10 + (1 - phase2) * 8, 1.2).fill({
-        color: 0x7ad0e8,
+      terrain.circle(sparkX, sparkY, 1.6).fill({ color: ColorPalette.qiSoft, alpha: 0.28 + (1 - phase) * 0.45 });
+      const phase2 = qiSparklePhase(sparkleTimeMs, t.id + 11);
+      terrain.circle(x + TILE / 2 - 6 + phase2 * 10, y + 10 + (1 - phase2) * 8, 1.2).fill({
+        color: ColorPalette.qiLight,
         alpha: 0.22 + (1 - phase2) * 0.35
       });
     }
     if (tileState.showWaterMark) {
-      g.circle(x + 11, y + TILE - 11, 3.4).fill({ color: 0x7ec8ff, alpha: 0.95 });
-      g.circle(x + 18, y + TILE - 14, 2.4).fill({ color: 0xbfe8ff, alpha: 0.88 });
-      g.circle(x + 14, y + TILE - 9, 1.6).fill({ color: 0xe8f6ff, alpha: 0.7 });
+      terrain.circle(x + 11, y + TILE - 11, 3.4).fill({ color: ColorPalette.waterBlue, alpha: 0.95 });
+      terrain.circle(x + 18, y + TILE - 14, 2.4).fill({ color: ColorPalette.waterHighlight, alpha: 0.88 });
+      terrain.circle(x + 14, y + TILE - 9, 1.6).fill({ color: ColorPalette.waterPaper, alpha: 0.7 });
     }
     if (tileState.showChannelMark) {
-      g.poly([x + TILE - 12, y + 9, x + TILE - 8, y + 15, x + TILE - 12, y + 21, x + TILE - 16, y + 15]).fill({ color: 0x66ddff, alpha: 0.88 });
-      g.poly([x + TILE - 12, y + 11, x + TILE - 10, y + 15, x + TILE - 12, y + 19, x + TILE - 14, y + 15]).fill({ color: 0xe8f8ff, alpha: 0.7 });
+      terrain.poly([x + TILE - 12, y + 9, x + TILE - 8, y + 15, x + TILE - 12, y + 21, x + TILE - 16, y + 15]).fill({ color: ColorPalette.qiBright, alpha: 0.88 });
+      terrain.poly([x + TILE - 12, y + 11, x + TILE - 10, y + 15, x + TILE - 12, y + 19, x + TILE - 14, y + 15]).fill({ color: ColorPalette.qiPaper, alpha: 0.7 });
     }
-    if (readiness.showPlantCue) {
-      g.circle(x + TILE / 2, y + TILE / 2 + 1, 4).stroke({ width: 1.5, color: 0x8bd450, alpha: 0.82 });
-      g.moveTo(x + TILE / 2, y + 11)
-        .lineTo(x + TILE / 2, y + TILE - 11)
-        .stroke({ width: 1.2, color: 0xbfe88f, alpha: 0.72 });
-      g.moveTo(x + 11, y + TILE / 2)
-        .lineTo(x + TILE - 11, y + TILE / 2)
-        .stroke({ width: 1.2, color: 0xbfe88f, alpha: 0.72 });
+
+    if (selectionTile?.id === t.id) {
+      const selectionState = tileSelectionVisualState({
+        selected: true,
+        actionable: selectionReadiness?.actionable ?? false,
+        ambientTimeMs,
+        reducedMotion: layers.reducedMotion
+      });
+      const edgePulse = 0.5 + Math.sin(selectionState.breathPhase * Math.PI * 2) * 0.5;
+      terrain.rect(x + 2, y + 2, TILE - 5, TILE - 5).fill({ color: ColorPalette.trueWhite, alpha: selectionState.selectionMaskAlpha });
+      terrain.rect(x + 2, y + 2, TILE - 5, TILE - 5).stroke({
+        width: 2.1 + edgePulse * 0.5,
+        color: ColorPalette.qiFlow,
+        alpha: selectionState.selectionEdgeAlpha
+      });
+      terrain.rect(x + 4, y + 4, TILE - 9, TILE - 9).stroke({
+        width: 1,
+        color: ColorPalette.moonWhite,
+        alpha: selectionState.selectionEdgeAlpha * 0.62
+      });
     }
-    if (readiness.showTillCue) {
-      g.moveTo(x + 10, y + 13)
-        .lineTo(x + TILE - 10, y + 13)
-        .stroke({ width: 1.1, color: 0xd8b070, alpha: 0.56 });
-      g.moveTo(x + 10, y + 21)
-        .lineTo(x + TILE - 10, y + 21)
-        .stroke({ width: 1.1, color: 0xd8b070, alpha: 0.56 });
-      g.moveTo(x + 10, y + 29)
-        .lineTo(x + TILE - 10, y + 29)
-        .stroke({ width: 1.1, color: 0xd8b070, alpha: 0.56 });
-    }
-    if (readiness.showBlockedCue) {
-      g.moveTo(x + 9, y + 9)
-        .lineTo(x + TILE - 9, y + TILE - 9)
-        .stroke({ width: 1.35, color: 0x2a1a10, alpha: 0.42 });
-      g.moveTo(x + TILE - 9, y + 9)
-        .lineTo(x + 9, y + TILE - 9)
-        .stroke({ width: 1.35, color: 0x2a1a10, alpha: 0.42 });
-    }
+
+    const flowState = qiFlowVisualState(t, ambientTimeMs, layers.reducedMotion);
+    drawQiFlowLines(qiFlowLayer, t, x, y, flowState);
+
     if (crop) {
       const herb = content.herbs.get(crop.defId);
       const cx = x + TILE / 2;
       const cy = y + TILE / 2;
       const metal = (herb?.metalAttract ?? 0) > 1;
+      const cropFb = cropGrowthFeedbackState(crop, herb?.growthThreshold ?? 1, ambientTimeMs, layers.reducedMotion);
       if (crop.stage === 'withered') {
         // 枯萎：棕色 X
-        g.moveTo(cx - 6, cy - 6)
+        e.moveTo(cx - 6, cy - 6)
           .lineTo(cx + 6, cy + 6)
           .moveTo(cx + 6, cy - 6)
           .lineTo(cx - 6, cy + 6)
           .stroke({ width: 2, color: STAGE_COLOR.withered });
       } else {
         const liftBonus = harvestLiftRadiusBonus(tileState);
-        const baseRadius =
-          crop.stage === 'seed'
-            ? seedFallbackRadius(tileState, 3)
-            : crop.stage === 'sprout'
-              ? 6
-              : crop.stage === 'growing'
-                ? 9
-                : 12 + liftBonus;
+        const baseRadius = crop.stage === 'seed' ? seedFallbackRadius(tileState, 3) : crop.stage === 'sprout' ? 6 : crop.stage === 'growing' ? 9 : 12 + liftBonus;
         const fallbackRadius = baseRadius;
         const texture = crop.stage === 'seed' ? assets?.cropSeeds[herb?.seedId ?? ''] : assets?.cropHerbs[crop.defId];
         if (texture) {
@@ -1264,42 +1331,55 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
           const liftY = tileState.harvestLift ? -3 : 0;
           const bobOffset = crop.stage === 'seed' ? 0 : ambientBobOffset(ambientTimeMs, crop.id, 1.8, 3200);
           applyWorldSprite(sprite, texture, cx, cy + spec.yOffset + bobOffset + liftY, spec.size * sizeMul);
-          if (metal) sprite.tint = 0xc9d4ea;
-          if (tileState.harvestLift) sprite.tint = metal ? 0xd8e4f0 : 0xfff0a8;
+          if (metal) sprite.tint = ColorPalette.frostTint;
+          if (tileState.harvestLift) sprite.tint = metal ? ColorPalette.frostPaper : ColorPalette.giltCrop;
         } else {
           // 回退路径：保留原始程序化图元，保证无贴图时仍可稳定演示
-          const col = metal ? 0xb8b8c8 : (STAGE_COLOR[crop.stage] ?? 0x4a9a30);
+          const col = metal ? ColorPalette.frostGray : (STAGE_COLOR[crop.stage] ?? ColorPalette.leaf);
           if (crop.stage === 'seed' && tileState.seedVisible) {
             // 刚播下：土中种子点 + 短茎两叶（T0-3 + V1-T4 放大）
             const s = tileState.seedScale;
-            g.ellipse(cx, cy + 5, 3.2 * s, 1.6 * s).fill({ color: 0x2a1a0c, alpha: 0.55 });
-            g.circle(cx, cy + 4, 2.1 * s).fill(metal ? 0x8a9aa8 : 0x5a3a18);
-            g.moveTo(cx, cy + 3).lineTo(cx, cy - 4 * s).stroke({ width: 1.4 * s, color: 0x3a6a28 });
-            g.circle(cx - 3 * s, cy - 4 * s, 2.4 * s).fill(metal ? 0x9fb6c4 : 0x7ac050);
-            g.circle(cx + 3 * s, cy - 4 * s, 2.4 * s).fill(metal ? 0x9fb6c4 : 0x7ac050);
+            e.ellipse(cx, cy + 5, 3.2 * s, 1.6 * s).fill({ color: ColorPalette.soilBorder, alpha: 0.55 });
+            e.circle(cx, cy + 4, 2.1 * s).fill(metal ? ColorPalette.frostDeep : ColorPalette.soilWarm);
+            e.moveTo(cx, cy + 3)
+              .lineTo(cx, cy - 4 * s)
+              .stroke({ width: 1.4 * s, color: ColorPalette.leafDark });
+            e.circle(cx - 3 * s, cy - 4 * s, 2.4 * s).fill(metal ? ColorPalette.frost : ColorPalette.mossBright);
+            e.circle(cx + 3 * s, cy - 4 * s, 2.4 * s).fill(metal ? ColorPalette.frost : ColorPalette.mossBright);
           } else if (crop.stage === 'seed') {
-            g.moveTo(cx, cy + 3).lineTo(cx, cy - 4).stroke({ width: 1.4, color: 0x3a6a28 });
-            g.circle(cx - 3, cy - 4, 2.4).fill(metal ? 0x9fb6c4 : 0x7ac050);
-            g.circle(cx + 3, cy - 4, 2.4).fill(metal ? 0x9fb6c4 : 0x7ac050);
+            e.moveTo(cx, cy + 3)
+              .lineTo(cx, cy - 4)
+              .stroke({ width: 1.4, color: ColorPalette.leafDark });
+            e.circle(cx - 3, cy - 4, 2.4).fill(metal ? ColorPalette.frost : ColorPalette.mossBright);
+            e.circle(cx + 3, cy - 4, 2.4).fill(metal ? ColorPalette.frost : ColorPalette.mossBright);
           } else {
             const drawCy = tileState.harvestLift ? cy - 3 : cy;
             if (crop.stage === 'growing' || crop.stage === 'mature') {
-              g.moveTo(cx, drawCy + fallbackRadius)
+              e.moveTo(cx, drawCy + fallbackRadius)
                 .lineTo(cx, y + TILE - 3)
-                .stroke({ width: tileState.harvestLift ? 2 : 1.5, color: 0x3a6a28 });
+                .stroke({ width: tileState.harvestLift ? 2 : 1.5, color: ColorPalette.leafDark });
             }
-            g.circle(cx, drawCy, fallbackRadius).fill(col);
+            e.circle(cx, drawCy, fallbackRadius).fill(col);
             if (tileState.harvestLift) {
-              g.circle(cx, drawCy, fallbackRadius * 0.45).fill({ color: 0xfff6c8, alpha: 0.55 });
+              e.circle(cx, drawCy, fallbackRadius * 0.45).fill({ color: ColorPalette.giltGlow, alpha: 0.55 });
             }
           }
         }
+        if (cropFb.qiGatherAlpha > 0) {
+          e.moveTo(cx, cy + fallbackRadius + 6)
+            .lineTo(cx, cy + Math.max(2, fallbackRadius - 2))
+            .stroke({ width: 1.6, color: ColorPalette.qiFlow, alpha: cropFb.qiGatherAlpha });
+        }
+        if (cropFb.temperTintAlpha > 0) {
+          e.circle(cx, tileState.harvestLift ? cy - 3 : cy, fallbackRadius).fill({ color: ColorPalette.frost, alpha: cropFb.temperTintAlpha });
+        }
         if (readiness.showHarvestHalo || tileState.harvestLift) {
           const haloCy = tileState.harvestLift ? cy - 3 : cy;
-          g.circle(cx, haloCy, fallbackRadius + 3).stroke({ width: 1.5, color: 0xffe066, alpha: 0.85 });
-          g.circle(cx, haloCy, fallbackRadius + 6).stroke({ width: 1, color: 0xfff2a8, alpha: 0.55 });
-          if (tileState.harvestLift) {
-            g.circle(cx, haloCy, fallbackRadius + 9).stroke({ width: 1, color: 0xffe066, alpha: 0.28 });
+          const pulse = 0.75 + 0.25 * Math.sin(cropFb.maturePulsePhase * Math.PI * 2);
+          e.circle(cx, haloCy, fallbackRadius + 3).stroke({ width: 1.5, color: ColorPalette.giltBright, alpha: 0.85 * pulse });
+          e.circle(cx, haloCy, fallbackRadius + 6).stroke({ width: 1, color: ColorPalette.qiLight, alpha: 0.45 * pulse });
+          if (tileState.harvestLift || cropFb.matureGlowAlpha > 0) {
+            e.circle(cx, haloCy, fallbackRadius + 9).stroke({ width: 1, color: ColorPalette.giltBright, alpha: 0.28 * pulse });
           }
         }
       }
@@ -1310,7 +1390,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   for (const decor of worldDecorPlacements(state.width, state.height, state.tiles, {
     hasFacilities: state.facilities.size > 0
   })) {
-    paintWorldDecor(g, decor, OX + decor.x * TILE, OY + decor.y * TILE, TILE, performance.now());
+    paintWorldDecor(terrain, decor, OX + decor.x * TILE, OY + decor.y * TILE, TILE, ambientTimeMs);
   }
 
   // —— 农庄设施：加工链从菜单入口落到具体地块 ——
@@ -1323,12 +1403,12 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       applyWorldSprite(sprite, guardTexture, x + TILE / 2, y + TILE / 2 + 2 + ambientBobOffset(ambientTimeMs, placement.beastId * 7, 1.4, 2800), TILE - 6);
       sprite.alpha = 0.7 + placement.vigorRatio * 0.3;
     } else {
-      g.circle(x + TILE / 2, y + TILE / 2 + 2, 11).fill({ color: 0x8ac4ff, alpha: 0.82 });
-      g.circle(x + TILE / 2, y + TILE / 2 + 2, 11).stroke({ width: 1.5, color: 0x16263a });
-      g.circle(x + TILE / 2 - 4, y + TILE / 2 - 1, 2).fill(0x16263a);
-      g.circle(x + TILE / 2 + 4, y + TILE / 2 - 1, 2).fill(0x16263a);
-      g.rect(x + 13, y + TILE - 10, TILE - 26, 3).fill({ color: 0x1a1a22, alpha: 0.85 });
-      g.rect(x + 13, y + TILE - 10, Math.max(3, (TILE - 26) * placement.vigorRatio), 3).fill(0x7ac050);
+      e.circle(x + TILE / 2, y + TILE / 2 + 2, 11).fill({ color: ColorPalette.qiBlue, alpha: 0.82 });
+      e.circle(x + TILE / 2, y + TILE / 2 + 2, 11).stroke({ width: 1.5, color: ColorPalette.inkBlueDeep });
+      e.circle(x + TILE / 2 - 4, y + TILE / 2 - 1, 2).fill(ColorPalette.inkBlueDeep);
+      e.circle(x + TILE / 2 + 4, y + TILE / 2 - 1, 2).fill(ColorPalette.inkBlueDeep);
+      e.rect(x + 13, y + TILE - 10, TILE - 26, 3).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.85 });
+      e.rect(x + 13, y + TILE - 10, Math.max(3, (TILE - 26) * placement.vigorRatio), 3).fill(ColorPalette.mossBright);
     }
 
     const specialty = placement.specialty;
@@ -1336,27 +1416,27 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       const marker = GUARD_BEAST_SPECIALTY_MARKER[specialty];
       const mx = x + TILE - 11;
       const my = y + 11;
-      g.circle(mx, my, 5).fill({ color: marker.color, alpha: 0.94 });
-      g.circle(mx, my, 5).stroke({ width: 1, color: 0x1a1a22, alpha: 0.94 });
+      e.circle(mx, my, 5).fill({ color: marker.color, alpha: 0.94 });
+      e.circle(mx, my, 5).stroke({ width: 1, color: ColorPalette.inkPanelDeep, alpha: 0.94 });
       if (specialty === 'field-ward') {
-        g.moveTo(mx, my - 2)
+        e.moveTo(mx, my - 2)
           .lineTo(mx, my + 2)
           .stroke({ width: 1.3, color: marker.accent, alpha: 0.96 });
-        g.moveTo(mx - 2, my)
+        e.moveTo(mx - 2, my)
           .lineTo(mx + 2, my)
           .stroke({ width: 1.3, color: marker.accent, alpha: 0.96 });
       } else if (specialty === 'array-warden') {
-        g.moveTo(mx - 2, my - 2)
+        e.moveTo(mx - 2, my - 2)
           .lineTo(mx + 2, my + 2)
           .stroke({ width: 1.3, color: marker.accent, alpha: 0.96 });
-        g.moveTo(mx + 2, my - 2)
+        e.moveTo(mx + 2, my - 2)
           .lineTo(mx - 2, my + 2)
           .stroke({ width: 1.3, color: marker.accent, alpha: 0.96 });
       } else {
-        g.moveTo(mx - 2, my + 2)
+        e.moveTo(mx - 2, my + 2)
           .lineTo(mx + 1, my - 1)
           .stroke({ width: 1.3, color: marker.accent, alpha: 0.96 });
-        g.moveTo(mx + 1, my - 1)
+        e.moveTo(mx + 1, my - 1)
           .lineTo(mx + 2, my)
           .stroke({ width: 1.3, color: marker.accent, alpha: 0.96 });
       }
@@ -1372,22 +1452,22 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, prop.assetId.length * 11, 1.1, 3600), TILE - 8);
       sprite.alpha = 0.9;
     } else {
-      const color = prop.assetId === 'facility.storage-chest' ? 0x8b6a3f : 0x7a4f2a;
-      g.roundRect(x + 9, y + 10, TILE - 18, TILE - 16, 5).fill({ color, alpha: 0.92 });
-      g.roundRect(x + 9, y + 10, TILE - 18, TILE - 16, 5).stroke({ width: 1.5, color: 0x2a1a0a });
-      g.rect(x + 12, y + 16, TILE - 24, 4).fill({ color: 0xd9c38a, alpha: 0.85 });
+      const color = prop.assetId === 'facility.storage-chest' ? ColorPalette.wood : ColorPalette.woodBrown;
+      e.roundRect(x + 9, y + 10, TILE - 18, TILE - 16, 5).fill({ color, alpha: 0.92 });
+      e.roundRect(x + 9, y + 10, TILE - 18, TILE - 16, 5).stroke({ width: 1.5, color: ColorPalette.soilShadow });
+      e.rect(x + 12, y + 16, TILE - 24, 4).fill({ color: ColorPalette.paperGold, alpha: 0.85 });
     }
 
     if (prop.status === 'ready') {
       const badgeTexture = assets?.itemIcons[farmsteadPropBadgeAssetId(state, prop.assetId) ?? ''];
       if (badgeTexture) {
-        g.circle(x + TILE - 10, y + 10, 7).fill({ color: 0x12121c, alpha: 0.9 });
-        g.circle(x + TILE - 10, y + 10, 7).stroke({ width: 1.2, color: 0x7fe38b, alpha: 0.94 });
+        e.circle(x + TILE - 10, y + 10, 7).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
+        e.circle(x + TILE - 10, y + 10, 7).stroke({ width: 1.2, color: ColorPalette.success, alpha: 0.94 });
         const badge = retainSceneSprite(layers, retainedSprites, `world:farmstead-prop:${prop.assetId}:badge`);
         applyWorldSprite(badge, badgeTexture, x + TILE - 10, y + 10, 12);
       } else {
-        g.circle(x + TILE - 10, y + 10, 5).fill(0x7fe38b);
-        g.circle(x + TILE - 10, y + 10, 5).stroke({ width: 1.2, color: 0x1a1a22, alpha: 0.92 });
+        e.circle(x + TILE - 10, y + 10, 5).fill(ColorPalette.success);
+        e.circle(x + TILE - 10, y + 10, 5).stroke({ width: 1.2, color: ColorPalette.inkPanelDeep, alpha: 0.92 });
       }
     }
   }
@@ -1397,51 +1477,48 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     if (!tile) continue;
     const x = OX + tile.x * TILE;
     const y = OY + tile.y * TILE;
-    const color = FACILITY_COLOR[facility.kind] ?? 0xb0b0b0;
+    const color = FACILITY_COLOR[facility.kind] ?? ColorPalette.neutralGray;
     const facilityTexture = assets?.facilities[facility.kind];
     if (facilityTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}`);
       applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, facility.id, 1, 4000));
     } else {
-      g.rect(x + 7, y + 9, TILE - 15, TILE - 14).fill({ color, alpha: 0.92 });
-      g.rect(x + 7, y + 9, TILE - 15, TILE - 14).stroke({ width: 1.5, color: 0x2a1a0a });
+      e.rect(x + 7, y + 9, TILE - 15, TILE - 14).fill({ color, alpha: 0.92 });
+      e.rect(x + 7, y + 9, TILE - 15, TILE - 14).stroke({ width: 1.5, color: ColorPalette.soilShadow });
       if (facility.kind === 'drying-rack') {
-        g.moveTo(x + 11, y + 17)
+        e.moveTo(x + 11, y + 17)
           .lineTo(x + TILE - 11, y + 17)
-          .stroke({ width: 2, color: 0x6b4f2a });
-        g.moveTo(x + 11, y + 25)
+          .stroke({ width: 2, color: ColorPalette.soil });
+        e.moveTo(x + 11, y + 25)
           .lineTo(x + TILE - 11, y + 25)
-          .stroke({ width: 2, color: 0x6b4f2a });
+          .stroke({ width: 2, color: ColorPalette.soil });
       } else if (facility.kind === 'sealing-cabinet') {
-        g.rect(x + 17, y + 13, 8, TILE - 22).stroke({ width: 1.5, color: 0x1a2a36 });
-        g.circle(x + 26, y + TILE / 2, 2).fill(0xeae0c8);
+        e.rect(x + 17, y + 13, 8, TILE - 22).stroke({ width: 1.5, color: ColorPalette.inkBlue });
+        e.circle(x + 26, y + TILE / 2, 2).fill(ColorPalette.paperText);
       } else if (facility.kind === 'talisman-furnace') {
-        g.circle(x + TILE / 2, y + TILE / 2, 10).stroke({ width: 2, color: 0x3a1610 });
-        g.circle(x + TILE / 2, y + TILE / 2, 5).fill(0xffd166);
-        g.rect(x + 14, y + TILE - 14, TILE - 28, 4).fill(0x3a1610);
+        e.circle(x + TILE / 2, y + TILE / 2, 10).stroke({ width: 2, color: ColorPalette.cinnabarDeep });
+        e.circle(x + TILE / 2, y + TILE / 2, 5).fill(ColorPalette.emberBright);
+        e.rect(x + 14, y + TILE - 14, TILE - 28, 4).fill(ColorPalette.cinnabarDeep);
       }
     }
     if (facility.job) {
       const done = facility.job.daysRemaining <= 0;
       const badgeTexture = done ? assets?.itemIcons[facilityWorldBadgeAssetId(facility.job.outputItemId) ?? ''] : undefined;
       if (done && badgeTexture) {
-        g.circle(x + TILE - 9, y + 9, 7).fill({ color: 0x12121c, alpha: 0.9 });
-        g.circle(x + TILE - 9, y + 9, 7).stroke({ width: 1.2, color: 0xffe066, alpha: 0.94 });
+        e.circle(x + TILE - 9, y + 9, 7).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
+        e.circle(x + TILE - 9, y + 9, 7).stroke({ width: 1.2, color: ColorPalette.giltBright, alpha: 0.94 });
         const badge = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}:badge`);
         applyWorldSprite(badge, badgeTexture, x + TILE - 9, y + 9, 12);
       } else {
-        g.circle(x + TILE - 9, y + 9, 5).fill(done ? 0xffe066 : 0x66ddff);
-        g.circle(x + TILE - 9, y + 9, 5).stroke({ width: 1.1, color: 0x1a1a22, alpha: 0.92 });
+        e.circle(x + TILE - 9, y + 9, 5).fill(done ? ColorPalette.giltBright : ColorPalette.qiBright);
+        e.circle(x + TILE - 9, y + 9, 5).stroke({ width: 1.1, color: ColorPalette.inkPanelDeep, alpha: 0.92 });
       }
       if (!done) {
-        g.rect(x + 9, y + TILE - 10, TILE - 18, 4).fill({ color: 0x1a1a22, alpha: 0.9 });
-        g.rect(x + 10, y + TILE - 9, TILE - 20, 2).fill(0x66ddff);
+        e.rect(x + 9, y + TILE - 10, TILE - 18, 4).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.9 });
+        e.rect(x + 10, y + TILE - 9, TILE - 20, 2).fill(ColorPalette.qiBright);
       }
     }
   }
-
-  const e = layers.entities;
-  e.clear();
 
   for (const placement of locationWorldPreviewPlacements(state)) {
     const x = OX + placement.x * TILE;
@@ -1460,54 +1537,54 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       applyWorldSprite(sprite, locationTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, placement.locationId.length * 13, 0.9, 5200), TILE - 4);
       sprite.alpha = 0.24;
     } else {
-      e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).fill({ color: 0x181824, alpha: 0.28 });
-      e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).stroke({ width: 1.2, color: 0x5a6a8a, alpha: 0.5 });
+      e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).fill({ color: ColorPalette.badgeDark, alpha: 0.28 });
+      e.roundRect(x + 3, y + 3, TILE - 7, TILE - 7, 7).stroke({ width: 1.2, color: ColorPalette.mountainHighlight, alpha: 0.5 });
     }
 
     if (placement.npcCount > 1) {
-      e.roundRect(x + badgeLayout.crowd.x, y + badgeLayout.crowd.y, 11, 11, 4).fill({ color: 0x12121c, alpha: 0.9 });
-      e.roundRect(x + badgeLayout.crowd.x, y + badgeLayout.crowd.y, 11, 11, 4).stroke({ width: 1, color: 0x6a5a2a, alpha: 0.85 });
-      e.rect(x + badgeLayout.crowd.x + 4, y + badgeLayout.crowd.y + 4, 3, 3).fill({ color: 0xeae0c8, alpha: 0.9 });
-      e.rect(x + badgeLayout.crowd.x + 4, y + badgeLayout.crowd.y + 8, 3, 3).fill({ color: 0xeae0c8, alpha: 0.9 });
-      e.rect(x + badgeLayout.crowd.x + 8, y + badgeLayout.crowd.y + 4, 3, 3).fill({ color: 0xeae0c8, alpha: 0.9 });
-      e.rect(x + badgeLayout.crowd.x + 8, y + badgeLayout.crowd.y + 8, 3, 3).fill({ color: 0xeae0c8, alpha: 0.9 });
+      e.roundRect(x + badgeLayout.crowd.x, y + badgeLayout.crowd.y, 11, 11, 4).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
+      e.roundRect(x + badgeLayout.crowd.x, y + badgeLayout.crowd.y, 11, 11, 4).stroke({ width: 1, color: ColorPalette.badgeGold, alpha: 0.85 });
+      e.rect(x + badgeLayout.crowd.x + 4, y + badgeLayout.crowd.y + 4, 3, 3).fill({ color: ColorPalette.paperText, alpha: 0.9 });
+      e.rect(x + badgeLayout.crowd.x + 4, y + badgeLayout.crowd.y + 8, 3, 3).fill({ color: ColorPalette.paperText, alpha: 0.9 });
+      e.rect(x + badgeLayout.crowd.x + 8, y + badgeLayout.crowd.y + 4, 3, 3).fill({ color: ColorPalette.paperText, alpha: 0.9 });
+      e.rect(x + badgeLayout.crowd.x + 8, y + badgeLayout.crowd.y + 8, 3, 3).fill({ color: ColorPalette.paperText, alpha: 0.9 });
     }
 
     if (placement.birthday) {
-      e.circle(x + badgeLayout.birthday.x, y + badgeLayout.birthday.y, 4).fill({ color: 0xffb347, alpha: 0.94 });
-      e.circle(x + badgeLayout.birthday.x, y + badgeLayout.birthday.y, 4).stroke({ width: 1, color: 0x5a2d0c, alpha: 0.9 });
+      e.circle(x + badgeLayout.birthday.x, y + badgeLayout.birthday.y, 4).fill({ color: ColorPalette.warningOrange, alpha: 0.94 });
+      e.circle(x + badgeLayout.birthday.x, y + badgeLayout.birthday.y, 4).stroke({ width: 1, color: ColorPalette.markerBrown, alpha: 0.9 });
     }
     if (placement.hasQuest) {
-      const color = placement.questReady ? 0xffe066 : 0x66ddff;
+      const color = placement.questReady ? ColorPalette.giltBright : ColorPalette.qiBright;
       e.rect(x + badgeLayout.quest.x - 4, y + badgeLayout.quest.y - 4, 7, 7).fill({ color, alpha: 0.94 });
-      e.rect(x + badgeLayout.quest.x - 4, y + badgeLayout.quest.y - 4, 7, 7).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
+      e.rect(x + badgeLayout.quest.x - 4, y + badgeLayout.quest.y - 4, 7, 7).stroke({ width: 1, color: ColorPalette.inkPanelDeep, alpha: 0.92 });
     }
     if (placement.serviceReady || placement.serviceDone) {
-      const color = placement.serviceReady ? 0x7fe38b : 0x9aa3b2;
+      const color = placement.serviceReady ? ColorPalette.success : ColorPalette.mountainMuted;
       const alpha = placement.serviceReady ? 0.96 : 0.9;
       const serviceBadgeAssetId = locationServiceWorldBadgeAssetId(placement.serviceAssetId);
       const serviceBadgeTexture = serviceBadgeAssetId?.startsWith('sprite.npc.') ? assets?.npcs[serviceBadgeAssetId] : assets?.itemIcons[serviceBadgeAssetId ?? ''];
       if (serviceBadgeTexture) {
-        e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).fill({ color: 0x12121c, alpha: 0.9 });
+        e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).stroke({ width: 1.2, color, alpha: 0.94 });
         const badge = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}:service`);
         applyWorldSprite(badge, serviceBadgeTexture, x + badgeLayout.service.x, y + badgeLayout.service.y, 12);
       } else {
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 4).fill({ color, alpha });
-        e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 4).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
+        e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 4).stroke({ width: 1, color: ColorPalette.inkPanelDeep, alpha: 0.92 });
       }
     }
     if (placement.taskReady) {
       const taskBadgeAssetId = locationTaskWorldBadgeAssetId(placement.taskAssetId);
       const badgeTexture = taskBadgeAssetId?.startsWith('facility.') ? assets?.facilities[taskBadgeAssetId] : assets?.itemIcons[taskBadgeAssetId ?? ''];
       if (badgeTexture) {
-        e.circle(x + badgeLayout.task.x, y + badgeLayout.task.y, 7).fill({ color: 0x12121c, alpha: 0.9 });
-        e.circle(x + badgeLayout.task.x, y + badgeLayout.task.y, 7).stroke({ width: 1.2, color: 0xffd36b, alpha: 0.94 });
+        e.circle(x + badgeLayout.task.x, y + badgeLayout.task.y, 7).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
+        e.circle(x + badgeLayout.task.x, y + badgeLayout.task.y, 7).stroke({ width: 1.2, color: ColorPalette.warning, alpha: 0.94 });
         const badge = retainSceneSprite(layers, retainedSprites, `world:location:${placement.locationId}:task`);
         applyWorldSprite(badge, badgeTexture, x + badgeLayout.task.x, y + badgeLayout.task.y, 12);
       } else {
-        e.rect(x + badgeLayout.task.x - 4, y + badgeLayout.task.y - 4, 8, 8).fill({ color: 0xffd36b, alpha: 0.95 });
-        e.rect(x + badgeLayout.task.x - 4, y + badgeLayout.task.y - 4, 8, 8).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
+        e.rect(x + badgeLayout.task.x - 4, y + badgeLayout.task.y - 4, 8, 8).fill({ color: ColorPalette.warning, alpha: 0.95 });
+        e.rect(x + badgeLayout.task.x - 4, y + badgeLayout.task.y - 4, 8, 8).stroke({ width: 1, color: ColorPalette.inkPanelDeep, alpha: 0.92 });
       }
     }
   }
@@ -1519,7 +1596,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const ncy = y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, placement.placementKey.length * 17, 1.6, 3400);
     const npcShadow = footShadowSpec('npc');
     e.ellipse(ncx, ncy + npcShadow.yOffset - 1, npcShadow.width / 2, npcShadow.height / 2).fill({
-      color: 0x0a1210,
+      color: ColorPalette.inkShadow,
       alpha: npcShadow.alpha
     });
     const npcTexture = assets?.npcs[placement.assetId];
@@ -1529,9 +1606,9 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       sprite.alpha = 0.92;
     } else {
       // 回退剪影：头 + 袍，避免「无名圆点」
-      e.circle(ncx, ncy - 4, 6).fill({ color: 0xd7c3a0, alpha: 0.92 });
-      e.ellipse(ncx, ncy + 6, 8, 9).fill({ color: 0x4a6a58, alpha: 0.9 });
-      e.circle(ncx, ncy - 4, 6).stroke({ width: 1.2, color: 0x33261a, alpha: 0.9 });
+      e.circle(ncx, ncy - 4, 6).fill({ color: ColorPalette.paperWarm, alpha: 0.92 });
+      e.ellipse(ncx, ncy + 6, 8, 9).fill({ color: ColorPalette.grayGreen, alpha: 0.9 });
+      e.circle(ncx, ncy - 4, 6).stroke({ width: 1.2, color: ColorPalette.markerDark, alpha: 0.9 });
     }
 
     if (placement.birthday || placement.hasQuest) {
@@ -1540,13 +1617,13 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       marker.x = x;
       marker.y = y;
       if (placement.birthday) {
-        marker.circle(TILE - 10, 10, 4).fill({ color: 0xffb347, alpha: 0.94 });
-        marker.circle(TILE - 10, 10, 4).stroke({ width: 1, color: 0x5a2d0c, alpha: 0.9 });
+        marker.circle(TILE - 10, 10, 4).fill({ color: ColorPalette.warningOrange, alpha: 0.94 });
+        marker.circle(TILE - 10, 10, 4).stroke({ width: 1, color: ColorPalette.markerBrown, alpha: 0.9 });
       }
       if (placement.hasQuest) {
-        const color = placement.questReady ? 0xffe066 : 0x66ddff;
+        const color = placement.questReady ? ColorPalette.giltBright : ColorPalette.qiBright;
         marker.rect(6, 6, 7, 7).fill({ color, alpha: 0.94 });
-        marker.rect(6, 6, 7, 7).stroke({ width: 1, color: 0x1a1a22, alpha: 0.92 });
+        marker.rect(6, 6, 7, 7).stroke({ width: 1, color: ColorPalette.inkPanelDeep, alpha: 0.92 });
       }
     }
   }
@@ -1556,7 +1633,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   for (const arr of arrayWorldPreviewPlacements(state)) {
     const isRod = arr.assetId === 'facility.array-eye';
     const active = arr.status === 'active';
-    const color = isRod ? 0xffe066 : 0x66ddff;
+    const color = isRod ? ColorPalette.giltBright : ColorPalette.qiBright;
     // 覆盖圈半透明填色，让"种田即布防"的防护范围可见
     for (const tid of arr.coverageTileIds) {
       const ct = state.tiles[tid];
@@ -1580,8 +1657,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     }
 
     if (!active) {
-      e.rect(cx - 6, cy - 1, 12, 2).fill({ color: 0x1a1a22, alpha: 0.9 });
-      e.rect(cx - 6, cy - 1, 12, 2).stroke({ width: 1, color: 0x8a6a52, alpha: 0.8 });
+      e.rect(cx - 6, cy - 1, 12, 2).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.9 });
+      e.rect(cx - 6, cy - 1, 12, 2).stroke({ width: 1, color: ColorPalette.soilMuted, alpha: 0.8 });
     }
   }
   const p = state.player;
@@ -1596,40 +1673,27 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         const zy = OY + cell.y * TILE;
         const fillA = cell.isCenter ? pulse * 0.42 : pulse * 0.18;
         const strokeA = cell.isCenter ? Math.min(0.95, pulse + 0.25) : pulse * 0.7;
-        e.rect(zx + 1, zy + 1, TILE - 3, TILE - 3).fill({ color: 0x6a3cff, alpha: fillA });
+        e.rect(zx + 1, zy + 1, TILE - 3, TILE - 3).fill({ color: ColorPalette.purpleDanger, alpha: fillA });
         e.rect(zx + 1, zy + 1, TILE - 3, TILE - 3).stroke({
           width: cell.isCenter ? 2.5 : 1.5,
-          color: cell.isCenter ? 0xe8d6ff : 0xb49cff,
+          color: cell.isCenter ? ColorPalette.purplePaper : ColorPalette.purpleSoft,
           alpha: strokeA
         });
         if (cell.isCenter) {
           const cx = zx + TILE / 2;
           const cy = zy + TILE / 2;
-          e.circle(cx, cy, 7 + pulse * 4).stroke({ width: 1.5, color: 0xffffff, alpha: pulse * 0.85 });
-          e.circle(cx, cy, 3).fill({ color: 0xffffff, alpha: 0.55 + pulse * 0.35 });
+          e.circle(cx, cy, 7 + pulse * 4).stroke({ width: 1.5, color: ColorPalette.trueWhite, alpha: pulse * 0.85 });
+          e.circle(cx, cy, 3).fill({ color: ColorPalette.trueWhite, alpha: 0.55 + pulse * 0.35 });
         }
       }
     }
-  }
-  // 面前格高亮（操作目标）
-  const fdx = p.facing === 'left' ? -1 : p.facing === 'right' ? 1 : 0;
-  const fdy = p.facing === 'up' ? -1 : p.facing === 'down' ? 1 : 0;
-  const fx = p.position.x + fdx;
-  const fy = p.position.y + fdy;
-  if (fx >= 0 && fy >= 0 && fx < state.width && fy < state.height) {
-    const frontTile = state.tiles[fy * state.width + fx];
-    const frontCrop = frontTile?.cropId != null ? state.crops.get(frontTile.id) : undefined;
-    const frontReadiness = frontTile ? tileReadinessState(frontTile, frontCrop) : null;
-    const frontStroke = frontReadiness?.kind === 'harvest-ready' ? 0xffe066 : frontReadiness?.kind === 'plant-ready' ? 0x8bd450 : frontReadiness?.kind === 'till-ready' ? 0xd8b070 : frontReadiness?.kind === 'blocked' ? 0x8a6a52 : 0xffffff;
-    const frontAlpha = frontReadiness?.actionable ? 0.92 : 0.7;
-    e.rect(OX + fx * TILE, OY + fy * TILE, TILE - 1, TILE - 1).stroke({ width: frontReadiness?.actionable ? 2.5 : 2, color: frontStroke, alpha: frontAlpha });
   }
   const px = OX + p.position.x * TILE + TILE / 2;
   const py = OY + p.position.y * TILE + TILE / 2 + ambientBobOffset(ambientTimeMs, 1, 1, 2400);
   const facing = p.facing as Facing4;
   const playerShadow = footShadowSpec('player');
   e.ellipse(px, py + playerShadow.yOffset, playerShadow.width / 2, playerShadow.height / 2).fill({
-    color: 0x0a1210,
+    color: ColorPalette.inkShadow,
     alpha: playerShadow.alpha
   });
   // V1-T5：暖袍/肤色条带 + 可读 tint，避免 assets.player 纯黑剪影（ISSUE-001）
@@ -1649,7 +1713,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     sprite.alpha = presence.spriteAlpha;
   } else {
     // 回退：under 条带已是头+袍；补描边增强轮廓
-    e.circle(px, py - 5, 7).stroke({ width: 1.2, color: 0x3a2418, alpha: 0.85 });
+    e.circle(px, py - 5, 7).stroke({ width: 1.2, color: ColorPalette.playerOutline, alpha: 0.85 });
   }
   for (const band of presence.bands) {
     if (band.layer !== 'over') continue;
@@ -1659,11 +1723,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   const tip = facingIndicatorOffset(facing, 13);
   const base = facingIndicatorOffset(facing, 5);
   if (facing === 'left' || facing === 'right') {
-    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).fill({ color: 0xffe066, alpha: 0.95 });
-    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).stroke({ width: 1, color: 0x3a2a10, alpha: 0.75 });
+    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).fill({ color: ColorPalette.giltBright, alpha: 0.95 });
+    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).stroke({ width: 1, color: ColorPalette.seedDark, alpha: 0.75 });
   } else {
-    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).fill({ color: 0xffe066, alpha: 0.95 });
-    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).stroke({ width: 1, color: 0x3a2a10, alpha: 0.75 });
+    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).fill({ color: ColorPalette.giltBright, alpha: 0.95 });
+    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).stroke({ width: 1, color: ColorPalette.seedDark, alpha: 0.75 });
   }
   finishRetainedWorldFrame(layers, retainedSprites);
 
@@ -1688,8 +1752,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   const bodyFoundation = p.bodyFoundation ?? p.cultivation;
   const cultPct = p.stage >= 7 ? 1 : Math.min(1, bodyFoundation / stageQiCap(p.stage, DEFAULT_BALANCE));
   // 控血走钢丝：HP<20% 黄警，<10% 红警（险死区是核心张力）
-  const hpColor = hpRatio > 0.5 ? 0x4ade80 : hpRatio > 0.2 ? 0xffe066 : 0xff5a5a;
-  const poisonColor = poisonPct > 0.7 ? 0xff3030 : poisonPct > 0.4 ? 0xff8a3a : 0x9a7a3a;
+  const hpColor = hpRatio > 0.5 ? ColorPalette.accentGreen : hpRatio > 0.2 ? ColorPalette.giltBright : ColorPalette.dangerBright;
+  const poisonColor = poisonPct > 0.7 ? ColorPalette.accentRed : poisonPct > 0.4 ? ColorPalette.ember : ColorPalette.loessDeep;
   const BAR_W = 120,
     BAR_H = 11,
     BAR_X0 = 12,
@@ -1697,8 +1761,8 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     BAR_Y = 42;
   drawBar(bg, BAR_X0, BAR_Y, BAR_W, BAR_H, hpRatio, hpColor);
   drawBar(bg, BAR_X0 + BAR_DX, BAR_Y, BAR_W, BAR_H, poisonPct, poisonColor);
-  drawBar(bg, BAR_X0 + 2 * BAR_DX, BAR_Y, BAR_W, BAR_H, cultPct, 0x66ddff);
-  drawBar(bg, BAR_X0 + 3 * BAR_DX, BAR_Y, BAR_W, BAR_H, staPct, 0x7ac050);
+  drawBar(bg, BAR_X0 + 2 * BAR_DX, BAR_Y, BAR_W, BAR_H, cultPct, ColorPalette.qiBright);
+  drawBar(bg, BAR_X0 + 3 * BAR_DX, BAR_Y, BAR_W, BAR_H, staPct, ColorPalette.mossBright);
   setTextIfChanged(layers.barLabels[0]!, `气血 ${hpPct}%`);
   setTextIfChanged(layers.barLabels[1]!, `丹毒 ${pp}`);
   setTextIfChanged(layers.barLabels[2]!, `体魄 ${Math.round(cultPct * 100)}%`);
@@ -1712,6 +1776,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
 
   // —— 结局遮罩 ——
   if (state.gameOver) {
+    layers.worldRoot.visible = false;
     layers.tiles.visible = false;
     layers.entities.visible = false;
     layers.sceneSprites.visible = false;
@@ -1724,6 +1789,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     clearInventoryIcons(layers);
     layers.cultivation.visible = false;
   } else if (state.postAscension.mode === 'choice-pending') {
+    layers.worldRoot.visible = true;
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.sceneSprites.visible = true;
@@ -1737,6 +1803,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     clearInventoryIcons(layers);
     layers.cultivation.visible = false;
   } else {
+    layers.worldRoot.visible = true;
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.sceneSprites.visible = true;
@@ -1763,7 +1830,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   tf.clear();
   if (layers.tribFlashTtl > 0) {
     // 压低全屏白闪占比，把「可识别招牌」让给电光几何
-    tf.rect(0, 0, SCREEN_W, SCREEN_H).fill({ color: 0xffffff, alpha: (layers.tribFlashTtl / 30) * 0.22 });
+    tf.rect(0, 0, SCREEN_W, SCREEN_H).fill({ color: ColorPalette.trueWhite, alpha: (layers.tribFlashTtl / 30) * 0.22 });
     layers.tribFlashTtl -= 1;
   }
   if (layers.tribBoltTtl > 0 && layers.tribBoltGeom) {
@@ -1789,8 +1856,8 @@ export function setToast(layers: RenderLayers, msg: string, texture?: Texture): 
 
   layers.toast.x = 46;
   layers.toast.style.wordWrapWidth = SCREEN_W - 56;
-  layers.toastIconBg.roundRect(10, SCREEN_H - 90, 28, 28, 6).fill({ color: 0x12121c, alpha: 0.96 });
-  layers.toastIconBg.roundRect(10, SCREEN_H - 90, 28, 28, 6).stroke({ width: 1.4, color: 0x6a5a2a, alpha: 0.94 });
+  layers.toastIconBg.roundRect(10, SCREEN_H - 90, 28, 28, 6).fill({ color: ColorPalette.inkPanel, alpha: 0.96 });
+  layers.toastIconBg.roundRect(10, SCREEN_H - 90, 28, 28, 6).stroke({ width: 1.4, color: ColorPalette.badgeGold, alpha: 0.94 });
   applyPanelSprite(layers.toastIcon, texture, 14, SCREEN_H - 86, 20);
   layers.toastIcon.visible = true;
 }
@@ -1805,18 +1872,18 @@ export function drawTodayBriefing(layers: RenderLayers, title: string, body: str
   setTextIfChanged(text, `${title}\n${body}`);
   const height = briefingBoxHeight(text.height);
   bg.clear();
-  bg.roundRect(BRIEFING_BOX.x, BRIEFING_BOX.y, BRIEFING_BOX.width, height, BRIEFING_BOX.radius).fill({ color: 0x12121c, alpha: 0.9 });
-  bg.roundRect(BRIEFING_BOX.x, BRIEFING_BOX.y, BRIEFING_BOX.width, height, BRIEFING_BOX.radius).stroke({ width: 1.2, color: 0x4e4636, alpha: 0.95 });
+  bg.roundRect(BRIEFING_BOX.x, BRIEFING_BOX.y, BRIEFING_BOX.width, height, BRIEFING_BOX.radius).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
+  bg.roundRect(BRIEFING_BOX.x, BRIEFING_BOX.y, BRIEFING_BOX.width, height, BRIEFING_BOX.radius).stroke({ width: 1.2, color: ColorPalette.grayBlue, alpha: 0.95 });
   if (heroAsset) {
-    bg.roundRect(BRIEFING_BOX.x + 10, BRIEFING_BOX.y + 10, 84, 84, 8).fill({ color: 0x171720, alpha: 0.96 });
-    bg.roundRect(BRIEFING_BOX.x + 10, BRIEFING_BOX.y + 10, 84, 84, 8).stroke({ width: 1, color: 0x6a5a2a, alpha: 0.92 });
+    bg.roundRect(BRIEFING_BOX.x + 10, BRIEFING_BOX.y + 10, 84, 84, 8).fill({ color: ColorPalette.inkNearBlack, alpha: 0.96 });
+    bg.roundRect(BRIEFING_BOX.x + 10, BRIEFING_BOX.y + 10, 84, 84, 8).stroke({ width: 1, color: ColorPalette.badgeGold, alpha: 0.92 });
     applyPanelSprite(layers.briefingImage, texture!, BRIEFING_BOX.x + 16, BRIEFING_BOX.y + 16, 72);
     layers.briefingImage.visible = true;
     layers.briefingIcon.visible = false;
   } else {
     layers.briefingImage.visible = false;
-    bg.roundRect(BRIEFING_BOX.x + 8, BRIEFING_BOX.y + 8, 28, 28, 6).fill({ color: 0x181824, alpha: 0.92 });
-    bg.roundRect(BRIEFING_BOX.x + 8, BRIEFING_BOX.y + 8, 28, 28, 6).stroke({ width: 1, color: 0x6a5a2a, alpha: 0.9 });
+    bg.roundRect(BRIEFING_BOX.x + 8, BRIEFING_BOX.y + 8, 28, 28, 6).fill({ color: ColorPalette.badgeDark, alpha: 0.92 });
+    bg.roundRect(BRIEFING_BOX.x + 8, BRIEFING_BOX.y + 8, 28, 28, 6).stroke({ width: 1, color: ColorPalette.badgeGold, alpha: 0.9 });
   }
   if (!heroAsset && texture) {
     applyPanelSprite(layers.briefingIcon, texture, BRIEFING_BOX.x + 12, BRIEFING_BOX.y + 12, 20);
@@ -1849,8 +1916,8 @@ export function drawHotbarIcon(layers: RenderLayers, texture?: Texture): void {
   }
 
   layers.hotbar.x = 46;
-  bg.roundRect(10, SCREEN_H - 50, 28, 28, 6).fill({ color: 0x12121c, alpha: 0.96 });
-  bg.roundRect(10, SCREEN_H - 50, 28, 28, 6).stroke({ width: 1.5, color: 0x6a5a2a });
+  bg.roundRect(10, SCREEN_H - 50, 28, 28, 6).fill({ color: ColorPalette.inkPanel, alpha: 0.96 });
+  bg.roundRect(10, SCREEN_H - 50, 28, 28, 6).stroke({ width: 1.5, color: ColorPalette.badgeGold });
   applyPanelSprite(layers.hotbarIcon, texture, 14, SCREEN_H - 46, 20);
   layers.hotbarIcon.visible = true;
 }
@@ -1860,10 +1927,10 @@ export function drawPanelItemPreview(layers: RenderLayers, title: string, detail
   setTextIfChanged(layers.panelPreviewText, `${title}\n\n${details}`);
   const height = itemPreviewBoxHeight(layers.panelPreviewText.height);
   bg.clear();
-  bg.roundRect(PANEL_PREVIEW_BOX.x, PANEL_PREVIEW_BOX.y, PANEL_PREVIEW_BOX.width, height, PANEL_PREVIEW_BOX.radius).fill({ color: 0x12121c, alpha: 0.94 });
-  bg.roundRect(PANEL_PREVIEW_BOX.x, PANEL_PREVIEW_BOX.y, PANEL_PREVIEW_BOX.width, height, PANEL_PREVIEW_BOX.radius).stroke({ width: 1.5, color: 0x5a6a8a });
-  bg.roundRect(704, 304, 60, 60, 6).fill({ color: 0x181824, alpha: 0.92 });
-  bg.roundRect(704, 304, 60, 60, 6).stroke({ width: 1, color: 0x6a5a2a, alpha: 0.9 });
+  bg.roundRect(PANEL_PREVIEW_BOX.x, PANEL_PREVIEW_BOX.y, PANEL_PREVIEW_BOX.width, height, PANEL_PREVIEW_BOX.radius).fill({ color: ColorPalette.inkPanel, alpha: 0.94 });
+  bg.roundRect(PANEL_PREVIEW_BOX.x, PANEL_PREVIEW_BOX.y, PANEL_PREVIEW_BOX.width, height, PANEL_PREVIEW_BOX.radius).stroke({ width: 1.5, color: ColorPalette.mountainHighlight });
+  bg.roundRect(704, 304, 60, 60, 6).fill({ color: ColorPalette.badgeDark, alpha: 0.92 });
+  bg.roundRect(704, 304, 60, 60, 6).stroke({ width: 1, color: ColorPalette.badgeGold, alpha: 0.9 });
   bg.visible = true;
 
   if (texture) {
@@ -1893,10 +1960,10 @@ export function drawLocationPreview(layers: RenderLayers, title: string, details
   layers.locationPreviewText.style.wordWrapWidth = texture ? 144 : 256;
   setTextIfChanged(layers.locationPreviewText, `${title}\n\n${details}`);
   const height = locationPreviewBoxHeight(layers.locationPreviewText.height);
-  bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).fill({ color: 0x12121c, alpha: 0.94 });
-  bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).stroke({ width: 1.5, color: 0x5a6a8a });
-  bg.roundRect(664, 194, 88, 66, 6).fill({ color: 0x181824, alpha: 0.9 });
-  bg.roundRect(664, 194, 88, 66, 6).stroke({ width: 1, color: 0x6a5a2a, alpha: 0.9 });
+  bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).fill({ color: ColorPalette.inkPanel, alpha: 0.94 });
+  bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).stroke({ width: 1.5, color: ColorPalette.mountainHighlight });
+  bg.roundRect(664, 194, 88, 66, 6).fill({ color: ColorPalette.badgeDark, alpha: 0.9 });
+  bg.roundRect(664, 194, 88, 66, 6).stroke({ width: 1, color: ColorPalette.badgeGold, alpha: 0.9 });
   bg.visible = true;
 
   if (texture) {
@@ -1946,8 +2013,8 @@ export function drawDialogue(layers: RenderLayers, lines: string[], texture?: Te
   const layout = dialogueBoxLayout(layers.dialogue.height, hasPortrait);
 
   g.clear();
-  g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).fill({ color: 0x12121c, alpha: 0.86 });
-  g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).stroke({ width: 1.5, color: 0x6a5a2a });
+  g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).fill({ color: ColorPalette.inkPanel, alpha: 0.86 });
+  g.roundRect(layout.x, layout.y, layout.width, layout.height, DIALOGUE_LAYOUT_LIMITS.radius).stroke({ width: 1.5, color: ColorPalette.badgeGold });
   g.visible = true;
   if (texture) {
     applyPanelSprite(layers.dialoguePortrait, texture, layout.portraitX, layout.portraitY, layout.portraitSize);
@@ -1972,11 +2039,7 @@ export function drawPauseOverlay(layers: RenderLayers): void {
   const g = layers.dialogueBg;
   const pauseHeight = DIALOGUE_LAYOUT_LIMITS.minHeight + 28;
   const pauseY = DIALOGUE_LAYOUT_LIMITS.bottom - pauseHeight;
-  g.clear()
-    .roundRect(DIALOGUE_LAYOUT_LIMITS.x, pauseY, DIALOGUE_LAYOUT_LIMITS.width, pauseHeight, DIALOGUE_LAYOUT_LIMITS.radius)
-    .fill({ color: 0x12121c, alpha: 0.86 })
-    .roundRect(DIALOGUE_LAYOUT_LIMITS.x, pauseY, DIALOGUE_LAYOUT_LIMITS.width, pauseHeight, DIALOGUE_LAYOUT_LIMITS.radius)
-    .stroke({ width: 1.5, color: 0x5a6a8a });
+  g.clear().roundRect(DIALOGUE_LAYOUT_LIMITS.x, pauseY, DIALOGUE_LAYOUT_LIMITS.width, pauseHeight, DIALOGUE_LAYOUT_LIMITS.radius).fill({ color: ColorPalette.inkPanel, alpha: 0.86 }).roundRect(DIALOGUE_LAYOUT_LIMITS.x, pauseY, DIALOGUE_LAYOUT_LIMITS.width, pauseHeight, DIALOGUE_LAYOUT_LIMITS.radius).stroke({ width: 1.5, color: ColorPalette.mountainHighlight });
   g.visible = true;
   layers.dialoguePortrait.visible = false;
   layers.dialogue.x = DIALOGUE_LAYOUT_LIMITS.x + DIALOGUE_LAYOUT_LIMITS.paddingX;

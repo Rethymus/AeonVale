@@ -4,6 +4,8 @@
  * T5：玩家可读色相（暖袍/肤色条带），避免纯黑剪影。
  */
 
+import { ColorPalette } from './ColorPalette';
+
 export type Facing4 = 'up' | 'down' | 'left' | 'right';
 
 /** left 镜像 scale.x = -1，其余 1。 */
@@ -62,8 +64,8 @@ export function shouldDrawQiSparkles(qiDensityMilli: number, tilled: boolean): b
  * 纹理若为纯黑则 tint 无效，需配合 spriteAlpha + underlay 条带。
  */
 export function ensureReadablePlayerTint(): number {
-  // 暖宣纸/肤色提亮，避免 0xffffff 冷白与 0x000000 纯黑
-  return 0xffd2b0;
+  // 暖宣纸/肤色提亮，避免冷白与纯黑剪影。
+  return ColorPalette.playerWarm;
 }
 
 export type PresenceBandKind = 'robe' | 'head' | 'sash' | 'highlight';
@@ -120,7 +122,7 @@ export function playerPresenceOverlay(facing: Facing4): PlayerPresenceOverlay {
       // 下层：暖底，透过半透明剪影读出服色分区
       {
         kind: 'robe',
-        color: 0xc46a3a,
+        color: ColorPalette.playerSash,
         alpha: 0.94,
         ox: shift.x * 0.4,
         oy: 6 + shift.y * 0.3,
@@ -130,7 +132,7 @@ export function playerPresenceOverlay(facing: Facing4): PlayerPresenceOverlay {
       },
       {
         kind: 'head',
-        color: 0xe8c4a0,
+        color: ColorPalette.playerSkinLight,
         alpha: 0.96,
         ox: shift.x * 0.5,
         oy: -5 + shift.y * 0.4,
@@ -141,7 +143,7 @@ export function playerPresenceOverlay(facing: Facing4): PlayerPresenceOverlay {
       // 上层：半透明朱砂/肤色/鎏金，强化分区与仙侠暖调
       {
         kind: 'robe',
-        color: 0xb5482f,
+        color: ColorPalette.danger,
         alpha: 0.36,
         ox: shift.x * 0.5,
         oy: 6,
@@ -151,7 +153,7 @@ export function playerPresenceOverlay(facing: Facing4): PlayerPresenceOverlay {
       },
       {
         kind: 'head',
-        color: 0xf0d0b0,
+        color: ColorPalette.playerSkin,
         alpha: 0.32,
         ox: shift.x * 0.6,
         oy: -5,
@@ -161,7 +163,7 @@ export function playerPresenceOverlay(facing: Facing4): PlayerPresenceOverlay {
       },
       {
         kind: 'sash',
-        color: 0xc9a14a,
+        color: ColorPalette.playerGilt,
         alpha: 0.4,
         ox: 0,
         oy: 9,
@@ -171,7 +173,7 @@ export function playerPresenceOverlay(facing: Facing4): PlayerPresenceOverlay {
       },
       {
         kind: 'highlight',
-        color: 0xffe8c8,
+        color: ColorPalette.playerHighlight,
         alpha: 0.28,
         ox: shift.x * 1.2 - 2,
         oy: -6,

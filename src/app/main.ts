@@ -4,7 +4,7 @@
  * 启动：pnpm dev（当前以浏览器作为开发/测试/作品展示入口；游戏核心仍按离线单机、多端适配方向推进）。全程中文 UI（C8）。
  */
 import { Application, Assets, Texture } from 'pixi.js';
-import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, getPublicDemoObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
+import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, getPublicDemoObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, readyToInvokeTribulation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
 import { saveGame, deserializeState } from '@sim/serialize';
 import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { t } from '@content/i18n';
@@ -42,6 +42,9 @@ import { arrayPlacementToastPresentation, cultivationPanelToastPresentation, der
 import { bodyTrainingToastPresentation, brewMaterialFailureToastPresentation, facilityCollectFailureToastPresentation, facilityCollectResultToast, facilityCollectResultToastPresentation, facilityFailureToastPresentation, facilityJobStartToast, facilityJobStartToastPresentation, facilityStatusToastPresentation, firstHarvestMilestoneToast, firstHarvestMilestoneToastPresentation, firstShipmentMilestoneToast, firstShipmentMilestoneToastPresentation, guardBeastFeedFailureToastPresentation, guardBeastFeedResultToastPresentation, pillUseToastPresentation, shippingFailureToastPresentation, shippingResultToast, shippingResultToastPresentation, storageFailureToastPresentation, storageResultToast, storageResultToastPresentation } from './actionResultToast';
 import { toolFeedbackToastPresentation } from './toolFeedback';
 import { buildTodayBriefing } from './todayBriefing';
+import { harvestFeedbackPresentation } from './harvestFeedback';
+import { tribulationPressurePresentation } from './tribulationPressurePresentation';
+import { tribulationPrepStatusLine } from './tribulationPrepText';
 import { ambientPanelPreview } from './ambientPanelPreview';
 import { locationPreviewFocusReason } from './locationFocusReason';
 import { farmsteadRootContextAssetId, getFarmsteadFocus } from './farmsteadFocus';
@@ -66,8 +69,30 @@ import { buildPublicDemoAftermathView, buildPublicDemoAlchemyView, buildPublicDe
 import { deriveSemanticGameState, interactionPanelSemanticLabel, type SemanticWorldAttention } from './semanticGameState';
 import { decodeStoredSave, deriveSaveHealthPresentation, saveHealthAfterClear, saveHealthAfterLoad, saveHealthAfterWrite, type SaveHealth } from './saveHealth';
 import { DEFAULT_RUNTIME_SETTINGS, RUNTIME_SETTINGS_STORAGE_KEY, decodeRuntimeSettings, runtimeSettingsPersistenceText, serializeRuntimeSettings, type RuntimeSettings } from './runtimeSettings';
+import { applyColorPaletteCssVariables, ColorPalette, cssColor } from '@render/ColorPalette';
+
+applyColorPaletteCssVariables(document.documentElement);
+document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', cssColor('shellPine'));
 
 type DirectFarmActionKind = Exclude<FarmActionFeedbackKind, 'sow' | 'fertilize'>;
+
+interface TerrainSemanticsKeypoint {
+  tillableX: number;
+  tillableY: number;
+  plantableX: number;
+  plantableY: number;
+  blockedX: number;
+  blockedY: number;
+  selectedX: number;
+  selectedY: number;
+}
+
+interface QiFlowKeypoint {
+  lowX: number;
+  lowY: number;
+  highX: number;
+  highY: number;
+}
 
 const RENDER_ASSET_LOAD_TIMEOUT_MS = 8_000;
 
@@ -153,6 +178,7 @@ async function main(): Promise<void> {
   let requestRender: (() => void) | null = null;
   let renderScheduler: RenderScheduler | null = null;
   let publicDemoPanels: PublicDemoPanelsController | null = null;
+  let playwrightAmbientTimeMs: number | null = null;
 
   const loadSave = (): { readonly state: GameState | null; readonly health: SaveHealth } => {
     let raw: string | null;
@@ -225,7 +251,7 @@ async function main(): Promise<void> {
   await app.init({
     width: 960,
     height: 540,
-    background: 0x10101a,
+    background: ColorPalette.canvas,
     antialias: false,
     roundPixels: true,
     preserveDrawingBuffer: import.meta.env.VITE_PRESERVE_DRAWING_BUFFER === 'true'
@@ -305,6 +331,7 @@ async function main(): Promise<void> {
   function updateRuntimeSettingsUi(): void {
     audio.setMasterVolume(runtimeSettings.masterVolume);
     document.documentElement.dataset.reducedMotion = String(runtimeSettings.reducedMotion);
+    layers.reducedMotion = runtimeSettings.reducedMotion;
 
     const volume = document.querySelector<HTMLInputElement>('#flow-settings-master-volume');
     const output = document.querySelector<HTMLOutputElement>('#flow-settings-volume-output');
@@ -525,7 +552,7 @@ async function main(): Promise<void> {
   }
 
   function spawnFarmActionBurst(kind: FarmActionFeedbackKind, affectedTiles: ReadonlyArray<{ x: number; y: number }>): void {
-    const style = kind === 'till' ? { color: 0xd8b070, count: 8, speed: 2.1, label: '翻地', labelColor: 0xd8b070 } : kind === 'water' ? { color: 0x7ec8ff, count: 8, speed: 2.4, label: '浇水', labelColor: 0x9ed8ff } : kind === 'harvest' ? { color: 0xffe066, count: 12, speed: 2.8, label: '收获', labelColor: 0xffe066 } : { color: 0x66ddff, count: 10, speed: 2.6, label: '供灵', labelColor: 0x88eeff };
+    const style = kind === 'till' ? { color: ColorPalette.soilHighlight, count: 8, speed: 2.1, label: '翻地', labelColor: ColorPalette.soilHighlight } : kind === 'water' ? { color: ColorPalette.waterBlue, count: 8, speed: 2.4, label: '浇水', labelColor: ColorPalette.waterText } : kind === 'harvest' ? { color: ColorPalette.giltBright, count: 12, speed: 2.8, label: '收获', labelColor: ColorPalette.giltBright } : { color: ColorPalette.qiBright, count: 10, speed: 2.6, label: '供灵', labelColor: ColorPalette.qiText };
     for (const tile of affectedTiles) {
       const point = screenPointForTile(tile.x, tile.y);
       spawnBurst(layers, point.x, point.y, style.count, style.color, style.speed);
@@ -541,6 +568,10 @@ async function main(): Promise<void> {
     const before = snapshotFarmTiles(state);
     const eventStart = state.events.length;
     const objectiveBefore = getPublicDemoObjectiveId(state);
+    const harvestTile = kind === 'harvest' ? tileAt(state, at.x, at.y) : null;
+    const harvestDefId = harvestTile?.cropId != null ? (state.crops.get(harvestTile.cropId)?.defId ?? state.crops.get(harvestTile.id)?.defId) : undefined;
+    const harvestYieldItem = harvestDefId ? reg.herbs.get(harvestDefId)?.yield[0]?.itemId : undefined;
+    const harvestCountBefore = harvestYieldItem ? itemCount(state.player, harvestYieldItem) : 0;
     applyAction(state, { kind, at }, ctx);
     const outcome = deriveFarmActionOutcome(kind, before, snapshotFarmTiles(state));
     const actionEvents = state.events.slice(eventStart);
@@ -557,6 +588,14 @@ async function main(): Promise<void> {
     else if (kind === 'water') audio.playSfx('water'); // G4: 浇水音效
     if (kind === 'harvest') {
       audio.playSfx('harvest');
+      if (harvestDefId && harvestYieldItem) {
+        const harvested = Math.max(0, itemCount(state.player, harvestYieldItem) - harvestCountBefore);
+        if (harvested > 0) {
+          const feedback = harvestFeedbackPresentation(harvestDefId, harvested, reg);
+          const feedbackPoint = screenPointForTile(at.x, at.y);
+          spawnFloatText(layers, feedbackPoint.x, feedbackPoint.y - 26, feedback.message, ColorPalette.giltBright);
+        }
+      }
       const objectiveAfter = getPublicDemoObjectiveId(state);
       if (objectiveBefore === 'first-harvest' && objectiveAfter === 'journey-alchemy') {
         const milestoneToast = firstHarvestMilestoneToastPresentation(actionEvents, reg, '下一步：打开丹炉，把教学药包炼成首枚避雷丹。');
@@ -690,6 +729,26 @@ async function main(): Promise<void> {
     if (commandBar) commandBar.hidden = !worldHudVisible;
     const objectiveRail = document.querySelector<HTMLElement>('#objective-rail');
     if (objectiveRail) objectiveRail.hidden = !worldHudVisible;
+    if (worldHudVisible) {
+      const pressureCard = document.querySelector<HTMLElement>('#pressure-card');
+      const pressureTrib = document.querySelector<HTMLElement>('#pressure-tribulation');
+      const pressureLife = document.querySelector<HTMLElement>('#pressure-lifespan');
+      const pressurePrep = document.querySelector<HTMLElement>('#pressure-prep');
+      if (pressureCard && pressureTrib && pressureLife && pressurePrep) {
+        const pressure = tribulationPressurePresentation({
+          status: state.tribulation.status,
+          daysRemaining: state.tribulation.daysRemaining,
+          lifespanRemainingDays: state.player.lifespanRemainingDays,
+          readyToInvoke: readyToInvokeTribulation(state, ctx.params),
+          frozen: state.postAscension.mode === 'stayed-in-world',
+          prepLine: tribulationPrepStatusLine(state)
+        });
+        if (pressureTrib.textContent !== pressure.tribulationRow) pressureTrib.textContent = pressure.tribulationRow;
+        if (pressureLife.textContent !== pressure.lifespanRow) pressureLife.textContent = pressure.lifespanRow;
+        if (pressurePrep.textContent !== pressure.prepRow) pressurePrep.textContent = pressure.prepRow;
+        if (pressureCard.dataset.pressureDanger !== pressure.danger) pressureCard.dataset.pressureDanger = pressure.danger;
+      }
+    }
 
     const semanticWorldActive = presentation?.surface === 'world';
     const semanticJourney = semanticWorldActive && presentation.mode === 'world' ? buildJourneyGuide(getPublicDemoObjectiveId(state), journeyGuideContextFromState(state)) : undefined;
@@ -770,6 +829,7 @@ async function main(): Promise<void> {
         frontTileWateredToday: boolean;
         frontTileMoisture: number;
         onboardingObjectiveId: string | null;
+        farmOnboardingObjectiveId: string | null;
         helpText: string;
         renderedHelpText: string;
         dialogueBackdropVisible: boolean;
@@ -790,6 +850,8 @@ async function main(): Promise<void> {
       };
       __AEON_TEST__?: {
         configureSowKeypoint: () => boolean;
+        configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
+        configureQiFlowKeypoint: () => QiFlowKeypoint | null;
         matureFrontCrop: () => boolean;
         waterFrontCrop: () => boolean;
         buyMosslingSeed: () => boolean;
@@ -888,6 +950,7 @@ async function main(): Promise<void> {
       frontTileWateredToday: front?.wateredToday ?? false,
       frontTileMoisture: front?.moisture ?? 0,
       onboardingObjectiveId: getPublicDemoObjectiveId(state),
+      farmOnboardingObjectiveId: getOnboardingObjectiveId(state),
       helpText,
       renderedHelpText: String(layers.help.text),
       dialogueBackdropVisible: layers.dialogueBg.visible,
@@ -925,6 +988,8 @@ async function main(): Promise<void> {
     const target = window as typeof window & {
       __AEON_TEST__?: {
         configureSowKeypoint: () => boolean;
+        configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
+        configureQiFlowKeypoint: () => QiFlowKeypoint | null;
         matureFrontCrop: () => boolean;
         waterFrontCrop: () => boolean;
         buyMosslingSeed: () => boolean;
@@ -963,6 +1028,77 @@ async function main(): Promise<void> {
         saveState(state);
         refreshAppPresentation();
         return getPublicDemoObjectiveId(state) === 'first-sow' && tileAt(state, targetTile.x, targetTile.y)?.cropId == null;
+      },
+      configureTerrainSemanticsKeypoint: () => {
+        if (!target.__AEON_TEST__?.configureSowKeypoint()) return null;
+        const tillable = tileAt(state, 4, 6);
+        const plantable = tileAt(state, 5, 6);
+        const blocked = tileAt(state, 6, 6);
+        const selected = tileAt(state, 7, 6);
+        if (!tillable || !plantable || !blocked || !selected) return null;
+
+        for (const tile of state.tiles) {
+          if (tile.blockType === 'none' && tile.soilType !== 'water' && tile.soilType !== 'rock' && tile.soilType !== 'metal-ore') tile.qiDensity = 10_000;
+        }
+        for (const tile of [tillable, plantable, blocked, selected]) {
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.soilType = 'loam';
+          tile.blockType = 'none';
+          tile.tilled = false;
+          tile.cropId = null;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+          tile.moisture = 0;
+          tile.qiDensity = 10_000;
+          tile.arrayId = null;
+        }
+        plantable.tilled = true;
+        blocked.soilType = 'rock';
+        state.player.position = { x: selected.x, y: selected.y - 1 };
+        state.player.facing = 'down';
+        playwrightAmbientTimeMs = 900;
+        saveState(state);
+        refreshAppPresentation();
+        return {
+          tillableX: tillable.x,
+          tillableY: tillable.y,
+          plantableX: plantable.x,
+          plantableY: plantable.y,
+          blockedX: blocked.x,
+          blockedY: blocked.y,
+          selectedX: selected.x,
+          selectedY: selected.y
+        };
+      },
+      configureQiFlowKeypoint: () => {
+        if (!target.__AEON_TEST__?.configureSowKeypoint()) return null;
+        const low = tileAt(state, 5, 6);
+        const high = tileAt(state, 6, 6);
+        if (!low || !high) return null;
+
+        for (const tile of state.tiles) {
+          if (tile.blockType === 'none' && tile.soilType !== 'water' && tile.soilType !== 'rock' && tile.soilType !== 'metal-ore') tile.qiDensity = 10_000;
+        }
+        for (const tile of [low, high]) {
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.soilType = 'loam';
+          tile.blockType = 'none';
+          tile.tilled = true;
+          tile.cropId = null;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+          tile.arrayId = null;
+        }
+        low.qiDensity = 30_000;
+        high.qiDensity = 100_000;
+        state.player.position = { x: 0, y: 0 };
+        state.player.facing = 'up';
+        playwrightAmbientTimeMs = null;
+        saveState(state);
+        refreshAppPresentation();
+        return { lowX: low.x, lowY: low.y, highX: high.x, highY: high.y };
       },
       matureFrontCrop: () => {
         const ft = frontTile();
@@ -1272,8 +1408,8 @@ async function main(): Promise<void> {
     audio.playSfx('sow'); // G4: 播种音效
     for (const tile of outcome.affectedTiles) {
       const point = screenPointForTile(tile.x, tile.y);
-      spawnBurst(layers, point.x, point.y, 8, 0xa8d070, 2.0);
-      spawnFloatText(layers, point.x, point.y - 8, '播种', 0xc8e890);
+      spawnBurst(layers, point.x, point.y, 8, ColorPalette.sowBurst, 2.0);
+      spawnFloatText(layers, point.x, point.y - 8, '播种', ColorPalette.sowText);
     }
     triggerShake(layers, 6, 1.3);
 
@@ -3184,7 +3320,7 @@ async function main(): Promise<void> {
     const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
     // 正式劫暂无逐雷落点 UI：屏幕中心一道招牌电光 + 粒子（与教学同语言）
     triggerTribBolt(layers, { x: app.screen.width / 2, y: app.screen.height * 0.42 }, 34);
-    spawnBurst(layers, app.screen.width / 2, app.screen.height / 2, 45, 0xffe066); // 天劫金芒迸发（T9）
+    spawnBurst(layers, app.screen.width / 2, app.screen.height / 2, 45, ColorPalette.giltBright); // 天劫金芒迸发（T9）
     audio.playSfx('tribulation');
     const br = breakthrough(state, ctx, res.survived);
     checkGameEnd(state, ctx);
@@ -3230,8 +3366,8 @@ async function main(): Promise<void> {
     const heat = furnaceHeat * 1000; // 玩家自控炉温（火候解谜）
     const res = brewPills(state, { materials: r.inputs.map(i => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: heat }, ctx);
     audio.playSfx(res.outcome === 'exploded' ? 'explosion' : 'brew');
-    if (res.outcome === 'exploded') spawnBurst(layers, 480, 240, 36, 0xff5a3a);
-    else if (res.outcome === 'pill') spawnBurst(layers, 480, 240, 18, 0x7ac050); // 成丹绿芒（T9）
+    if (res.outcome === 'exploded') spawnBurst(layers, 480, 240, 36, ColorPalette.dangerOrange);
+    else if (res.outcome === 'pill') spawnBurst(layers, 480, 240, 18, ColorPalette.mossBright); // 成丹绿芒（T9）
     const presentation = brewResultToastPresentation(res.outcome, { name, furnaceHeat });
     toast(presentation.message, presentation.assetId);
   }
@@ -3685,8 +3821,8 @@ async function main(): Promise<void> {
           if (tile) triggerTribBolt(layers, screenPointForTile(tile.x, tile.y), action.perfectBlock ? 32 : 26);
           else triggerTribFlash(layers);
           const impact = tile ? screenPointForTile(tile.x, tile.y) : { x: app.screen.width / 2, y: app.screen.height / 2 };
-          spawnBurst(layers, impact.x, impact.y, action.perfectBlock ? 28 : 16, action.perfectBlock ? 0xc8b0ff : 0xffe066);
-          spawnFloatText(layers, impact.x, impact.y - 12, action.perfectBlock ? '完美擦弹' : '劫雷', action.perfectBlock ? 0xe0d0ff : 0xffe066);
+          spawnBurst(layers, impact.x, impact.y, action.perfectBlock ? 28 : 16, action.perfectBlock ? ColorPalette.purpleAction : ColorPalette.giltBright);
+          spawnFloatText(layers, impact.x, impact.y - 12, action.perfectBlock ? '完美擦弹' : '劫雷', action.perfectBlock ? ColorPalette.purpleText : ColorPalette.giltBright);
         }
         if (state.tutorialTribulation.phase === 'aftermath') flowView?.dispatch({ type: 'finish-tribulation' });
         break;
@@ -4555,7 +4691,7 @@ async function main(): Promise<void> {
 
   function renderFrame(timestamp: number): void {
     const worldSurfaceActive = flowAllowsWorldInput();
-    layers.ambientTimeMs = worldSurfaceActive ? timestamp : 0;
+    layers.ambientTimeMs = worldSurfaceActive ? (playwrightAmbientTimeMs ?? timestamp) : 0;
     drawWorld(layers, state, reg, ctx, renderAssets);
     const hotbarSlot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
     drawHotbarIcon(layers, renderAssets.hotbarIcons[hotbarSlotAssetId(hotbarSlot) ?? '']);

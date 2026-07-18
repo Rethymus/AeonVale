@@ -6,7 +6,7 @@
     <link rel="icon" type="image/png" sizes="64x64" href="./logo/favicon-64.png" />
     <link rel="apple-touch-icon" href="./logo/favicon-64.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#173c32" />
+    <meta name="theme-color" content="" />
     <title>永恒山谷：大道之歌 · Aeon Vale</title>
     <link rel="stylesheet" href="./src/app/app.css" />
   </head>
@@ -14,6 +14,11 @@
     <main id="game-shell">
       <div id="app" data-app-surface="world" tabindex="-1" aria-label="永恒山谷游戏画面" aria-describedby="game-instructions" aria-hidden="true" hidden inert>
         <aside id="objective-rail" class="objective-rail" data-hud-density="compact" aria-label="当前旅程目标" hidden>
+          <div id="pressure-card" class="pressure-card" data-pressure-danger="calm">
+            <p id="pressure-tribulation" class="pressure-row pressure-tribulation">劫势未成</p>
+            <p id="pressure-lifespan" class="pressure-row pressure-lifespan">距大限：——</p>
+            <p id="pressure-prep" class="pressure-row pressure-prep"></p>
+          </div>
           <p id="objective-rail-progress" class="objective-rail-progress">旅程进度将在载入后显示</p>
           <p id="objective-rail-primary" class="objective-rail-primary">当前目标将在载入后显示</p>
           <details id="objective-rail-details" class="objective-rail-details" data-hud-secondary="true">

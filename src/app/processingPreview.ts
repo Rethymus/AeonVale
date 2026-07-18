@@ -2,6 +2,7 @@ import type { ContentRegistry } from '@content/defs';
 import type { CropQuality } from '@sim/farm/quality';
 import { FACILITY_RECIPES } from '@sim';
 import { itemIconAssetId } from './itemIcons';
+import { brewFailurePresentation } from './brewFailurePresentation';
 
 export interface ProcessingPanelPreview {
   title: string;
@@ -130,28 +131,17 @@ export function processingRecipeUnavailableToastPresentation(mode: 'furnace'): P
 }
 
 export function brewResultToastPresentation(outcome: 'pill' | 'exploded' | 'flawed' | 'waste', options: { name: string; furnaceHeat: number }): ProcessingToastPresentation {
-  switch (outcome) {
-    case 'pill':
-      return {
-        message: `炼成 ${options.name}（炉温${options.furnaceHeat}）｜可服用备劫或稳住修行`,
-        assetId: 'facility.talisman-furnace'
-      };
-    case 'exploded':
-      return {
-        message: '炸炉！丹毒反噬，先调火候再耗药材',
-        assetId: 'facility.talisman-furnace'
-      };
-    case 'flawed':
-      return {
-        message: '残丹：炉温偏离，药力不足以稳妥备劫',
-        assetId: 'facility.talisman-furnace'
-      };
-    case 'waste':
-      return {
-        message: '废丹：火候不当，材料已损耗',
-        assetId: 'facility.talisman-furnace'
-      };
+  if (outcome === 'pill') {
+    return {
+      message: `炼成 ${options.name}（炉温${options.furnaceHeat}）｜可服用备劫或稳住修行`,
+      assetId: 'facility.talisman-furnace'
+    };
   }
+  const failure = brewFailurePresentation({ outcome });
+  return {
+    message: `${failure.title}｜${failure.message}（炉温${options.furnaceHeat}）｜${failure.hint}`,
+    assetId: 'facility.talisman-furnace'
+  };
 }
 
 export function furnaceRecipeToastPresentation(recipeName: string): ProcessingToastPresentation {
