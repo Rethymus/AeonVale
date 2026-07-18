@@ -1,11 +1,32 @@
 import { describe, expect, it } from 'vitest';
+import type { Graphics } from 'pixi.js';
 import {
   WORLD_DECOR_HARD_CAP,
   WORLD_DECOR_MAX_DENSITY,
+  paintWorldDecor,
   worldDecorPlacements,
   worldDecorSeed,
+  type WorldDecorKind,
+  type WorldDecorPlacement,
   type WorldDecorTileView
 } from '@render/worldDecor';
+
+describe('paintWorldDecor · 常驻微动 (tMs)', () => {
+  // 链式 no-op Graphics 替身：任意方法调用回自身（roundRect().fill() 等链式不报错）
+  function fakeGraphics(): Graphics {
+    const g = new Proxy({} as Record<string, (...a: unknown[]) => unknown>, { get: () => () => g });
+    return g as unknown as Graphics;
+  }
+  const kinds: WorldDecorKind[] = ['path-stone', 'grass-tuft', 'pebble', 'mist-band', 'fence-post'];
+
+  it('每种装饰在静态(tMs=0)与微动(tMs>0)时钟下均不抛', () => {
+    for (const kind of kinds) {
+      const placement: WorldDecorPlacement = { kind, x: 1, y: 1, ox: 0.5, oy: 0.5, variant: 0 };
+      expect(() => paintWorldDecor(fakeGraphics(), placement, 0, 0, 32)).not.toThrow();
+      expect(() => paintWorldDecor(fakeGraphics(), placement, 0, 0, 32, 12345)).not.toThrow();
+    }
+  });
+});
 
 function makeTile(overrides: Partial<WorldDecorTileView> & Pick<WorldDecorTileView, 'id' | 'x' | 'y'>): WorldDecorTileView {
   return {

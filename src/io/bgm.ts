@@ -174,6 +174,18 @@ export class GenerativeBgm {
 
     window.setTimeout(() => {
       this.disposeVoices();
+      const transport = this.transport(tone);
+      try {
+        // 重建前重置 transport 时间线：循环 Part 用 part.start(0) 排程，若 transport
+        // 已连续运行很久（本作每帧 setMusicContext、transport 从不重置），新 Part 会
+        // 从过去时刻追赶，一次性触发整段历史的循环事件，撑爆 lead/pad 多音色，
+        // 造成控制台刷爆「Max polyphony exceeded. Note dropped」并使 BGM 掉音。
+        // stop()+start() 把 position 归零，让新 Part 从当下起播，杜绝追赶爆发。
+        transport.stop();
+        transport.start();
+      } catch {
+        /* 无 Tone 或 transport 不可控时忽略，退回原行为 */
+      }
       this.voices = this.buildVoices(tone, phrase);
       const target = (this.masterVolume / 100) * 0.5;
       const t2 = tone.now();
