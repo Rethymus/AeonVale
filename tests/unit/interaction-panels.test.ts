@@ -44,7 +44,7 @@ describe('交互面板状态工具', () => {
     expect(FARM_ACTION_ORDER).toEqual(['build', 'facility-collect', 'storage-deposit', 'storage-withdraw', 'processing-drying', 'processing-sealing', 'processing-furnace', 'shipping-normal', 'shipping-quality', 'upgrade']);
     expect(farmActionLabel('build')).toBe('建造');
     expect(farmActionLabel('facility-collect')).toBe('设施收取');
-    expect(farmActionLabel('upgrade')).toBe('升级');
+    expect(farmActionLabel('upgrade')).toBe('扩建');
   });
 
   it('农庄操作面板支持数字键直选稳定映射', () => {

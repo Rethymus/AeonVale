@@ -55,6 +55,6 @@ export function farmActionLabel(kind: FarmActionKind): string {
     case 'shipping-quality':
       return '品质出货';
     case 'upgrade':
-      return '升级';
+      return '扩建';
   }
 }

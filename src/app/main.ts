@@ -1765,7 +1765,7 @@ async function main(): Promise<void> {
     interactionPanel = { kind: 'upgrade' };
     facilityBuildIdx = normalizeSelection(facilityBuildIdx, upgrades.length);
     const upgrade = upgrades[facilityBuildIdx]!;
-    const presentation = upgradeToastPresentation(upgrade, selectionLabel(facilityBuildIdx, upgrades.length), confirmHint('升级'), reg);
+    const presentation = upgradeToastPresentation(upgrade, selectionLabel(facilityBuildIdx, upgrades.length), confirmHint('扩建'), reg);
     toast(presentation.message, presentation.assetId);
   }
 
