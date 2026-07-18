@@ -13,6 +13,7 @@ import { itemCount } from '@sim/world/player';
 import { createLayers, drawWorld, setToast, setHotbar, setTextIfChanged, triggerTribFlash, triggerTribBolt, triggerShake, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, spawnBurst, spawnFloatText, updateParticles, updateFloatTexts, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, drawTodayBriefing, hideTodayBriefing, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
 import { GUARD_BEAST_ASSET_IDS } from '@render/guardBeastPreview';
 import { nextPendingBeat, markSeen, type NarrativeBeat } from '@content/narrative';
+import { createTitleAmbience } from './titleAmbience';
 import { createFurnaceLayer, drawFurnace } from '@render/furnacePanel';
 import { createRenderScheduler, type RenderScheduler } from '@render/renderScheduler';
 import { computeViewportLayout } from '@render/viewportLayout';
@@ -907,8 +908,15 @@ async function main(): Promise<void> {
     };
   }
 
+  const titleAmbience = createTitleAmbience({
+    requestFrame: callback => window.requestAnimationFrame(callback),
+    cancelFrame: handle => window.cancelAnimationFrame(handle as number),
+    resolveTarget: () => document.querySelector<HTMLElement>('.flow-title-mark img')
+  });
+
   function refreshAppPresentation(): void {
     syncAppPresentation();
+    titleAmbience.setActive((flowView?.getPresentation().surface ?? null) === 'title');
     publishDebugSnapshot();
   }
 
