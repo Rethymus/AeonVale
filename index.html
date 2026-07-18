@@ -14,10 +14,16 @@
     <main id="game-shell">
       <div id="app" data-app-surface="world" tabindex="-1" aria-label="永恒山谷游戏画面" aria-describedby="game-instructions" aria-hidden="true" hidden inert>
         <aside id="objective-rail" class="objective-rail" data-hud-density="compact" aria-label="当前旅程目标" hidden>
-          <div id="pressure-card" class="pressure-card" data-pressure-danger="calm">
+          <div id="pressure-card" class="pressure-card fate-card" data-pressure-danger="calm">
             <p id="pressure-tribulation" class="pressure-row pressure-tribulation">劫势未成</p>
             <p id="pressure-lifespan" class="pressure-row pressure-lifespan">距大限：——</p>
             <p id="pressure-prep" class="pressure-row pressure-prep"></p>
+          </div>
+          <div id="celestial-compass" class="celestial-compass fate-card" data-compass-tone="calm" aria-label="天象因果链罗盘">
+            <p id="celestial-compass-title" class="celestial-compass-title">天象罗盘</p>
+            <p id="celestial-compass-primary" class="celestial-compass-primary">天象平稳</p>
+            <p id="celestial-compass-causal" class="celestial-compass-causal">因果：无大势压境</p>
+            <p id="celestial-compass-upcoming" class="celestial-compass-upcoming">后兆：七日内无定期节令</p>
           </div>
           <p id="objective-rail-progress" class="objective-rail-progress">旅程进度将在载入后显示</p>
           <p id="objective-rail-primary" class="objective-rail-primary">当前目标将在载入后显示</p>
