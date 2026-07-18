@@ -35,6 +35,7 @@ content/saves/*.json
 # Local reports and browser artifacts
 playwright-report/
 test-results/
+dogfood-output/
 *.tsbuildinfo
 .tmp.playwright-*.config.ts
 
