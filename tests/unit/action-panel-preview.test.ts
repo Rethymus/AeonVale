@@ -93,7 +93,7 @@ describe('action panel preview', () => {
     expect(farmActionMenuPreview('upgrade', state, ctx).assetId).toBe('loc.herb-plot');
 
     expect(farmActionMenuToastPresentation('upgrade', '（8/10）', '空格/E/回车进入·Esc返回', state, ctx)).toEqual({
-      message: '农庄操作（8/10）：升级｜数字1-0直达·Tab切换·空格/E/回车进入·Esc返回',
+      message: '农庄操作（8/10）：扩建｜数字1-0直达·Tab切换·空格/E/回车进入·Esc返回',
       assetId: 'loc.herb-plot'
     });
   });
