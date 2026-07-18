@@ -65,6 +65,16 @@ export const NARRATIVE_BEATS: readonly NarrativeBeat[] = [
     lines: ['劫雷淬体——剧痛之后，凡骨里多了一丝天雷的余韵。', '「原来这就是偷天。它劈我，我吃它——亏的是血，赚的是命。」']
   },
   {
+    id: 'shennong-plaque',
+    trigger: s => s.player.temperingStack > 0,
+    lines: ['淬体之后，你在田角翻出一截焦黑木牌，上刻古篆，半埋于土。', '「……神……农……遗……泽……」——字迹被雷火舔过，只剩残痕。', '村中老人说，这谷里百万年前住过一个不愿留名的怪人，后来不知所踪。']
+  },
+  {
+    id: 'shennong-art-truth',
+    trigger: s => s.player.stage >= 2,
+    lines: ['《偷天换劫诀》残卷第二页，字迹随你修为渐显：', '「此诀非灵修所创。传自上古一具修——以凡骨承天雷，非灵根之途。」', '你盯着那块焦黑木牌，忽然想起：改良灵米、教人辟田的，不正是那位「神农」？', '——莫非，这卷残诀，也是他留下的？']
+  },
+  {
     id: 'qi-tide',
     trigger: s => activeEventIs(s, 'event.qi-tide'),
     lines: ['灵气潮汐降临，远方大能突破的余波震荡天地，灵草疯长。', '但灵气也会引来不该来的东西——抢收，布防。']
