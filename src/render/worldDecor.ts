@@ -208,11 +208,15 @@ const C = {
 
 /**
  * 在给定瓦片像素原点绘制单件装饰（低 alpha，叠在地砖之上、实体之下）。
+ *
+ * `tMs` 为渲染时钟（毫秒），>0 时启用常驻微动（草摆 / 雾飘），让世界「会呼吸」；
+ * 每件装饰的相位由其坐标确定性派生（无 RNG），故同一帧同位置仍可复现。纯 render 层，不影响 sim。
  */
-export function paintWorldDecor(g: Graphics, placement: WorldDecorPlacement, tileOriginX: number, tileOriginY: number, tileSize: number): void {
+export function paintWorldDecor(g: Graphics, placement: WorldDecorPlacement, tileOriginX: number, tileOriginY: number, tileSize: number, tMs = 0): void {
   const px = tileOriginX + placement.ox * tileSize;
   const py = tileOriginY + placement.oy * tileSize;
   const s = tileSize;
+  const phase = tMs > 0 ? ((worldDecorSeed(placement.x, placement.y) % 1000) / 1000) * Math.PI * 2 : 0;
 
   switch (placement.kind) {
     case 'path-stone': {
@@ -225,7 +229,9 @@ export function paintWorldDecor(g: Graphics, placement: WorldDecorPlacement, til
       break;
     }
     case 'grass-tuft': {
-      const lean = placement.variant % 2 === 0 ? -1.2 : 1.2;
+      // 常驻微动：整簇随时间错相轻摆（位置确定性相位，无 RNG）
+      const sway = tMs > 0 ? Math.sin(tMs * 0.003 + phase) * 1.8 : 0;
+      const lean = (placement.variant % 2 === 0 ? -1.2 : 1.2) + sway;
       g.moveTo(px, py)
         .lineTo(px + lean, py - 5 - (placement.variant % 3))
         .stroke({ width: 1.2, color: C.leafdark, alpha: 0.42 });
@@ -244,11 +250,12 @@ export function paintWorldDecor(g: Graphics, placement: WorldDecorPlacement, til
       break;
     }
     case 'mist-band': {
-      // 远景雾带：横向柔条
+      // 远景雾带：横向柔条，随时间缓慢飘移（位置确定性相位）
       const bw = s * 0.85;
       const bh = 3 + (placement.variant % 2);
-      g.ellipse(tileOriginX + s / 2, py, bw / 2, bh).fill({ color: C.frost, alpha: 0.14 });
-      g.ellipse(tileOriginX + s / 2 + 4, py + 2, bw / 2.4, bh * 0.7).fill({ color: C.moonwhite, alpha: 0.08 });
+      const drift = tMs > 0 ? Math.sin(tMs * 0.0008 + phase) * 4 : 0;
+      g.ellipse(tileOriginX + s / 2 + drift, py, bw / 2, bh).fill({ color: C.frost, alpha: 0.14 });
+      g.ellipse(tileOriginX + s / 2 + 4 + drift, py + 2, bw / 2.4, bh * 0.7).fill({ color: C.moonwhite, alpha: 0.08 });
       break;
     }
     case 'fence-post': {
