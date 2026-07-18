@@ -105,22 +105,41 @@ button {
   font-weight: 700;
 }
 
-.pressure-card {
-  margin: 0 0 0.5rem;
-  padding: 0.35rem 0.5rem;
-  border: 1px solid var(--color-paperBorder);
+.fate-card {
+  margin: 0 0 4px;
+  padding: 6px 8px;
+  border: 1px solid rgb(var(--rgb-paperBorder) / 0.55);
   border-left-width: 3px;
-  border-radius: 2px;
-  background: var(--color-paperBright);
+  border-radius: 4px;
+  background: rgb(var(--rgb-inkPanel) / 0.88);
+  color: var(--color-paperBright);
 }
-.pressure-card .pressure-row { margin: 0; line-height: 1.3; }
-.pressure-card .pressure-tribulation { font-weight: 600; }
-.pressure-card .pressure-prep { margin-top: 0.25rem; opacity: 0.9; }
-.pressure-card[data-pressure-danger='warning'] { border-color: var(--color-giltUi); }
-.pressure-card[data-pressure-danger='warning'] .pressure-tribulation { color: var(--color-giltUi); }
-.pressure-card[data-pressure-danger='critical'] { border-color: var(--color-dangerUi); }
-.pressure-card[data-pressure-danger='critical'] .pressure-tribulation { color: var(--color-dangerUi); }
-.pressure-card[data-pressure-danger='terminal'] { border-color: var(--color-giltUi); }
+.pressure-card .pressure-row,
+.celestial-compass p { margin: 0; line-height: 1.22; }
+.pressure-card .pressure-tribulation,
+.celestial-compass-primary { font-weight: 600; }
+.pressure-card .pressure-prep,
+.celestial-compass-causal,
+.celestial-compass-upcoming { margin-top: 3px; opacity: 0.88; font-size: 11px; }
+.celestial-compass-title { color: var(--color-giltUi); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; }
+.celestial-compass-causal,
+.celestial-compass-upcoming {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.pressure-card[data-pressure-danger='warning'],
+.celestial-compass[data-compass-tone='warning'] { border-color: var(--color-giltUi); }
+.pressure-card[data-pressure-danger='warning'] .pressure-tribulation,
+.celestial-compass[data-compass-tone='warning'] .celestial-compass-primary { color: var(--color-giltUi); }
+.pressure-card[data-pressure-danger='critical'],
+.celestial-compass[data-compass-tone='critical'] { border-color: var(--color-dangerUi); }
+.pressure-card[data-pressure-danger='critical'] .pressure-tribulation,
+.celestial-compass[data-compass-tone='critical'] .celestial-compass-primary { color: var(--color-dangerUi); }
+.pressure-card[data-pressure-danger='terminal'],
+.celestial-compass[data-compass-tone='opportunity'] { border-color: var(--color-giltUi); }
+.celestial-compass[data-compass-tone='opportunity'] .celestial-compass-primary { color: var(--color-cssSurfaceBlueGreen); }
 
 .objective-rail-progress {
   margin: 0;

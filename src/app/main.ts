@@ -43,6 +43,7 @@ import { bodyTrainingToastPresentation, brewMaterialFailureToastPresentation, fa
 import { toolFeedbackToastPresentation } from './toolFeedback';
 import { buildTodayBriefing } from './todayBriefing';
 import { harvestFeedbackPresentation } from './harvestFeedback';
+import { celestialCompassPresentation } from './celestialCompassPresentation';
 import { tribulationPressurePresentation } from './tribulationPressurePresentation';
 import { tribulationPrepStatusLine } from './tribulationPrepText';
 import { ambientPanelPreview } from './ambientPanelPreview';
@@ -747,6 +748,43 @@ async function main(): Promise<void> {
         if (pressureLife.textContent !== pressure.lifespanRow) pressureLife.textContent = pressure.lifespanRow;
         if (pressurePrep.textContent !== pressure.prepRow) pressurePrep.textContent = pressure.prepRow;
         if (pressureCard.dataset.pressureDanger !== pressure.danger) pressureCard.dataset.pressureDanger = pressure.danger;
+      }
+      const compassCard = document.querySelector<HTMLElement>('#celestial-compass');
+      const compassTitle = document.querySelector<HTMLElement>('#celestial-compass-title');
+      const compassPrimary = document.querySelector<HTMLElement>('#celestial-compass-primary');
+      const compassCausal = document.querySelector<HTMLElement>('#celestial-compass-causal');
+      const compassUpcoming = document.querySelector<HTMLElement>('#celestial-compass-upcoming');
+      if (compassCard && compassTitle && compassPrimary && compassCausal && compassUpcoming) {
+        const eventDef = state.activeEvent ? ctx.content.events.get(state.activeEvent.defId) : undefined;
+        const upcoming = upcomingCalendarEntries(state, ctx, 7).find(entry => (entry.daysFromNow ?? 0) >= 0) ?? null;
+        const compass = celestialCompassPresentation({
+          activeEvent: state.activeEvent
+            ? {
+                id: state.activeEvent.defId,
+                displayName: state.activeEvent.displayName,
+                type: eventDef?.type,
+                daysLeft: state.activeEvent.daysLeft,
+                growthMod: state.activeEvent.growthMod,
+                qiMod: state.activeEvent.qiMod,
+                desc: eventDef?.desc
+              }
+            : null,
+          beastSurge: state.beastSurge,
+          upcoming: upcoming
+            ? {
+                id: upcoming.id,
+                title: upcoming.title,
+                kind: upcoming.kind,
+                daysFromNow: upcoming.daysFromNow,
+                description: upcoming.description
+              }
+            : null
+        });
+        if (compassTitle.textContent !== compass.title) compassTitle.textContent = compass.title;
+        if (compassPrimary.textContent !== compass.primary) compassPrimary.textContent = compass.primary;
+        if (compassCausal.textContent !== compass.causal) compassCausal.textContent = compass.causal;
+        if (compassUpcoming.textContent !== compass.upcoming) compassUpcoming.textContent = compass.upcoming;
+        if (compassCard.dataset.compassTone !== compass.tone) compassCard.dataset.compassTone = compass.tone;
       }
     }
 
