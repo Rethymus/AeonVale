@@ -25,7 +25,7 @@ export function buildResultToastPresentation(kind: FacilityKind, outcome: 'succe
 export function upgradeResultToastPresentation(upgrade: UpgradeDef, outcome: 'success' | 'failure', content: ContentRegistry, detail?: string): FacilityToastPresentation {
   const preview = upgradePanelPreview(upgrade, content);
   return {
-    message: outcome === 'success' ? `${upgrade.displayName}完成${detail ? `｜${detail}` : ''}` : `升级失败：${detail ?? upgrade.displayName}`,
+    message: outcome === 'success' ? `${upgrade.displayName}完成${detail ? `｜${detail}` : ''}` : `扩建未成：${detail ?? upgrade.displayName}`,
     assetId: preview.assetId
   };
 }
@@ -41,14 +41,14 @@ export function buildToastPresentation(kind: FacilityKind, indexLabel: string, c
 export function upgradeToastPresentation(upgrade: UpgradeDef, indexLabel: string, confirmHint: string, content: ContentRegistry): FacilityToastPresentation {
   const preview = upgradePanelPreview(upgrade, content);
   return {
-    message: `升级${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
+    message: `扩建${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
     assetId: preview.assetId
   };
 }
 
 export function upgradeUnavailableToastPresentation(assetIdOverride?: string): FacilityToastPresentation {
   return {
-    message: '暂无可升级建设',
+    message: '暂无可扩建设施',
     assetId: assetIdOverride ?? 'loc.farmstead'
   };
 }
@@ -126,7 +126,7 @@ export function buildPanelPreview(kind: FacilityKind, content: ContentRegistry):
 }
 
 export function upgradePanelPreview(upgrade: UpgradeDef, content: ContentRegistry): FacilityPanelPreview {
-  const lines = [`升级建设`, `材料：${upgradeCostLine(upgrade, content)}`, `效果：${upgradeEffectSummary(upgrade)}`];
+  const lines = [`扩建设施`, `材料：${upgradeCostLine(upgrade, content)}`, `效果：${upgradeEffectSummary(upgrade)}`];
 
   if (upgrade.requiresStayedInWorld) lines.push('条件：需留世后继续经营');
   if (upgrade.requiresUpgradeId) lines.push('条件：需先完成前置扩建');

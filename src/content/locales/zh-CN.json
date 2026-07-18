@@ -13,7 +13,7 @@
       "farmAction": "农庄操作·数字预选项目·Tab切换项目·Enter确认进入·Esc返回",
       "npcAction": "人物操作·数字预选互动·Tab切换·Enter确认·Esc返回",
       "build": "建造中·Tab切换候选·Enter确认放置·Esc返回",
-      "upgrade": "升级面板·Tab切换候选·Enter确认升级·Esc返回",
+      "upgrade": "扩建面板·Tab切换候选·Enter确认扩建·Esc返回",
       "storage": "仓储面板·Tab切换物品·Enter确认·Esc返回·当前不会过夜",
       "shipping": "出货面板·Tab切换物品·Enter确认·Esc返回·当前不会过夜",
       "processing": "加工面板·Tab切换候选·Enter确认·Esc返回",

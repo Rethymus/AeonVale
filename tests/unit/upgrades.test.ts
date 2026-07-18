@@ -194,7 +194,7 @@ describe('永久升级与储物戒扩容', () => {
     expect(performUpgrade(state, 'storage-ring-1').ok).toBe(true);
     const duplicate = performUpgrade(state, 'storage-ring-1');
     expect(duplicate.ok).toBe(false);
-    expect(duplicate.reason).toBe('已完成升级');
+    expect(duplicate.reason).toBe('已完成扩建');
 
     const gated = performUpgrade(state, 'storage-ring-2');
     expect(gated.ok).toBe(false);
@@ -202,7 +202,7 @@ describe('永久升级与储物戒扩容', () => {
 
     const unknown = performUpgrade(state, 'storage-ring-x');
     expect(unknown.ok).toBe(false);
-    expect(unknown.reason).toBe('无此升级');
+    expect(unknown.reason).toBe('无此扩建');
   });
 
   it('扩容后可以新增原本因满背包失败的物品', () => {

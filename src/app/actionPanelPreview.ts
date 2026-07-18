@@ -181,7 +181,7 @@ export function farmActionMenuPreview(kind: FarmActionKind, state: GameState, ct
     }
     case 'upgrade':
       return {
-        title: '升级',
+        title: '扩建',
         details: `长期经营\n留世模式 ${state.postAscension.mode === 'stayed-in-world' ? '已开启' : '未开启'}\n扩建农庄、暖棚与工具能力`,
         assetId: nextUpgradeAssetId(state)
       };

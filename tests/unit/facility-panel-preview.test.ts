@@ -25,7 +25,7 @@ describe('facility panel preview', () => {
 
     expect(preview).toEqual({
       title: '暖棚温渠加固',
-      details: '升级建设\n材料：灵石 × 26、阵核 × 2、残卷 × 2、雾蕨 × 4\n效果：提升暖棚苗床与养护能力\n条件：需留世后继续经营\n条件：需先完成前置扩建',
+      details: '扩建设施\n材料：灵石 × 26、阵核 × 2、残卷 × 2、雾蕨 × 4\n效果：提升暖棚苗床与养护能力\n条件：需留世后继续经营\n条件：需先完成前置扩建',
       assetId: 'loc.greenhouse'
     });
   });
@@ -127,8 +127,8 @@ describe('facility panel preview', () => {
     const upgrade = UPGRADE_CATALOG.find(entry => entry.id === 'farmstead-expansion-1');
     expect(upgrade).toBeTruthy;
 
-    expect(upgradeToastPresentation(upgrade!, '（1/2）', '空格/E/回车升级·Esc返回', reg)).toEqual({
-      message: '升级（1/2）：农庄扩建一阶｜Tab切换·空格/E/回车升级·Esc返回',
+    expect(upgradeToastPresentation(upgrade!, '（1/2）', '空格/E/回车扩建·Esc返回', reg)).toEqual({
+      message: '扩建（1/2）：农庄扩建一阶｜Tab切换·空格/E/回车扩建·Esc返回',
       assetId: 'loc.herb-plot'
     });
   });
@@ -146,19 +146,19 @@ describe('facility panel preview', () => {
     });
 
     expect(upgradeResultToastPresentation(storage!, 'failure', reg, '材料不足')).toEqual({
-      message: '升级失败：材料不足',
+      message: '扩建未成：材料不足',
       assetId: 'loc.farmstead'
     });
   });
 
   it('keeps upgrade and facility-collect empty states on farmstead by default and allows context overrides', () => {
     expect(upgradeUnavailableToastPresentation()).toEqual({
-      message: '暂无可升级建设',
+      message: '暂无可扩建设施',
       assetId: 'loc.farmstead'
     });
 
     expect(upgradeUnavailableToastPresentation('facility.array-eye')).toEqual({
-      message: '暂无可升级建设',
+      message: '暂无可扩建设施',
       assetId: 'facility.array-eye'
     });
 

@@ -445,8 +445,8 @@ export function toolAreaSize(state: GameState, action: ToolActionKind): number {
 
 export function performUpgrade(state: GameState, upgradeId: string): UpgradeResult {
   const upgrade = UPGRADE_CATALOG.find(entry => entry.id === upgradeId) ?? null;
-  if (!upgrade) return { ok: false, upgrade: null, reason: '无此升级' };
-  if (hasUpgrade(state, upgrade.id)) return { ok: false, upgrade, reason: '已完成升级' };
+  if (!upgrade) return { ok: false, upgrade: null, reason: '无此扩建' };
+  if (hasUpgrade(state, upgrade.id)) return { ok: false, upgrade, reason: '已完成扩建' };
   if (state.player.stage < upgrade.stageMin) return { ok: false, upgrade, reason: '阶段不足' };
   if (upgrade.requiresStayedInWorld && state.postAscension.mode !== 'stayed-in-world') {
     return { ok: false, upgrade, reason: '需留世后方可扩建' };
