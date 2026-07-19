@@ -37,7 +37,7 @@ function relationshipNextStepLine(event: RelationshipDialogueInput): string | nu
     case 'herb-gatherer-160':
       return '现在可做：去露根药圃补露根草和雾蕨，再把体魄练到 1200。';
     case 'array-smith-160':
-      return '现在可做：去遗迹和矿石坡补破损法宝、阵核，把第一条人物任务线拉起来。';
+      return '现在可做：去遗迹和矿石坡补破损法宝、阵核，把第一条人物委托线拉起来。';
     case 'wandering-cultivator-160':
       return '现在可做：去集市或残脉补妖兽内丹和灵石，把散修这条换路线先跑通。';
     default:

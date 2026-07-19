@@ -1616,7 +1616,7 @@ async function main(): Promise<void> {
       case 'gift':
         return '赠礼';
       case 'quest':
-        return '人物任务';
+        return '人物委托';
     }
   }
 

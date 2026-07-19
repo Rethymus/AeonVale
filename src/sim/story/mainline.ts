@@ -140,7 +140,7 @@ export function getCurrentMainlineQuest(state: GameState): MainlineQuestStatus |
 
 export function claimMainlineQuest(state: GameState, questId: string): MainlineQuestResult {
   const quest = MAINLINE_QUEST_CATALOG.find(entry => entry.id === questId) ?? null;
-  if (!quest) return { ok: false, quest: null, reason: '无此主线任务' };
+  if (!quest) return { ok: false, quest: null, reason: '无此主线委托' };
   if (!quest.isAvailable(state)) return { ok: false, quest, reason: '主线未解锁' };
   if (isMainlineQuestClaimed(state, quest.id)) return { ok: false, quest, reason: '已领取' };
   if (!quest.isComplete(state)) return { ok: false, quest, reason: '进度未成' };

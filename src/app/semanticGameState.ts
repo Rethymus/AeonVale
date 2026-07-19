@@ -200,7 +200,7 @@ export function interactionPanelSemanticLabel(panel: InteractionPanelState): str
     case 'upgrade':
       return '扩建';
     case 'npc':
-      return panel.mode === 'browse' ? '人物浏览' : panel.mode === 'gift' ? '赠礼' : '人物任务';
+      return panel.mode === 'browse' ? '人物浏览' : panel.mode === 'gift' ? '赠礼' : '人物委托';
     case 'festival':
       return '节庆活动';
     case 'shop':

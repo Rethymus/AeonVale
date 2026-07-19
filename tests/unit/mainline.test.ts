@@ -1,5 +1,5 @@
 /**
- * 主线任务链：把 Stardew 式持续推进目标收束为修仙化的章节任务。
+ * 主线委托链：把 Stardew 式持续推进目标收束为修仙化的章节委托。
  */
 import { describe, expect, it } from 'vitest';
 import { applyAction, archiveDonationFlag, claimMainlineQuest, createSimContext, createWorld, DEFAULT_BALANCE, getCurrentMainlineQuest, getMainlineQuests, isMainlineQuestClaimed, mainlineQuestFlag, specialOrderCompleteFlag, type GameState, type SimContext } from '@sim';
@@ -14,8 +14,8 @@ function setup(seed = 1): { state: GameState; ctx: SimContext } {
   return { state, ctx };
 }
 
-describe('主线任务链', () => {
-  it('按顺序开放当前主线任务，并在领取后切换到下一步', () => {
+describe('主线委托链', () => {
+  it('按顺序开放当前主线委托，并在领取后切换到下一步', () => {
     const { state } = setup();
     expect(getCurrentMainlineQuest(state)?.id).toBe('mainline.mortal-discipline');
 

@@ -74,10 +74,10 @@ function idleFacilityCount(state: GameState, kind: 'sealing-cabinet' | 'talisman
 }
 
 function npcBrowseNextStepLine(npc: { id: string; affection: number }, schedule: NpcDailySchedule | null, quest: NpcQuestStatus | null): string {
-  if (quest?.completed) return '现在可做：去人物任务面板领奖，接上后续支线。';
+  if (quest?.completed) return '现在可做：去人物委托面板领奖，接上后续支线。';
   if (quest) return `现在可做：去${schedule?.location ?? '对方所在处'}推进“${quest.title}”。`;
   if (schedule?.birthday) return '现在可做：今日生辰，优先带礼去拜访。';
-  if (npc.affection >= 160) return `现在可做：去${schedule?.location ?? '对方所在处'}继续深聊，等人物任务线索出现。`;
+  if (npc.affection >= 160) return `现在可做：去${schedule?.location ?? '对方所在处'}继续深聊，等人物委托线索出现。`;
   if (npc.affection >= 80) return '现在可做：可继续送偏好礼物，尽快冲到下一档好感。';
   return '现在可做：先记住今日行程，带上合适礼物再来。';
 }
@@ -205,7 +205,7 @@ export function npcActionMenuPreview(mode: 'browse' | 'gift' | 'quest', currentN
     case 'browse':
       return {
         title: '人物浏览',
-        details: '人物社交\n查看今日行程、好感与任务线索\n为拜访、赠礼与委托做准备',
+        details: '人物社交\n查看今日行程、好感与委托线索\n为拜访、赠礼与委托做准备',
         assetId: currentNpcPortrait ?? 'sprite.npc.wandering-cultivator'
       };
     case 'gift':
@@ -216,8 +216,8 @@ export function npcActionMenuPreview(mode: 'browse' | 'gift' | 'quest', currentN
       };
     case 'quest':
       return {
-        title: '人物任务',
-        details: '人物社交\n核对个人任务进度与奖励\n完成后可推进角色支线',
+        title: '人物委托',
+        details: '人物社交\n核对个人委托进度与奖励\n完成后可推进角色支线',
         assetId: currentNpcPortrait ?? 'sprite.npc.array-smith'
       };
   }
@@ -235,7 +235,7 @@ export function npcBrowsePanelPreview(npc: { id: string; displayName: string; ro
   const lines = [`${npc.role}｜好感 ${npc.affection}/1000`, schedule ? `${schedule.location}｜${schedule.activity}` : '今日行踪未明'];
   if (schedule?.birthday) lines.push('今日生辰｜赠礼收益翻倍');
   lines.push(npcGiftStatusLine(giftName, Boolean(schedule?.birthday)));
-  if (quest) lines.push(`人物任务｜${quest.title}${quest.completed ? '（可领取）' : ''}`);
+  if (quest) lines.push(`人物委托｜${quest.title}${quest.completed ? '（可领取）' : ''}`);
   lines.push(npcBrowseNextStepLine(npc, schedule, quest));
   return {
     title: npc.displayName,
@@ -289,7 +289,7 @@ export function npcQuestPanelPreview(npc: { displayName: string }, quest: NpcQue
   if (!quest) {
     return {
       title: npc.displayName,
-      details: '人物任务\n暂无可推进任务\n先提升好感或完成前置条件'
+      details: '人物委托\n暂无可推进委托\n先提升好感或完成前置条件'
     };
   }
 
@@ -306,7 +306,7 @@ export function npcQuestPanelPreview(npc: { displayName: string }, quest: NpcQue
 export function npcQuestToastPresentation(npc: { displayName: string }, quest: NpcQuestStatus | null, indexLabel: string, confirmHint: string, content?: ContentRegistry): NpcPanelToastPresentation {
   const preview = npcQuestPanelPreview(npc, quest, content);
   return {
-    message: `人物任务${indexLabel}：${npc.displayName}｜${quest ? `${preview.title}${quest.completed ? '｜可领取' : '｜未完成'}` : '暂无人物任务'}｜Tab切换人物·${confirmHint}`,
+    message: `人物委托${indexLabel}：${npc.displayName}｜${quest ? `${preview.title}${quest.completed ? '｜可领取' : '｜未完成'}` : '暂无人物委托'}｜Tab切换人物·${confirmHint}`,
     assetId: preview.assetId
   };
 }
@@ -316,22 +316,22 @@ export function npcQuestResultToastPresentation(npc: { displayName: string }, qu
   switch (outcome) {
     case 'advance':
       return {
-        message: `${npc.displayName}任务推进：${preview.title} → ${nextQuestTitle ?? '后续任务'}`,
+        message: `${npc.displayName}委托推进：${preview.title} → ${nextQuestTitle ?? '后续委托'}`,
         assetId: preview.assetId
       };
     case 'complete':
       return {
-        message: `${npc.displayName}任务完成：${preview.title}`,
+        message: `${npc.displayName}委托完成：${preview.title}`,
         assetId: preview.assetId
       };
     case 'failure':
       return {
-        message: quest?.completed ? `${npc.displayName}任务领取失败：${preview.title}` : `${npc.displayName}任务未成：${preview.title}`,
+        message: quest?.completed ? `${npc.displayName}委托领取失败：${preview.title}` : `${npc.displayName}委托未成：${preview.title}`,
         assetId: preview.assetId
       };
     case 'missing':
       return {
-        message: `${npc.displayName}：暂无人物任务`,
+        message: `${npc.displayName}：暂无人物委托`,
         assetId: preview.assetId
       };
   }
