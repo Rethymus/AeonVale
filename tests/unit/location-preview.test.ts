@@ -16,7 +16,7 @@ function location(overrides: Partial<LocationStatus> = {}): LocationStatus {
     services: ['shop', 'trade', 'commission-board'],
     active: true,
     npcs: [],
-    serviceLabels: ['商店'],
+    serviceLabels: ['坊市'],
     closedServiceLabels: [],
     ...overrides
   };
@@ -26,9 +26,9 @@ function service(overrides: Partial<LocationServiceOption> = {}): LocationServic
   return {
     locationId: 'valley-market',
     service: 'shop',
-    label: '商店',
+    label: '坊市',
     command: 'browse-shop',
-    commandLabel: '浏览商店',
+    commandLabel: '浏览坊市',
     ...overrides
   };
 }
@@ -214,7 +214,7 @@ describe('location preview helper', () => {
       focusReason: '先补几颗种子，把第二轮药材和炼丹材料接上。'
     });
 
-    expect(summary).toBe(['散修、商贩与委托汇聚之处。', '当前：商店 -> 浏览商店', '现在来：先补几颗种子，把第二轮药材和炼丹材料接上。', '动向：今日以常规来往为主', '要务：出货箱待结 2 项', '可选：1. 商店 / 2. 交易', '人物：游方散修｜游方散修掂着灵石，扫过你背后的药篓。', '偶遇：游方散修：集市看货｜山谷集市认货不认根骨；有草、有丹、有妖兽内丹，就能换路。', 'Shift+数字选地点｜数字选服务｜空格/E/回车确认'].join('\n'));
+    expect(summary).toBe(['散修、商贩与委托汇聚之处。', '当前：坊市 -> 浏览坊市', '现在来：先补几颗种子，把第二轮药材和炼丹材料接上。', '动向：今日以常规来往为主', '要务：出货箱待结 2 项', '可选：1. 坊市 / 2. 交易', '人物：游方散修｜游方散修掂着灵石，扫过你背后的药篓。', '偶遇：游方散修：集市看货｜山谷集市认货不认根骨；有草、有丹、有妖兽内丹，就能换路。', 'Shift+数字选地点｜数字选服务｜空格/E/回车确认'].join('\n'));
   });
 
   it('includes farmstead action signals when the location has immediate logistics work', () => {
@@ -426,7 +426,7 @@ describe('location preview helper', () => {
   });
 
   it('uses npc-backed hero assets for person-led service entries while keeping place-thread routing intact', () => {
-    expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '商店', command: 'browse-shop', commandLabel: '浏览商店' }), '空格/E/回车执行·Esc返回').assetId).toBe('sprite.npc.market-merchant');
+    expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '坊市', command: 'browse-shop', commandLabel: '浏览坊市' }), '空格/E/回车执行·Esc返回').assetId).toBe('sprite.npc.market-merchant');
 
     expect(locationSelectionToastPresentation('服务', location({ id: 'greenhouse', displayName: '暖棚' }), service({ locationId: 'greenhouse', service: 'greenhouse-tending', label: '暖棚养护', command: 'show-greenhouse', commandLabel: '查看暖棚' }), '空格/E/回车执行·Esc返回').assetId).toBe('sprite.npc.herb-gatherer');
 
@@ -434,8 +434,8 @@ describe('location preview helper', () => {
   });
 
   it('includes a concise why-now reason in selection toasts when a focus reason is available', () => {
-    expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '商店', command: 'browse-shop', commandLabel: '浏览商店' }), '空格/E/回车执行·Esc返回', '先补几颗种子，把第二轮药材和炼丹材料接上。')).toEqual({
-      message: '服务：山谷集市（商店：浏览商店）｜现在来：先补几颗种子，把第二轮药材和炼丹材料接上。｜空格/E/回车执行·Esc返回',
+    expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '坊市', command: 'browse-shop', commandLabel: '浏览坊市' }), '空格/E/回车执行·Esc返回', '先补几颗种子，把第二轮药材和炼丹材料接上。')).toEqual({
+      message: '服务：山谷集市（坊市：浏览坊市）｜现在来：先补几颗种子，把第二轮药材和炼丹材料接上。｜空格/E/回车执行·Esc返回',
       assetId: 'sprite.npc.market-merchant'
     });
   });
@@ -551,7 +551,7 @@ describe('location preview helper', () => {
   it('uses one shared rule for the compact location-selection summary states', () => {
     expect(describeLocationSelectionSummary(null, [], null)).toBe('今日无可用地点');
     expect(describeLocationSelectionSummary(location({ id: 'herb-plot', displayName: '露根药圃', npcs: ['采药女'] }), [], null)).toBe('露根药圃（先看行踪；采药女）');
-    expect(describeLocationSelectionSummary(location({ id: 'valley-market', displayName: '山谷集市', npcs: ['游方散修'] }), [service()], service())).toBe('山谷集市（商店：浏览商店；游方散修）');
+    expect(describeLocationSelectionSummary(location({ id: 'valley-market', displayName: '山谷集市', npcs: ['游方散修'] }), [service()], service())).toBe('山谷集市（坊市：浏览坊市；游方散修）');
   });
 
   it('keeps service-unavailable failures anchored to the current location', () => {

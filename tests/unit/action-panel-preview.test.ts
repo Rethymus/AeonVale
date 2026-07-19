@@ -292,7 +292,7 @@ describe('action panel preview', () => {
 
   it('reuses npc root menu portrait art for toast presentation', () => {
     expect(npcActionMenuToastPresentation('quest', '（2/3）', '空格/E/回车进入·Esc返回')).toEqual({
-      message: '人物操作（2/3）：人物任务｜数字1-3直达·Tab切换·空格/E/回车进入·Esc返回',
+      message: '人物操作（2/3）：人物委托｜数字1-3直达·Tab切换·空格/E/回车进入·Esc返回',
       assetId: 'sprite.npc.array-smith'
     });
   });
@@ -360,7 +360,7 @@ describe('action panel preview', () => {
 
     const preview = npcBrowsePanelPreview(npc!, schedule, quest);
 
-    expect(preview.details).toContain('人物任务｜温骨识药');
+    expect(preview.details).toContain('人物委托｜温骨识药');
     expect(preview.details).toContain('携礼：暂无合适礼物｜建议先补社交物资');
     expect(preview.details).toContain('现在可做：去露根药圃推进“温骨识药”。');
     expect(preview.assetId).toBe('sprite.npc.herb-gatherer');
@@ -487,11 +487,11 @@ describe('action panel preview', () => {
     const quest = getCurrentNpcQuest(state, 'npc.herb-gatherer');
 
     expect(npcQuestResultToastPresentation(npc!, quest, 'complete', reg)).toEqual({
-      message: '采药女任务完成：温骨识药',
+      message: '采药女委托完成：温骨识药',
       assetId: 'sprite.npc.herb-gatherer'
     });
     expect(npcQuestResultToastPresentation(npc!, quest, 'failure', reg)).toEqual({
-      message: '采药女任务领取失败：温骨识药',
+      message: '采药女委托领取失败：温骨识药',
       assetId: 'sprite.npc.herb-gatherer'
     });
   });
@@ -504,7 +504,7 @@ describe('action panel preview', () => {
     const quest = getCurrentNpcQuest(state, 'npc.herb-gatherer');
 
     expect(npcQuestToastPresentation(npc!, quest, '（3/3）', '空格/E/回车推进·Esc返回', reg)).toEqual({
-      message: '人物任务（3/3）：采药女｜温骨识药｜未完成｜Tab切换人物·空格/E/回车推进·Esc返回',
+      message: '人物委托（3/3）：采药女｜温骨识药｜未完成｜Tab切换人物·空格/E/回车推进·Esc返回',
       assetId: 'sprite.npc.herb-gatherer'
     });
   });
@@ -517,15 +517,15 @@ describe('action panel preview', () => {
     const quest = getCurrentNpcQuest(state, 'npc.herb-gatherer');
 
     expect(npcQuestResultToastPresentation(npc!, quest, 'advance', reg, '雷酿护身')).toEqual({
-      message: '采药女任务推进：温骨识药 → 雷酿护身',
+      message: '采药女委托推进：温骨识药 → 雷酿护身',
       assetId: 'sprite.npc.herb-gatherer'
     });
     expect(npcQuestResultToastPresentation(npc!, quest, 'failure', reg)).toEqual({
-      message: '采药女任务未成：温骨识药',
+      message: '采药女委托未成：温骨识药',
       assetId: 'sprite.npc.herb-gatherer'
     });
     expect(npcQuestResultToastPresentation(npc!, null, 'missing', reg)).toEqual({
-      message: '采药女：暂无人物任务',
+      message: '采药女：暂无人物委托',
       assetId: undefined
     });
   });
@@ -556,7 +556,7 @@ describe('action panel preview', () => {
       {
         id: 'npc-quest.debug-fallback',
         npcId: 'npc.array-smith',
-        title: '测试任务',
+        title: '测试委托',
         description: '测试',
         objective: '提交未知信物',
         reward: { itemId: 'quest.unknown-token', count: 1 },
@@ -580,7 +580,7 @@ describe('action panel preview', () => {
 
     expect(preview).toEqual({
       title: '游方散修',
-      details: '人物任务\n暂无可推进任务\n先提升好感或完成前置条件'
+      details: '人物委托\n暂无可推进委托\n先提升好感或完成前置条件'
     });
   });
 });

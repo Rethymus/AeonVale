@@ -1,5 +1,5 @@
 /**
- * 基础商店：出货得灵石后，稳定购买种子/工具，闭合经济循环。
+ * 基础坊市：出货得灵石后，稳定购买种子/工具，闭合经济循环。
  */
 import { describe, expect, it } from 'vitest';
 import { applyAction, buyShopItem, createSimContext, createWorld, DEFAULT_BALANCE, FIRST_MARKET_RESTOCK_FLAG, getShopItems, markRelationshipEventSeen } from '@sim';
@@ -15,7 +15,7 @@ function setup(stage = 0, seed = 1): { state: GameState; ctx: SimContext } {
   return { state, ctx };
 }
 
-describe('基础商店经济闭环', () => {
+describe('基础坊市经济闭环', () => {
   it('按阶段过滤可购买商品', () => {
     const early = getShopItems(setup(0).state).map(item => item.itemId);
     expect(early).toContain('seed.mossling');
@@ -81,7 +81,7 @@ describe('基础商店经济闭环', () => {
     expect(itemCount(state.player, 'seed.mossling')).toBe(1);
   });
 
-  it('商店可购买灵壤肥，支持农场品质循环', () => {
+  it('坊市可购买灵壤肥，支持农场品质循环', () => {
     const { state } = setup(0);
     mutateItem(state.player, 'item.spirit-stone', 3);
     const r = buyShopItem(state, 'item.spirit-compost', 1);

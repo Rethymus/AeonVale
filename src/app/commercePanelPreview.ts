@@ -24,7 +24,7 @@ export function tradeUnavailableToastPresentation(reason: 'stage-gated' | 'empty
 
 export function shopUnavailableToastPresentation(kind: 'shop' | 'festival-stall'): CommerceToastPresentation {
   return {
-    message: kind === 'festival-stall' ? '节日摊位已收摊' : '商店暂未开张',
+    message: kind === 'festival-stall' ? '节日摊位已收摊' : '坊市暂未开张',
     assetId: kind === 'festival-stall' ? 'loc.festival-ground' : 'loc.valley-market'
   };
 }
@@ -61,7 +61,7 @@ export function tradeResultToastPresentation(offer: TradeOffer, outcome: 'succes
 export function shopPanelPreview(kind: 'shop' | 'festival-stall', item: ShopItem | FestivalStallItem, content: ContentRegistry): CommercePanelPreview {
   return {
     title: item.displayName,
-    details: `${kind === 'festival-stall' ? '节日摊位' : '商店'}\n灵石 × ${item.price}`,
+    details: `${kind === 'festival-stall' ? '节日摊位' : '坊市'}\n灵石 × ${item.price}`,
     assetId: itemIconAssetId(item.itemId, content),
     panelAssetId: kind === 'festival-stall' ? 'loc.festival-ground' : 'loc.valley-market'
   };
@@ -70,7 +70,7 @@ export function shopPanelPreview(kind: 'shop' | 'festival-stall', item: ShopItem
 export function shopToastPresentation(kind: 'shop' | 'festival-stall', item: ShopItem | FestivalStallItem, indexLabel: string, confirmHint: string, content: ContentRegistry): CommerceToastPresentation {
   const preview = shopPanelPreview(kind, item, content);
   return {
-    message: `${kind === 'festival-stall' ? '节日摊位' : '商店'}${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
+    message: `${kind === 'festival-stall' ? '节日摊位' : '坊市'}${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
     assetId: preview.panelAssetId ?? preview.assetId
   };
 }

@@ -190,8 +190,8 @@ export function getCurrentNpcQuest(state: GameState, npcId?: string): NpcQuestSt
 
 export function claimNpcQuest(state: GameState, questId: string): NpcQuestResult {
   const quest = NPC_QUEST_CATALOG.find(entry => entry.id === questId) ?? null;
-  if (!quest) return { ok: false, quest: null, reason: '无此人物任务' };
-  if (!quest.isAvailable(state)) return { ok: false, quest, reason: '人物任务未解锁' };
+  if (!quest) return { ok: false, quest: null, reason: '无此人物委托' };
+  if (!quest.isAvailable(state)) return { ok: false, quest, reason: '人物委托未解锁' };
   if (isNpcQuestClaimed(state, quest.id)) return { ok: false, quest, reason: '已领取' };
   if (!quest.isComplete(state)) return { ok: false, quest, reason: '进度未成' };
   if (!grantReward(state, quest.reward)) return { ok: false, quest, reason: '储物戒已满' };

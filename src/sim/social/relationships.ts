@@ -1,6 +1,6 @@
 /**
  * NPC 好感：固定角色 + 每日送礼限制 + 偏好礼物。
- * 这是 Stardew 式社交循环的最小骨架，后续可挂剧情、商店折扣与事件邀约。
+ * 这是 Stardew 式社交循环的最小骨架，后续可挂剧情、坊市折扣与事件邀约。
  */
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';

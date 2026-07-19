@@ -154,7 +154,7 @@ function ruinChapterAssetId(chapter: RuinChapterLike, content: ContentRegistry):
 export function mainlineQuestPanelPreview(quest: MainlineQuestStatus, content: ContentRegistry): CommissionPanelPreview {
   return {
     title: quest.title,
-    details: quest.completed ? `主线任务\n${quest.objective}\n已满足条件，可领取奖励` : `主线任务\n${quest.objective}\n当前推进中`,
+    details: quest.completed ? `主线委托\n${quest.objective}\n已满足条件，可领取奖励` : `主线委托\n${quest.objective}\n当前推进中`,
     assetId: mainlineQuestAssetId(quest, content)
   };
 }
