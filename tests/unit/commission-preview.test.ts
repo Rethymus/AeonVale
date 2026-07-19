@@ -452,7 +452,7 @@ describe('commission preview', () => {
 
     expect(mainlineQuestPanelPreview(quest, reg)).toEqual({
       title: '药草入骨',
-      details: '主线任务\n持有青苔与露根草各 1 份，证明灵田已能支撑早期淬体。\n当前推进中',
+      details: '主线委托\n持有青苔与露根草各 1 份，证明灵田已能支撑早期淬体。\n当前推进中',
       assetId: 'loc.herb-plot'
     });
   });
@@ -474,7 +474,7 @@ describe('commission preview', () => {
 
     expect(mainlineQuestPanelPreview(quest, reg)).toEqual({
       title: '残篇问路',
-      details: '主线任务\n前往遗迹门口推进旧阵线索，拿到第一份残篇。\n当前推进中',
+      details: '主线委托\n前往遗迹门口推进旧阵线索，拿到第一份残篇。\n当前推进中',
       assetId: 'loc.ruin-gate'
     });
   });
@@ -496,7 +496,7 @@ describe('commission preview', () => {
 
     expect(mainlineQuestPanelPreview(quest, reg)).toEqual({
       title: '山谷立名',
-      details: '主线任务\n完成特别订单“淬体药草储备”，证明你已能稳定供应炼体资源。\n当前推进中',
+      details: '主线委托\n完成特别订单“淬体药草储备”，证明你已能稳定供应炼体资源。\n当前推进中',
       assetId: 'loc.creek-field'
     });
   });
@@ -518,7 +518,7 @@ describe('commission preview', () => {
 
     expect(mainlineQuestPanelPreview(quest, reg)).toEqual({
       title: '后续旧阵线',
-      details: '主线任务\n继续追查旧阵后的去向。\n当前推进中',
+      details: '主线委托\n继续追查旧阵后的去向。\n当前推进中',
       assetId: 'loc.ruin-gate'
     });
   });
@@ -540,7 +540,7 @@ describe('commission preview', () => {
 
     expect(mainlineQuestPanelPreview(quest, reg)).toEqual({
       title: '凡骨开篇',
-      details: '主线任务\n累计完成四项基础苦练，让体魄达到 400、耐力达到 80、意志达到 80。\n已满足条件，可领取奖励',
+      details: '主线委托\n累计完成四项基础苦练，让体魄达到 400、耐力达到 80、意志达到 80。\n已满足条件，可领取奖励',
       assetId: 'loc.farmstead'
     });
   });

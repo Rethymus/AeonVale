@@ -11,8 +11,8 @@ function setup(seed = 1): { state: GameState; ctx: SimContext } {
   return { state, ctx };
 }
 
-describe('NPC 人物任务线', () => {
-  it('按 NPC 好感事件与前序进度开放当前人物任务', () => {
+describe('NPC 人物委托线', () => {
+  it('按 NPC 好感事件与前序进度开放当前人物委托', () => {
     const { state } = setup();
     expect(getCurrentNpcQuest(state, 'npc.herb-gatherer')).toBeNull;
 
@@ -27,9 +27,9 @@ describe('NPC 人物任务线', () => {
     expect(getCurrentNpcQuest(state, 'npc.herb-gatherer')?.id).toBe('npc-quest.herb-gatherer-thunder-brew');
   });
 
-  it('人物任务未完成、未解锁、重复领取均被拒绝', () => {
+  it('人物委托未完成、未解锁、重复领取均被拒绝', () => {
     const { state } = setup();
-    expect(claimNpcQuest(state, 'npc-quest.herb-gatherer-bone-guard')).toMatchObject({ ok: false, reason: '人物任务未解锁' });
+    expect(claimNpcQuest(state, 'npc-quest.herb-gatherer-bone-guard')).toMatchObject({ ok: false, reason: '人物委托未解锁' });
 
     state.flags.add(relationshipEventFlag('herb-gatherer-160'));
     expect(claimNpcQuest(state, 'npc-quest.herb-gatherer-bone-guard')).toMatchObject({ ok: false, reason: '进度未成' });
@@ -42,7 +42,7 @@ describe('NPC 人物任务线', () => {
     expect(claimNpcQuest(state, 'npc-quest.herb-gatherer-bone-guard')).toMatchObject({ ok: false, reason: '已领取' });
   });
 
-  it('人物任务奖励物因储物戒满无法接收时不写入领取标记', () => {
+  it('人物委托奖励物因储物戒满无法接收时不写入领取标记', () => {
     const { state } = setup();
     state.flags.add(relationshipEventFlag('herb-gatherer-160'));
     mutateItem(state.player, 'herb.dewroot', 4);
@@ -60,7 +60,7 @@ describe('NPC 人物任务线', () => {
     expect(state.player.bodyFoundation).toBe(1200);
   });
 
-  it('人物任务线会衔接藏经、特别订单、引劫与巡守兽进度', () => {
+  it('人物委托线会衔接藏经、特别订单、引劫与巡守兽进度', () => {
     const { state } = setup();
 
     state.flags.add(relationshipEventFlag('array-smith-160'));
@@ -105,10 +105,10 @@ describe('NPC 人物任务线', () => {
     expect(roundTripEqual(state)).toBe(true);
   });
 
-  it('游方散修深交（320）解锁“故交引路”终章人物任务', () => {
+  it('游方散修深交（320）解锁“故交引路”终章人物委托', () => {
     const { state } = setup();
     // 未深交前不解锁
-    expect(claimNpcQuest(state, 'npc-quest.wandering-cultivator-deep-road')).toMatchObject({ ok: false, reason: '人物任务未解锁' });
+    expect(claimNpcQuest(state, 'npc-quest.wandering-cultivator-deep-road')).toMatchObject({ ok: false, reason: '人物委托未解锁' });
 
     state.flags.add(relationshipEventFlag('wandering-cultivator-320'));
     // 深交但进度未成
@@ -131,7 +131,7 @@ describe('NPC 人物任务线', () => {
     expect(getCurrentNpcQuest(state, 'npc.wandering-cultivator')).toBeNull();
   });
 
-  it('采药女与阵匠深交（320）各自解锁终章人物任务', () => {
+  it('采药女与阵匠深交（320）各自解锁终章人物委托', () => {
     const { state } = setup();
 
     // 采药女·空苔养骨：需自种绝灵苔 + 体魄 2200
