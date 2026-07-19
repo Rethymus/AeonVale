@@ -93,7 +93,7 @@ function explorationShortcutFailureMessage(state: GameState, locationId: Locatio
       const availability = getLocationServiceAvailability(state, locationId, 'shop');
       if (!availability.open && availability.reason === '节日停市') return '集市今日随节停市｜先去会场看当期货与事务';
       if (!availability.open && availability.reason === '集市盘账') return '集市今日盘账歇市｜先清农庄内务，明日再来';
-      return '山谷集市今日无商店可逛｜先去告示板或回农庄推进';
+      return '山谷集市今日无坊市可逛｜先去告示板或回农庄推进';
     }
     if (command === 'browse-trade') {
       const availability = getLocationServiceAvailability(state, locationId, 'trade');

@@ -204,7 +204,7 @@ export function interactionPanelSemanticLabel(panel: InteractionPanelState): str
     case 'festival':
       return '节庆活动';
     case 'shop':
-      return panel.festival ? '节庆摊位' : '商店';
+      return panel.festival ? '节庆摊位' : '坊市';
     case 'trade':
       return '交易';
     case 'commission':
