@@ -16,10 +16,10 @@ describe('地点目录与每日动线', () => {
     expect(locationIdForDisplayName('未知山坳')).toBe('valley-outskirts');
   });
 
-  it('派生核心地点服务，覆盖商店、委托和三类外出探索', () => {
+  it('派生核心地点服务，覆盖坊市、委托和三类外出探索', () => {
     const state = setup();
     const directory = getLocationDirectory(state);
-    expect(directory.find(location => location.id === 'valley-market')).toMatchObject({ serviceLabels: ['偶遇', '商店', '交易', '委托'] });
+    expect(directory.find(location => location.id === 'valley-market')).toMatchObject({ serviceLabels: ['偶遇', '坊市', '交易', '委托'] });
     expect(directory.find(location => location.id === 'valley-outskirts')?.serviceLabels).toContain('山谷寻访');
     expect(directory.find(location => location.id === 'ruin-gate')?.serviceLabels).toEqual(['遗迹寻访', '深入遗迹', '藏经']);
     expect(directory.find(location => location.id === 'spirit-vein')?.serviceLabels).toContain('残脉探查');
@@ -68,12 +68,12 @@ describe('地点目录与每日动线', () => {
 
     const market = getLocationDirectory(state).find(location => location.id === 'valley-market');
     expect(market?.serviceLabels).toEqual(['偶遇', '委托']);
-    expect(market?.closedServiceLabels).toEqual(['商店休', '交易休']);
+    expect(market?.closedServiceLabels).toEqual(['坊市休', '交易休']);
     expect(getLocationServiceAvailability(state, 'valley-market', 'shop')).toEqual({ open: false, reason: '集市盘账' });
     expect(getLocationServiceOptions(state, 'valley-market').map(option => option.command)).toEqual(['show-location-encounter', 'show-commission']);
   });
 
-  it('新手补货阶段即使遇到盘账日也开放集市商店，避免首轮经营动线中断', () => {
+  it('新手补货阶段即使遇到盘账日也开放集市坊市，避免首轮经营动线中断', () => {
     const state = setup();
     state.player.flags.add(FIRST_SHIPPING_SETTLEMENT_FLAG);
     state.seasonDay = 7;
@@ -243,7 +243,7 @@ describe('地点目录与每日动线', () => {
     expect(getLocationEncounters(state, 'festival-ground')).toHaveLength(3);
 
     const market = getLocationDirectory(state).find(location => location.id === 'valley-market');
-    expect(market?.closedServiceLabels).toEqual(['商店休', '交易休', '委托休']);
+    expect(market?.closedServiceLabels).toEqual(['坊市休', '交易休', '委托休']);
     expect(getLocationServiceOptions(state, 'valley-market')).toEqual([]);
   });
 
@@ -252,7 +252,7 @@ describe('地点目录与每日动线', () => {
     state.player.flags.add(FIRST_SECOND_WATER_FLAG);
     const summary = locationSummary(state).join('｜');
     expect(summary).toContain('农庄（耕作/加工/阵法）');
-    expect(summary).toContain('山谷集市（偶遇/商店/交易/委托；游方散修）');
+    expect(summary).toContain('山谷集市（偶遇/坊市/交易/委托；游方散修）');
     expect(summary).toContain('露根药圃（偶遇；采药女）');
     expect(summary).not.toContain('阵器棚');
 

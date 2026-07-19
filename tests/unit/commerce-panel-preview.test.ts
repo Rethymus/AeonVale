@@ -45,7 +45,7 @@ describe('commerce panel preview', () => {
 
     expect(shopPanelPreview('shop', shopItem, reg)).toEqual({
       title: '灵壤肥',
-      details: '商店\n灵石 × 3',
+      details: '坊市\n灵石 × 3',
       assetId: 'icon.item.spirit-compost',
       panelAssetId: 'loc.valley-market'
     });
@@ -63,7 +63,7 @@ describe('commerce panel preview', () => {
     const stallItem: FestivalStallItem = { eventId: 'event.winter-festival', itemId: 'item.array-core', displayName: '阵核', price: 5 };
 
     expect(shopToastPresentation('shop', shopItem, '（2/6）', '空格/E/回车购买·Esc返回', reg)).toEqual({
-      message: '商店（2/6）：露根草种｜Tab切换·空格/E/回车购买·Esc返回',
+      message: '坊市（2/6）：露根草种｜Tab切换·空格/E/回车购买·Esc返回',
       assetId: 'loc.valley-market'
     });
     expect(shopToastPresentation('festival-stall', stallItem, '（1/2）', '空格/E/回车购买·Esc返回', reg)).toEqual({
@@ -82,7 +82,7 @@ describe('commerce panel preview', () => {
       assetId: 'loc.valley-market'
     });
     expect(shopUnavailableToastPresentation('shop')).toEqual({
-      message: '商店暂未开张',
+      message: '坊市暂未开张',
       assetId: 'loc.valley-market'
     });
     expect(shopUnavailableToastPresentation('festival-stall')).toEqual({

@@ -345,7 +345,7 @@ describe('ambient panel preview', () => {
 
     expect(ambientPanelPreview(state, reg, false)).toEqual({
       title: '山谷集市',
-      details: '散修、商贩与委托汇聚之处。\n去向：今日以常规来往为主\n现在来：先补几颗种子，把第二轮药材和炼丹材料接上。\n去处：商店 -> 浏览商店\n人物：游方散修',
+      details: '散修、商贩与委托汇聚之处。\n去向：今日以常规来往为主\n现在来：先补几颗种子，把第二轮药材和炼丹材料接上。\n去处：坊市 -> 浏览坊市\n人物：游方散修',
       assetId: 'loc.valley-market'
     });
   });
