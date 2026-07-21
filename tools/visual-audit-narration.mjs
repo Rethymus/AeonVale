@@ -42,6 +42,7 @@ async function prepare(page) {
         'narration.codex.seenScenesEver',
         'narration.codex.seenEndings',
         'narration.e7Triggered',
+        'narration.readChoices',
         'narration.textSize'
       ]) {
         localStorage.removeItem(k);
@@ -149,18 +150,35 @@ async function untilEnding(page, endingId, timeoutMs = 20000) {
     await page
       .waitForFunction(() => {
         const im = document.querySelector('.narration-ending-cg');
-        return im instanceof HTMLImageElement && im.complete && im.naturalWidth > 0;
+        return (
+          im instanceof HTMLImageElement &&
+          im.complete &&
+          im.naturalWidth > 0 &&
+          im.dataset.decoded === 'true' &&
+          Number(getComputedStyle(im).opacity) > 0.95
+        );
       }, null, { timeout: 8000 })
-      .catch(() => note('major', `结局 ${endingId} CG 未在 8s 内 naturalWidth>0`));
+      .catch(() => note('major', `结局 ${endingId} CG 未在 8s 内完成加载并显影`));
     const info = await img
       .evaluate((im) =>
         im instanceof HTMLImageElement
-          ? { src: im.currentSrc || im.src, w: im.naturalWidth, h: im.naturalHeight, cw: im.clientWidth, ch: im.clientHeight }
+          ? {
+              src: im.currentSrc || im.src,
+              w: im.naturalWidth,
+              h: im.naturalHeight,
+              cw: im.clientWidth,
+              ch: im.clientHeight,
+              decoded: im.dataset.decoded,
+              opacity: getComputedStyle(im).opacity
+            }
           : null
       )
       .catch(() => null);
     if (!info || !info.w) note('major', `结局 ${endingId} CG 尺寸异常`, { info });
     else if (info.ch < 80) note('major', `结局 ${endingId} CG 显示高度过小`, { info });
+    else if (info.decoded !== 'true' || Number(info.opacity) === 0) {
+      note('major', `结局 ${endingId} CG 已加载但仍不可见`, { info });
+    }
   } else {
     const fb = await page.locator('.narration-ending-cg-fallback').count();
     if (fb) note('major', `结局 ${endingId} 走了 fallback，无 CG`);
@@ -200,6 +218,52 @@ async function auditCg(page, tag) {
   // locked choices without glyph consistency — soft
   const labels = await choices.allTextContents();
   if (labels.some((l) => !l || !l.trim())) note('major', `存在空文案选项 (${tag})`, { labels });
+  const frame = await page.locator('#narration-stage').evaluate((stage) => {
+    const info = (selector) => {
+      const el = stage.querySelector(selector);
+      if (!(el instanceof HTMLElement)) return null;
+      const rect = el.getBoundingClientRect();
+      return {
+        text: (el.textContent ?? '').trim(),
+        visible: !el.hidden && el.offsetParent !== null,
+        top: rect.top,
+        bottom: rect.bottom,
+        clientHeight: el.clientHeight,
+        scrollHeight: el.scrollHeight
+      };
+    };
+    const stageRect = stage.getBoundingClientRect();
+    return {
+      sceneId: stage.getAttribute('data-scene-id'),
+      stage: { top: stageRect.top, bottom: stageRect.bottom },
+      text: info('.narration-text'),
+      cabinet: info('.narration-cabinet'),
+      dialog: info('.narration-dialog'),
+      choices: info('.narration-choices'),
+      quick: info('.narration-quick-menu')
+    };
+  });
+  if (frame.text?.text && frame.cabinet?.visible && frame.cabinet.text === frame.text.text) {
+    note('major', `正文与心声条精确重复 (${tag})`, { sceneId: frame.sceneId });
+  }
+  if (frame.cabinet?.visible && frame.dialog && frame.cabinet.bottom > frame.dialog.top + 1) {
+    note('major', `心声条与对话框重叠 (${tag})`, { sceneId: frame.sceneId });
+  }
+  if (frame.dialog && frame.quick && frame.dialog.bottom > frame.quick.top + 1) {
+    note('major', `对话框与快捷菜单重叠 (${tag})`, { sceneId: frame.sceneId });
+  }
+  if (frame.dialog && frame.dialog.bottom > frame.stage.bottom + 1) {
+    note('major', `对话框越出舞台 (${tag})`, { sceneId: frame.sceneId });
+  }
+  if (frame.quick && frame.quick.bottom > frame.stage.bottom + 1) {
+    note('major', `快捷菜单越出舞台 (${tag})`, { sceneId: frame.sceneId });
+  }
+  if (frame.text?.visible && frame.text.clientHeight + 1 < frame.text.scrollHeight) {
+    note('major', `正文溢出自身盒子 (${tag})`, { sceneId: frame.sceneId });
+  }
+  if (frame.text?.visible && frame.choices?.visible && frame.text.bottom > frame.choices.top + 1) {
+    note('major', `正文与选项重叠 (${tag})`, { sceneId: frame.sceneId });
+  }
   return { labels, cgCount: n, broken };
 }
 
@@ -379,14 +443,15 @@ async function main() {
 
   // —— madness ——
   if (await restartToTrain()) {
-    if (await pick(page, 'temper')) {
-      if (await pick(page, 'more')) {
-        if (await pick(page, 'break')) {
-          const e = await untilEnding(page, 'madness');
-          await shot(page, 'ending-madness');
-          results['madness'] = e;
-        }
-      }
+    const openedLateStages = await walk(
+      page,
+      ['temper', 'stage1', 'on', 'stage2', 'on', 'stage3', 'on', 'more', 'break'],
+      'madness-six-order'
+    );
+    if (openedLateStages) {
+      const e = await untilEnding(page, 'madness');
+      await shot(page, 'ending-madness');
+      results['madness'] = e;
     }
   }
 
@@ -423,170 +488,136 @@ async function main() {
     }
   }
 
-  // —— ascension: stages 1-6 then assault, cave, answer ——
+  // —— 六劫与完整终局链 ——
   async function doStages(page) {
-    if (!(await pick(page, 'temper'))) return false;
-    for (const st of ['stage1', 'stage2', 'stage3']) {
-      if (await waitChoice(page, st, 4000)) {
-        await pick(page, st);
-        // leave stage scene
-        if (await waitChoice(page, 'on', 4000)) await pick(page, 'on');
-      } else note('major', `缺 ${st}`);
+    return walk(
+      page,
+      ['temper', 'stage1', 'on', 'stage2', 'on', 'stage3', 'on', 'more', 'stage4', 'on', 'stage5', 'on', 'stage6', 'on'],
+      'six-stages'
+    );
+  }
+
+  async function stackDefiance(page) {
+    return walk(
+      page,
+      ['side', 'bully', 'watch', 'herb', 'abandon', 'bribe', 'accept', 'more', 'whistle', 'silent', 'back', 'back'],
+      'defiance-storylets'
+    );
+  }
+
+  async function stackBond(page) {
+    return walk(
+      page,
+      [
+        'side', 'more', 'famine', 'share', 'village',
+        'ditch', 'back', 'market', 'back', 'song', 'back',
+        'go-out', 'wanderer', 'help', 'herbgirl-cold', 'atone',
+        'artificer', 'refuse', 'back', 'back'
+      ],
+      'bond-storylets'
+    );
+  }
+
+  async function walkFinaleToQuestion(page, tag) {
+    if (!(await pick(page, 'assault'))) return false;
+    await shot(page, `${tag}-act3-entry`);
+    const atQuestion = async () =>
+      page
+        .locator(
+          'button.narration-choice[data-choice-id="e6"], button.narration-choice[data-choice-id="e7"], button.narration-choice[data-choice-id="answer"]'
+        )
+        .first()
+        .isVisible()
+        .catch(() => false);
+
+    for (let step = 0; step < 14; step++) {
+      const ready = await advanceUntil(
+        page,
+        async () => (await atQuestion()) || (await page.locator('button.narration-choice:visible').count()) > 0,
+        12000,
+        `${tag}-finale-${step}`
+      );
+      if (!ready) return false;
+      if (await atQuestion()) break;
+
+      const sceneId = await page.locator('#narration-stage').getAttribute('data-scene-id');
+      await auditCg(page, `${tag}-${sceneId ?? step}`);
+      if (sceneId === 'act3.preparation') {
+        await shot(page, `${tag}-preparation`);
+        for (const prepId of ['whistle', 'herbs', 'ditch', 'array', 'array-dark']) {
+          const prep = page.locator(`button.narration-choice[data-choice-id="${prepId}"]`);
+          if (await prep.isVisible().catch(() => false)) {
+            if (!(await pick(page, prepId))) return false;
+            await advanceUntil(
+              page,
+              async () => (await page.locator('button.narration-choice:visible').count()) > 0,
+              5000,
+              `${tag}-prep-${prepId}`
+            );
+          }
+        }
+      }
+      if (sceneId?.startsWith('act3.tribulation')) {
+        await shot(page, `${tag}-${sceneId.replaceAll('.', '-')}`);
+      }
+      if (!(await pick(page, 'on'))) return false;
     }
-    if (await waitChoice(page, 'more', 4000)) await pick(page, 'more');
-    for (const st of ['stage4', 'stage5', 'stage6']) {
-      if (await waitChoice(page, st, 4000)) {
-        await pick(page, st);
-        if (await waitChoice(page, 'on', 4000)) await pick(page, 'on');
-      } else note('major', `缺 ${st}`);
+
+    if (!(await atQuestion())) {
+      note('critical', `${tag}: 未抵达天道诘问`);
+      await shot(page, `${tag}-stuck-before-question`);
+      return false;
     }
-    // after stage6 go train
-    // may already be train
+    await auditCg(page, `${tag}-question`);
+    await shot(page, `${tag}-tribulation-question`);
+    const visibleTerminal = await page
+      .locator(
+        'button.narration-choice[data-choice-id="e6"]:visible, button.narration-choice[data-choice-id="e7"]:visible, button.narration-choice[data-choice-id="answer"]:visible'
+      )
+      .evaluateAll((buttons) => buttons.map((button) => button.getAttribute('data-choice-id')));
+    if (visibleTerminal.length !== 1) {
+      note('major', `${tag}: 天道诘问泄露互斥结局矩阵`, { visibleTerminal });
+    }
     return true;
   }
 
-  if (await restartToTrain()) {
-    await doStages(page);
-    // ensure on train
-    await advanceUntil(page, async () => page.locator('button.narration-choice[data-choice-id="assault"]').isVisible(), 8000, 'assault');
-    if (await pick(page, 'assault')) {
-      await shot(page, '04-act3-entry');
-      // cave path
-      await pick(page, 'on'); // entry
-      // entrance - pick on skip clues
-      if (await waitChoice(page, 'on', 8000)) await pick(page, 'on');
-      if (await waitChoice(page, 'on', 8000)) await pick(page, 'on'); // lab
-      if (await waitChoice(page, 'on', 8000)) await pick(page, 'on'); // faceless
-      if (await waitChoice(page, 'on', 8000)) await pick(page, 'on'); // light -> tribulation
-      await shot(page, '05-act3-tribulation');
-      // answer for ascension (defiance should be <60 if we hurried)
-      if (await waitChoice(page, 'answer', 8000)) {
-        await pick(page, 'answer');
-        const e = await untilEnding(page, 'ascension');
-        await shot(page, 'ending-ascension');
-        results['ascension'] = e;
-      } else {
-        const labels = await page.locator('button.narration-choice:visible').allTextContents();
-        note('major', '终局无 answer 选项（可能 defiance>=60）', { labels });
-        await shot(page, 'stuck-tribulation-no-answer');
-        // try e6/e7
-        if (await page.locator('button.narration-choice[data-choice-id="e6"]').isVisible()) {
-          await pick(page, 'e6');
-          results['e6-sacrifice'] = await untilEnding(page, 'e6-sacrifice');
-          await shot(page, 'ending-e6-sacrifice');
-        } else if (await page.locator('button.narration-choice[data-choice-id="e7"]').isVisible()) {
-          await pick(page, 'e7');
-          results['e7-usurp'] = await untilEnding(page, 'e7-usurp');
-          await shot(page, 'ending-e7-usurp');
-        }
-      }
-    } else note('critical', 'cult 满后仍无 assault');
+  // —— ascension: 六劫稳妥完成，不堆反抗 ——
+  if (await restartToTrain() && await doStages(page) && await walkFinaleToQuestion(page, 'ascension')) {
+    if (await pick(page, 'answer')) {
+      const e = await untilEnding(page, 'ascension');
+      await shot(page, 'ending-ascension');
+      results['ascension'] = e;
+    }
   }
 
-  // —— E7: high defiance low bond ——
-  if (await restartToTrain()) {
-    // raise defiance via hurry already; add more via side bribe etc + stages
-    await doStages(page);
-    // pump defiance: side hubs
-    if (await pick(page, 'side')) {
-      // try bribe/whistle paths if present
-      for (const id of ['bully', 'herb', 'bribe', 'more']) {
-        if (await page.locator(`button.narration-choice[data-choice-id="${id}"]`).isVisible().catch(() => false)) {
-          await pick(page, id);
-          // pick defiance options if any
-          for (const d of ['watch', 'ignore', 'take', 'refuse', 'silent', 'leave', 'back', 'on']) {
-            if (await page.locator(`button.narration-choice[data-choice-id="${d}"]`).isVisible().catch(() => false)) {
-              await pick(page, d);
-              break;
-            }
-          }
-        }
-      }
-    }
-    // go train and assault
-    // navigate back if needed
-    for (let i = 0; i < 6; i++) {
-      if (await page.locator('button.narration-choice[data-choice-id="assault"]').isVisible().catch(() => false)) break;
-      if (await page.locator('button.narration-choice[data-choice-id="back"]').isVisible().catch(() => false)) await pick(page, 'back');
-      else if (await page.locator('button.narration-choice[data-choice-id="rest"]').isVisible().catch(() => false)) await pick(page, 'rest');
-      else break;
-    }
-    if (await pick(page, 'assault')) {
-      await pick(page, 'on');
-      if (await waitChoice(page, 'on', 5000)) await pick(page, 'on');
-      if (await waitChoice(page, 'on', 5000)) await pick(page, 'on');
-      if (await waitChoice(page, 'on', 5000)) await pick(page, 'on');
-      if (await waitChoice(page, 'on', 5000)) await pick(page, 'on');
-      if (await waitChoice(page, 'e7', 5000)) {
-        await pick(page, 'e7');
-        const e = await untilEnding(page, 'e7-usurp');
-        await shot(page, 'ending-e7-usurp');
-        results['e7-usurp'] = e;
-        // dismiss and check title curse
-        if (e) {
-          await page.locator('.narration-ending-dismiss').click().catch(() => undefined);
-          await page.waitForTimeout(300);
-          await shot(page, '06-title-after-e7');
-          const cursed = await page.locator('[data-app-surface="title"].e7-cursed, .e7-cursed').count();
-          if (!cursed) note('major', 'E7 后标题屏未出现 e7-cursed 改写');
-        }
-      } else if (await waitChoice(page, 'e6', 3000)) {
-        note('minor', 'E7 路径落到 e6（bond 仍高）');
-        await pick(page, 'e6');
-        results['e6-sacrifice'] = await untilEnding(page, 'e6-sacrifice');
-        await shot(page, 'ending-e6-sacrifice');
-      } else if (await waitChoice(page, 'answer', 3000)) {
-        note('minor', 'E7 路径落到 answer（defiance 不足）');
+  // —— E7: 高反抗、低羁绊 ——
+  if (await restartToTrain() && await doStages(page) && await stackDefiance(page) && await walkFinaleToQuestion(page, 'e7')) {
+    if (await pick(page, 'e7')) {
+      const e = await untilEnding(page, 'e7-usurp');
+      await shot(page, 'ending-e7-usurp');
+      results['e7-usurp'] = e;
+      if (e) {
+        await page.locator('.narration-ending-dismiss').click().catch(() => undefined);
+        await page.waitForTimeout(300);
+        await shot(page, '06-title-after-e7');
+        const cursed = await page.locator('[data-app-surface="title"].e7-cursed, .e7-cursed').count();
+        if (!cursed) note('major', 'E7 后标题屏未出现 e7-cursed 改写');
       }
     }
   }
 
-  // —— E6: high defiance high bond ——
-  if (await restartToTrain()) {
-    // help path for bond + stages for defiance
-    // already in train via hurry; do side righteous for bond
-    await doStages(page);
-    if (await pick(page, 'side')) {
-      // village for bond
-      if (await page.locator('button.narration-choice[data-choice-id="more"]').isVisible()) {
-        await pick(page, 'more');
-        if (await page.locator('button.narration-choice[data-choice-id="village"]').isVisible().catch(() => false)) {
-          await pick(page, 'village');
-          for (const id of ['ditch', 'market', 'song']) {
-            if (await page.locator(`button.narration-choice[data-choice-id="${id}"]`).isVisible().catch(() => false)) {
-              await pick(page, id);
-              // pick help/righteous
-              for (const d of ['help', 'on', 'buy', 'listen', 'back']) {
-                if (await page.locator(`button.narration-choice[data-choice-id="${d}"]`).isVisible().catch(() => false)) {
-                  await pick(page, d);
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-    for (let i = 0; i < 8; i++) {
-      if (await page.locator('button.narration-choice[data-choice-id="assault"]').isVisible().catch(() => false)) break;
-      if (await page.locator('button.narration-choice[data-choice-id="back"]').isVisible().catch(() => false)) await pick(page, 'back');
-      else if (await page.locator('button.narration-choice[data-choice-id="rest"]').isVisible().catch(() => false)) await pick(page, 'rest');
-      else await clickStage(page);
-    }
-    if (await pick(page, 'assault')) {
-      await pick(page, 'on');
-      for (let i = 0; i < 4; i++) {
-        if (await waitChoice(page, 'on', 4000)) await pick(page, 'on');
-      }
-      if (await waitChoice(page, 'e6', 5000)) {
-        await pick(page, 'e6');
-        const e = await untilEnding(page, 'e6-sacrifice');
-        await shot(page, 'ending-e6-sacrifice');
-        results['e6-sacrifice'] = e;
-      } else {
-        const labels = await page.locator('button.narration-choice:visible').allTextContents();
-        note('major', '未能触发 E6 选项', { labels });
-        await shot(page, 'stuck-no-e6');
-      }
+  // —— E6: 高反抗、高羁绊；劫前准备完成最后回收 ——
+  if (
+    await restartToTrain() &&
+    await doStages(page) &&
+    await stackDefiance(page) &&
+    await stackBond(page) &&
+    await walkFinaleToQuestion(page, 'e6')
+  ) {
+    if (await pick(page, 'e6')) {
+      const e = await untilEnding(page, 'e6-sacrifice');
+      await shot(page, 'ending-e6-sacrifice');
+      results['e6-sacrifice'] = e;
     }
   }
 
@@ -626,6 +657,16 @@ async function main() {
   console.log('\n=== SUMMARY ===');
   console.log(JSON.stringify(report.summary, null, 2));
   console.log('findings', findings.length, 'screenshots →', OUT);
+  const failed =
+    report.summary.endingsFailed.length > 0 ||
+    report.summary.critical > 0 ||
+    report.summary.major > 0;
+  if (failed) {
+    console.error('visual-audit-narration: FAILED');
+    process.exitCode = 1;
+  } else {
+    console.log('visual-audit-narration: OK');
+  }
 }
 
 main().catch((e) => {

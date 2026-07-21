@@ -23,7 +23,7 @@
  */
 
 import type { NarrationBlipSpeaker } from '@io/audio';
-import { isChoiceAvailable } from './firstPersonView';
+import { isChoiceAvailable, onceFlag } from './firstPersonView';
 import type { EndingId, NarrationChoice, NarrationLine, NarrationScene, NarrationState, Speaker } from './narrationTypes';
 
 /** 打字机四档速度（docs/23 §5：38 标准 / 60 慢 / 18 快 / 0 即时）。 */
@@ -39,6 +39,8 @@ export const NARRATION_TEXT_SIZES: readonly NarrationTextSize[] = ['small', 'med
 const NARRATION_TEXT_SIZE_STORAGE_KEY = 'narration.textSize';
 /** 跨周目保留的已读选项标记（sceneId::choiceId）。不随 beginNewRun 清空。 */
 const NARRATION_READ_CHOICES_STORAGE_KEY = 'narration.readChoices';
+/** 互斥剧情分支守卫未满足时不渲染，避免锁项剧透另一条人生。 */
+const HIDE_WHEN_UNAVAILABLE_TAG = 'hide-when-unavailable';
 
 /** 心声条（内心内阁）最多叠 2 条 FIFO（docs/23 §5）。 */
 const CABINET_MAX = 2;
@@ -61,7 +63,9 @@ function describeRequires(requires?: string): string {
   if (!requires) return '条件未满';
   switch (requires.trim()) {
     case 'cultProgress>=6':
-      return '需体修圆满';
+      return '还差最后一重';
+    case 'cultProgress>=7':
+      return '需六劫圆满';
     case 'cultProgress>=3':
       return '需再历几道劫';
     case 'cultProgress>=1 && cultProgress<2':
@@ -74,6 +78,8 @@ function describeRequires(requires?: string): string {
       return '需历第四道劫';
     case 'cultProgress>=5 && cultProgress<6':
       return '需历第五道劫';
+    case 'cultProgress>=6 && cultProgress<7':
+      return '需历第六道劫';
     case 'defiance>=60 && bond>=50':
       return '需逆志与红尘皆深';
     case 'defiance>=60 && bond<50':
@@ -137,7 +143,12 @@ export interface NarrationVNOptions {
 
 export interface NarrationVNController {
   /** 渲染一个场景：逐字打字 lines → 列 choices（或叶节点完成信号）。 */
-  showScene(scene: NarrationScene, state: NarrationState, handlers: NarrationSceneHandlers): void;
+  showScene(
+    scene: NarrationScene,
+    state: NarrationState,
+    handlers: NarrationSceneHandlers,
+    options?: NarrationVNShowOptions
+  ): void;
   /** 渲染结局卡（占位 CG + 名称 + 线索 + 返回）。 */
   showEnding(card: NarrationEndingCard): void;
   /**
@@ -163,6 +174,11 @@ export interface NarrationVNController {
   isBacklogVisible(): boolean;
   /** 销毁：拆监听 + 清 timer + 清 DOM（不删 root 本身）。 */
   destroy(): void;
+}
+
+export interface NarrationVNShowOptions {
+  /** 回访 hub 时跳过已经读过的 lines，直接恢复尚未处理的选项。 */
+  readonly startAtChoices?: boolean;
 }
 
 type Phase = 'idle' | 'typing' | 'await-advance' | 'choices' | 'complete' | 'ending';
@@ -207,10 +223,6 @@ const NUMBER_KEY_TO_INDEX: Readonly<Record<string, number>> = {
 
 const NUMBER_GLYPHS = ['①', '②', '③', '④', '⑤'] as const;
 
-function isNonNarrator(speaker: Speaker | undefined): boolean {
-  return speaker !== undefined && speaker !== 'narrator';
-}
-
 function clamp(value: number, min: number, max: number): number {
   if (Number.isNaN(value)) return min;
   return value < min ? min : value > max ? max : value;
@@ -241,6 +253,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   let skipActive = false;
   let backlogVisible = false;
   let uiHidden = false;
+  /** 每次换段/换场递增；旧 timer 即使已进入任务队列，也不得写回新场景。 */
+  let renderEpoch = 0;
+  /** 回访 hub 直接列选项时不重复推入「须自择一途」提示。 */
+  let suppressDecisionCue = false;
 
   // —— 当前场景演出状态 ——
   let currentScene: NarrationScene | null = null;
@@ -265,6 +281,8 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   // —— Backlog 环形 + 心声条 FIFO ——
   const backlogRing: NarrationBacklogEntry[] = [];
   const cabinet: { speaker: Speaker; text: string }[] = [];
+  /** RESPONSE/CONVERGE 段隐藏心声条：长回应会撑高对话框，与 cabinet 叠层（dogfood「内容重叠交叉」）。 */
+  let cabinetSuppressed = false;
 
   // —— DOM 搭建 ——
   root.textContent = '';
@@ -309,6 +327,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
 
   const dialog = document.createElement('div');
   dialog.className = 'narration-dialog';
+
+  // 底部阅读坞：心声提示 → 主对话/选项 → Quick Menu 走正常 grid 流，避免绝对定位互相压叠。
+  const bottomDock = document.createElement('div');
+  bottomDock.className = 'narration-bottom-dock';
 
   const speakerTag = document.createElement('span');
   speakerTag.className = 'narration-speaker-tag';
@@ -370,7 +392,8 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   endingCard.className = 'narration-ending-card';
   endingCard.hidden = true;
 
-  stage.append(cgWrap, cabinetEl, dialog, quickMenu, backlogOverlay, endingCard);
+  bottomDock.append(cabinetEl, dialog, quickMenu);
+  stage.append(cgWrap, bottomDock, backlogOverlay, endingCard);
   root.appendChild(stage);
 
   function mkButton(className: string, label: string, onClick: EventListener, title?: string): HTMLButtonElement {
@@ -441,7 +464,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       cabinetEl.hidden = true;
       return;
     }
-    cabinetEl.hidden = false;
+    cabinetEl.hidden = cabinetSuppressed;
     for (const entry of cabinet) {
       const slot = document.createElement('p');
       slot.className = 'narration-cabinet-slot';
@@ -455,6 +478,12 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
 
   /** 字形冗余（italic / weight / 字距）色盲安全（docs/23 §5 三重冗余：色+形+音）。 */
   function applySpeakerGlyph(el: HTMLElement, speaker: Speaker): void {
+    // 每段先清空上一 speaker 留下的行内字形，防 system 反白/heart-demon 字距串到后文。
+    el.style.fontStyle = '';
+    el.style.fontFamily = '';
+    el.style.fontWeight = '';
+    el.style.letterSpacing = '';
+    el.style.background = '';
     switch (speaker) {
       case 'master':
         el.style.fontStyle = 'italic';
@@ -530,20 +559,18 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     } else {
       dialogText.classList.add('narration-typing');
     }
-    if (isNonNarrator(activeSpeaker) && cabinet.length > 0) {
-      const last = cabinetEl.lastElementChild as HTMLElement | null;
-      if (last && last.dataset.speaker === activeSpeaker) {
-        last.textContent = activeText.slice(0, revealed);
-      }
-    }
   }
 
   function startSegment(text: string, speaker: Speaker, origin: BacklogOrigin): void {
     clearTyping();
     clearAuto();
+    renderEpoch += 1;
     activeText = text;
     activeSpeaker = speaker;
     activeOrigin = origin;
+    cabinetSuppressed = origin === 'response' || origin === 'converge';
+    if (cabinetSuppressed) cabinetEl.hidden = true;
+    else if (cabinet.length > 0) cabinetEl.hidden = false;
     revealed = 0;
     charsSinceBlip = 0;
     rollbackPos = null;
@@ -552,12 +579,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     hint.hidden = true;
     hideChoices();
     dialogText.style.color = SPEAKER_COLOR[speaker];
+    dialogText.dataset.speaker = speaker;
     applySpeakerGlyph(dialogText, speaker);
     setSpeakerTag(speaker, origin);
     announce.textContent = text;
-    if (isNonNarrator(speaker)) {
-      pushCabinet(speaker, ''); // 新建空 slot 供打字实时填充。
-    }
     if (speed === 0 || reducedMotion || skipActive) {
       revealed = text.length;
       renderActiveText();
@@ -565,7 +590,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       return;
     }
     dialogText.classList.add('narration-typing');
-    scheduleTick();
+    scheduleTick(renderEpoch);
     focusStage();
   }
 
@@ -597,7 +622,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     speakerTag.hidden = label.length === 0;
   }
 
-  function scheduleTick(): void {
+  function scheduleTick(epoch = renderEpoch): void {
     clearTyping();
     let delay = speed;
     if (revealed > 0) {
@@ -609,14 +634,15 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     }
     if (delay <= 0) {
       // 用 setTimeout(0) 让出主线程，避免即时档同步递归爆栈。
-      typingTimer = setTimeout(tick, 0);
+      typingTimer = setTimeout(() => tick(epoch), 0);
       return;
     }
-    typingTimer = setTimeout(tick, delay);
+    typingTimer = setTimeout(() => tick(epoch), delay);
   }
 
-  function tick(): void {
+  function tick(epoch: number): void {
     if (destroyed) return;
+    if (epoch !== renderEpoch) return;
     typingTimer = null;
     if (phase !== 'typing') return;
     if (revealed >= activeText.length) {
@@ -635,7 +661,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
         revealed = activeText.length;
         renderActiveText();
       }
-      scheduleTick();
+      scheduleTick(epoch);
     } else {
       onLineTyped();
     }
@@ -646,14 +672,6 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     dialogText.classList.remove('narration-typing');
     if (activeText.length > 0) {
       pushBacklog(activeOrigin, activeText, currentScene?.id ?? '');
-      if (isNonNarrator(activeSpeaker) && cabinet.length > 0) {
-        const lastIdx = cabinet.length - 1;
-        const last = cabinet[lastIdx];
-        if (last && last.speaker === activeSpeaker && last.text === '') {
-          cabinet[lastIdx] = { speaker: activeSpeaker, text: activeText };
-          renderCabinet();
-        }
-      }
     }
     phase = 'await-advance';
     hint.textContent = 'Enter / 点击继续';
@@ -661,10 +679,16 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     focusStage();
     if (autoActive) {
       clearAuto();
-      autoTimer = setTimeout(() => advance(), autoPauseMs(activeText.length));
+      const epoch = renderEpoch;
+      autoTimer = setTimeout(() => {
+        if (epoch === renderEpoch) advance();
+      }, autoPauseMs(activeText.length));
     } else if (skipActive) {
       // Skip 模式：让出主线程后立即推进，避免同步递归。
-      autoTimer = setTimeout(() => advance(), 0);
+      const epoch = renderEpoch;
+      autoTimer = setTimeout(() => {
+        if (epoch === renderEpoch) advance();
+      }, 0);
     }
   }
 
@@ -697,11 +721,12 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     const scene = currentScene;
     if (!scene) return;
     const choices = scene.choices ?? [];
-    const visibleChoices = choices.filter(choice => currentState !== null && isChoiceAvailable(currentState, scene.id, choice));
-    if (choices.length > 0) {
+    const renderedChoices = choices.filter(choice => currentState !== null && shouldRenderChoice(currentState, scene.id, choice));
+    const visibleChoices = renderedChoices.filter(choice => currentState !== null && isChoiceAvailable(currentState, scene.id, choice));
+    if (renderedChoices.length > 0) {
       // 重大抉择前强制 1 条心声：≥2 选项且本场景 lines 无 self/heart-demon/master/intuition 时，
       // 轻量推入 cabinet 一句（不剧透结局），保持克制。
-      if (choices.length >= 2) {
+      if (!suppressDecisionCue && renderedChoices.length >= 2) {
         const hasInnerVoice = scene.lines.some(line => {
           const s = line.speaker;
           return s === 'self' || s === 'heart-demon' || s === 'master' || s === 'intuition';
@@ -725,7 +750,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     hint.hidden = false;
     if (autoActive) {
       clearAuto();
-      autoTimer = setTimeout(() => advance(), autoPauseMs(activeText.length));
+      const epoch = renderEpoch;
+      autoTimer = setTimeout(() => {
+        if (epoch === renderEpoch) advance();
+      }, autoPauseMs(activeText.length));
     }
   }
 
@@ -741,6 +769,14 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   }
 
   // —— 选项四态渲染 ——
+  function shouldRenderChoice(state: NarrationState, sceneId: string, choice: NarrationChoice): boolean {
+    // once 契约是“选中后隐藏”，不是变成一块永远锁着的墓碑。
+    if (choice.once && state.flags.has(onceFlag(sceneId, choice.id))) return false;
+    const available = isChoiceAvailable(state, sceneId, choice);
+    if (!available && choice.tags?.includes(HIDE_WHEN_UNAVAILABLE_TAG)) return false;
+    return true;
+  }
+
   function renderChoices(scene: NarrationScene): void {
     // 抉择必须可见：隐窗中进入选项时强制恢复 UI。
     if (uiHidden) setUiHidden(false);
@@ -749,10 +785,11 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     const choices = scene.choices ?? [];
     const readSet = loadReadChoices();
     // docs/23 §5：① ② ③ ④ ⑤ 数字键直选只数 isChoiceAvailable 的项——视觉 glyph 与
-    // NUMBER_KEY_TO_INDEX 必须一致（onStageKeydown 按 available 顺序命中）。锁项不占编号位、
+    // NUMBER_KEY_TO_INDEX 必须一致（onNarrationKeydown 按 available 顺序命中）。锁项不占编号位、
     // 不显 glyph，显锁图标 + label + 锁定原因（玩家可看但 disabled）。
     let renderIndex = 0;
     for (const choice of choices) {
+      if (state === null || !shouldRenderChoice(state, scene.id, choice)) continue;
       const available = state !== null && isChoiceAvailable(state, scene.id, choice);
       let glyph = '';
       if (available) {
@@ -866,6 +903,8 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
 
   function completeLineInstantly(): void {
     clearTyping();
+    // 使已经进入任务队列、但尚未执行的旧 tick 失效。
+    renderEpoch += 1;
     revealed = activeText.length;
     renderActiveText();
     onLineTyped();
@@ -902,6 +941,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     if (!entry) return;
     clearTyping();
     clearAuto();
+    renderEpoch += 1;
     phase = 'await-advance';
     const speaker: Speaker = typeof entry.origin === 'string' && isSpeaker(entry.origin) ? entry.origin : 'narrator';
     // 仅静态展示，不改 active 字段（保留 liveSnapshot 以便恢复）。
@@ -919,6 +959,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     const snapshot = liveSnapshot;
     liveSnapshot = null;
     if (!snapshot) return;
+    renderEpoch += 1;
     activeText = snapshot.text;
     activeSpeaker = snapshot.speaker;
     activeOrigin = snapshot.origin;
@@ -929,7 +970,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     setSpeakerTag(activeSpeaker, activeOrigin);
     if (phase === 'typing') {
       renderActiveText();
-      scheduleTick();
+      scheduleTick(renderEpoch);
     } else {
       renderActiveText();
       hint.textContent = 'Enter / 点击继续';
@@ -1138,7 +1179,18 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       img.setAttribute('aria-hidden', 'true');
       img.decoding = 'async';
       img.loading = 'eager';
-      // 大图（1024×1536）可能竞态失败：先绑 error，再设 src，失败时替换为 fallback。
+      // ISSUE-001 修复：1024×1536 ~3MB 正图配 decoding="async" 时，浏览器会在解码完成前
+      // 先绘制结局卡——逐行渐进绘制会露出顶部一条（心魔/飞升），尚未开始解码则只剩黑底
+      // （丹毒）。先把 <img> 标记 data-decoded="false"（CSS opacity:0 占位，aspect-ratio
+      // 锁稳定肖像框），待 img.decode() 解析（首帧即可无闪烁整图绘制）后再显影。
+      img.dataset.decoded = 'false';
+      const revealDecoded = (): void => {
+        img.dataset.decoded = 'true';
+      };
+      // decode() 的 Promise 可能因浏览器调度/资源复用而拒绝，即便随后 load 成功且
+      // naturalWidth 有效。load 是完整资源可用的可靠兜底，不能让图片永久停在 opacity:0。
+      img.addEventListener('load', revealDecoded, { once: true });
+      // 大图可能竞态失败：先绑 error，再设 src，失败时替换为 fallback。
       const onCgLoadError = (): void => {
         img.removeEventListener('error', onCgLoadError);
         const fallback = document.createElement('div');
@@ -1150,6 +1202,16 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       };
       img.addEventListener('error', onCgLoadError);
       img.src = card.cgUrl;
+      // decode() 在首帧绘制前完成完整解码，消除「顶部一条 / 黑底」竞态；老环境无 decode
+      // 能力时立即显影（退回旧行为，不阻断渲染）。
+      if (typeof img.decode === 'function') {
+        img.decode().then(revealDecoded, () => {
+          // 真正损坏的资源由 error 事件替换；若只是 decode() 拒绝，load 事件仍会显影。
+          if (img.complete && img.naturalWidth > 0) revealDecoded();
+        });
+      } else {
+        revealDecoded();
+      }
       plate.appendChild(img);
     } else {
       const fallback = document.createElement('div');
@@ -1173,7 +1235,15 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   }
 
   // —— 事件接线 ——
-  const onStageKeydown: EventListener = event => {
+  // ISSUE-007：键盘推进绑到 document 捕获 phase（对齐 narrationIntro.attachModalListeners 的
+  // document capture 模式），不再依赖 stage 是否持焦。根因：原 bind(stage,'keydown',...) 只在
+  // stage 获焦时触发，但入场时屏幕切换/其他 focus 管理会抢走焦点，导致 Enter/Space 失效，
+  // 玩家必须先点一下舞台才管用。document capture 在任何焦点状态下都先收到 → 按 docs/23 §5
+  // 「Space/Enter/click 推进」契约无焦点依赖地推进。
+  // 单一 keydown 监听（stage 不再绑 keydown）→ 不存在双触发。window 级全局键监听在 narration
+  // surface 下被 flowAllowsWorldInput() 早退（surface!=='world'），appFlowView 只管 b/Escape/Tab，
+  // 故本监听是 narration 推进的唯一入口。destroy() 经 bindings[] 自动 removeEventListener。
+  const onNarrationKeydown: EventListener = event => {
     if (destroyed) return;
     const keyboard = event as KeyboardEvent;
     const key = keyboard.key;
@@ -1194,6 +1264,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
         const target = event.target as HTMLElement | null;
         if (target && target.closest('button')) return;
         event.preventDefault();
+        focusStage(); // ISSUE-007：键盘用户落焦 stage，触发 app.css :focus-visible 焦点环。
         advance();
         return;
       }
@@ -1245,6 +1316,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       const target = event.target as HTMLElement | null;
       if (target && target.closest('button')) return; // 选项/Quick Menu 交给原生点击。
       event.preventDefault();
+      focusStage(); // ISSUE-007：键盘用户落焦 stage，触发 app.css :focus-visible 焦点环。
       advance();
     }
   };
@@ -1274,15 +1346,23 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     cgAmbienceImg.hidden = true;
   };
 
-  bind(stage, 'keydown', onStageKeydown);
+  // ISSUE-007：keydown 绑 document 捕获 phase（见 onNarrationKeydown 注释）。click/wheel
+  // 仍是 stage 局部指针事件——只在舞台内推进/回退，避免点 surface 外壳也推进。
+  bind(document, 'keydown', onNarrationKeydown, true);
   bind(stage, 'click', onStageClick);
   bind(stage, 'wheel', onStageWheel, { passive: false });
   bind(cgImg, 'error', onCgError);
   bind(cgAmbienceImg, 'error', onCgAmbienceError);
 
   // —— 对外方法 ——
-  function showScene(scene: NarrationScene, state: NarrationState, handlers: NarrationSceneHandlers): void {
+  function showScene(
+    scene: NarrationScene,
+    state: NarrationState,
+    handlers: NarrationSceneHandlers,
+    showOptions: NarrationVNShowOptions = {}
+  ): void {
     if (destroyed) return;
+    renderEpoch += 1;
     clearTyping();
     clearAuto();
     // 跨场景清空心声条：避免上一场景 heart-demon/self 文案泄漏到下一场景上方。
@@ -1296,11 +1376,29 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     selectedChoiceId = null;
     lastChoiceId = null;
     pendingConvergeAfterResponse = false;
+    cabinetSuppressed = false;
+    suppressDecisionCue = showOptions.startAtChoices === true;
     currentScene = scene;
     currentState = state;
     currentHandlers = handlers;
+    stage.dataset.sceneId = scene.id;
     segmentQueue = scene.lines.length > 0 ? scene.lines.slice(1) : [];
     hint.textContent = 'Enter / 点击继续';
+    if (showOptions.startAtChoices) {
+      activeText = '';
+      activeSpeaker = 'narrator';
+      activeOrigin = 'narrator';
+      revealed = 0;
+      dialogText.textContent = '';
+      dialogText.classList.remove('narration-typing');
+      dialogText.removeAttribute('data-speaker');
+      announce.textContent = '';
+      speakerTag.textContent = '';
+      speakerTag.hidden = true;
+      segmentQueue = [];
+      afterSceneLines();
+      return;
+    }
     if (scene.lines.length === 0) {
       afterSceneLines();
       return;
@@ -1311,6 +1409,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
 
   function showEnding(card: NarrationEndingCard): void {
     if (destroyed) return;
+    renderEpoch += 1;
     clearTyping();
     clearAuto();
     phase = 'ending';
@@ -1347,6 +1446,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     destroy(): void {
       if (destroyed) return;
       destroyed = true;
+      renderEpoch += 1;
       clearTyping();
       clearAuto();
       for (const binding of bindings) binding.target.removeEventListener(binding.type, binding.listener, binding.options);

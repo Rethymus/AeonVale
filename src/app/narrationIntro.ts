@@ -48,6 +48,17 @@ export interface NarrationIntroController {
   isRead(): boolean;
 }
 
+/**
+ * ISSUE-003：modal 开启期间被 inert 的 host 兄弟元素记录。
+ * 逐元素记录 inert / aria-hidden 原状态，close 时按原值精确回滚
+ * （只移除本次添加的属性，保留元素既有的 inert/aria-hidden）。
+ */
+interface InertedSibling {
+  readonly element: Element;
+  readonly hadInert: boolean;
+  readonly ariaHiddenPrior: string | null;
+}
+
 function defaultStorage(): NarrationIntroStorage {
   // 仿 narrationCodex safe 模式：隐私模式 / 配额 / Safari 跨域 iframe 抛 SecurityError 时
   // 静默降级（MEDIUM5：未读状态不持久化 → 玩家每次点入口都看自白，可接受降级）。
@@ -111,6 +122,8 @@ export function createNarrationIntro(options: NarrationIntroOptions): NarrationI
   let destroyed = false;
   // 文档级监听绑定记录（HIGH4：destroy/close 时拆，避免泄漏）。
   const docListeners: Array<{ readonly type: string; readonly listener: EventListener }> = [];
+  // ISSUE-003：modal 开启时被 inert 的 host 兄弟元素记录（close 时按原状态恢复）。
+  let inertedSiblings: InertedSibling[] = [];
 
   function isRead(): boolean {
     return storage.getItem(INTRO_STORAGE_KEY) === '1';
@@ -133,6 +146,48 @@ export function createNarrationIntro(options: NarrationIntroOptions): NarrationI
       document.removeEventListener(type, listener);
     }
     docListeners.length = 0;
+  }
+
+  /**
+   * ISSUE-003：modal overlay 开启后，把 host 的其余 element 子节点标为 `inert` + `aria-hidden="true"`，
+   * 使标题屏底层控件（新游戏 / 设置 / 灵韵叙录入口…）在 browse mode 与无障碍树中一同隐去，
+   * 与 `role=dialog` `aria-modal=true` 的语义对齐。Tab 已被 {@link attachModalListeners} 陷阱，
+   * 这里补全结构性遮蔽（inert 同时移除 tab 序与无障碍树）。逐元素记录原状态，便于 close 时精确回滚。
+   *
+   * 边界：跳过 overlay 自身；只处理直接 element 子节点（`host.children` 已排除文本节点）；
+   * host 无其他子节点时数组为空；防御性重置以兼容重复 open。
+   */
+  function applyHostInert(): void {
+    inertedSiblings = [];
+    if (!host) return;
+    const children = Array.from(host.children);
+    for (const child of children) {
+      if (!overlay || child === overlay) continue;
+      const hadInert = child.hasAttribute('inert');
+      const ariaHiddenPrior = child.getAttribute('aria-hidden');
+      child.setAttribute('inert', '');
+      child.setAttribute('aria-hidden', 'true');
+      inertedSiblings.push({ element: child, hadInert, ariaHiddenPrior });
+    }
+  }
+
+  /**
+   * ISSUE-003：close 时恢复 host 兄弟的原 inert / aria-hidden 状态。
+   * 仅移除本次添加的属性；若元素原本就 inert 或 `aria-hidden="true"` 则原状保留，
+   * 若原本是 `'false'` 等显式值则恢复原值。空数组下为 no-op，重复 close 安全。
+   */
+  function restoreHostInert(): void {
+    for (const { element, hadInert, ariaHiddenPrior } of inertedSiblings) {
+      if (!hadInert) {
+        element.removeAttribute('inert');
+      }
+      if (ariaHiddenPrior === null) {
+        element.removeAttribute('aria-hidden');
+      } else if (ariaHiddenPrior !== 'true') {
+        element.setAttribute('aria-hidden', ariaHiddenPrior);
+      }
+    }
+    inertedSiblings = [];
   }
 
   /**
@@ -198,6 +253,9 @@ export function createNarrationIntro(options: NarrationIntroOptions): NarrationI
       overlay.remove();
       overlay = null;
     }
+    // ISSUE-003：先恢复 host 兄弟的可聚焦/可访问状态，再把焦点还给标题屏入口
+    // （若仍 inert，focus 不可见且 AT 无法到达）。
+    restoreHostInert();
     // 关闭后把焦点还给标题屏入口（便于再次点开 / 继续标题屏操作）。
     document.querySelector<HTMLElement>('#flow-title-narration')?.focus({ preventScroll: true });
   }
@@ -279,6 +337,9 @@ export function createNarrationIntro(options: NarrationIntroOptions): NarrationI
     close(); // 防御：避免重复 overlay。
     overlay = buildOverlay();
     host.appendChild(overlay);
+    // ISSUE-003：overlay 落到 host 后立刻把其余子节点 inert + aria-hidden，
+    // 使标题屏底层按钮在无障碍树与 browse mode 中隐去（modal 语义对齐）。
+    applyHostInert();
     const mount = overlay.querySelector<HTMLElement>('#narration-intro-vn');
     if (!mount) {
       close();
