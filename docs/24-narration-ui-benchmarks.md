@@ -14,8 +14,9 @@
 3. **选项有分量**（位置、延迟、文案长度、锁因），不用数值条剧透  
 4. **系统界面 diegetic**（玉简/识海/残卷），少用齿轮工具条  
 5. **图鉴/回想保沉浸**（节点图 + 未解锁两档）
+6. **分支先兑现再汇流**：重大结果来自选择串；即时、短期、终局三层回响缺一不可
 
-灵韵叙录**内容与分支已厚**，观感仍像「深色卡片里的 demo」，主因是 **布局哲学仍是框中插图，不是全屏 ADV**。
+灵韵叙录改造前同时存在两类问题：视觉上像「深色卡片里的 demo」，叙事上则是选项很快汇流、功法与终劫一笔带过、回访重复播放。升级必须同时处理阅读界面与因果结构，不能只换皮。
 
 ---
 
@@ -63,6 +64,30 @@
 - **可抄**：宣纸半透、墨线、竖列选项、古风词  
 - **勿抄**：信息过载灰选项伪自由  
 
+### 1.9 Roadwarden — 有限资源与带伤前进
+
+- **哲学**：旅途中每次援手、绕行和消耗都会改变后续可用准备；失败常改变局面，而非简单读档抹去
+- **可抄**：让木哨、药、渠、阵法成为终劫真实物件；强行淬体也能前进，但留下颤抖、旧痛、寿元与走火代价
+- **勿抄**：把所有路线扩成无法维护的开放世界文本量
+
+### 1.10 80 Days — 选择串而非孤立按钮
+
+- **哲学**：重大结果来自连续小选择、资源与关系共同累积；同一节点会根据此前旅程产生不同意义
+- **可抄**：山道抉择先改变当场行动，再影响名声/木哨，最后进入记忆锚；终局不是突然检查单个 flag
+- **勿抄**：为追求组合数量而制造只有措辞不同的伪分支
+
+### 1.11 Suzerain — 决策链与后果回访
+
+- **哲学**：政治选择会在中期事件、关系和最终国情中多次回响，玩家能追溯“为什么走到这里”
+- **可抄**：采药女救/弃分成暖冷两条后续；夺阵的把握明确来自邻田代价；E6/E7 回看一整串行为
+- **勿抄**：把隐藏数值直接做成仪表盘，提前暴露最优解
+
+### 1.12 Ink / Yarn Spinner / ChoiceScript — 分支工程方法
+
+- **哲学**：一次性选项、条件选项、局部 weave/foldback 与自动遍历共同控制组合爆炸
+- **可抄**：`once` 选后消失；互斥路线静默隐藏；hub 回访只列剩余选项；自动校验全场景/全结局可达
+- **勿抄**：迁移整个叙事引擎。现有 TypeScript 纯状态机足够，重点是补齐契约与测试
+
 ---
 
 ## 2. 灵韵叙录现状 vs 标杆
@@ -79,6 +104,18 @@
 | 结局仪式 | 落版插画+标题 | 曾空图；现改善但仍素 | 中 |
 | 叙录图鉴 | 节点+未解锁两档 | 已有 | 小 |
 | 多声部 | 色+形+音 | 已有六色 | 小 |
+
+### 2.1 叙事闭环对标结论
+
+本模式采用以下统一公式：
+
+`旧矛盾 → 有限准备 → 递进抉择 → 明确代价 → 带伤汇流 → 身体/关系/世界回收`
+
+- **先独有兑现，再汇流**：救人与绕行先进入不同场景，不能刚选完就共用“义举传开”。
+- **三层回响**：重要选择至少有即时回应、中段 flag/关系变化、终局物件或结局回收。
+- **失败带伤前进**：六重淬体的稳妥/强行都能学会方法，但收益、伤势、寿元和走火不同。
+- **证据补全，不伪造经历**：神农洞府可拿出新证据补缺，不能声称玩家亲历了未选择的线索。
+- **幽默服从人物**：保留少量处境反差；禁用与世界、角色、当前行动无因果关系的网络梗。
 
 ---
 
@@ -152,18 +189,23 @@
 | P1 姓名板 / 抉择心声 / 决策条 | ✅ 中文名牌；须自择一途可见；右偏 520px |
 | P1 叙录 timeline + 边 | ✅ 左侧 timeline；桌面 SVG 边；只显示有痕迹的幕 |
 | P1 UI 音效 + 已读选项 | ✅ ui-confirm 等；◇ 已读跨周目保留 |
-| 视觉回归 | ✅ `tmp/visual-audit-ui/*` · `tmp/visual-audit-p1/*` |
-| 浏览器/治理门禁 | ✅ narration-flow 3/3 · governance 8/8 · typecheck |
+| 叙事因果重写 | ✅ 72 场景；六重淬体 + 五段终劫；前期选择进入劫前准备 |
+| 重复/叠层修复 | ✅ 回访 hub 不重播；一次性选项消失；正文与心声不复制；Grid 阅读坞 |
+| 视觉回归 | ✅ 两份 `tools/visual-audit-*.mjs` 覆盖桌面全结局；`narration-flow.spec.ts` 覆盖移动端大字号几何 |
+| 浏览器/治理门禁 | ✅ narration-flow 6 项 · governance 72/72 场景、8/8 结局 · typecheck |
 
 ---
 
 ## 6. 参考索引（公开讨论与业界共识）
 
-- Disco Elysium UI / 对话信息流设计谈（GamerMatters、80.lv 等访谈与分析）  
-- Scarlet Hollow 关系系统与 UI 重做（Black Tabby / 作者日志）  
-- ADV Textbox / History / Skip 惯例（VNDev Wiki、Fuwanovel UI 解剖、Ren'Py 文档）  
-- Pentiment 字体即叙事（Polygon、GDC 相关分享）  
-- 互动影游节点图（隐形守护者、Detroit flowchart 玩家指南）  
-- 太吾等仙侠「先清晰再风格」的 UI 讨论  
+- Ink 官方写作指南（weave / gather / choice）：<https://github.com/inkle/ink/blob/master/Documentation/WritingWithInk.md>
+- Yarn Spinner Options：<https://docs.yarnspinner.dev/write-yarn-scripts/scripting-fundamentals/options>
+- Yarn Spinner Once：<https://docs.yarnspinner.dev/write-yarn-scripts/scripting-fundamentals/once>
+- Yarn Spinner Saliency：<https://docs.yarnspinner.dev/write-yarn-scripts/advanced-scripting/saliency>
+- Roadwarden 设计复盘：<https://www.gamedeveloper.com/design/deep-dive-roadwarden>
+- 80 Days 叙事与设计分享：<https://www.gamedeveloper.com/design/narrative-and-design-insights-from-i-80-days-i-writing-lead>
+- Suzerain 分支叙事案例：<https://www.articy.com/en/showcase/suzerain/>
+- ChoiceScript 条件与高级写法：<https://www.choiceofgames.com/make-your-own-games/choicescript-advanced/>
+- ChoiceScript 自动测试：<https://www.choiceofgames.com/make-your-own-games/testing-choicescript-games-automatically/>
 
-（具体 URL 以实施 PR 的参考链接附录为准；设计决策以本文第 3 节清单为验收。）
+这些来源支持的是结构原则，不要求迁移引擎；具体验收仍以本文第 2.1、3、4 节及工程契约为准。

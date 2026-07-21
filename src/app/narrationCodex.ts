@@ -129,16 +129,17 @@ const SCENE_META: Readonly<Record<string, SceneMeta>> = {
   'prologue.depart.road': { title: '山道义举', clue: '一前一后，两桩麻烦' },
   'prologue.depart.token': { title: '赠木哨', clue: '一枚木哨，一道旧纹' },
   'prologue.depart.spread': { title: '名声传开', clue: '山道之上，薄有声名' },
+  'prologue.depart.silent': { title: '独上山门', clue: '绕开求助，独自走完山路' },
   'prologue.sect': { title: '测灵', clue: '当众一试，高下立判' },
   'prologue.return': { title: '递锄头', clue: '一把旧锄，一句无言' },
   'act1.battle': { title: '斗法余波', clue: '天降横祸，一物遗落' },
   'act1.battle.sky': { title: '天上对照', clue: '顺天者雁，逆天者雷' },
-  'act1.battle.cellar': { title: '蝼蚁地窖', clue: '挖掘机下，那只蚂蚁' },
+  'act1.battle.cellar': { title: '地窖避劫', clue: '强者斗法，凡人先求活命' },
   'act1.battle.stare': { title: '一瞬对视', clue: '他记住了，这张脸' },
   'act1.ring': { title: '储物戒', clue: '无主之物，凡手可开' },
-  'act1.ring.attempts': { title: '三次试开', clue: '指纹血契，俱都不对' },
+  'act1.ring.attempts': { title: '三次试开', clue: '戒指只认真正的来处' },
   'act1.ring.flash': { title: '开戒一闪', clue: '金黄的田，简体的字' },
-  'act1.ring.oldman': { title: '无老爷爷', clue: '戒中无叟，唯同路人' },
+  'act1.ring.oldman': { title: '戒中无人', clue: '期待落空，只余遗物' },
   'act1.scroll': { title: '翻残卷', clue: '字字惊心，竟似旧识' },
   'act1.reveal': { title: '拼出真相', clue: '一线串起，此身有异' },
   'act1.seclude': { title: '埋骨归田', clue: '一念放下，便是一生' },
@@ -146,12 +147,12 @@ const SCENE_META: Readonly<Record<string, SceneMeta>> = {
   'act2.train.lore-hub': { title: '田侧旧迹', clue: '田埂石像与泛黄村志' },
   'act2.temper': { title: '引劫淬体', clue: '以雷为窑，碎而复生' },
   'act2.temper.late': { title: '更深的劫', clue: '云后目光，识海开口' },
-  'act2.temper.stage1': { title: '认劫', clue: '亏的是血，赚的是命' },
-  'act2.temper.stage2': { title: '引劫', clue: '阵如电路，劫如电流' },
-  'act2.temper.stage3': { title: '御劫', clue: '灵脉如管，急不得' },
-  'act2.temper.stage4': { title: '窃劫·心雷', clue: '勿字之后，是个独扛' },
-  'act2.temper.stage5': { title: '化劫', clue: '云后，天亲自低头' },
-  'act2.temper.stage6': { title: '偷天圆满', clue: '走到此处，已死一回' },
+  'act2.temper.stage1': { title: '察漏', clue: '先辨认仍可决定的余量' },
+  'act2.temper.stage2': { title: '引路', clue: '让错误方向更难通行' },
+  'act2.temper.stage3': { title: '借势', clue: '来势与去势都留下痕迹' },
+  'act2.temper.stage4': { title: '淬骨', clue: '停雷三息，让万物分担' },
+  'act2.temper.stage5': { title: '守我', clue: '为不能烧去的记忆留锚' },
+  'act2.temper.stage6': { title: '归一', clue: '独自承受或承认彼此' },
   'act2.alchemy': { title: '炼丹', clue: '一炉暗红，半是灵药' },
   'act2.peek': { title: '窥天机', clue: '深一层，险一分' },
   'act2.farm-lore': { title: '巡田', clue: '地肥有因，非天所赐' },
@@ -169,20 +170,26 @@ const SCENE_META: Readonly<Record<string, SceneMeta>> = {
   'act2.side.famine': { title: '荒年', clue: '一口粮，一条命' },
   'act2.famine-death': { title: '倒于树下', clue: '落叶满身，异乡异土' },
   'act2.village.hub': { title: '荒村日常', clue: '凡人时候，有人记得' },
-  'act2.village.ditch': { title: '修渠', clue: '灵脉如水管，堵则疏之' },
-  'act2.village.market': { title: '赶集', clue: '暗红嫩晃，舌尖先尝' },
+  'act2.village.ditch': { title: '修渠', clue: '重定坡度，水与灵气同归' },
+  'act2.village.market': { title: '辨毒灵米', clue: '旧错后来替别人挡灾' },
   'act2.village.song': { title: '童谣', clue: '无面人种田，孩子嘴唱' },
   'act2.encounter.hub': { title: '山道同道', clue: '修士也走这条道' },
-  'act2.encounter.wanderer': { title: '游方散修', clue: '一声系统，两面试探' },
-  'act2.encounter.herbgirl': { title: '药田', clue: '草木一套规矩，到哪都管用' },
-  'act2.encounter.artificer': { title: '阵匠老陆', clue: '阵纹如布线，理顺则通' },
-  'act2.encounter.ring-peek': { title: '再翻储物戒', clue: '戒中无老叟，唯同路人' },
+  'act2.encounter.wanderer': { title: '逆的旧宿', clue: '半张阵图与一笔旧账' },
+  'act2.encounter.herbgirl': { title: '药田再会', clue: '救过的人也有自己的路' },
+  'act2.encounter.herbgirl-cold': { title: '失约之后', clue: '旧伤站在面前，不能回避' },
+  'act2.encounter.artificer': { title: '护田阵', clue: '守阵与夺阵只差四笔' },
+  'act2.encounter.ring-peek': { title: '夹层便笺', clue: '写给后来者的分担之法' },
   'act3.entry': { title: '神农洞府', clue: '一片田，一个旧人' },
   'act3.cave.entrance': { title: '浮雕六图', clue: '六幅浮雕，等己指认' },
   'act3.cave.lab': { title: '实验台', clue: '图表公式，旧世之字' },
   'act3.cave.faceless': { title: '无面石像', clue: '半页残纸，留与后人' },
   'act3.cave.light': { title: '一线劫光', clue: '一线劫光，再念一遍' },
-  'act3.tribulation': { title: '紫雷劫', clue: '以骨为柴，最后一破' },
+  'act3.preparation': { title: '劫前清点', clue: '只带上此前真正留下的' },
+  'act3.tribulation': { title: '终劫·察漏', clue: '紫雷核对六次旧伤' },
+  'act3.tribulation.route': { title: '终劫·引路', clue: '骨线与泄口守住正路' },
+  'act3.tribulation.borrow': { title: '终劫·借势', clue: '借回卷之力钉住淬炼' },
+  'act3.tribulation.recast': { title: '终劫·重塑', clue: '新骨保留每一道代价' },
+  'act3.tribulation.question': { title: '天道诘问', clue: '最后一步由谁的意志走出' },
   'act3.e6': { title: '自择', clue: '心声起处，选项消失' },
   'act3.e7': { title: '驱逐', clue: '隔屏一眼，滚出此界' },
   'act3.ascend': { title: '飞升', clue: '答天之后，此我非我' }
@@ -419,6 +426,9 @@ export function createNarrationCodex(options: NarrationCodexOptions): NarrationC
     clearEdgeListeners();
     root.textContent = '';
     root.setAttribute('data-codex-host', 'true');
+    // `codex-host` 类是 CSS 布局钩子（docs/23 §4）：把三区排成
+    // 「顶栏章节轨整行 + 节点图|结局墙并列」的扫描友好布局。
+    root.classList.add('codex-host');
     if (reducedMotion) root.dataset.reducedMotion = 'true';
 
     const runSet = readSeenThisRun(storage);
@@ -450,6 +460,7 @@ export function createNarrationCodex(options: NarrationCodexOptions): NarrationC
     clearEdgeListeners();
     root.textContent = '';
     root.removeAttribute('data-codex-host');
+    root.classList.remove('codex-host');
     delete root.dataset.reducedMotion;
   }
 

@@ -21,6 +21,7 @@ import type { NarrationBlipSpeaker, SfxId } from '@io/audio';
 import type { MusicSeason, MusicTension, MusicZone } from '@io/generativeMusic';
 import {
   bucket,
+  deriveHeartPulse,
   deriveLayerKeys,
   enterScene,
   initialState,
@@ -29,6 +30,7 @@ import {
   markEnding,
   nextState
 } from './firstPersonView';
+import type { HeartPulse, HeartQuality } from './firstPersonView';
 import { beginNewRun, recordEnding, recordSeenScene } from './narrationCodex';
 import { NARRATION_SCENES, NARRATION_SCENES_BY_ID } from './narrationScenes';
 import type { EndingId, NarrationScene, NarrationState } from './narrationTypes';
@@ -36,6 +38,20 @@ import { createNarrationVN, type NarrationVNController } from './narrationVN';
 
 /** E7 改写标题屏的 flag（docs/22 §2.5）：showEnding(e7) 时写入，title surface 检测。 */
 export const NARRATION_E7_FLAG_KEY = 'narration.e7Triggered';
+
+/**
+ * 道心脉象 → 内心内阁声色映射（dogfood ISSUE-006 / docs/23 §5 六色守色律）。
+ * 复用既有六色 token 与 blip 音轨，**不引入第七色**：
+ *  - bond（羁绊）→ 金·师尊暖声（master blip，钟磬泛音）
+ *  - defiance（反逆）→ 朱砂·心魔逆声（heart-demon blip，低频锯齿）
+ *  - defilement（道心污染/走火）→ 靛·直觉浊声（intuition blip）
+ * 三重冗余（色 + 形 + 音）色盲安全；颜色仅冗余，正文恒为墨 on 纸。
+ */
+const HEART_PULSE_SPEAKER: Readonly<Record<HeartQuality, NarrationBlipSpeaker>> = {
+  bond: 'master',
+  defiance: 'heart-demon',
+  defilement: 'intuition'
+};
 
 /**
  * 灵韵叙录 surface 所需的音频适配器（解耦自 AudioEngine 具体类型）。
@@ -186,7 +202,7 @@ function sceneNarrationPlan(scene: NarrationScene): NarrationTrackPlan {
     };
   }
   // act 3：tribulation = Reich 相位威压茎（v2）；其余 = finale 苍凉 + 二泉映月 erhu
-  if (scene.id === 'act3.tribulation') {
+  if (scene.id.startsWith('act3.tribulation')) {
     return { trackId: 'bgm.narration.tribulation-v2', bedId: 'bgm.narration.tribulation-v2' };
   }
   return {
@@ -233,6 +249,14 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
    * null = 尚未进入过任何场景（首场景不算"切换"）。
    */
   let previousAct: NarrationScene['act'] | null = null;
+  /**
+   * 道心脉象浮纹 DOM（dogfood ISSUE-006）：抉择跨越隐变量档位时浮现的叙事反馈层。
+   * 挂在 #narration-vn（root）内、舞台之侧，pointer-events:none 不抢焦点；结局路径不显示。
+   * heartPulseSr：sr-only + aria-live=polite，把同一短句交屏阅器播报（非视觉可达）。
+   */
+  let heartPulseEl: HTMLElement | null = null;
+  let heartPulseSr: HTMLElement | null = null;
+  let heartPulseTimer: ReturnType<typeof setTimeout> | null = null;
 
   function resolveStartScene(): NarrationScene {
     const requested = options.startSceneId;
@@ -248,7 +272,7 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
     return first;
   }
 
-  function showScene(scene: NarrationScene, nextState2: NarrationState): void {
+  function showScene(scene: NarrationScene, nextState2: NarrationState, revisiting = false): void {
     currentScene = scene;
     state = nextState2;
     // 叙录界面防剧透分层存储（docs/23 §4）：本周目/跨周目物理分离，仅 localStorage 副作用。
@@ -276,6 +300,8 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
       onChoose: handleChoose,
       onSceneComplete: handleSceneComplete,
       onExit: handleExit
+    }, {
+      startAtChoices: revisiting && scene.revisitMode === 'choices-only'
     });
   }
 
@@ -294,10 +320,71 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
     return { ...(bg !== undefined ? { bg } : {}), ...(ambience !== undefined ? { ambience } : {}) };
   }
 
+  /**
+   * 挂载道心脉象浮纹 DOM（dogfood ISSUE-006）。在 createNarrationVN 之后调用——VN 构造会清空
+   * root 并追加舞台，故本元素作为舞台的后续兄弟节点挂入，z 序高于对话框。
+   */
+  function mountHeartPulse(): void {
+    heartPulseEl = document.createElement('div');
+    heartPulseEl.className = 'narration-heart-pulse';
+    heartPulseEl.setAttribute('aria-hidden', 'true');
+    heartPulseEl.hidden = true;
+    const glyph = document.createElement('span');
+    glyph.className = 'narration-heart-pulse-glyph';
+    const text = document.createElement('span');
+    text.className = 'narration-heart-pulse-text';
+    heartPulseEl.append(glyph, text);
+    heartPulseSr = document.createElement('p');
+    heartPulseSr.className = 'sr-only narration-heart-pulse-sr';
+    heartPulseSr.setAttribute('aria-live', 'polite');
+    heartPulseSr.setAttribute('aria-atomic', 'true');
+    root.append(heartPulseEl, heartPulseSr);
+  }
+
+  /**
+   * 渲染一次道心脉象（dogfood ISSUE-006）：按 quality/tier 设色 + 笔触字形 + 字体 + 短句，
+   * 并按 quality 触发对应 blip（三重冗余之「音」）。短句取自 narration.heartPulse.* 词表，
+   * ≤14 字、无专名/数字/因果连接词（docs/23 §4 红线）。reducedMotion 下不做位移动画、缩短停留。
+   * 绝不写入或显示任何数值——pulse 由纯函数 deriveHeartPulse 离散化派生，玩家只感不数。
+   */
+  function renderHeartPulse(pulse: HeartPulse): void {
+    if (destroyed || !heartPulseEl || !heartPulseSr) return;
+    const copy = t(`narration.heartPulse.${pulse.quality}.${pulse.tier}`);
+    heartPulseEl.dataset.quality = pulse.quality;
+    heartPulseEl.dataset.tier = pulse.tier;
+    const text = heartPulseEl.querySelector<HTMLElement>('.narration-heart-pulse-text');
+    if (text) text.textContent = copy;
+    // 同一短句交屏阅器（aria-live=polite）——非视觉玩家也收到反馈。
+    heartPulseSr.textContent = copy;
+    try {
+      audio.playBlip(HEART_PULSE_SPEAKER[pulse.quality]);
+    } catch {
+      /* 音频未就绪 / 隐私：静默降级（脉象仍以色+形+字呈现，三重冗余不全失） */
+    }
+    heartPulseEl.hidden = false;
+    // 重启 bloom 动画：先撤 is-on、强制 reflow、再加回（CSS transition 可靠重放）。
+    heartPulseEl.classList.remove('is-on');
+    void heartPulseEl.offsetWidth;
+    heartPulseEl.classList.add('is-on');
+    if (heartPulseTimer) clearTimeout(heartPulseTimer);
+    const dwell = options.reducedMotion ? 2200 : 2500;
+    heartPulseTimer = setTimeout(() => {
+      if (heartPulseEl) heartPulseEl.classList.remove('is-on');
+      heartPulseTimer = null;
+    }, dwell);
+  }
+
   function handleChoose(choiceId: string): void {
     if (destroyed || !vn || !currentScene) return;
+    const stateBefore = state;
     const result = nextState(state, currentScene, choiceId);
     state = result.state;
+    // 道心脉象（ISSUE-006）：抉择致隐变量跨越离散档位时浮现叙事反馈，仅非结局路径（不与终局卡争屏）。
+    // delta 只来自 choice.effects（已声明副作用，docs/23 §0），无隐式变量改动。
+    if (!result.ending) {
+      const pulse = deriveHeartPulse(stateBefore, result.state);
+      if (pulse) renderHeartPulse(pulse);
+    }
     if (result.ending) {
       showEnding(result.ending);
       return;
@@ -305,6 +392,7 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
     if (result.nextSceneId) {
       const next = NARRATION_SCENES_BY_ID.get(result.nextSceneId);
       if (next) {
+        const revisiting = state.seenScenes.has(next.id);
         const entered = enterScene(state, next);
         // 失败态优先（docs/22 §7）：onEnter effects 也可能致死（如 act3.tribulation
         // set cult 7 + madness/lifespan 代价，若玩家已濒死则不进 choices 而是直接收束）。
@@ -315,7 +403,7 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
           showEnding(enteredFail);
           return;
         }
-        showScene(next, entered);
+        showScene(next, entered, revisiting);
         return;
       }
       // 下一场景 id 在表中找不到：内容数据 bug，兜底退出（Wave 4 CI 会拒此情形）。
@@ -409,6 +497,8 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
         playSfx: id => audio.playSfx(id as SfxId)
       }
     });
+    // 道心脉象浮纹挂载（ISSUE-006）：必须在 createNarrationVN 之后——前者会清空 root 再追加舞台。
+    mountHeartPulse();
     const firstScene = resolveStartScene();
     const entered = enterScene(state, firstScene);
     // 失败态优先：开场 onEnter effects 若致死（理论不可达，序章无 onEnter）也立即收束。
@@ -424,6 +514,12 @@ export function createNarrationSurface(options: NarrationSurfaceOptions): Narrat
   function destroy(): void {
     if (destroyed) return;
     destroyed = true;
+    if (heartPulseTimer) {
+      clearTimeout(heartPulseTimer);
+      heartPulseTimer = null;
+    }
+    heartPulseEl = null;
+    heartPulseSr = null;
     vn?.destroy();
     vn = null;
     // narration 茎淡出释放（Tone.Player 独立 gain，1.0s 淡出 + dispose）。

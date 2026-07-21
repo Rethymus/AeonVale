@@ -12,11 +12,14 @@
 
 ## 1. Scene/节点 schema（扩展现有 `{cgAssetId,lines,choices,converge}`）
 
-- `choice` 补：`requires?`(guard，如 `'defiance>=60 && bond<50'`) / `effects?: Effect[]`(声明式副作用 `{set,add,flag,lore}`) / `once?`(Ink `*`一次性) / `tags?[]` / `speaker?`
-- `scene` 补：`id`(命名空间 `act2.tribulation.grip-1`) / `act` / `layerKeys?`(分层合成) / `onEnter?: Effect[]` / `ends?: EndingId` / `status: 'draft'|'review'|'approved'` / `locale`
+- `choice` 补：`requires?`（guard，如 `'defiance>=60 && bond<50'`）/ `effects?: Effect[]`（声明式副作用 `{set,add,flag,unflag,lore}`）/ `once?`（Ink `*` 一次性）/ `tags?[]` / `speaker?` / `ends?`。
+- `tags:['hide-when-unavailable']` 专用于互斥人生与终局矩阵：守卫不满足时不渲染 DOM，不能用灰锁项泄露另一条路线；普通 `requires` 仍可显示锁因。
+- `scene` 补：`id`（命名空间 `act3.tribulation.question`）/ `act` / `layerKeys?`（分层合成）/ `revisitMode?:'choices-only'` / `onEnter?: Effect[]` / `ends?: EndingId` / `status: 'draft'|'review'|'approved'` / `locale`。
+- `revisitMode:'choices-only'`：首次完整播放 `lines`，回访 hub 直接列出尚余选项，不重播开场、不残留上一场正文。
+- `onEnter` 只在该 scene **首次进入**时结算；回访不能重复加 bond/defiance/丹毒等数值。可重复收益必须显式建模成新的有限事件，不得靠循环刷同一节点。
 - 把 `speaker` 从文本里拎出到 `Line={text,speaker?}`。
 - CI 拒 `status!=='approved'` 的 Scene 进 `narrationScenes.ts` 入口。
-- 变量一律在 `firstPersonView.ts` 顶部 `declare`（类型化 + 初值，对标 Yarn `<<declare>>`）。
+- 变量一律进入 `NarrationState` 类型并由 `initialState()` 给出显式初值（对标 Yarn `<<declare>>`），禁止文本或 DOM 私藏状态。
 
 ## 2. 分层选图（数据驱动查表，禁脚本 `if`）
 
@@ -27,9 +30,9 @@
 
 ## 3. 抗组合爆炸
 
-- 四幕 = **Gauntlet + Foldback**（每幕末汇流到下一幕开场，唯一真分支点 = 终局天道诘问）。
-- 7 结局 = `(defiance≥60?, bond≥50?)` **2×2 阈值矩阵** + 5 失败态（任意幕触发即收敛到"死得明白"模板）。
-- 支线心志抉择 = **storylet**（`requires` 入池，仅 `defiance/bond` 两 quality 驱动，Quality Parsimony）。
+- 四幕 = **Gauntlet + Foldback**（每幕末汇流到下一幕开场，唯一真分支点 = 终局天道诘问）；每条支线须先得到独有回应，再携 flag/伤势/关系进入汇流，禁止“选了等于没选”。
+- 8 结局 = E0 支线 + 4 类中途失败（丹毒 / 渡劫 / 走火 / 寿终）+ 终局三路（飞升 / E6 / E7）；终局由 `(defiance≥60?, bond≥50?)` 阈值矩阵选出唯一可见路线。
+- 支线心志抉择 = **有限 storylet**（`requires` 入池，`once` 消耗，仅 `defiance/bond` 两 quality 驱动，Quality Parsimony）。
 - **微差异用图层不用分支**（换道心氛围层一张图，不新写 Scene）。
 
 ## 4. 叙录界面
@@ -49,6 +52,8 @@
 - **选项**：≤5、竖列、`①②③④⑤`数字键直选、四态（默认/悬停/已选`✓`/禁用锁）、触屏≥44px。
 - **图层 z 序**：bg → 道心氛围(`opacity≤0.35`，每 8s≥2s 静止，光敏安全 WCAG 2.3.1) → NPC 立绘 → 渡劫 → 对话框；转场 320/280/120ms。
 - **内心内阁六色严格映射**（不引入第七色，守色律）：墨旁白 / 金师尊(斜体衬线) / 朱砂心魔(粗+微抖) / 靛直觉 / 气青自语 / 纸系统。字体变形(italic/weight)外化声音。心声条独立窄条不抢主框，最多叠 2 条 FIFO。**三重冗余**（色+形+音）色盲安全。
+- **单一正文主权**：同一 `NarrationLine.text` 同一时刻只能出现在主阅读面或识海浮纹之一，严禁把 `self` 行同时复制到两处；心声条只承载独立的状态脉象/提示。
+- **底部阅读坞**：心声条、对话框、Quick Menu 必须处于同一正常文档流 Grid，顺序固定为上→下；长正文/长选项在对话框内部滚动，禁止用多组 `bottom:calc(...)` 猜高度。桌面与 390×844 大字号均须做几何不相交断言。
 - **Backlog**：环形 200 行、`H`/`Ctrl` 唤出、Skip Read/All、Auto(行末停 800-2500ms)、Rollback(滚轮上)。
 - **无障碍**：字号 3 档(16/19/24)、打字含即时、对比度墨 on 纸≥7:1(AAA)、reduced-motion 瞬切、`aria-live=polite`、em 单位（WCAG 1.4.12）。
 - **diegetic**：Quick Menu 做成"玉简/符箓"、心声条"识海浮纹"水墨笔触（古风词表一致）。
@@ -68,13 +73,16 @@
 - 孤儿引用（`master_ref/ref_imgs/path` 必须在仓内）。
 - status 机（`published` 必有 `signer`，`approved` 不可被后续 attempt 覆盖）。
 - **结局可达性**（Scene `choices+requires` 建图 BFS，8 结局全可达，无孤儿节点）。
-- 打字机文本无空键。
+- 72 个场景全部 `approved`；打字机文本无空键。
+- **叙事一致性门**：长文案零无意精确重复；循环节点必须使用 `once` 或 `revisitMode:'choices-only'`；生硬梗词按零/低预算静态扫描。
+- 一次性选项选后从 DOM 消失；互斥 `hide-when-unavailable` 选项不得以锁项泄露。
+- 渲染使用 epoch/代次令牌废弃旧 timer，场景切换后旧打字机不得写回新场景。
 - **风格指纹漂移**（published 图 pHash vs master，超阈值 fail，防 LoRA 被偷换）。
 - **运行时无 fetch/AI SDK**（静态扫 `src/app` + `src/render`）。
 - 类型检查 + 纯函数快照（`fast-check`：`defiance∈[0,100]` 单调有界、`effects` 应用后状态合法、`(defiance,bond)` 阈值矩阵路由正确）。
 
 ## 8. 自主开发 Do / Don't
 
-**Do**：先架构后内容、先骨架后图、垂直切片验证管线、每刀 CI 全绿、写手/图集解耦、`-vN` 版本化、占位图先行（图集精修是人审环节，不阻塞代码）。
+**Do**：先架构后内容、先骨架后图、垂直切片验证管线、每刀 CI 全绿、写手/图集解耦、`-vN` 版本化、占位图先行；重大选择按“即时回应 → 中段 flag 回响 → 终局准备/结局回收”验收。
 
-**Don't**：为 CI 绿改图集（金回放红线同样适用图）、混模型/混 LoRA、用 `ls` 判完成、自由 prompt、省人工抽检、原地覆盖旧图、藏 `ai_disclosed`、运行时调模型、文本埋隐式变量改动。
+**Don't**：为 CI 绿改图集（金回放红线同样适用图）、混模型/混 LoRA、用 `ls` 判完成、自由 prompt、省人工抽检、原地覆盖旧图、藏 `ai_disclosed`、运行时调模型、文本埋隐式变量改动、回访重复结算、用灰锁项展示玩家从未走过的互斥人生。

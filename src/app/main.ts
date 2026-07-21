@@ -5830,6 +5830,9 @@ async function main(): Promise<void> {
   }
 
   const portraitMedia = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
+  // ISSUE-004: 竖屏用户可手动放行横屏提示。override 仅存内存（本次会话），
+  // 不写 localStorage —— 下次加载时横屏建议照常出现。
+  let portraitOverride = false;
   if (BUILD_TITLE) document.title = `永恒山谷：大道之歌 · ${BUILD_TITLE}`;
   flowView = createAppFlowViewController({
     continueAvailable: deriveSaveHealthPresentation(saveHealth).continueAvailable,
@@ -5838,6 +5841,12 @@ async function main(): Promise<void> {
     onStateChange: handleFlowStateChange
   });
   const handlePortraitChange = (event: MediaQueryListEvent): void => {
+    // 用户已本次会话内手动关闭横屏提示：不再因方向变化重新弹出遮罩，
+    // 保持当前界面（如灵韵叙录）继续可用。
+    if (portraitOverride) {
+      flowView?.setPortraitBlocked(false);
+      return;
+    }
     flowView?.setPortraitBlocked(event.matches);
     requestRender?.();
     refreshAppPresentation();
@@ -5848,6 +5857,53 @@ async function main(): Promise<void> {
   };
   portraitMedia.addEventListener('change', handlePortraitChange);
   window.addEventListener('resize', handleViewportResize);
+
+  // 竖屏遮罩文案与手动放行（ISSUE-004）。文案经 i18n(t) 取自 zh-CN.json；
+  // #orientation-gate 内的按钮无 data-flow-action，由本处自管点击（appFlowView 不接管）。
+  const orientationGateEl = document.querySelector<HTMLElement>('#orientation-gate');
+  const orientationOverrideBtn = document.querySelector<HTMLButtonElement>('#orientation-override');
+  const orientationOverrideNote = document.querySelector<HTMLElement>('#orientation-override-note');
+  const orientationKickerEl = document.querySelector<HTMLElement>('.orientation-kicker');
+  const orientationHeadingEl = document.querySelector<HTMLElement>('#orientation-heading');
+  const orientationSaveStatusEl = document.querySelector<HTMLElement>('#orientation-save-status');
+  if (orientationKickerEl) orientationKickerEl.textContent = t('ui.orientation.kicker');
+  if (orientationHeadingEl) orientationHeadingEl.textContent = t('ui.orientation.heading');
+  if (orientationSaveStatusEl) orientationSaveStatusEl.textContent = t('ui.orientation.saveStatus');
+  if (orientationOverrideNote) orientationOverrideNote.textContent = t('ui.orientation.overrideNote');
+  if (orientationOverrideBtn) {
+    orientationOverrideBtn.textContent = t('ui.orientation.overrideButton');
+    orientationOverrideBtn.setAttribute('aria-label', t('ui.orientation.overrideLabel'));
+  }
+
+  const dismissOrientationGate = (): void => {
+    if (portraitOverride) return;
+    portraitOverride = true;
+    flowView?.setPortraitBlocked(false);
+    requestRender?.();
+    refreshAppPresentation();
+    // 放行后焦点交回当前主界面（标题屏的「灵韵叙录」入口即可 Tab/点击到达）。
+    flowView?.refocusCurrentSurface();
+  };
+
+  orientationOverrideBtn?.addEventListener('click', event => {
+    event.preventDefault();
+    dismissOrientationGate();
+  });
+
+  // 键盘可达性：flowView 在 portraitBlocked 时会在 document capture 阶段吞掉所有按键。
+  // 此处在 window capture（早于 document）放行指向遮罩内控件的 Tab/Enter/Space，
+  // stopPropagation 阻断 document 监听器，让按钮的默认激活（Enter/Space → click）正常触发。
+  if (orientationGateEl && orientationOverrideBtn) {
+    const onOrientationGateKeydown = (event: KeyboardEvent): void => {
+      if (!portraitMedia.matches || portraitOverride) return;
+      const target = event.target;
+      if (!(target instanceof Element) || !orientationGateEl.contains(target)) return;
+      if (event.key === 'Tab' || event.key === 'Enter' || event.key === ' ') {
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener('keydown', onOrientationGateKeydown, { capture: true });
+  }
 
   responsiveShell = createResponsiveShell({ dispatch: dispatchGameCommand });
   document.querySelector<HTMLElement>('[data-app-surface="map"]')?.addEventListener('click', handleMapSurfaceClick);

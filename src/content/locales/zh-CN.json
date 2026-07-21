@@ -43,6 +43,14 @@
       "incoming": "天劫降临",
       "waves": "第 {n} 波 / 共 {m} 波"
     },
+    "orientation": {
+      "kicker": "横屏游玩",
+      "heading": "请横置设备",
+      "saveStatus": "农田、丹炉与天劫需要更宽的视野。正在检查当前进度是否已写入本地存档。",
+      "overrideNote": "灵韵叙录竖屏可读，农田、丹炉与天劫仍以横屏为佳。",
+      "overrideButton": "仍要竖屏继续",
+      "overrideLabel": "关闭横屏提示，仍以竖屏继续本次旅程"
+    },
     "hud": {
       "hp": "气血",
       "pillPoison": "丹毒",
@@ -131,6 +139,23 @@
       "topicGood": "善终",
       "topicDoom": "劫终",
       "topicHidden": "隐终"
+    },
+    "heartPulse": {
+      "bond": {
+        "low": "尘缘转薄，灯火渐稀。",
+        "med": "心头微温，尚有人记。",
+        "high": "万家灯火，皆系于心。"
+      },
+      "defiance": {
+        "low": "心头戾气，暂得平息。",
+        "med": "胸中一念，渐成锋芒。",
+        "high": "铮然一念，敢叩天门。"
+      },
+      "defilement": {
+        "low": "浊气微散，神识暂清。",
+        "med": "识海泛浊，神识微摇。",
+        "high": "浊浪拍岸，几欲夺神。"
+      }
     },
     "ending": {
       "e0-mushroom": { "name": "红伞白杆", "clue": "异乡人的第一课：别乱吃" },

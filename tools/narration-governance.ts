@@ -4,7 +4,7 @@
  * 由 tools/governance-check.mjs 经 tsx 调起（governance:check 脚本链的一环）。任何一项
  * 失败即以非零码退出，整体 governance:check 随之失败。
  *
- * 四项检查：
+ * 五项检查：
  *  1. 结局可达性：解析 src/app/narrationScenes.ts 的 NARRATION_SCENES（import 后 introspect，
  *     该模块是纯数据、零 sim/IO 依赖，导入安全），建图（scene id=节点，choice.goto=边，
  *     choice.ends / scene.ends=终态），BFS 验证：8 个 EndingId 全可达；无孤儿 scene
@@ -19,6 +19,8 @@
  *  4. manifest 完整性：assets/manifest.json 中所有 cg.first-person.* 条目——checksum 与文件
  *     实际 sha256 一致、ai_disclosed:true、license 非空、status 属合法 AssetStatus 枚举。
  *     draft 允许（占位图），但在报告中计数（后续美术升 -v2 改 published）。
+ *  5. 叙事一致性：approved 状态、长文本无无意精确重复、循环 storylet 必须 once 或回到
+ *     choices-only hub、梗词预算不过量（防人工测试指出的重复段落/生硬梗回归）。
  *
  * 红线：本脚本只读 src/app/narrationScenes 纯数据 + manifest + 静态文本扫描；不引重依赖，
  * 仅 Node 标准库（node:crypto / node:fs）+ 项目既有 tsx。
@@ -177,7 +179,110 @@ function checkTypewriterKeys(): CheckResult {
   return pass([], `打字机文本无空键：${NARRATION_SCENES.length} scene 全检通过。`);
 }
 
-// ── 检查 3：运行时无 AI/fetch（静态扫 src/app + src/render） ──────────────────
+// ── 检查 3：叙事一致性（重复/循环/梗预算） ───────────────────────────────────
+
+function normalizeNarrativeText(text: string): string {
+  return text
+    .normalize('NFKC')
+    .replace(/[\s，。！？；：、—…,.!?;:'"“”‘’（）()《》「」]/g, '')
+    .toLowerCase();
+}
+
+function sceneDisplayTexts(scene: NarrationScene): readonly { readonly key: string; readonly text: string }[] {
+  const out: { key: string; text: string }[] = scene.lines.map((line, index) => ({
+    key: `${scene.id}:line:${index}`,
+    text: line.text
+  }));
+  for (const choice of scene.choices ?? []) {
+    out.push({ key: `${scene.id}:choice:${choice.id}:label`, text: choice.label });
+    if (choice.response) out.push({ key: `${scene.id}:choice:${choice.id}:response`, text: choice.response });
+  }
+  if (scene.converge) out.push({ key: `${scene.id}:converge`, text: scene.converge });
+  return out;
+}
+
+function checkNarrativeIntegrity(): CheckResult {
+  const messages: string[] = [];
+  const byId = new Map<string, NarrationScene>(NARRATION_SCENES.map(scene => [scene.id, scene]));
+
+  for (const scene of NARRATION_SCENES) {
+    if (scene.status !== 'approved') {
+      messages.push(`未批准 scene：${scene.id} status=${scene.status}`);
+    }
+  }
+
+  // 长文本精确重复：短口令/按钮允许复用；≥24 个归一化字符的正文必须独立书写。
+  const occurrences = new Map<string, string[]>();
+  for (const scene of NARRATION_SCENES) {
+    for (const entry of sceneDisplayTexts(scene)) {
+      const normalized = normalizeNarrativeText(entry.text);
+      if (normalized.length < 24) continue;
+      const keys = occurrences.get(normalized) ?? [];
+      keys.push(entry.key);
+      occurrences.set(normalized, keys);
+    }
+  }
+  for (const keys of occurrences.values()) {
+    if (keys.length > 1) messages.push(`长文本重复：${keys.join(' ↔ ')}`);
+  }
+
+  // 若 target 能走回 source，它就是循环入口：内容节点必须 once；导航 hub 则声明 choices-only，
+  // 让回访直接列选项而不重播开场。
+  const canReach = (from: string, target: string): boolean => {
+    const seen = new Set<string>();
+    const stack = [from];
+    while (stack.length > 0) {
+      const id = stack.pop()!;
+      if (id === target) return true;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const scene = byId.get(id);
+      if (!scene) continue;
+      for (const choice of scene.choices ?? []) {
+        if (choice.goto && !seen.has(choice.goto)) stack.push(choice.goto);
+      }
+    }
+    return false;
+  };
+  for (const source of NARRATION_SCENES) {
+    for (const choice of source.choices ?? []) {
+      if (!choice.goto) continue;
+      const target = byId.get(choice.goto);
+      if (!target || !canReach(target.id, source.id)) continue;
+      const safeStorylet = choice.once === true;
+      const safeHub = target.revisitMode === 'choices-only';
+      if (!safeStorylet && !safeHub) {
+        messages.push(`可重复内容环：${source.id}.${choice.id} → ${target.id}（需 once 或 target.revisitMode='choices-only'）`);
+      }
+    }
+  }
+
+  // 人工测试明确指出的生硬梗建立硬预算；扫描实际展示文本，不扫描注释。
+  const allText = NARRATION_SCENES.flatMap(scene => sceneDisplayTexts(scene).map(entry => entry.text)).join('\n');
+  const motifBudgets: readonly { readonly phrase: string; readonly max: number }[] = [
+    { phrase: '八百本小说', max: 0 },
+    { phrase: '老爷爷', max: 0 },
+    { phrase: '物业', max: 0 },
+    { phrase: '房东', max: 0 },
+    { phrase: '垃圾回收', max: 0 },
+    { phrase: '电路板', max: 0 },
+    { phrase: '水管', max: 0 },
+    { phrase: '红伞伞', max: 1 },
+    { phrase: '系统', max: 2 },
+    { phrase: '勿独扛', max: 3 }
+  ];
+  for (const budget of motifBudgets) {
+    const count = allText.split(budget.phrase).length - 1;
+    if (count > budget.max) {
+      messages.push(`梗词超预算：「${budget.phrase}」出现 ${count} 次，最多 ${budget.max} 次`);
+    }
+  }
+
+  if (messages.length > 0) return fail(messages);
+  return pass([], `叙事一致性：${NARRATION_SCENES.length} scene approved；长文本零重复；循环节点均一次性/回访直达；梗词预算通过。`);
+}
+
+// ── 检查 4：运行时无 AI/fetch（静态扫 src/app + src/render） ──────────────────
 
 const AI_SDK_PATTERNS: readonly RegExp[] = [
   // MEDIUM8：通义千问 Qwen 的官方/社区 SDK 前缀为 @chatanywhere/openai-api、tongyi、qwen。
@@ -287,7 +392,7 @@ function checkNoRuntimeFetchOrAI(): CheckResult {
   return pass([], `运行时无 AI/fetch：扫描 ${dirs.join(' + ')} 共 ${scanned} 个 ts 文件，零外部 API/AI SDK。`);
 }
 
-// ── 检查 4：manifest 完整性（cg.first-person.*） ────────────────────────────────
+// ── 检查 5：manifest 完整性（cg.first-person.*） ────────────────────────────────
 
 const ASSET_STATUSES = new Set(['draft', 'generated', 'vision_passed', 'human_signed', 'published']);
 const ALLOWED_LICENSES = new Set(['OFL-1.1', 'MIT', 'Apache-2.0', 'CC0-1.0', 'CC-BY-4.0', 'CC-BY-SA-4.0', 'CC-BY-NC-4.0', 'AI-Generated']);
@@ -352,6 +457,7 @@ function main(): void {
   const checks: readonly { readonly label: string; readonly run: () => CheckResult }[] = [
     { label: '结局可达性', run: checkReachability },
     { label: '打字机无空键', run: checkTypewriterKeys },
+    { label: '叙事一致性', run: checkNarrativeIntegrity },
     { label: '运行时无 AI/fetch', run: checkNoRuntimeFetchOrAI },
     { label: 'manifest 完整性', run: checkManifestIntegrity }
   ];

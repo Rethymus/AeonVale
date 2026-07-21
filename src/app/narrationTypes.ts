@@ -98,6 +98,10 @@ export interface NarrationChoice {
   readonly goto?: string;
   /** 一次性选项：选中后写入 flag（`once:<sceneId>:<choiceId>`）隐藏，不再出现。 */
   readonly once?: boolean;
+  /**
+   * 内容/演出标签。`hide-when-unavailable` 用于互斥剧情分支：守卫不满足时完全隐藏，
+   * 避免把另一条人生以“锁定选项”形式提前剧透；普通 requires 仍渲染锁因。
+   */
   readonly tags?: readonly string[];
   readonly speaker?: Speaker;
   /** 直接终结到指定结局（优先于 goto 与 judgeEnding）。 */
@@ -114,6 +118,11 @@ export interface NarrationScene {
   readonly choices?: readonly NarrationChoice[];
   /** 任一选项后浮现的收敛行（漏斗汇流）。 */
   readonly converge?: string;
+  /**
+   * 回访演出策略。`choices-only` 表示第一次完整播放 lines，之后回到本节点时直接列选项，
+   * 适用于训练/村落/storylet hub，防止导航往返反复重播同一段开场。
+   */
+  readonly revisitMode?: 'choices-only';
   /** 进入本场景时一次性应用的声明式副作用。 */
   readonly onEnter?: readonly Effect[];
   /** 场景直接终结到指定结局（无选项的叶节点场景）。 */
