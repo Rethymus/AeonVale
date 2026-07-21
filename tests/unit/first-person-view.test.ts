@@ -14,6 +14,7 @@ import {
   applyEffects,
   bucket,
   checkRequires,
+  deriveHeartPulse,
   deriveLayerKeys,
   enterScene,
   initialState,
@@ -24,6 +25,7 @@ import {
   nextState,
   onceFlag
 } from '@app/firstPersonView';
+import { NARRATION_SCENES_BY_ID } from '@app/narrationScenes';
 import {
   BOND_THRESHOLD,
   CULT_PROGRESSION_MAX,
@@ -464,6 +466,22 @@ describe('firstPersonView · enterScene', () => {
     const twice = enterScene(once, sc);
     expect(twice.seenScenes.size).toBe(1);
   });
+
+  it('重复进入同一 scene：onEnter 数值效果只结算一次', () => {
+    const sc = scene({
+      id: 'repeatable-storylet',
+      onEnter: [
+        { kind: 'add', target: 'bond', value: 7 },
+        { kind: 'lore', target: 'lore', value: 2 }
+      ]
+    });
+    const once = enterScene(initialState(), sc);
+    const twice = enterScene(once, sc);
+    expect(once.bond).toBe(7);
+    expect(once.shennongLore).toBe(2);
+    expect(twice.bond).toBe(7);
+    expect(twice.shennongLore).toBe(2);
+  });
 });
 
 // ── checkRequires · 最小表达式解析（fail-closed） ──────────────────────────────
@@ -568,5 +586,122 @@ describe('firstPersonView · 终局节点与真实数据契约', () => {
     // 飞升象限。
     const ascend = applyEffects(withState({ defiance: 20, bond: 30 }), tribulationEnter);
     expect(judgeEnding(ascend)).toBe('ascension');
+  });
+
+  it('真实修炼链必须走完六劫：cult=6 仍锁雷关，stage6 后 cult=7 才开放', () => {
+    const reveal = NARRATION_SCENES_BY_ID.get('act1.reveal')!;
+    let state = nextState(initialState(), reveal, 'practice').state;
+    expect(state.cultProgress).toBe(1);
+
+    const stages = [
+      'act2.temper.stage1',
+      'act2.temper.stage2',
+      'act2.temper.stage3',
+      'act2.temper.stage4',
+      'act2.temper.stage5'
+    ];
+    for (const id of stages) {
+      const stage = NARRATION_SCENES_BY_ID.get(id)!;
+      state = nextState(enterScene(state, stage), stage, 'on').state;
+    }
+    expect(state.cultProgress).toBe(6);
+    const train = NARRATION_SCENES_BY_ID.get('act2.train')!;
+    const assault = train.choices!.find(choice => choice.id === 'assault')!;
+    expect(isChoiceAvailable(state, train.id, assault)).toBe(false);
+
+    const stage6 = NARRATION_SCENES_BY_ID.get('act2.temper.stage6')!;
+    state = nextState(enterScene(state, stage6), stage6, 'on').state;
+    expect(state.cultProgress).toBe(CULT_PROGRESSION_MAX);
+    expect(isChoiceAvailable(state, train.id, assault)).toBe(true);
+  });
+
+  it('采药女分支读取真实选择：放弃后只开放冷遇路线，不会固定声称曾背她下山', () => {
+    const cliff = NARRATION_SCENES_BY_ID.get('act2.side.herb')!;
+    const afterAbandon = nextState(initialState(), cliff, 'abandon').state;
+    const hub = NARRATION_SCENES_BY_ID.get('act2.encounter.hub')!;
+    const warm = hub.choices!.find(choice => choice.id === 'herbgirl')!;
+    const cold = hub.choices!.find(choice => choice.id === 'herbgirl-cold')!;
+    expect(afterAbandon.flags.has('herb-abandoned')).toBe(true);
+    expect(isChoiceAvailable(afterAbandon, hub.id, warm)).toBe(false);
+    expect(isChoiceAvailable(afterAbandon, hub.id, cold)).toBe(true);
+  });
+
+  it('终局诘问在每个状态象限只开放一个分支', () => {
+    const question = NARRATION_SCENES_BY_ID.get('act3.tribulation.question')!;
+    const availableIds = (state: NarrationState): string[] =>
+      question.choices!.filter(choice => isChoiceAvailable(state, question.id, choice)).map(choice => choice.id);
+
+    expect(availableIds(withState({ defiance: 20, bond: 80 }))).toEqual(['answer']);
+    expect(availableIds(withState({ defiance: 60, bond: 50 }))).toEqual(['e6']);
+    expect(availableIds(withState({ defiance: 60, bond: 49 }))).toEqual(['e7']);
+  });
+});
+
+// ── 道心脉象：隐变量档位跨越的离散化派生（dogfood ISSUE-006） ──────────────────
+
+describe('firstPersonView · deriveHeartPulse 隐变量档位跨越', () => {
+  it('三条隐变量均无档位跨越 → null（同档微涨不脉冲，免噪音；felt, not counted）', () => {
+    const prev = withState({ defiance: 10, bond: 10, madness: 10 });
+    const next = withState({ defiance: 12, bond: 9, madness: 11 });
+    expect(deriveHeartPulse(prev, next)).toBeNull();
+  });
+
+  it('defiance 跨 low→high（+50）→ defiance/high 上升脉象', () => {
+    const prev = withState({ defiance: 20 });
+    const next = withState({ defiance: 70 });
+    const pulse = deriveHeartPulse(prev, next);
+    expect(pulse).not.toBeNull();
+    expect(pulse!).toEqual({ quality: 'defiance', tier: 'high', rose: true });
+  });
+
+  it('bond 跨 med→low（回退）→ bond/low 下降脉象（rose=false）', () => {
+    const prev = withState({ bond: 40 });
+    const next = withState({ bond: 20 });
+    const pulse = deriveHeartPulse(prev, next);
+    expect(pulse).not.toBeNull();
+    expect(pulse!).toEqual({ quality: 'bond', tier: 'low', rose: false });
+  });
+
+  it('defilement 映射到 madness：madness 跨 low→med → defilement/med', () => {
+    const prev = withState({ madness: 10 });
+    const next = withState({ madness: 50 });
+    expect(deriveHeartPulse(prev, next)).toEqual({ quality: 'defilement', tier: 'med', rose: true });
+  });
+
+  it('defiance 与 bond 同跨度（均 low→med）时优先 defiance（E6/E7 触发主因）', () => {
+    const prev = withState({ defiance: 10, bond: 10 });
+    const next = withState({ defiance: 50, bond: 50 });
+    const pulse = deriveHeartPulse(prev, next);
+    expect(pulse).not.toBeNull();
+    expect(pulse!.quality).toBe('defiance');
+  });
+
+  it('取跨度最大者：defiance low→high（跨 2 档）压过 bond med→high（跨 1 档）', () => {
+    const prev = withState({ defiance: 10, bond: 50 });
+    const next = withState({ defiance: 70, bond: 70 });
+    const pulse = deriveHeartPulse(prev, next);
+    expect(pulse).not.toBeNull();
+    expect(pulse!.quality).toBe('defiance');
+    expect(pulse!.tier).toBe('high');
+  });
+
+  it('不改入参（纯函数，只读镜像侧，docs/23 §0）', () => {
+    const prev = withState({ defiance: 0, bond: 0, madness: 0 });
+    const snapshot = { ...prev };
+    deriveHeartPulse(prev, withState({ defiance: 80, bond: 80, madness: 80 }));
+    expect(prev).toEqual(snapshot);
+  });
+
+  it('全 0 → 全 0 无脉象', () => {
+    expect(deriveHeartPulse(initialState(), initialState())).toBeNull();
+  });
+
+  it('档位边界点（33/66）闭环：32 仍 low、33 入 med、65 仍 med、66 入 high', () => {
+    // 32(low)→33(med)：bond 跨档。
+    expect(deriveHeartPulse(withState({ bond: 32 }), withState({ bond: 33 }))!.tier).toBe('med');
+    // 65(med)→66(high)：defiance 跨档。
+    expect(deriveHeartPulse(withState({ defiance: 65 }), withState({ defiance: 66 }))!.tier).toBe('high');
+    // 32→32 同档无脉象。
+    expect(deriveHeartPulse(withState({ bond: 32 }), withState({ bond: 32 }))).toBeNull();
   });
 });

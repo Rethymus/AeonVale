@@ -387,7 +387,10 @@ export function onceFlag(sceneId: string, choiceId: string): string {
  * 返回新状态（入参不变）。叶节点场景（无选项）由调用方随后读 `scene.ends` 或 judgeEnding。
  */
 export function enterScene(state: NarrationState, scene: NarrationScene): NarrationState {
-  const withOnEnter = applyEffects(state, scene.onEnter);
+  // onEnter 的契约是“首次进入一次性应用”。旧实现每次回到 hub/storylet 都重加数值，
+  // 会让玩家靠重播同一段刷 bond/defiance/丹毒，也正是重复叙事与状态污染的共同根因。
+  const alreadySeen = state.seenScenes.has(scene.id);
+  const withOnEnter = alreadySeen ? state : applyEffects(state, scene.onEnter);
   const seenScenes = withOnEnter.seenScenes.has(scene.id)
     ? withOnEnter.seenScenes
     : withFlagAdded(withOnEnter.seenScenes, scene.id);
@@ -509,6 +512,77 @@ function resolveDaoAmbience(state: NarrationState, declared: 'auto' | string | u
   if (declared === undefined) return undefined;
   if (declared !== 'auto') return declared;
   return `dao-${bucket(state.defiance)}-${bucket(state.bond)}`;
+}
+
+// —— 道心脉象：隐变量的离散化叙事反馈（dogfood ISSUE-006 / docs/23 §2 离散 + §5 三重冗余） ——
+
+/**
+ * 道心脉象追踪的三条隐变量（docs/22 §5；玩家不可见数值，仅看/听/感到反馈）。
+ *  - bond：红尘羁绊（叙事上配「金·师尊暖声」）
+ *  - defiance：反抗觉醒度（叙事上配「朱砂·心魔逆声」；E6/E7 触发主因）
+ *  - defilement：道心污染，即走火值 madness 的具象（叙事上配「靛·直觉浊声」）
+ *
+ * 红线（docs/23 §0）：本类型只服务于「叙事反馈的离散化派生」，绝不把数值暴露给玩家——
+ * 玩家只看到颜色 / 字形 / 字体 / 短句 / 音，看不到任何数字。
+ */
+export type HeartQuality = 'bond' | 'defiance' | 'defilement';
+
+/** 离散档位（docs/23 §2：low<33 / med<66 / high≥66，直接复用 {@link bucket}）。 */
+export type HeartTier = 'low' | 'med' | 'high';
+
+/**
+ * 一次抉择引起的「最显著」道心脉象：某条隐变量跨越了一个离散档位。
+ *  - tier：跨越后所处的新档位（玩家据此「感到」强弱，而非读到数字）。
+ *  - rose：true=升档（蓄势），false=降档（回退）。
+ */
+export interface HeartPulse {
+  readonly quality: HeartQuality;
+  readonly tier: HeartTier;
+  readonly rose: boolean;
+}
+
+/** HeartQuality → 实际读取的数值状态键（defilement 映射到 madness，docs/22 §5）。 */
+const HEART_STAT: Readonly<Record<HeartQuality, NumericStatKey>> = {
+  bond: 'bond',
+  defiance: 'defiance',
+  defilement: 'madness'
+};
+
+const HEART_TIER_RANK: Readonly<Record<HeartTier, number>> = { low: 0, med: 1, high: 2 };
+
+/**
+ * 同档位跨度下的人审优先级（defiance 驱动 E6/E7，故最优先；随后 bond 决定 E6/E7 走向）。
+ * 遍历顺序即 tie-break 顺序。
+ */
+const HEART_PRIORITY: readonly HeartQuality[] = ['defiance', 'bond', 'defilement'];
+
+/**
+ * 由「抉择前后状态」派生道心脉象（纯函数，docs/23 §0 副作用只走 effects 的只读镜像侧）。
+ *
+ * 规则：对 bond/defiance/defilement(madness) 三条隐变量分别比较 bucket(prev) 与 bucket(next)，
+ * 取「档位跨度最大」的一条作为本帧脉象——跨多档只报新档，避免一次抉择叠多条脉冲。
+ * 跨度相同时按 defiance > bond > defilement 取（HEART_PRIORITY 顺序，defiance 是 E6/E7 触发主因）。
+ * 三条均无档位跨越 → null（同档微涨不脉冲，免噪音；玩家只在「质变」处收到反馈，即「felt, not counted」）。
+ *
+ * 本函数**不读不改** effects / 路由 / flags；只对 applyEffects 已产生的新旧状态做只读离散化，
+ * 供 narrationSurface 渲染叙事浮纹（颜色 + 字形 + 字体 + 短句 + 音，五重冗余，色盲安全）。
+ */
+export function deriveHeartPulse(prev: NarrationState, next: NarrationState): HeartPulse | null {
+  let best: HeartPulse | null = null;
+  let bestSpan = 0;
+  for (const quality of HEART_PRIORITY) {
+    const stat = HEART_STAT[quality];
+    const before = bucket(readNumericStat(prev, stat));
+    const after = bucket(readNumericStat(next, stat));
+    if (before === after) continue;
+    const span = Math.abs(HEART_TIER_RANK[after] - HEART_TIER_RANK[before]);
+    // 严格大于才替换：跨度相等时保留先遍历到的（defiance > bond > defilement）。
+    if (span > bestSpan) {
+      bestSpan = span;
+      best = { quality, tier: after, rose: HEART_TIER_RANK[after] > HEART_TIER_RANK[before] };
+    }
+  }
+  return best;
 }
 
 // —— 结局判定（docs/22 §7 + docs/23 §3 阈值矩阵） ——

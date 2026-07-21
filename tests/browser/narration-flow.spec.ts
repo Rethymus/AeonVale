@@ -25,7 +25,9 @@ const NARRATION_KEYS = [
   'narration.codex.seenThisRun',
   'narration.codex.seenScenesEver',
   'narration.codex.seenEndings',
-  'narration.e7Triggered'
+  'narration.e7Triggered',
+  'narration.readChoices',
+  'narration.textSize'
 ];
 
 /** 预置 reduced motion + 清空 narration 周目状态，确保即时打字与全新图鉴。 */
@@ -66,8 +68,27 @@ async function advanceUntil(page: Page, predicate: () => Promise<boolean>, timeo
 
 async function openTitleAndEntry(page: Page): Promise<void> {
   await page.goto(gameEntryPath());
+  const entry = page.locator('#flow-title-narration');
+  const continuePortrait = page.locator('#orientation-override');
+  await expect.poll(async () => {
+    if (await entry.isVisible().catch(() => false)) return true;
+    if (await continuePortrait.isVisible().catch(() => false)) {
+      await continuePortrait.click();
+    }
+    return entry.isVisible().catch(() => false);
+  }, { timeout: 20000 }).toBe(true);
   // 标题屏就绪：入口按钮可见即可点。
-  await expect(page.locator('#flow-title-narration')).toBeVisible({ timeout: 20000 });
+  await expect(entry).toBeVisible();
+}
+
+async function enterMainNarration(page: Page): Promise<void> {
+  await openTitleAndEntry(page);
+  await page.locator('#flow-title-narration').click();
+  await advanceUntil(page, async () =>
+    page.locator('button.narration-choice[data-choice-id="try"]').isVisible()
+  );
+  await page.locator('button.narration-choice[data-choice-id="try"]').click();
+  await expect(page.locator('[data-app-surface="narration"]')).toBeVisible({ timeout: 8000 });
 }
 
 test.describe('灵韵叙录 · 端到端 narration flow', () => {
@@ -115,6 +136,12 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
 
   test('序章「山谷深处」分支推进到 E0 红伞白杆早夭结局', async ({ page }) => {
     await prepareFreshNarration(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(HTMLImageElement.prototype, 'decode', {
+        configurable: true,
+        value: () => Promise.reject(new DOMException('forced decode rejection for regression coverage'))
+      });
+    });
     await openTitleAndEntry(page);
 
     // 进 narration surface（自白 → 试一试）。
@@ -139,6 +166,9 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
     const endingCard = page.locator('.narration-ending-card[data-ending-id="e0-mushroom"]');
     await expect(endingCard).toBeVisible();
     await expect(endingCard.locator('.narration-ending-name')).toHaveText('红伞白杆');
+    const endingCg = endingCard.locator('.narration-ending-cg');
+    await expect(endingCg).toHaveAttribute('data-decoded', 'true');
+    await expect(endingCg).toBeVisible();
     // 返回标题按钮存在且可聚焦。
     await expect(endingCard.locator('.narration-ending-dismiss')).toBeVisible();
   });
@@ -182,5 +212,110 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
 
     // 图鉴墙标题计数「X/8」（全新周目 X=0）。
     await expect(wall.locator('.codex-wall-title')).toContainText('/8');
+  });
+
+  test('回访 hub 不重播开场：一次性选项消失且正文/心声不残留', async ({ page }) => {
+    await prepareFreshNarration(page);
+    await enterMainNarration(page);
+
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="village"]').isVisible()
+    );
+    await page.locator('button.narration-choice[data-choice-id="village"]').click();
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="system"]').isVisible()
+    );
+
+    await page.locator('button.narration-choice[data-choice-id="system"]').click();
+    await advanceUntil(page, async () => {
+      const askVisible = await page.locator('button.narration-choice[data-choice-id="ask"]').isVisible().catch(() => false);
+      const systemCount = await page.locator('button.narration-choice[data-choice-id="system"]').count();
+      return askVisible && systemCount === 0;
+    });
+
+    const stage = page.locator('#narration-stage');
+    await expect(stage).toHaveAttribute('data-scene-id', 'prologue.village');
+    await expect(page.locator('button.narration-choice[data-choice-id="system"]')).toHaveCount(0);
+    await expect(stage.locator('.narration-text')).toHaveText('');
+    await expect(stage.locator('.narration-cabinet')).toBeHidden();
+  });
+
+  test('内心声部只显示在主阅读面，不再与识海浮纹复制同一文段', async ({ page }) => {
+    await prepareFreshNarration(page);
+    await enterMainNarration(page);
+
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="village"]').isVisible()
+    );
+    await page.locator('button.narration-choice[data-choice-id="village"]').click();
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="ask"]').isVisible()
+    );
+    await page.locator('button.narration-choice[data-choice-id="ask"]').click();
+
+    const selfLine = '我没听懂修仙那半句，只把“先看清”记住了。那是他第一次主动教我一件事。';
+    await advanceUntil(page, async () =>
+      (await page.locator('#narration-stage .narration-text').textContent().catch(() => ''))?.includes('我没听懂修仙') === true
+    );
+    await expect(page.locator('#narration-stage')).toHaveAttribute('data-scene-id', 'prologue.depart');
+    await expect(page.locator('#narration-stage .narration-text')).toContainText(selfLine);
+    await expect(page.locator('#narration-stage .narration-cabinet')).toBeHidden();
+    await expect(page.locator('#narration-stage .narration-cabinet')).not.toContainText('我没听懂修仙');
+  });
+
+  test('移动端大字号五选项：心声、对话框与快捷菜单保持顺序且不相交', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await prepareFreshNarration(page);
+    await page.addInitScript(() => {
+      try {
+        window.localStorage.setItem('narration.textSize', 'large');
+      } catch {
+        /* 隐私模式：静默降级 */
+      }
+    });
+    await enterMainNarration(page);
+
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="village"]').isVisible()
+    );
+    await page.locator('button.narration-choice[data-choice-id="village"]').click();
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="system"]').isVisible()
+    );
+
+    const geometry = await page.locator('#narration-stage').evaluate(stage => {
+      const box = (selector: string): DOMRect => {
+        const element = stage.querySelector<HTMLElement>(selector);
+        if (!element) throw new Error(`缺少 ${selector}`);
+        return element.getBoundingClientRect();
+      };
+      const stageBox = stage.getBoundingClientRect();
+      const dock = box('.narration-bottom-dock');
+      const cabinet = box('.narration-cabinet');
+      const dialog = box('.narration-dialog');
+      const text = box('.narration-text');
+      const choices = box('.narration-choices');
+      const quick = box('.narration-quick-menu');
+      const dialogEl = stage.querySelector<HTMLElement>('.narration-dialog')!;
+      const textEl = stage.querySelector<HTMLElement>('.narration-text')!;
+      return {
+        stage: { top: stageBox.top, bottom: stageBox.bottom },
+        dock: { top: dock.top, bottom: dock.bottom },
+        cabinet: { top: cabinet.top, bottom: cabinet.bottom },
+        dialog: { top: dialog.top, bottom: dialog.bottom, clientHeight: dialogEl.clientHeight, scrollHeight: dialogEl.scrollHeight },
+        text: { top: text.top, bottom: text.bottom, clientHeight: textEl.clientHeight, scrollHeight: textEl.scrollHeight },
+        choices: { top: choices.top, bottom: choices.bottom },
+        quick: { top: quick.top, bottom: quick.bottom }
+      };
+    });
+    expect(geometry.dock.top).toBeGreaterThanOrEqual(geometry.stage.top - 1);
+    expect(geometry.dock.bottom).toBeLessThanOrEqual(geometry.stage.bottom + 1);
+    expect(geometry.dialog.bottom).toBeLessThanOrEqual(geometry.stage.bottom + 1);
+    expect(geometry.quick.bottom).toBeLessThanOrEqual(geometry.stage.bottom + 1);
+    expect(geometry.cabinet.bottom).toBeLessThanOrEqual(geometry.dialog.top + 1);
+    expect(geometry.text.clientHeight).toBeGreaterThanOrEqual(geometry.text.scrollHeight - 1);
+    expect(geometry.text.bottom).toBeLessThanOrEqual(geometry.choices.top + 1);
+    expect(geometry.dialog.bottom).toBeLessThanOrEqual(geometry.quick.top + 1);
+    expect(geometry.dialog.clientHeight).toBeLessThanOrEqual(geometry.dialog.scrollHeight);
   });
 });
