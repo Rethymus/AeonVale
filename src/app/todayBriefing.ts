@@ -71,7 +71,7 @@ function farmFocusLine(state: GameState): string {
 }
 
 function reminderLine(state: GameState, ctx: SimContext): string {
-  if (readyForBreakthrough(state, ctx.params)) return '引劫：体魄已至极限，今日先按 T 主动引劫。';
+  if (readyForBreakthrough(state, ctx.params)) return '引劫：体魄已至极限，先打开修行页确认备劫。';
 
   if (state.postAscension.mode === 'stayed-in-world') {
     const incident = getCurrentStayingWorldIncident(state);
@@ -264,7 +264,7 @@ function isPortfolioWelcomeBriefing(state: GameState, objectiveId: OnboardingObj
 
 function firstLoopMilestoneLine(state: GameState, objectiveId: OnboardingObjectiveId | null): string {
   if (objectiveId === 'first-loop-complete' || state.player.flags.has(FIRST_SECOND_WATER_FLAG)) {
-    return '里程碑：首轮农务闭环已跑通，按 Shift+M 把余货接入加工、阵法与备劫。';
+    return '里程碑：首轮农务闭环已跑通，点“农务”把余货接入加工、阵法与备劫。';
   }
   if (objectiveId === 'first-harvest' && !state.player.flags.has(FIRST_HARVEST_FLAG)) {
     return '里程碑：第一株灵草已经成熟，收下它，首轮农务才算真正开始兑现。';

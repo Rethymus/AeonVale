@@ -120,7 +120,7 @@ export const TEA_SHED_TALES: readonly TeaShedTale[] = [
   { id: 'tale.tool-rust', title: '锈工具', line: '茶客摸着一把磨得光亮的锄。「工具不怕旧，怕生锈——天天用，它就天天亮；体修的身子也是这个理。」', willpowerBonus: 40 },
   { id: 'tale.beast-pup', title: '幼兽', line: '茶客讲起当年捡回那只幼兽的事。「它那时还不会护田，却肯跟着我守夜——巡守兽的忠，是从它还小时养起的。」', willpowerBonus: 40 },
   { id: 'tale.lightning-rod-tale', title: '引雷阵', line: '茶客讲起引雷阵那根直指天空的阵杆。「引雷阵是把双刃剑——引来的雷既能淬熟金属性灵草，也能烧田；布它的人，得算得清这份险。」', willpowerBonus: 40 },
-  { id: 'tale.insulation-array', title: '绝缘阵', line: '茶客讲起绝缘阵那圈隔开雷势的残纹。「绝缘阵不引雷，只挡雷——护住核心几块田，雷季就有了底气。」', willpowerBonus: 40 },
+  { id: 'tale.insulation-array', title: '绝缘阵', line: '茶客讲起绝缘阵那圈隔开雷势的残纹。「绝缘阵不争雷心，只把雷势导到阵缘——核心几块田稳住了，雷季就有了底气。」', willpowerBonus: 40 },
   { id: 'tale.festival-memory', title: '节庆旧事', line: '茶客讲起山谷节庆的热闹。「节庆不只是热闹——那是山谷认你、邻里认你的日子，留世的人最该过好这几个节。」', willpowerBonus: 40 },
   { id: 'tale.hermit-hut', title: '隐士庐', line: '茶客讲起山深处那位隐士的草庐。「隐士不见客，却肯留半卷给有缘人——你若路过，记得替他扫扫门前那片落叶。」', willpowerBonus: 50 },
   { id: 'tale.herb-gatherer-tale', title: '采药女', line: '茶客讲起采药女分辨药性的好眼力。「她认草比认人还准——山谷里谁家灵草出了岔，都爱去找她把一把脉。」', willpowerBonus: 40 },

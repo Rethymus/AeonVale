@@ -11,7 +11,16 @@ import { createHash } from 'node:crypto';
 import { validateManifest, type AssetManifest } from '../../src/io/assets';
 
 const manifest: AssetManifest = validateManifest(JSON.parse(readFileSync(resolve('assets/manifest.json'), 'utf-8')));
-const sprites = manifest.sprites.filter(e => e.id.startsWith('sprite.') || e.id.startsWith('icon.') || e.id.startsWith('facility.') || e.id.startsWith('loc.') || e.id.startsWith('tile.'));
+const sprites = manifest.sprites.filter(e => e.id.startsWith('sprite.') || e.id.startsWith('map-sprite.') || e.id.startsWith('portrait.') || e.id.startsWith('icon.') || e.id.startsWith('facility.') || e.id.startsWith('loc.') || e.id.startsWith('tile.'));
+
+function expectedSpriteSize(assetId: string): { width: number; height: number } {
+  if (assetId.startsWith('tile.')) return { width: 42, height: 42 };
+  if (assetId.startsWith('map-sprite.')) return { width: 96, height: 96 };
+  if (assetId.startsWith('portrait.avatar.')) return { width: 256, height: 256 };
+  if (assetId === 'portrait.array-smith-lu-v1') return { width: 1536, height: 1024 };
+  if (assetId.startsWith('portrait.')) return { width: 1024, height: 1536 };
+  return { width: 32, height: 32 };
+}
 
 describe('图像资产完整性（角色精灵 + 物品图标）', () => {
   it('若已登记精灵/图标条目，则进入完整性锁定', () => {
@@ -23,7 +32,7 @@ describe('图像资产完整性（角色精灵 + 物品图标）', () => {
       const filePath = resolve('assets', sp.path);
 
       it('文件存在', () => {
-        expect(() => statSync(filePath)).not.toThrow;
+        expect(() => statSync(filePath)).not.toThrow();
       });
 
       it('为规范尺寸合法 PNG', () => {
@@ -34,9 +43,9 @@ describe('图像资产完整性（角色精灵 + 物品图标）', () => {
         // IHDR 的宽高（字节 16-23）
         const w = buf.readUInt32BE(16);
         const h = buf.readUInt32BE(20);
-        const expected = sp.id.startsWith('tile.') ? 42 : 32;
-        expect(w).toBe(expected);
-        expect(h).toBe(expected);
+        const expected = expectedSpriteSize(sp.id);
+        expect(w).toBe(expected.width);
+        expect(h).toBe(expected.height);
       });
 
       it('sha256 与 manifest checksum 一致', () => {

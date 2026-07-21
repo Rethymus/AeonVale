@@ -23,7 +23,7 @@ export interface SpiritHerbDef {
   growthThreshold: number; // 成熟阈值（毫点）
   qiNeed: number; // 理想灵气（毫点）
   qiDrainPerDay: number; // 毫点
-  metalAttract: number; // 避雷吸引权重（0..）
+  metalAttract: number; // 导雷吸引权重（0..）
   preferredSeason?: Season;
   weakSeason?: Season;
   seedId: string;
@@ -66,7 +66,7 @@ export interface ContentRegistry {
 export type PillEffectKind =
   | 'heal' // 回 HP
   | 'maxHpUp' // 永久提升 HP 上限
-  | 'lightningWard' // 单次抗雷减伤
+  | 'lightningWard' // 单次承雷减伤
   | 'ironBone' // 整场减伤
   | 'detox' // 清丹毒
   | 'temperBoost' // 淬体效率提升
@@ -136,13 +136,17 @@ export interface CelestialEventDef {
   alchemyTolMod?: number;
 }
 
-/** 阵法定义。种田即布防：引雷阵吸雷、绝缘阵排雷。 */
+/** 阵法定义。种田即布阵：引雷阵吸雷、绝缘阵排雷、引水阵灌溉（R3-B）。 */
 export interface ArrayDef {
   id: string;
   displayName: string;
-  type: 'rod' | 'insulation'; // 引雷阵 / 绝缘阵
-  modifier: number; // 权重倍率（引雷 >1 吸引，绝缘 <1 排斥）
+  type: 'rod' | 'insulation' | 'water'; // 引雷阵 / 绝缘阵 / 引水阵
+  modifier: number; // 权重倍率（引雷 >1 吸引，绝缘 <1 排斥，引水 1 不参与雷权重）
   radius: number; // 覆盖半径（切比雪夫）
   needsMetalCore: boolean; // 引雷阵需金属性灵草作阵眼
+  /** 引水阵：每日清晨自动浇灌的水量（毫点）。仅 type==='water' 有效。 */
+  waterAmountMilli?: number;
+  /** 阵法放置所需的最低体修阶段（stage）。缺省=不在 sim 层硬门控（引雷/绝缘走 UI 层）。R3-B 引水阵用，防 bot 绕过。 */
+  stageMin?: number;
   desc: string;
 }

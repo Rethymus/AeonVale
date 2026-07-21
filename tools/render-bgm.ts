@@ -28,6 +28,12 @@ import {
   type MusicPhrase,
   type MusicSeason
 } from '@io/generativeMusic';
+import {
+  generateAmbientPhrase,
+  midiToFreq,
+  type AmbientPhrase,
+  type AmbientMode
+} from '@io/generativeAmbient';
 
 const SAMPLE_RATE = 44100;
 
@@ -173,9 +179,172 @@ function sha256(file: string): string {
 
 interface Track {
   readonly id: string;
-  readonly phrase: MusicPhrase;
+  /** generatePhrase 茎或 generateAmbientPhrase 茎（v2）。 */
+  readonly phrase: MusicPhrase | AmbientPhrase;
   readonly seedLabel: string;
   readonly note: string;
+}
+
+/**
+ * V2 环境音茎（第二刀）：由 generateAmbientPhrase 驱动的 Eno/Reich/Sparse 模式。
+ * 与第一刀的 generatePhrase 茎分轨并存：保留原 prologue/tribulation（Markov/grammar 茎）
+ * 以维持已有 fixture 与 manifest checksum 稳定，新茎加 -v2 后缀便于主循环合并阶段替换。
+ */
+interface AmbientTrack {
+  readonly id: string;
+  readonly phrase: AmbientPhrase;
+  readonly seedLabel: string;
+  readonly note: string;
+}
+
+function buildAmbientV2Tracks(): AmbientTrack[] {
+  const tracks: AmbientTrack[] = [
+    {
+      id: 'bgm.narration.prologue-v2',
+      phrase: generateAmbientPhrase({
+        seed: 'narration:prologue:v2',
+        mode: 'eno',
+        durationSeconds: 90,
+        bpm: 60,
+        rootMidi: 60
+      }),
+      seedLabel: 'narration:prologue:v2',
+      note: '序章 Eno 风格环境茎（互质拍长 7/8/11 + sine pad；Eno「Music for Airports」思路，Tero Parviainen systems-music 范式）。'
+    },
+    {
+      id: 'bgm.narration.tribulation-v2',
+      phrase: generateAmbientPhrase({
+        seed: 'narration:tribulation:v2',
+        mode: 'reich',
+        durationSeconds: 80,
+        bpm: 72,
+        rootMidi: 57
+      }),
+      seedLabel: 'narration:tribulation:v2',
+      note: '渡劫 Reich 风格相位漂移茎（两段同序列，driftRate 0.9999，piano-phase 错相）。'
+    },
+    {
+      id: 'bgm.narration.ending-e6',
+      phrase: generateAmbientPhrase({
+        seed: 'narration:ending-e6',
+        mode: 'sparse',
+        durationSeconds: 70,
+        rootMidi: 55
+      }),
+      seedLabel: 'narration:ending-e6',
+      note: 'E6 结局 sparse 茎（8-16s 事件 + 6-10s 反馈延迟；Harold Budd / Stars of the Lid 风格）。'
+    },
+    {
+      id: 'bgm.narration.sacrifice',
+      phrase: generateAmbientPhrase({
+        seed: 'narration:sacrifice',
+        mode: 'sparse',
+        durationSeconds: 70,
+        rootMidi: 50
+      }),
+      seedLabel: 'narration:sacrifice',
+      note: '献祭结局 sparse 茎（更低根音 D3 + sparse 反馈延迟，苍凉收束）。'
+    }
+  ];
+  return tracks;
+}
+
+/** 环境音事件 → 单声道 PCM（Float32）。pad 走 sine 慢包络；动机/echo 走 triangle/sine 软包络。 */
+export function renderAmbientToFloat32(phrase: AmbientPhrase, sr = SAMPLE_RATE): Float32Array {
+  const totalSec = phrase.durationSeconds + 4.0; // 尾部 release
+  const n = Math.ceil(totalSec * sr);
+  const buf = new Float32Array(n);
+  for (const ev of phrase.events) {
+    const freq = midiToFreq(ev.midi);
+    const startIdx = Math.floor(ev.time * sr);
+    const isPad = ev.voice === 'pad';
+    const isEcho = ev.voice.startsWith('sparse-echo');
+    const isPendulum = ev.voice.startsWith('pendulum');
+    const type: OscType = isPad ? 'sine' : isPendulum ? 'triangle' : isEcho ? 'sine' : 'triangle';
+    const amp = ev.velocity * (isPad ? 0.55 : isEcho ? 0.45 : 0.5);
+    const attack = isPad ? 1.4 : 0.01;
+    const release = isPad ? 1.8 : isEcho ? 1.2 : 0.4;
+    const noteSamples = Math.floor((ev.duration + release + 0.1) * sr);
+    let phase = 0;
+    const phaseInc = freq / sr;
+    for (let i = 0; i < noteSamples; i++) {
+      const idx = startIdx + i;
+      if (idx < 0 || idx >= n) {
+        phase += phaseInc;
+        continue;
+      }
+      const t = i / sr;
+      let env: number;
+      if (t < attack) env = attack > 0 ? t / attack : 1;
+      else if (t < ev.duration) env = 1;
+      else {
+        const r = release > 0 ? (t - ev.duration) / release : 1;
+        env = Math.max(0, 1 - r);
+      }
+      if (ev.velocity > 0 && env > 0) buf[idx] = (buf[idx] ?? 0) + amp * env * osc(type, phase);
+      phase += phaseInc;
+    }
+  }
+  // 峰值归一 + 软削波（同 renderPhraseToFloat32）。
+  let peak = 0;
+  for (const v of buf) peak = Math.max(peak, Math.abs(v));
+  if (peak > 0) {
+    const scale = 0.85 / peak;
+    for (let i = 0; i < buf.length; i++) buf[i] = Math.tanh(buf[i]! * scale);
+  }
+  return buf;
+}
+
+/**
+ * 灵韵叙录 7 个 narration 茎（docs/22 §12 + 音频调研 Path B）。
+ * 第一刀：复用 generatePhrase 内核（不新建 generativeAmbient）；通过 season/zone/tension/bars
+ * 参数刻画各幕语境。zone='market' 借密度乘子 1.18 模拟"古朴升密度"；zone='forest' 借 0.74 稀疏化。
+ */
+function buildNarrationTracks(): Track[] {
+  return [
+    {
+      id: 'bgm.narration.prologue',
+      phrase: generatePhrase({ seed: 'narration:prologue', season: 'spring', zone: 'farm', tension: 'calm', bars: 8 }),
+      seedLabel: 'narration:prologue',
+      note: '序章迷茫空灵叙事茎（spring/farm/calm/bars:8，复用 generatePhrase）。'
+    },
+    {
+      id: 'bgm.narration.village',
+      phrase: generatePhrase({ seed: 'narration:village', season: 'spring', zone: 'market', tension: 'calm', bars: 4 }),
+      seedLabel: 'narration:village',
+      note: '荒村古朴叙事茎（spring/market/calm/bars:4，借 market 密度乘子 1.18 略升密度）。'
+    },
+    {
+      id: 'bgm.narration.road',
+      phrase: generatePhrase({ seed: 'narration:road', season: 'autumn', zone: 'forest', tension: 'calm', bars: 4 }),
+      seedLabel: 'narration:road',
+      note: '修仙路沉思叙事茎（autumn/forest/calm/bars:4，多利亚调色板 + forest 稀疏）。'
+    },
+    {
+      id: 'bgm.narration.combat',
+      phrase: generatePhrase({ seed: 'narration:combat', season: 'autumn', zone: 'tribulation', tension: 'tense', bars: 4 }),
+      seedLabel: 'narration:combat',
+      note: '打斗紧张叙事茎（autumn/tribulation/tense/bars:4，TENSE_BPM_BOOST 1.16 + leap bias）。'
+    },
+    {
+      id: 'bgm.narration.tribulation',
+      phrase: generatePhrase({ seed: 'narration:tribulation', season: 'autumn', zone: 'tribulation', tension: 'tense', bars: 4 }),
+      seedLabel: 'narration:tribulation',
+      note: '渡劫威压叙事茎（autumn/tribulation/tense/bars:4；运行时叠 narration-thunder SFX，不在茎里烘焙雷）。'
+    },
+    {
+      id: 'bgm.narration.finale',
+      phrase: generatePhrase({ seed: 'narration:finale', season: 'autumn', zone: 'forest', tension: 'calm', bars: 4 }),
+      seedLabel: 'narration:finale',
+      note: '终局苍凉叙事茎（autumn/forest/calm/bars:4，forest 0.74 密度营造稀疏感）。'
+    },
+    {
+      id: 'bgm.narration.ending-ascension',
+      phrase: generatePhrase({ seed: 'narration:ending-ascension', season: 'spring', zone: 'forest', tension: 'calm', bars: 8 }),
+      seedLabel: 'narration:ending-ascension',
+      note: '飞升超脱叙事茎（spring/forest/calm/bars:8，长延迟收尾）。'
+    }
+  ];
 }
 
 function buildTracks(): Track[] {
@@ -196,6 +365,8 @@ function buildTracks(): Track[] {
       note: `${season} 季自适应 BGM 烘焙（farm/calm），仿星露谷四季调色板。`
     });
   }
+  // 灵韵叙录 7 茎（docs/22 §12）：复用 generatePhrase，不新建 generativeAmbient（第一刀简化）。
+  tracks.push(...buildNarrationTracks());
   return tracks;
 }
 
@@ -213,18 +384,25 @@ function ffmpegEncode(wavPath: string, oggPath: string, totalSec: number): void 
 async function main(): Promise<void> {
   const args = new Set(process.argv.slice(2));
   const updateManifest = args.has('--update-manifest');
+  const includeV2 = args.has('--v2-stems');
   const outArg = process.argv.find(a => a.startsWith('--out='));
   const outDir = resolve(outArg ? outArg.slice(6) : 'assets/audio/bgm');
   const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   mkdirSync(resolve(projectRoot, outDir), { recursive: true });
 
   const tracks = buildTracks();
+  if (includeV2) tracks.push(...buildAmbientV2Tracks());
   const provenance: unknown[] = [];
   const manifestEntries: unknown[] = [];
 
   for (const track of tracks) {
-    const pcm = renderPhraseToFloat32(track.phrase);
-    const totalSec = phraseDurationSeconds(track.phrase) + 1.0;
+    const isAmbient = 'mode' in track.phrase && typeof track.phrase.mode === 'string';
+    const pcm = isAmbient
+      ? renderAmbientToFloat32(track.phrase as AmbientPhrase)
+      : renderPhraseToFloat32(track.phrase as MusicPhrase);
+    const totalSec = isAmbient
+      ? (track.phrase as AmbientPhrase).durationSeconds + 1.0
+      : phraseDurationSeconds(track.phrase as MusicPhrase) + 1.0;
     const baseName = track.id;
     const wavPath = resolve(projectRoot, outDir, `${baseName}.wav`);
     const oggPath = resolve(projectRoot, outDir, `${baseName}.ogg`);
@@ -238,15 +416,19 @@ async function main(): Promise<void> {
       id: track.id,
       file: cleanRel,
       seed: track.seedLabel,
-      season: track.phrase.season,
-      zone: 'farm',
-      tension: track.phrase.tension,
-      bars: track.phrase.bars,
-      bpm: track.phrase.bpm,
+      mode: isAmbient ? (track.phrase as AmbientPhrase).mode : undefined,
+      season: isAmbient ? undefined : (track.phrase as MusicPhrase).season,
+      zone: isAmbient ? undefined : (track.phrase as MusicPhrase).zone,
+      tension: isAmbient ? undefined : (track.phrase as MusicPhrase).tension,
+      bars: isAmbient ? undefined : (track.phrase as MusicPhrase).bars,
+      durationSeconds: isAmbient ? (track.phrase as AmbientPhrase).durationSeconds : undefined,
+      bpm: (track.phrase as { bpm: number }).bpm,
       checksum,
       license: 'MIT',
       source: track.note,
-      generated_by: 'generatePhrase (Markov + grammar) → renderPhraseToFloat32 → ffmpeg loudnorm/libvorbis',
+      generated_by: isAmbient
+        ? 'generateAmbientPhrase (Eno/Reich/Sparse systems-music) → renderAmbientToFloat32 → ffmpeg loudnorm/libvorbis'
+        : 'generatePhrase (Markov + grammar) → renderPhraseToFloat32 → ffmpeg loudnorm/libvorbis',
       commissioned: false,
       suno_udio: false
     });
@@ -270,6 +452,7 @@ async function main(): Promise<void> {
   writeFileSync(resolve(artifactsDir, 'audio-manifest-entries.json'), `${JSON.stringify(manifestEntries, null, 2)}\n`);
   console.log(`\nprovenance → .omc/artifacts/audio-provenance.json`);
   console.log(`manifest entries → .omc/artifacts/audio-manifest-entries.json${updateManifest ? '（已写入 assets/manifest.json）' : '（未自动改 manifest，按需粘贴；加 --update-manifest 可自动追加）'}`);
+  if (includeV2) console.log(`v2 ambient stems included (--v2-stems): ${buildAmbientV2Tracks().length} additional tracks`);
 
   if (updateManifest) {
     const manifestPath = resolve(projectRoot, 'assets/manifest.json');

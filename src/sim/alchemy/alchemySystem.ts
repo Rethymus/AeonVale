@@ -33,6 +33,8 @@ export interface BrewResult {
   poisonGainMilli: number;
   hpDamageMilli: number;
   furnaceVec: PropertyVector;
+  /** R3-C2-b：药性冲突接近炸炉但未炸（conflict ∈ (explosion×conflictRatio, explosion)），UI 亚阈警告。 */
+  warningConflict?: boolean;
 }
 
 export interface TutorialBrewAttemptResult {
@@ -83,6 +85,8 @@ export function resolveBrew(state: GameState, input: BrewInput, ctx: SimContext)
     //：丹毒反噬 20、HP 伤 15
     return { outcome: 'exploded', quality: 0, poisonGainMilli: 20_000, hpDamageMilli: 15_000, furnaceVec };
   }
+  // R3-C2-b：亚阈警告——药性冲突接近炸炉（conflict > explosion×conflictRatio，docs/06 §5.2 / docs/20 R7）。
+  const warningConflict = conflict > expThreshold * params.alchemy.conflictRatio;
 
   // 4. 配方匹配（材料多重集）+ 打分
   const candidates = [...content.recipes.values()].filter(r => multisetEqual(r.inputs, input.materials));
@@ -100,7 +104,7 @@ export function resolveBrew(state: GameState, input: BrewInput, ctx: SimContext)
 
   const score = best?.score ?? 0;
   if (!best || score < 0.4) {
-    return { outcome: 'waste', quality: score, poisonGainMilli: 3_000, hpDamageMilli: 0, furnaceVec };
+    return { outcome: 'waste', quality: score, poisonGainMilli: 3_000, hpDamageMilli: 0, furnaceVec, warningConflict };
   }
   const pillDef = best.recipe.outputPillId ? content.pills.get(best.recipe.outputPillId) : undefined;
   const load = (pillDef?.load ?? 0) * pairing.poisonRetention;
@@ -111,7 +115,8 @@ export function resolveBrew(state: GameState, input: BrewInput, ctx: SimContext)
     quality: score,
     poisonGainMilli: Math.max(0, load),
     hpDamageMilli: 0,
-    furnaceVec
+    furnaceVec,
+    warningConflict
   };
 }
 
@@ -141,12 +146,15 @@ export function brewPills(state: GameState, input: BrewInput, ctx: SimContext): 
     }
   }
   const res = resolveBrew(state, input, ctx);
+  if ((res.outcome === 'pill' || res.outcome === 'flawed') && res.pillId && !inventoryCanFitRewards(state.player, [{ itemId: res.pillId, count: 1 }], ctx.content)) {
+    return { outcome: 'waste', quality: 0, poisonGainMilli: 0, hpDamageMilli: 0, furnaceVec: res.furnaceVec };
+  }
   for (const m of input.materials) mutateItem(state.player, m.herbId, -m.qty);
   applyResolvedBrew(state, res, ctx);
   return res;
 }
 
-/** 首次收获后准备一份不可出售、不会进入背包的正式避雷丹药材包。 */
+/** 首次收获后准备一份不可出售、不会进入背包的正式承雷丹药材包。 */
 export function prepareTutorialAlchemyKit(state: GameState, ctx: SimContext): boolean {
   const flags = state.player.flags;
   if (!flags.has(FIRST_HARVEST_FLAG)) return false;
@@ -161,7 +169,7 @@ export function prepareTutorialAlchemyKit(state: GameState, ctx: SimContext): bo
   return true;
 }
 
-/** 用虚拟药包执行正式避雷丹方；失败保留药包，成功只产一枚并永久门禁。 */
+/** 用虚拟药包执行正式承雷丹方；失败保留药包，成功只产一枚并永久门禁。 */
 export function brewTutorialWardPill(state: GameState, avgHeatMilli: number, ctx: SimContext): TutorialBrewAttemptResult {
   const flags = state.player.flags;
   if (!flags.has(FIRST_HARVEST_FLAG)) return { attempted: false, completed: false, retryable: false, brew: null, reason: 'harvest-required' };
@@ -174,7 +182,7 @@ export function brewTutorialWardPill(state: GameState, avgHeatMilli: number, ctx
   const input = { materials: recipe.inputs.map(entry => ({ herbId: entry.herbId, qty: entry.qty })), avgHeatMilli: heat };
   const brew = resolveBrew(state, input, ctx);
   const completesTutorial = (brew.outcome === 'pill' || brew.outcome === 'flawed') && brew.pillId === recipe.outputPillId;
-  if (completesTutorial && !inventoryCanFitRewards(state.player, [{ itemId: recipe.outputPillId, count: 1 }])) {
+  if (completesTutorial && !inventoryCanFitRewards(state.player, [{ itemId: recipe.outputPillId, count: 1 }], ctx.content)) {
     emit(state, 'tutorial-brew-rejected', { reason: 'inventory-full', recipeId: recipe.id });
     return { attempted: false, completed: false, retryable: true, brew: null, reason: 'inventory-full' };
   }

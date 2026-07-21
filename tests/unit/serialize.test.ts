@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { applyAction, createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, greenhouseNurserySlotsRemaining, tileAt } from '@sim';
+import { applyAction, createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, greenhouseNurserySlotsRemaining, inventorySlotKey, tileAt } from '@sim';
 import { deserializeState, roundTripEqual, canonicalSerialize, stateHash, saveGame, serializeState } from '@sim/serialize';
 import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { mutateItem } from '@sim/world/player';
@@ -144,6 +144,82 @@ describe('序列化与确定性 ', () => {
     const restored = deserializeState(raw);
 
     expect(restored.exploration).toEqual({ deepestRuinLevel: 0 });
+    expect(roundTripEqual(restored)).toBe(true);
+  });
+
+  it('旧存档缺少背包格子顺序时创建默认布局状态', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 83, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    const raw = serializeState(state) as Record<string, unknown>;
+    delete raw.inventoryLayout;
+
+    const restored = deserializeState(raw);
+
+    expect(restored.inventoryLayout).toEqual({ orders: {}, view: { activeTab: 'player', pageByContainer: {}, searchTerm: '', sortKey: 'layout' } });
+    expect(roundTripEqual(restored)).toBe(true);
+  });
+
+  it('背包格子顺序序列化时过滤旧 key 并补齐当前 key', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 84, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    mutateItem(state.player, 'seed.mossling', 1);
+    mutateItem(state.player, 'item.beast-core', 1);
+    state.player.qualityInventory.spirit = { 'herb.dewroot': 2 };
+    state.inventoryLayout.orders.player = ['missing.old-key', 'seed.mossling'];
+
+    const raw = serializeState(state) as Record<string, unknown>;
+    const layout = raw.inventoryLayout as { orders: { player: string[] } };
+    const qualityKey = inventorySlotKey('herb.dewroot', 'spirit');
+
+    expect(layout.orders.player[0]).toBe('seed.mossling');
+    expect(layout.orders.player).not.toContain('missing.old-key');
+    expect(layout.orders.player).toEqual(expect.arrayContaining(['seed.mossling', 'item.beast-core', qualityKey]));
+
+    const restored = deserializeState(raw);
+    expect(restored.inventoryLayout.orders.player).toEqual(layout.orders.player);
+    expect(roundTripEqual(restored)).toBe(true);
+  });
+
+  it('背包视图偏好随存档往返并过滤无效页码', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 85, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    state.inventoryLayout.view = {
+      activeTab: 'storage',
+      pageByContainer: { player: 2, storage: 1, shipping: 0 },
+      searchTerm: '灵草药酒',
+      sortKey: 'count'
+    };
+
+    const raw = serializeState(state) as Record<string, unknown>;
+    const layout = raw.inventoryLayout as { view: unknown };
+
+    expect(layout.view).toEqual({
+      activeTab: 'storage',
+      pageByContainer: { player: 2, storage: 1 },
+      searchTerm: '灵草药酒',
+      sortKey: 'count'
+    });
+
+    const restored = deserializeState(raw);
+    expect(restored.inventoryLayout.view).toEqual(layout.view);
+    expect(roundTripEqual(restored)).toBe(true);
+  });
+
+  it('旧背包视图偏好缺字段时补齐默认值', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 86, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    const raw = serializeState(state) as Record<string, unknown>;
+    raw.inventoryLayout = {
+      orders: {},
+      view: { activeTab: 'furnace', pageByContainer: { player: 3 }, sortKey: 'name' }
+    };
+
+    const restored = deserializeState(raw);
+
+    expect(restored.inventoryLayout).toEqual({
+      orders: {},
+      view: { activeTab: 'furnace', pageByContainer: { player: 3 }, searchTerm: '', sortKey: 'name' }
+    });
     expect(roundTripEqual(restored)).toBe(true);
   });
 

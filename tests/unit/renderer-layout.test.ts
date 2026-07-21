@@ -1,10 +1,40 @@
 import { describe, expect, it } from 'vitest';
 import { Container } from 'pixi.js';
 import type { Application } from 'pixi.js';
-import { briefingBoxHeight, createLayers, facilityWorldBadgeAssetId, farmsteadPropBadgeAssetId, isBriefingHeroAsset, itemPreviewBoxHeight, locationPreviewBoxHeight, locationWorldBadgeLayout, locationServiceWorldBadgeAssetId, locationTaskWorldBadgeAssetId, LOGICAL_RENDER_REGIONS, RENDER_ROOT_LABELS, screenPointForTile, setTextIfChanged, TILE } from '@render/renderer';
+import {
+  briefingBoxHeight,
+  createLayers,
+  cultivationSurfaceAlphaScale,
+  drawLocationPreview,
+  estimateLocationPreviewLineCount,
+  facilityWorldBadgeAssetId,
+  FARMSTEAD_PASSIVE_FARM_PLOT_ALPHA,
+  farmsteadPropBadgeAssetId,
+  farmsteadValleyCueState,
+  isBriefingHeroAsset,
+  itemPreviewBoxHeight,
+  locationPreviewBoxHeight,
+  locationPreviewEstimatedTextHeight,
+  locationPreviewMaxTextHeight,
+  locationPreviewMaxTextLines,
+  locationPreviewTextContent,
+  locationWorldBadgeLayout,
+  locationServiceWorldBadgeAssetId,
+  locationTaskWorldBadgeAssetId,
+  LOGICAL_RENDER_REGIONS,
+  PLAYER_MAP_SPRITE_ALPHA,
+  RENDER_ROOT_LABELS,
+  screenPointForTile,
+  setTextIfChanged,
+  setToast,
+  TILE,
+  tileCoordinatesFromScreenPoint,
+  toastLayoutForText,
+  TOAST_BOTTOM_UI_TOP
+} from '@render/renderer';
 import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
-import { createFurnaceLayer } from '@render/furnacePanel';
+import { applyFarmsteadSceneLayout, firstFarmsteadFarmPlotTile } from '@app/farmsteadScene';
 
 function createFakeApplication(): Application {
   return {
@@ -20,44 +50,41 @@ describe('renderer layout sizing', () => {
 
     expect(app.stage.children).toEqual([layers.worldRoot, layers.screenFxRoot, layers.hudRoot, layers.focusRoot, layers.toastRoot]);
     expect(app.stage.children.map(child => child.label)).toEqual(Object.values(RENDER_ROOT_LABELS));
-    expect(layers.worldRoot.children).toEqual([layers.tiles, layers.tileSprites, layers.terrainSemanticOverlay, layers.qiFlow, layers.entities, layers.sceneSprites, layers.npcMarkers]);
+    expect(layers.worldRoot.children).toEqual([layers.tiles, layers.tileSprites, layers.terrainSemanticOverlay, layers.qiFlow, layers.entities, layers.sceneSprites, layers.characterOverlay, layers.npcMarkers]);
     expect(layers.worldRoot.getChildIndex(layers.terrainSemanticOverlay)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.tileSprites));
     expect(layers.worldRoot.getChildIndex(layers.qiFlow)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.terrainSemanticOverlay));
     expect(layers.worldRoot.getChildIndex(layers.qiFlow)).toBeLessThan(layers.worldRoot.getChildIndex(layers.entities));
-    expect(layers.worldRoot.getChildIndex(layers.npcMarkers)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.sceneSprites));
+    expect(layers.worldRoot.getChildIndex(layers.characterOverlay)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.sceneSprites));
+    expect(layers.worldRoot.getChildIndex(layers.npcMarkers)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.characterOverlay));
     expect(layers.screenFxRoot.children).toEqual([layers.seasonTint, layers.particles, layers.floatTextLayer, layers.tribFlash]);
     expect(layers.hudRoot.children).toEqual([layers.hotbarIconBg, layers.hotbarIcon, layers.hud, layers.briefingBg, layers.briefingImage, layers.briefingIcon, layers.briefing, layers.help, layers.hotbar, layers.bars, ...layers.barLabels]);
     expect(layers.focusRoot.children).toEqual([layers.panelPreviewBg, layers.panelPreviewIcon, layers.panelPreviewText, layers.locationPreviewBg, layers.locationPreviewImage, layers.locationPreviewNpcPrimary, layers.locationPreviewNpcSecondary, layers.locationPreviewText, layers.ending, layers.inv, layers.invIcons, layers.cultivation, layers.dialogueBg, layers.dialoguePortrait, layers.dialogue]);
     expect(layers.toastRoot.children).toEqual([layers.toastIconBg, layers.toastIcon, layers.toast]);
   });
 
-  it('attaches the furnace to focusRoot without changing the existing factory call', () => {
+  it('lifts canvas toast above touch controls in compact landscape', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);
-    const furnace = createFurnaceLayer(app);
 
-    expect(furnace.container.parent).toBe(layers.focusRoot);
-    expect(furnace.icons.parent).toBe(layers.focusRoot);
-    expect(furnace.lines.parent).toBe(layers.focusRoot);
-    expect(app.stage.children).toHaveLength(5);
+    setToast(layers, '修仙农庄开局');
+    expect(layers.toast.y).toBe(416);
+    expect(layers.toast.x).toBe(16);
+    expect(layers.toast.style.wordWrapWidth).toBe(410);
+
+    setToast(layers, '修仙农庄开局', undefined, 'compact-landscape');
+    expect(layers.toast.y).toBe(288);
+    expect(layers.toast.x).toBe(16);
+    expect(layers.toast.style.wordWrapWidth).toBe(248);
   });
 
-  it('prefers an explicit furnace parent over the labeled focus root', () => {
-    const app = createFakeApplication();
-    const layers = createLayers(app);
-    const parent = new Container();
-    const furnace = createFurnaceLayer(app, parent);
+  it('raises long canvas toast above the bottom command reserve instead of letting it run under controls', () => {
+    const shortToast = toastLayoutForText('修仙农庄开局', true);
+    expect(shortToast.textY).toBe(416);
+    expect(shortToast.bgY + shortToast.bgHeight).toBeLessThanOrEqual(TOAST_BOTTOM_UI_TOP);
 
-    expect(parent.children).toEqual([furnace.container, furnace.icons, furnace.lines]);
-    expect(layers.focusRoot.children).not.toContain(furnace.container);
-    expect(app.stage.children).toHaveLength(5);
-  });
-
-  it('falls back to the stage when no focus root exists', () => {
-    const app = createFakeApplication();
-    const furnace = createFurnaceLayer(app);
-
-    expect(app.stage.children).toEqual([furnace.container, furnace.icons, furnace.lines]);
+    const longToast = toastLayoutForText('修仙农庄开局：灵草换灵石，灵石撑备劫。当前目标：先翻出一块地。'.repeat(7), true);
+    expect(longToast.textY).toBeLessThan(shortToast.textY);
+    expect(longToast.bgY + longToast.bgHeight).toBeLessThanOrEqual(TOAST_BOTTOM_UI_TOP);
   });
 
   it('does not assign canvas text when the rendered value is unchanged', () => {
@@ -80,26 +107,81 @@ describe('renderer layout sizing', () => {
     expect(value).toBe('新文本');
   });
 
-  it('aligns the logical world and objective rail to the approved world-first proportions', () => {
+  it('centers the playable board in the full canvas content while keeping the DOM rail contract', () => {
     const layers = createLayers(createFakeApplication());
-    const { content, world, objectiveRail } = LOGICAL_RENDER_REGIONS;
+    const { content, playfield, world, objectiveRail } = LOGICAL_RENDER_REGIONS;
     const worldRatio = world.width / content.width;
     const railRatio = objectiveRail.width / content.width;
     const firstTileLeft = screenPointForTile(0, 0).x - TILE / 2;
     const lastTileRight = screenPointForTile(13, 0).x + TILE / 2;
-    const worldRight = world.x + world.width;
+    const contentRight = content.x + content.width;
 
     expect(worldRatio).toBeGreaterThanOrEqual(0.72);
     expect(worldRatio).toBeLessThanOrEqual(0.78);
     expect(railRatio).toBeGreaterThanOrEqual(0.22);
     expect(railRatio).toBeLessThanOrEqual(0.28);
-    expect(worldRight).toBeLessThanOrEqual(objectiveRail.x);
-    expect(firstTileLeft).toBeGreaterThanOrEqual(world.x);
-    expect(lastTileRight).toBeLessThanOrEqual(worldRight);
-    expect(Math.abs(firstTileLeft - world.x - (worldRight - lastTileRight))).toBeLessThanOrEqual(1);
+    expect(playfield.x).toBe(content.x);
+    expect(playfield.width).toBe(content.width);
+    expect(world.x + world.width).toBeLessThanOrEqual(objectiveRail.x);
+    expect(firstTileLeft).toBeGreaterThanOrEqual(content.x);
+    expect(lastTileRight).toBeLessThanOrEqual(contentRight);
+    expect(Math.abs(firstTileLeft - content.x - (contentRight - lastTileRight))).toBeLessThanOrEqual(1);
     expect(layers.briefing.x).toBeGreaterThanOrEqual(objectiveRail.x);
     expect(layers.briefing.y).toBeGreaterThanOrEqual(objectiveRail.y);
     expect(layers.briefing.x + layers.briefing.style.wordWrapWidth).toBeLessThanOrEqual(objectiveRail.x + objectiveRail.width);
+  });
+
+  it('round-trips logical tile centers back to world coordinates for pointer targeting', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 1, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+
+    expect(tileCoordinatesFromScreenPoint(state, screenPointForTile(8, 4))).toEqual({ x: 8, y: 4 });
+    expect(tileCoordinatesFromScreenPoint(state, screenPointForTile(0, 0))).toEqual({ x: 0, y: 0 });
+    expect(tileCoordinatesFromScreenPoint(state, { x: screenPointForTile(13, 8).x + TILE, y: screenPointForTile(13, 8).y })).toBeNull();
+  });
+
+  it('keeps passive farmstead herb plots quiet until the player targets or invests in them', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 20260710, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    applyFarmsteadSceneLayout(state, { resetHerbPlot: true });
+    const point = firstFarmsteadFarmPlotTile(state);
+    expect(point).not.toBeNull();
+    const tile = state.tiles.find(entry => entry.x === point!.x && entry.y === point!.y)!;
+
+    expect(cultivationSurfaceAlphaScale(state, tile, undefined)).toBe(FARMSTEAD_PASSIVE_FARM_PLOT_ALPHA);
+    expect(cultivationSurfaceAlphaScale(state, tile, undefined, { pointerTile: point })).toBe(1);
+
+    tile.tilled = true;
+    expect(cultivationSurfaceAlphaScale(state, tile, undefined)).toBe(1);
+  });
+
+  it('keeps the generated world player sprite nearly opaque while leaving room for warm underlay bands', () => {
+    expect(PLAYER_MAP_SPRITE_ALPHA).toBeGreaterThanOrEqual(0.92);
+    expect(PLAYER_MAP_SPRITE_ALPHA).toBeLessThanOrEqual(0.95);
+  });
+
+  it('adds valley ambience to non-farm farmstead zones without decorating the herb plot', () => {
+    const tile = { id: 42, x: 2, y: 1 };
+
+    expect(farmsteadValleyCueState('herb-plot', tile)).toEqual({
+      hasValleyCue: false,
+      stoneAlpha: 0,
+      pathBandAlpha: 0,
+      grassAlpha: 0,
+      mistAlpha: 0,
+      workyardSparkAlpha: 0,
+      homesteadFloorAlpha: 0
+    });
+    expect(farmsteadValleyCueState('wild', tile)).toMatchObject({
+      hasValleyCue: true,
+      grassAlpha: expect.any(Number),
+      mistAlpha: expect.any(Number)
+    });
+    expect(farmsteadValleyCueState('gate', tile).pathBandAlpha).toBeGreaterThan(0);
+    expect(farmsteadValleyCueState('courtyard', tile).stoneAlpha).toBeGreaterThan(0);
+    expect(farmsteadValleyCueState('workyard', tile).workyardSparkAlpha).toBeGreaterThan(0);
+    expect(farmsteadValleyCueState('homestead', tile).homesteadFloorAlpha).toBeGreaterThan(0);
+    expect(farmsteadValleyCueState('wild', tile)).toEqual(farmsteadValleyCueState('wild', tile));
   });
 
   it('keeps today briefing at baseline height for short text and grows for denser copy', () => {
@@ -118,9 +200,27 @@ describe('renderer layout sizing', () => {
     expect(locationPreviewBoxHeight(500)).toBe(370);
   });
 
+  it('clamps long location preview copy to the panel text budget', () => {
+    const text = locationPreviewTextContent('山谷墟市', '今日人声很杂，散修摊位、药材行情、委托传闻和归谷路线都挤在一处。'.repeat(20), 144);
+    expect(estimateLocationPreviewLineCount(text, 144)).toBeLessThanOrEqual(locationPreviewMaxTextLines());
+    expect(text).toContain('…');
+  });
+
+  it('keeps rendered location preview text inside the max-height panel', () => {
+    const app = createFakeApplication();
+    const layers = createLayers(app);
+    drawLocationPreview(layers, '山谷墟市', '今日人声很杂，散修摊位、药材行情、委托传闻和归谷路线都挤在一处。'.repeat(28));
+
+    expect(layers.locationPreviewBg.visible).toBe(true);
+    expect(layers.locationPreviewText.visible).toBe(true);
+    expect(locationPreviewEstimatedTextHeight(layers.locationPreviewText.text, Number(layers.locationPreviewText.style.wordWrapWidth))).toBeLessThanOrEqual(locationPreviewMaxTextHeight());
+    expect(locationPreviewBoxHeight(locationPreviewEstimatedTextHeight(layers.locationPreviewText.text, Number(layers.locationPreviewText.style.wordWrapWidth)))).toBeLessThanOrEqual(370);
+  });
+
   it('treats location, npc, and facility assets as hero art in today briefing', () => {
     expect(isBriefingHeroAsset('loc.farmstead')).toBe(true);
     expect(isBriefingHeroAsset('sprite.npc.herb-gatherer')).toBe(true);
+    expect(isBriefingHeroAsset('map-sprite.herb-gatherer-v1')).toBe(true);
     expect(isBriefingHeroAsset('facility.shipping-bin')).toBe(true);
     expect(isBriefingHeroAsset('tile.scorched')).toBe(true);
     expect(isBriefingHeroAsset('logo.full')).toBe(true);
@@ -171,9 +271,10 @@ describe('renderer layout sizing', () => {
     expect(locationTaskWorldBadgeAssetId).toBeUndefined;
   });
 
-  it('accepts service badges backed by npc portraits or icons and ignores location art', () => {
+  it('accepts service badges backed by npc/map sprites or icons and ignores location art', () => {
     expect(locationServiceWorldBadgeAssetId('sprite.npc.tea-shed-elder')).toBe('sprite.npc.tea-shed-elder');
     expect(locationServiceWorldBadgeAssetId('sprite.npc.market-merchant')).toBe('sprite.npc.market-merchant');
+    expect(locationServiceWorldBadgeAssetId('map-sprite.market-merchant-v1')).toBe('map-sprite.market-merchant-v1');
     expect(locationServiceWorldBadgeAssetId('icon.item.spirit-stone')).toBe('icon.item.spirit-stone');
     expect(locationServiceWorldBadgeAssetId('loc.greenhouse')).toBeUndefined;
     expect(locationServiceWorldBadgeAssetId).toBeUndefined;

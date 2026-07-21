@@ -37,7 +37,7 @@ describe('tool feedback toast helper', () => {
   it('falls back to the player thread when the tool is unknown', () => {
     expect(toolFeedbackToastPresentation([event('tool-broke', { itemId: 'item.unknown-tool' })])).toEqual({
       message: 'item.unknown-tool已损坏，先修补再续农务',
-      assetId: 'sprite.player'
+      assetId: 'portrait.avatar.player-v1'
     });
     expect(toolFeedbackToastPresentation([event('tool-worn', { itemId: 'item.unknown-tool', durability: 2 })], 'loc.herb-plot')).toEqual({
       message: 'item.unknown-tool耐久仅剩 2，尽快修补以免断了药田节奏',

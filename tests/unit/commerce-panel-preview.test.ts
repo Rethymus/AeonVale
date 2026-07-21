@@ -33,7 +33,7 @@ describe('commerce panel preview', () => {
     };
 
     expect(tradeToastPresentation(offer, '（1/3）', '空格/E/回车成交·Esc返回', reg)).toEqual({
-      message: '交易（1/3）：内丹换灵石｜Tab切换·空格/E/回车成交·Esc返回',
+      message: '交易（1/3）：内丹换灵石｜点选条目·空格/E/回车成交·Esc返回',
       assetId: 'loc.valley-market'
     });
   });
@@ -63,11 +63,11 @@ describe('commerce panel preview', () => {
     const stallItem: FestivalStallItem = { eventId: 'event.winter-festival', itemId: 'item.array-core', displayName: '阵核', price: 5 };
 
     expect(shopToastPresentation('shop', shopItem, '（2/6）', '空格/E/回车购买·Esc返回', reg)).toEqual({
-      message: '坊市（2/6）：露根草种｜Tab切换·空格/E/回车购买·Esc返回',
+      message: '坊市（2/6）：露根草种｜点选商品·空格/E/回车购买·Esc返回',
       assetId: 'loc.valley-market'
     });
     expect(shopToastPresentation('festival-stall', stallItem, '（1/2）', '空格/E/回车购买·Esc返回', reg)).toEqual({
-      message: '节日摊位（1/2）：阵核｜Tab切换·空格/E/回车购买·Esc返回',
+      message: '节日摊位（1/2）：阵核｜点选商品·空格/E/回车购买·Esc返回',
       assetId: 'loc.festival-ground'
     });
   });

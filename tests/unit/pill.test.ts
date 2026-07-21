@@ -31,7 +31,7 @@ describe('丹药服用 ', () => {
     expect(state.player.pillPoison).toBe(27_000);
   });
 
-  it('避雷丹设置护体减伤', () => {
+  it('承雷丹设置承雷稳脉减伤', () => {
     const { state, ctx } = setup();
     mutateItem(state.player, 'pill.ward-basic', 1);
     applyPill(state, 'pill.ward-basic', ctx);
@@ -44,17 +44,17 @@ describe('丹药服用 ', () => {
     expect(r.applied).toBe(false);
   });
 
-  it('护体减伤在天劫中生效且渡劫后消耗', () => {
+  it('承雷稳脉减伤在天劫中生效且渡劫后消耗', () => {
     const reg = buildRegistry();
     const sA = createWorld({ seed: 5, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
     const sB = createWorld({ seed: 5, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
     const cA = createSimContext(5, reg, DEFAULT_BALANCE);
     const cB = createSimContext(5, reg, DEFAULT_BALANCE);
     mutateItem(sA.player, 'pill.ward-basic', 1);
-    applyPill(sA, 'pill.ward-basic', cA); // A 有护体
+    applyPill(sA, 'pill.ward-basic', cA); // A 有承雷稳脉
     const rA = runTribulation(sA, { stage: 1, boltCount: 8, policy: { blockChance: 0 } }, cA);
     const rB = runTribulation(sB, { stage: 1, boltCount: 8, policy: { blockChance: 0 } }, cB);
-    // A 受护体保护，掉血更少
+    // A 承雷控伤，掉血更少
     expect(rA.finalHpMilli).toBeGreaterThanOrEqual(rB.finalHpMilli);
     expect(sA.player.wardMitigation).toBe(0); // 渡劫后消耗
   });
@@ -77,7 +77,7 @@ describe('丹药服用 ', () => {
     expect(state.player.temperBoostMult).toBe(1.6);
   });
 
-  it('偷天避雷丹设置护体减伤 0.75（终极抗雷）', () => {
+  it('偷天承雷丹设置承雷稳脉减伤 0.75（终极承雷）', () => {
     const { state, ctx } = setup();
     mutateItem(state.player, 'pill.ward-heaven', 1);
     applyPill(state, 'pill.ward-heaven', ctx);
@@ -91,9 +91,9 @@ describe('丹药服用 ', () => {
     expect(state.player.ironBoneMitigation).toBe(0.2);
   });
 
-  it('铁骨减伤在天劫中与避雷护体叠加，且渡劫后双双消耗', () => {
+  it('铁骨减伤在天劫中与承雷稳脉叠加，且渡劫后双双消耗', () => {
     const reg = buildRegistry();
-    // 同时服避雷丹(0.4) + 铁骨丹(0.2) → 每雷 dmg = base × 0.6 × 0.8
+    // 同时服承雷丹(0.4) + 铁骨丹(0.2) → 每雷 dmg = base × 0.6 × 0.8
     const sBoth = createWorld({ seed: 9, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
     const sNone = createWorld({ seed: 9, width: 6, height: 6, content: reg, params: DEFAULT_BALANCE });
     const cBoth = createSimContext(9, reg, DEFAULT_BALANCE);

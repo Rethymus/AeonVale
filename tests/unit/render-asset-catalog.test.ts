@@ -21,13 +21,15 @@ function storeWithNpcAssets(spriteIds: readonly string[]): AssetStore {
 }
 
 describe('runtime npc asset catalog', () => {
-  it('includes all manifest sprite.npc assets in addition to sim-backed and fallback preview assets', () => {
+  it('includes clear sim-backed portraits, fallback preview sprites, and all manifest sprite.npc assets', () => {
     const store = storeWithNpcAssets(['sprite.npc.herb-gatherer', 'sprite.npc.market-merchant', 'sprite.npc.mysterious-guest', 'icon.item.spirit-stone']);
 
     const ids = runtimeNpcAssetIds(store);
 
     expect(ids).toContain('sprite.npc.wandering-cultivator');
-    expect(ids).toContain('sprite.npc.array-smith');
+    expect(ids).toContain('portrait.avatar.herb-gatherer-v1');
+    expect(ids).toContain('portrait.avatar.array-smith-lu-v1');
+    expect(ids).toContain('sprite.npc.herb-gatherer');
     expect(ids).toContain('sprite.npc.market-merchant');
     expect(ids).toContain('sprite.npc.mysterious-guest');
     expect(ids).not.toContain('icon.item.spirit-stone');

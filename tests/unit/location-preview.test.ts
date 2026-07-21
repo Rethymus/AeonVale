@@ -133,35 +133,35 @@ describe('location preview helper', () => {
     expect(LOCATION_PREVIEW_LOCATION_IDS).toEqual(LOCATION_CATALOG.map(location => location.id));
   });
 
-  it('maps supported npc ids to sprite asset ids', () => {
+  it('maps supported npc ids to the clearest available portrait asset ids', () => {
     expect(npcPortraitAssetId('npc.wandering-cultivator')).toBe('sprite.npc.wandering-cultivator');
-    expect(npcPortraitAssetId('npc.herb-gatherer')).toBe('sprite.npc.herb-gatherer');
-    expect(npcPortraitAssetId('npc.array-smith')).toBe('sprite.npc.array-smith');
+    expect(npcPortraitAssetId('npc.herb-gatherer')).toBe('portrait.avatar.herb-gatherer-v1');
+    expect(npcPortraitAssetId('npc.array-smith')).toBe('portrait.avatar.array-smith-lu-v1');
     expect(npcPortraitAssetId('npc.unknown')).toBeUndefined;
   });
 
   it('resolves preview-only npc ids and names into portrait assets', () => {
-    expect(previewNpcPortraitAssetId('npc.market-merchant')).toBe('sprite.npc.market-merchant');
-    expect(previewNpcPortraitAssetId('sprite.npc.patrol-guard')).toBe('sprite.npc.patrol-guard');
-    expect(previewNpcPortraitAssetIdFromName('茶棚老人')).toBe('sprite.npc.tea-shed-elder');
+    expect(previewNpcPortraitAssetId('npc.market-merchant')).toBe('map-sprite.market-merchant-v1');
+    expect(previewNpcPortraitAssetId('map-sprite.patrol-guard-v1')).toBe('map-sprite.patrol-guard-v1');
+    expect(previewNpcPortraitAssetIdFromName('茶棚老人')).toBe('map-sprite.tea-shed-elder-v1');
     expect(previewNpcPortraitAssetIdFromName('陌生修士')).toBeUndefined;
   });
 
   it('derives preview npc ids from the shared npc catalog', () => {
     expect(NPC_PREVIEW_IDS).toEqual(NPC_CATALOG.map(npc => npc.id));
-    expect(NPC_PREVIEW_IDS.map(npcId => npcPortraitAssetId(npcId))).toEqual(['sprite.npc.wandering-cultivator', 'sprite.npc.herb-gatherer', 'sprite.npc.array-smith']);
+    expect(NPC_PREVIEW_IDS.map(npcId => npcPortraitAssetId(npcId))).toEqual(['sprite.npc.wandering-cultivator', 'portrait.avatar.herb-gatherer-v1', 'portrait.avatar.array-smith-lu-v1']);
   });
 
   it('locks the extra preview-only npc asset ids used by high-frequency surfaces', () => {
-    expect(EXTRA_NPC_PREVIEW_ASSET_IDS).toEqual(['sprite.npc.market-merchant', 'sprite.npc.tea-shed-elder', 'sprite.npc.processing-artisan', 'sprite.npc.patrol-guard']);
+    expect(EXTRA_NPC_PREVIEW_ASSET_IDS).toEqual(['map-sprite.market-merchant-v1', 'map-sprite.tea-shed-elder-v1', 'map-sprite.processing-artisan-v1', 'map-sprite.patrol-guard-v1']);
   });
 
   it('maps person-led location services to shared actor portraits', () => {
-    expect(locationServiceActorAssetId('browse-shop')).toBe('sprite.npc.market-merchant');
-    expect(locationServiceActorAssetId('browse-trade')).toBe('sprite.npc.market-merchant');
-    expect(locationServiceActorAssetId('browse-festival-stall')).toBe('sprite.npc.market-merchant');
-    expect(locationServiceActorAssetId('show-tea-shed')).toBe('sprite.npc.tea-shed-elder');
-    expect(locationServiceActorAssetId('show-greenhouse')).toBe('sprite.npc.herb-gatherer');
+    expect(locationServiceActorAssetId('browse-shop')).toBe('map-sprite.market-merchant-v1');
+    expect(locationServiceActorAssetId('browse-trade')).toBe('map-sprite.market-merchant-v1');
+    expect(locationServiceActorAssetId('browse-festival-stall')).toBe('map-sprite.market-merchant-v1');
+    expect(locationServiceActorAssetId('show-tea-shed')).toBe('map-sprite.tea-shed-elder-v1');
+    expect(locationServiceActorAssetId('show-greenhouse')).toBe('portrait.avatar.herb-gatherer-v1');
     expect(locationServiceActorAssetId('show-farm-work')).toBeUndefined;
   });
 
@@ -177,23 +177,23 @@ describe('location preview helper', () => {
   it('prefers real npc portraits and appends conservative location fallbacks', () => {
     const assetIds = locationPreviewPortraitAssetIds(location({ id: 'valley-market', npcs: ['游方散修'] }), ['npc.wandering-cultivator']);
 
-    expect(assetIds).toEqual(['sprite.npc.wandering-cultivator', 'sprite.npc.market-merchant', 'sprite.npc.patrol-guard']);
+    expect(assetIds).toEqual(['sprite.npc.wandering-cultivator', 'map-sprite.market-merchant-v1', 'map-sprite.patrol-guard-v1']);
   });
 
   it('uses location-specific fallback portraits when no sim-backed npc portrait is available', () => {
-    expect(locationPreviewPortraitAssetIds(location({ id: 'tea-shed' }), [])).toEqual(['sprite.npc.tea-shed-elder']);
-    expect(locationPreviewPortraitAssetIds(location({ id: 'drying-yard' }), [])).toEqual(['sprite.npc.processing-artisan']);
-    expect(locationPreviewPortraitAssetIds(location({ id: 'herb-plot' }), [])).toEqual(['sprite.npc.herb-gatherer']);
-    expect(locationPreviewPortraitAssetIds(location({ id: 'greenhouse' }), [])).toEqual(['sprite.npc.herb-gatherer']);
-    expect(locationPreviewPortraitAssetIds(location({ id: 'array-shed' }), [])).toEqual(['sprite.npc.array-smith']);
+    expect(locationPreviewPortraitAssetIds(location({ id: 'tea-shed' }), [])).toEqual(['map-sprite.tea-shed-elder-v1']);
+    expect(locationPreviewPortraitAssetIds(location({ id: 'drying-yard' }), [])).toEqual(['map-sprite.processing-artisan-v1']);
+    expect(locationPreviewPortraitAssetIds(location({ id: 'herb-plot' }), [])).toEqual(['portrait.avatar.herb-gatherer-v1']);
+    expect(locationPreviewPortraitAssetIds(location({ id: 'greenhouse' }), [])).toEqual(['portrait.avatar.herb-gatherer-v1']);
+    expect(locationPreviewPortraitAssetIds(location({ id: 'array-shed' }), [])).toEqual(['portrait.avatar.array-smith-lu-v1']);
   });
 
   it('picks primary and secondary portrait textures with graceful fallback', () => {
     const primary = Texture.EMPTY;
     const secondary = new Texture({ source: Texture.EMPTY.source });
-    const portraits = locationPreviewPortraits(['sprite.npc.wandering-cultivator', 'sprite.npc.herb-gatherer', 'sprite.npc.array-smith'], {
+    const portraits = locationPreviewPortraits(['sprite.npc.wandering-cultivator', 'portrait.avatar.herb-gatherer-v1', 'portrait.avatar.array-smith-lu-v1'], {
       'sprite.npc.wandering-cultivator': primary,
-      'sprite.npc.herb-gatherer': secondary
+      'portrait.avatar.herb-gatherer-v1': secondary
     });
 
     expect(portraits).toEqual({ primary, secondary });
@@ -214,7 +214,7 @@ describe('location preview helper', () => {
       focusReason: '先补几颗种子，把第二轮药材和炼丹材料接上。'
     });
 
-    expect(summary).toBe(['散修、商贩与委托汇聚之处。', '当前：坊市 -> 浏览坊市', '现在来：先补几颗种子，把第二轮药材和炼丹材料接上。', '动向：今日以常规来往为主', '要务：出货箱待结 2 项', '可选：1. 坊市 / 2. 交易', '人物：游方散修｜游方散修掂着灵石，扫过你背后的药篓。', '偶遇：游方散修：集市看货｜山谷集市认货不认根骨；有草、有丹、有妖兽内丹，就能换路。', 'Shift+数字选地点｜数字选服务｜空格/E/回车确认'].join('\n'));
+    expect(summary).toBe(['散修、商贩与委托汇聚之处。', '当前：坊市 -> 浏览坊市', '现在来：先补几颗种子，把第二轮药材和炼丹材料接上。', '动向：今日以常规来往为主', '要务：出货箱待结 2 项', '可选：1. 坊市 / 2. 交易', '人物：游方散修｜游方散修掂着灵石，扫过你背后的药篓。', '偶遇：游方散修：集市看货｜山谷集市认货不认根骨；有草、有丹、有妖兽内丹，就能换路。', '点选地点与服务进入，Esc 返回农庄'].join('\n'));
   });
 
   it('includes farmstead action signals when the location has immediate logistics work', () => {
@@ -331,7 +331,7 @@ describe('location preview helper', () => {
     state.player.bodyFoundation = stageQiCap(state.player.stage, DEFAULT_BALANCE);
     state.player.cultivation = state.player.bodyFoundation;
 
-    expect(locationPreviewFocusReason(state, null, 'farmstead', 'show-farm-work', 0)).toBe('体魄已至极限，缺避雷丹｜阵法未成(0/2)｜准备度0%｜先补避雷丹与两座阵法。');
+    expect(locationPreviewFocusReason(state, null, 'farmstead', 'show-farm-work', 0)).toBe('体魄已至极限，缺承雷丹｜阵法未成(0/2)｜准备度0%｜先补承雷丹与两座阵法。');
   });
 
   it('switches farmstead root preview summaries onto the array-shed thread when breakthrough is ready', () => {
@@ -358,7 +358,7 @@ describe('location preview helper', () => {
       encounters: []
     });
 
-    expect(summary).toBe(['散修、商贩与委托汇聚之处。', '当前：先回农庄收口', '动向：今日以常规来往为主', '可选：今日先回农庄收口农务与修行资源', '人物：今日先按当前地点动线推进', '偶遇：今日先按农务与地点动线推进', 'Shift+数字选地点｜数字选服务｜空格/E/回车确认'].join('\n'));
+    expect(summary).toBe(['散修、商贩与委托汇聚之处。', '当前：先回农庄收口', '动向：今日以常规来往为主', '可选：今日先回农庄收口农务与修行资源', '人物：今日先按当前地点动线推进', '偶遇：今日先按农务与地点动线推进', '点选地点与服务进入，Esc 返回农庄'].join('\n'));
   });
 
   it('keeps encounter-only preview summaries route-aware instead of falling back to empty service text', () => {
@@ -377,7 +377,7 @@ describe('location preview helper', () => {
       ]
     });
 
-    expect(summary).toBe(['春日辨草与低阶灵苗的常见去处。', '当前：先看行踪', '动向：今日以常规来往为主', '可选：今日先看行踪，再决定要不要跟进', '人物：采药女｜采药女蹲在垄边辨叶，顺手把几株幼苗扶正。', '偶遇：采药女：辨认春苗｜先记住她今日停在哪，再决定要不要顺路过去。', 'Shift+数字选地点｜数字选服务｜空格/E/回车确认'].join('\n'));
+    expect(summary).toBe(['春日辨草与低阶灵苗的常见去处。', '当前：先看行踪', '动向：今日以常规来往为主', '可选：今日先看行踪，再决定要不要跟进', '人物：采药女｜采药女蹲在垄边辨叶，顺手把几株幼苗扶正。', '偶遇：采药女：辨认春苗｜先记住她今日停在哪，再决定要不要顺路过去。', '点选地点与服务进入，Esc 返回农庄'].join('\n'));
   });
 
   it('prioritizes quest-ready and birthday signals in location preview summary', () => {
@@ -421,22 +421,22 @@ describe('location preview helper', () => {
       )
     ).toEqual({
       message: '服务：旧茶棚（歇脚听闻：歇脚听闻；守茶翁）｜空格/E/回车执行·Esc返回',
-      assetId: 'sprite.npc.tea-shed-elder'
+      assetId: 'map-sprite.tea-shed-elder-v1'
     });
   });
 
   it('uses npc-backed hero assets for person-led service entries while keeping place-thread routing intact', () => {
-    expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '坊市', command: 'browse-shop', commandLabel: '浏览坊市' }), '空格/E/回车执行·Esc返回').assetId).toBe('sprite.npc.market-merchant');
+    expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '坊市', command: 'browse-shop', commandLabel: '浏览坊市' }), '空格/E/回车执行·Esc返回').assetId).toBe('map-sprite.market-merchant-v1');
 
-    expect(locationSelectionToastPresentation('服务', location({ id: 'greenhouse', displayName: '暖棚' }), service({ locationId: 'greenhouse', service: 'greenhouse-tending', label: '暖棚养护', command: 'show-greenhouse', commandLabel: '查看暖棚' }), '空格/E/回车执行·Esc返回').assetId).toBe('sprite.npc.herb-gatherer');
+    expect(locationSelectionToastPresentation('服务', location({ id: 'greenhouse', displayName: '暖棚' }), service({ locationId: 'greenhouse', service: 'greenhouse-tending', label: '暖棚养护', command: 'show-greenhouse', commandLabel: '查看暖棚' }), '空格/E/回车执行·Esc返回').assetId).toBe('portrait.avatar.herb-gatherer-v1');
 
-    expect(locationSelectionToastPresentation('服务', location({ id: 'festival-ground', displayName: '节庆会场' }), service({ locationId: 'festival-ground', service: 'festival-stall', label: '摊位', command: 'browse-festival-stall', commandLabel: '浏览摊位' }), '空格/E/回车执行·Esc返回').assetId).toBe('sprite.npc.market-merchant');
+    expect(locationSelectionToastPresentation('服务', location({ id: 'festival-ground', displayName: '节庆会场' }), service({ locationId: 'festival-ground', service: 'festival-stall', label: '摊位', command: 'browse-festival-stall', commandLabel: '浏览摊位' }), '空格/E/回车执行·Esc返回').assetId).toBe('map-sprite.market-merchant-v1');
   });
 
   it('includes a concise why-now reason in selection toasts when a focus reason is available', () => {
     expect(locationSelectionToastPresentation('服务', location({ id: 'valley-market', displayName: '山谷集市' }), service({ locationId: 'valley-market', service: 'shop', label: '坊市', command: 'browse-shop', commandLabel: '浏览坊市' }), '空格/E/回车执行·Esc返回', '先补几颗种子，把第二轮药材和炼丹材料接上。')).toEqual({
       message: '服务：山谷集市（坊市：浏览坊市）｜现在来：先补几颗种子，把第二轮药材和炼丹材料接上。｜空格/E/回车执行·Esc返回',
-      assetId: 'sprite.npc.market-merchant'
+      assetId: 'map-sprite.market-merchant-v1'
     });
   });
 
@@ -496,7 +496,7 @@ describe('location preview helper', () => {
     state.player.cultivation = state.player.bodyFoundation;
 
     expect(locationSelectionToastPresentation('服务', location({ id: 'farmstead', displayName: '农庄' }), service({ locationId: 'farmstead', service: 'farm-work', label: '耕作', command: 'show-farm-work', commandLabel: '查看农事' }), '空格/E/回车执行·Esc返回', locationPreviewFocusReason(state, null, 'farmstead', 'show-farm-work', 0), undefined, 'loc.array-shed')).toEqual({
-      message: '服务：阵器棚（阵法布设：查看阵法）｜现在来：体魄已至极限，缺避雷丹｜阵法未成(0/2)｜准备度0%｜先补避雷丹与两座阵法。｜空格/E/回车执行·Esc返回',
+      message: '服务：阵器棚（阵法布设：查看阵法）｜现在来：体魄已至极限，缺承雷丹｜阵法未成(0/2)｜准备度0%｜先补承雷丹与两座阵法。｜空格/E/回车执行·Esc返回',
       assetId: 'loc.array-shed'
     });
   });

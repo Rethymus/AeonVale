@@ -88,14 +88,14 @@ describe('主循环高频键上下文路由', () => {
     expect(resolvePrimaryInteractionShortcut({ key: 'E', shiftKey: false, quickLocationShortcut: null })).toBe('default-confirm');
   });
 
-  it('热栏提示文案同步显式包含切换与直选信息', () => {
+  it('热栏提示文案同步显式包含直选信息并移除默认 Q 切换提示', () => {
     expect(
       hotbarStatusText(
         0,
         () => '青苔',
         () => '翻地'
       )
-    ).toContain('Space/Q切换');
+    ).not.toContain('Q切换');
     expect(
       hotbarStatusText(
         0,
@@ -182,7 +182,8 @@ describe('主循环高频键上下文路由', () => {
     expect(resolveWorldActionShortcut('@', false)).toBe('train-sit-up');
     expect(resolveWorldActionShortcut('#', false)).toBe('train-squat');
     expect(resolveWorldActionShortcut(')', false)).toBe('train-long-run');
-    expect(resolveWorldActionShortcut('b', false)).toBe('brew-selected-recipe');
+    expect(resolveWorldActionShortcut('b', false)).toBe('toggle-inventory');
+    expect(resolveWorldActionShortcut('B', true)).toBe('toggle-inventory');
     expect(resolveWorldActionShortcut('n', false)).toBe('brew-bone-pill');
     expect(resolveWorldActionShortcut('m', false)).toBe('brew-detox-pill');
     expect(resolveWorldActionShortcut('h', false)).toBe('eat-ward-pill');
@@ -258,6 +259,21 @@ describe('主循环高频键上下文路由', () => {
     ).toBe(true);
     expect(
       shouldPreserveInteractionPanelForKey({
+        key: 'W',
+        isModifierOnly: false,
+        farmActionDigitActive: false,
+        npcActionDigitActive: false,
+        primaryInteractionShortcut: null,
+        enterShortcut: null,
+        escapeShortcut: null,
+        tabShortcut: null,
+        pageDownShortcut: null,
+        commandShortcut: null,
+        quickLocationShortcut: 'tea-shed'
+      })
+    ).toBe(true);
+    expect(
+      shouldPreserveInteractionPanelForKey({
         key: 'x',
         isModifierOnly: false,
         farmActionDigitActive: false,
@@ -310,6 +326,20 @@ describe('主循环高频键上下文路由', () => {
         escapeShortcut: null,
         tabShortcut: null,
         commandShortcut: null
+      })
+    ).toBe(true);
+    expect(
+      shouldPreserveLocationSelectionForKey({
+        key: 'E',
+        isModifierOnly: false,
+        locationDigitActive: false,
+        locationServiceDigitActive: false,
+        primaryInteractionShortcut: null,
+        enterShortcut: null,
+        escapeShortcut: null,
+        tabShortcut: null,
+        commandShortcut: null,
+        quickLocationShortcut: 'greenhouse'
       })
     ).toBe(true);
     expect(

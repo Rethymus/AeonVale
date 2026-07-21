@@ -31,12 +31,32 @@ describe('semantic input router', () => {
   });
 
   it('maps visible menu accelerators to semantic open targets', () => {
-    expect(gameCommandFromKeyboard({ key: 'm' })).toEqual({ kind: 'open', target: 'menu' });
-    expect(gameCommandFromKeyboard({ key: 'i' })).toEqual({ kind: 'open', target: 'inventory' });
+    expect(gameCommandFromKeyboard({ key: 'b' })).toEqual({ kind: 'open', target: 'inventory' });
     expect(gameCommandFromKeyboard({ key: 'c' })).toEqual({ kind: 'open', target: 'cultivation' });
-    expect(gameCommandFromKeyboard({ key: 'l' })).toEqual({ kind: 'open', target: 'map' });
-    expect(gameCommandFromKeyboard({ key: 'u' })).toEqual({ kind: 'open', target: 'alchemy' });
+    expect(gameCommandFromKeyboard({ key: 'j' })).toEqual({ kind: 'open', target: 'journey' });
+    expect(gameCommandFromKeyboard({ key: 'm' })).toEqual({ kind: 'open', target: 'map' });
     expect(gameCommandFromKeyboard({ key: 'p' })).toEqual({ kind: 'open', target: 'pause' });
+  });
+
+  it('keeps the default product profile click-first by dropping tab, hotbar, and space/e shortcuts', () => {
+    const context = { shortcutProfile: 'product' as const, enterBehavior: 'confirm' as const };
+    expect(gameCommandFromKeyboard({ key: 'b' }, context)).toEqual({ kind: 'open', target: 'inventory' });
+    expect(gameCommandFromKeyboard({ key: 'Escape' }, context)).toEqual({ kind: 'cancel' });
+    expect(gameCommandFromKeyboard({ key: 'Enter' }, context)).toEqual({ kind: 'confirm' });
+    expect(gameCommandFromKeyboard({ key: 'ArrowRight' }, context)).toEqual({ kind: 'move', direction: 'right' });
+    expect(gameCommandFromKeyboard({ key: 'c' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'j' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'm' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'n' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'p' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'u' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'y' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: '[' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: ']' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'Tab' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: '1', code: 'Digit1' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: ' ' }, context)).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'e' }, context)).toBeNull();
   });
 
   it('normalizes touch controls into the same GameCommand union', () => {
@@ -46,7 +66,7 @@ describe('semantic input router', () => {
       { touch: { control: 'cancel' }, expected: { kind: 'cancel' } },
       { touch: { control: 'cycle', direction: 'previous' }, expected: { kind: 'cycle', direction: 'previous' } },
       { touch: { control: 'hotbar', index: 4 }, expected: { kind: 'hotbar', index: 4 } },
-      { touch: { control: 'open', target: 'alchemy' }, expected: { kind: 'open', target: 'alchemy' } },
+      { touch: { control: 'open', target: 'furnace' }, expected: { kind: 'open', target: 'furnace' } },
       { touch: { control: 'end-day' }, expected: { kind: 'end-day' } }
     ];
 
@@ -55,6 +75,9 @@ describe('semantic input router', () => {
 
   it('rejects unsupported shortcuts, modified commands, and invalid touch hotbar indices', () => {
     expect(gameCommandFromKeyboard({ key: 'x' })).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'i' })).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'l' })).toBeNull();
+    expect(gameCommandFromKeyboard({ key: 'u' })).toBeNull();
     expect(gameCommandFromKeyboard({ key: 'e', ctrlKey: true })).toBeNull();
     expect(gameCommandFromKeyboard({ key: 'p', metaKey: true })).toBeNull();
     expect(gameCommandFromKeyboard({ key: 'ArrowUp', altKey: true })).toBeNull();

@@ -90,7 +90,7 @@ export function nearDeathBonus(finalHpRatio: number, params: SimContext['params'
   return tp.nearDeathSafe; // >80% → 0.6（未受淬炼）
 }
 
-/** 解析单雷，不结算整场淬体，也不消费任何护体效果。 */
+/** 解析单雷，不结算整场淬体，也不消费任何承雷稳脉效果。 */
 export function resolveTribulationBolt(state: GameState, opts: TribulationBoltOptions, ctx: SimContext, rng: Rng = ctx.rng.lightning): TribulationBoltResolution {
   const { stage, policy } = opts;
   const tp = ctx.params.lightning.tempering;
@@ -183,7 +183,7 @@ export function runTribulation(state: GameState, opts: TribulationOptions, ctx: 
   state.player.bodyFoundation += tempering;
   state.player.willpower += Math.round(tempering / ctx.params.bodyCultivation.tribulationWillpowerDivisor);
   state.player.temperingStack += tempering;
-  state.player.wardMitigation = 0; // 护体渡劫后消耗
+  state.player.wardMitigation = 0; // 承雷稳脉渡劫后消耗
   state.player.temperBoostMult = 1; // 淬体倍率渡劫后消耗
   state.player.ironBoneMitigation = 0; // 铁骨减伤渡劫后消耗
   const survived = state.player.hp > 0;

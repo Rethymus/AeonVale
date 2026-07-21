@@ -11,7 +11,7 @@ import type { SimContext } from './world/context';
 import { applyAction as applyActionImpl } from './farm/actions';
 import { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herbQiDemand } from './farm/farmSystem';
 import { tickCelestial } from './celestial/celestialSystem';
-import { tickBeasts } from './celestial/beastSystem';
+import { tickBeasts, courierHaulGroundItems } from './celestial/beastSystem';
 import { deriveStreams, type RngStreams } from './world/rng';
 import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from './params';
 import { MILLI } from './world/types';
@@ -59,6 +59,7 @@ function resolveDayEnd(state: GameState, ctx: SimContext): void {
   applyFarmDayEnd(state, ctx, mods.growthMod, mods.qiMod);
   advanceStayingWorldDay(state);
   tickBeasts(state, ctx); // 灵气潮汐→灵草成熟→引来妖兽啃食
+  courierHaulGroundItems(state, ctx); // R3-B2：courier 专长兽归仓地面物（护田优先、搬运末位）
   advanceFacilityJobs(state, ctx);
   settleShipping(state, ctx);
   advanceSpecialOrdersDay(state);
@@ -127,9 +128,9 @@ export { applyFarmDayEnd, growthPerDay, qiFactor, soilFactor, seasonFactor, herb
 export { applyPill } from './alchemy/pillSystem';
 export { brewPills, brewTutorialWardPill, prepareTutorialAlchemyKit, resolveBrew } from './alchemy/alchemySystem';
 export type { TutorialBrewAttemptResult } from './alchemy/alchemySystem';
-export { ARRAY_BUILD_COSTS, activeArraysCoveringTile, hasActiveArrayCoverage, placeArray, arrayModifierFor } from './tribulation/arrays';
+export { ARRAY_BUILD_COSTS, activeArraysCoveringTile, hasActiveArrayCoverage, placeArray, arrayModifierFor, coveringWaterArray } from './tribulation/arrays';
 export type { ArrayCost, PlaceArrayOptions } from './tribulation/arrays';
-export { arrayWardenResonanceForTile, assignGuardBeastPatrol, feedGuardBeast, guardBeastMasteryReady, preferredGuardBeastForPatrol, tickBeasts, qiTideActive, tameGuardBeast } from './celestial/beastSystem';
+export { arrayWardenResonanceForTile, assignGuardBeastPatrol, courierHaulGroundItems, feedGuardBeast, guardBeastMasteryReady, preferredGuardBeastForPatrol, tickBeasts, qiTideActive, tameGuardBeast } from './celestial/beastSystem';
 export type { ArrayWardenResonance } from './celestial/beastSystem';
 export type { AssignGuardBeastPatrolResult, FeedGuardBeastResult, TameGuardBeastResult } from './celestial/beastSystem';
 export { buyFestivalStallItem, currentFestivalEventId, festivalParticipationFlag, getFestivalStallItems, hasParticipatedCurrentFestival, participateFestival, selectCelestialEvent, startPurpleOmenIfDue, tickCelestial } from './celestial/celestialSystem';
@@ -138,7 +139,7 @@ export { TRADE_CATALOG, getTradeOffers, executeTrade } from './economy/trade';
 export type { TradeOffer, TradeResult } from './economy/trade';
 export { getMarketDemands, marketDemandForItem } from './economy/market';
 export type { MarketDemand } from './economy/market';
-export { shippingUnitPrice, canShipItem, shipItem, shipQualityItem, shippingLines, settleShipping } from './economy/shipping';
+export { shippingUnitPrice, canShipItem, shipItem, shipQualityItem, unshipItem, unshipQualityItem, shippingLines, settleShipping } from './economy/shipping';
 export type { ShipResult, ShippingLine, ShippingSettlement } from './economy/shipping';
 export { SHOP_CATALOG, getShopItems, buyShopItem } from './economy/shop';
 export type { ShopItem, BuyShopResult } from './economy/shop';
@@ -167,6 +168,8 @@ export type { LocationDef, LocationEncounter, LocationId, LocationService, Locat
 export { applyMvpStarterKit } from './world/starterKit';
 export { depositItem, depositQualityItem, storageItemCount, storageQualityItemCount, storageUsed, withdrawItem, withdrawQualityItem } from './storage/storage';
 export type { StorageResult } from './storage/storage';
+export { dropInventoryItem, transferInventoryItem } from './inventory/transfers';
+export type { InventoryDropRequest, InventoryDropResult, InventoryTransferRequest, InventoryTransferResult } from './inventory/transfers';
 export { applyPoultice, brewHerbalWine, compostHerb, consumeHerbalWine, dryHerb, makePoultice, offerRefinedTea, refineArrayCore, sealHerb } from './processing/processing';
 export type { ConsumeHerbalWineResult, ProcessingResult } from './processing/processing';
 export { ARCHIVE_DONATION_CATALOG, ARCHIVE_MILESTONE_CATALOG, archiveDonationCount, archiveDonationFlag, archiveMilestoneFlag, claimArchiveMilestone, donateToArchive, getArchiveDonations, getArchiveMilestones, isArchiveDonationComplete, isArchiveMilestoneClaimed, nextArchiveDonation, nextArchiveMilestone } from './collection/archive';

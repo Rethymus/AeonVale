@@ -54,9 +54,9 @@ if (includeLivePages) {
 }
 
 const portfolioScreenshots = [
-  { path: 'test-results/portfolio/01-farm-loop.png', width: 960, height: 542 },
-  { path: 'test-results/portfolio/02-location-routing.png', width: 960, height: 542 },
-  { path: 'test-results/portfolio/03-farm-actions.png', width: 960, height: 542 },
+  { path: 'test-results/portfolio/01-farm-loop.png', width: 1440, height: 810 },
+  { path: 'test-results/portfolio/02-location-routing.png', width: 1440, height: 825 },
+  { path: 'test-results/portfolio/03-farm-actions.png', width: 1440, height: 810 },
   { path: 'test-results/portfolio/04-mobile-farm-loop.png', width: 736, height: 414 }
 ];
 

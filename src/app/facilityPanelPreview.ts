@@ -33,7 +33,7 @@ export function upgradeResultToastPresentation(upgrade: UpgradeDef, outcome: 'su
 export function buildToastPresentation(kind: FacilityKind, indexLabel: string, confirmHint: string, content: ContentRegistry): FacilityToastPresentation {
   const preview = buildPanelPreview(kind, content);
   return {
-    message: `建造${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
+    message: `建造${indexLabel}：${preview.title}｜点选候选·${confirmHint}`,
     assetId: preview.assetId
   };
 }
@@ -41,7 +41,7 @@ export function buildToastPresentation(kind: FacilityKind, indexLabel: string, c
 export function upgradeToastPresentation(upgrade: UpgradeDef, indexLabel: string, confirmHint: string, content: ContentRegistry): FacilityToastPresentation {
   const preview = upgradePanelPreview(upgrade, content);
   return {
-    message: `扩建${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
+    message: `扩建${indexLabel}：${preview.title}｜点选候选·${confirmHint}`,
     assetId: preview.assetId
   };
 }
@@ -155,7 +155,7 @@ export function facilityCollectPanelPreview(choice: FacilityCollectPreviewChoice
 
 export function facilityCollectToastPresentation(choice: FacilityCollectPreviewChoice, indexLabel: string, confirmHint: string): FacilityToastPresentation {
   return {
-    message: `设施收取${indexLabel}：${FACILITY_LABEL[choice.kind]}｜${choice.ready ? '可收取' : '未完成'}｜Tab切换·${confirmHint}`,
+    message: `设施收取${indexLabel}：${FACILITY_LABEL[choice.kind]}｜${choice.ready ? '可收取' : '未完成'}｜点选设施·${confirmHint}`,
     assetId: facilityAssetId(choice.kind)
   };
 }

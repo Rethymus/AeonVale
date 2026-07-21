@@ -141,7 +141,7 @@ const evidenceArtifacts = [
     priority: 'P0-A',
     path: 'test-results/portfolio/*.png',
     generatedBy: 'pnpm portfolio:capture',
-    requiredSignals: ['01-farm-loop.png 960x542 CSS-rendered readable PNG', '02-location-routing.png 960x542 CSS-rendered readable PNG', '03-farm-actions.png 960x542 CSS-rendered readable PNG', '04-mobile-farm-loop.png 736x414 CSS-rendered small-viewport landscape keyboard-first PNG (compatibility filename)', 'screenshotEvidence paintedRatio and colors meet thresholds'],
+    requiredSignals: ['01-farm-loop.png 1440x810 CSS-rendered readable PNG', '02-location-routing.png 1440x825 CSS-rendered backdrop PNG', '03-farm-actions.png 1440x810 CSS-rendered readable PNG', '04-mobile-farm-loop.png 736x414 CSS-rendered small-viewport landscape keyboard-first PNG (compatibility filename)', 'screenshotEvidence paintedRatio and colors meet thresholds'],
     publicTreePolicy: 'generated-only; review evidence only, do not publish screenshots directly from test-results',
     reviewCommand: 'pnpm portfolio:mvp-preflight -- --keep-public-tree'
   },

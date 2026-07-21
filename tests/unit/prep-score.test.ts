@@ -2,7 +2,7 @@
  * prepScore 集成测试。
  *
  * 验证"种田—炼丹—布阵—渡劫"闭环在数值上的体现：
- * - 有阵法 + 有避雷丹 → 高 prepScore → 高突破成功率
+ * - 有阵法 + 有承雷丹 → 高 prepScore → 高突破成功率
  * - 无准备 → prepScore=0 → 成功率降低
  */
 import { describe, it, expect } from 'vitest';
@@ -20,19 +20,19 @@ function setup(seed = 1, stage: 1 | 2 | 3 = 1) {
 }
 
 describe('prepScore: 突破准备度评分', () => {
-  it('无阵法 + 无避雷丹 → prepScore=0.0', () => {
+  it('无阵法 + 无承雷丹 → prepScore=0.0', () => {
     const { state } = setup();
     expect(computePrepScore(state)).toBe(0.0);
   });
 
-  it('有避雷丹（ward-basic）→ pillScore=1.0 → prepScore=0.6', () => {
+  it('有承雷丹（ward-basic）→ pillScore=1.0 → prepScore=0.6', () => {
     const { state } = setup();
     mutateItem(state.player, 'pill.ward-basic', 1);
     // arrayScore=0, pillScore=1.0 → 0.4×0 + 0.6×1.0 = 0.6
     expect(computePrepScore(state)).toBeCloseTo(0.6);
   });
 
-  it('有大避雷丹（ward-greater）→ pillScore=1.0 → prepScore=0.6', () => {
+  it('有大承雷丹（ward-greater）→ pillScore=1.0 → prepScore=0.6', () => {
     const { state } = setup();
     mutateItem(state.player, 'pill.ward-greater', 1);
     expect(computePrepScore(state)).toBeCloseTo(0.6);
@@ -53,7 +53,7 @@ describe('prepScore: 突破准备度评分', () => {
     expect(computePrepScore(state)).toBeCloseTo(0.2);
   });
 
-  it('满准备（2+阵 + 避雷丹）→ prepScore=1.0', () => {
+  it('满准备（2+阵 + 承雷丹）→ prepScore=1.0', () => {
     const { state } = setup();
     mutateItem(state.player, 'pill.ward-basic', 1);
     state.arrays.set(1, { id: 1, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 0, coverageTileIds: [], power: 100, active: true });

@@ -56,7 +56,7 @@ const DEFAULT_WORLD_COLUMNS = 14;
 const LOGICAL_LAYOUT = computeViewportLayout({ ...LOGICAL_CANVAS, touchCapable: false });
 if (!LOGICAL_LAYOUT.regions) throw new Error('P0 qi-flow screenshots require the 960×540 landscape layout.');
 const TILE_ORIGIN = {
-  x: Math.round(LOGICAL_LAYOUT.regions.world.x + (LOGICAL_LAYOUT.regions.world.width - DEFAULT_WORLD_COLUMNS * TILE_SIZE) / 2),
+  x: Math.round(LOGICAL_LAYOUT.regions.content.x + (LOGICAL_LAYOUT.regions.content.width - DEFAULT_WORLD_COLUMNS * TILE_SIZE) / 2),
   y: Math.round(LOGICAL_LAYOUT.regions.world.y)
 };
 

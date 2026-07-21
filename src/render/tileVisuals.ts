@@ -80,6 +80,8 @@ export interface QiFlowVisualState {
   readonly speed: number;
   readonly amplitude: number;
   readonly phase: number;
+  /** 静态灵气辉光底（截图也能看到，不依赖抓住动画帧）；浓度越高越亮。 */
+  readonly glowAlpha: number;
 }
 
 /** 翻地基色（较未翻深一档，配合 contrast 再叠暗） */
@@ -132,7 +134,7 @@ export function tileSurfaceVisualState(tile: Tile, crop?: CropInstance | null): 
     return {
       surfaceKind: 'plantable',
       baseTone: 'soilDeep',
-      baseToneAlpha: 0.44,
+      baseToneAlpha: 0.52,
       grainKind: 'fine',
       grainTone: 'soilHighlight',
       grainDensity: 7,
@@ -145,11 +147,11 @@ export function tileSurfaceVisualState(tile: Tile, crop?: CropInstance | null): 
     return {
       surfaceKind: 'tillable',
       baseTone: 'soilFertile',
-      baseToneAlpha: 0.24,
+      baseToneAlpha: 0.45,
       grainKind: 'fine',
       grainTone: 'paperWarm',
       grainDensity: 10,
-      grainAlpha: 0.2,
+      grainAlpha: 0.28,
       furrowAlpha: 0
     };
   }
@@ -208,15 +210,15 @@ export function tileSelectionVisualState(input: TileSelectionVisualInput): TileS
 /** 灵气浓度到轻量流线的单调映射；只读 tile，不改模拟状态。 */
 export function qiFlowVisualState(tile: Pick<Tile, 'id' | 'x' | 'y' | 'qiDensity' | 'blockType' | 'soilType' | 'tilled'>, ambientTimeMs: number, reducedMotion: boolean): QiFlowVisualState {
   const farmable = tile.blockType === 'none' && tile.soilType !== 'water' && tile.soilType !== 'rock' && tile.soilType !== 'metal-ore';
-  const rawConcentration = clamp01((tile.qiDensity - 30_000) / 70_000);
-  const preparedBaseline = tile.tilled && tile.qiDensity >= 30_000 ? 0.125 : 0;
-  const concentration = Math.max(rawConcentration, preparedBaseline);
-  const visible = tile.tilled ? tile.qiDensity >= 30_000 : tile.qiDensity >= 60_000;
-  if (!farmable || !visible) {
-    return { lineCount: 0, concentration: 0, alpha: 0, lineWidth: 0, speed: 0, amplitude: 0, phase: 0 };
+  // 浓度基线下调到 5000：凡间地默认 qi=30k（state.ts）→ 浓度≈0.26，肉眼可见的基础流；
+  // 高灵气田 70k+ → 0.68 浓密流。此前基线 30k + alpha 0.62 在截图/人眼下读为「无灵气」，
+  // 人眼（非视觉 proxy）判定 P0-4 未达标——基线下调 + 静态辉光底 + 加粗线才一眼可见。
+  const concentration = farmable ? clamp01((Math.max(0, tile.qiDensity) - 5_000) / 95_000) : 0;
+  if (concentration <= 0.02) {
+    return { lineCount: 0, concentration: 0, alpha: 0, lineWidth: 0, speed: 0, amplitude: 0, phase: 0, glowAlpha: 0 };
   }
 
-  const lineCount: 1 | 2 | 3 = concentration < 1 / 3 ? 1 : concentration < 2 / 3 ? 2 : 3;
+  const lineCount: 0 | 1 | 2 | 3 = concentration < 0.34 ? 1 : concentration < 0.67 ? 2 : 3;
   const speed = 0.72 + concentration * 0.38;
   const basePhase = (tile.id * 0.618_033_988_75 + tile.x * 0.071 + tile.y * 0.113) % 1;
   const safeTime = Number.isFinite(ambientTimeMs) ? Math.max(0, ambientTimeMs) : 0;
@@ -225,14 +227,12 @@ export function qiFlowVisualState(tile: Pick<Tile, 'id' | 'x' | 'y' | 'qiDensity
   return {
     lineCount,
     concentration,
-    // 可见度地板：此前 alpha≈0.43 / width≈1.7 在人眼与视觉复核下都读为「均匀棕色」，
-    // 像素门禁虽绿但属亚感知（见 2026-07-18 P0-4 复核）。抬到 alpha≈0.63 / width≈2.4
-    // 后仍为低饱和灵气青/月白，不引入霓虹，浓度差依旧单调。
-    alpha: 0.62 + concentration * 0.1,
-    lineWidth: 2.35 + concentration * 0.1,
+    alpha: 0.9 + concentration * 0.1,
+    lineWidth: 3.8 + concentration * 1.3,
     speed,
-    amplitude: 1.3 + concentration * 1.7,
-    phase
+    amplitude: 1.4 + concentration * 1.7,
+    phase,
+    glowAlpha: 0.04 + concentration * 0.08
   };
 }
 

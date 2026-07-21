@@ -27,7 +27,7 @@ function toolAssetId(itemId: string | undefined, assetIdOverride?: string): stri
     case 'item.sickle':
       return 'icon.item.sickle';
     default:
-      return assetIdOverride ?? 'sprite.player';
+      return assetIdOverride ?? 'portrait.avatar.player-v1';
   }
 }
 

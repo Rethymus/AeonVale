@@ -374,7 +374,7 @@ describe('巡守兽护田（体修农庄看门犬式防护）', () => {
     expect(state.crops.has(tileAt(state, 0, 0)!.id)).toBe(true);
   });
 
-  it('绝缘阵会让妖兽绕开被护住的成熟灵草，优先啃食未布防地块', () => {
+  it('绝缘阵会让妖兽绕开被护住的成熟灵草，优先啃食未巡守地块', () => {
     const { state, ctx, reg } = setup(7, beastParams({ guardVigorRecoveryPerDay: 0 }));
     state.beastSurge = { beastsRemaining: 1, daysLeft: 2 };
 

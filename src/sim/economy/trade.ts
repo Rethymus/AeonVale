@@ -9,7 +9,8 @@
  */
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
-import { mutateItem, itemCount } from '@sim/world/player';
+import type { SimContext } from '@sim/world/context';
+import { inventoryCanFitRewards, mutateItem, itemCount } from '@sim/world/player';
 import { hasRelationshipPerk } from '@sim/social/relationshipEvents';
 
 /** 单条交易要约：以 give 换 receive，受 stageMin 门槛约束。 */
@@ -72,7 +73,7 @@ export interface TradeResult {
  * 执行一笔交易。校验阶段→材料→容量；容量满时回滚 give。
  * 成功发出 'trade' 事件（give/receive），供 UI 反馈。
  */
-export function executeTrade(state: GameState, offerId: string): TradeResult {
+export function executeTrade(state: GameState, offerId: string, ctx?: SimContext): TradeResult {
   const offer = tradeCatalogForState(state).find(o => o.id === offerId) ?? null;
   if (!offer) return { ok: false, offer: null, reason: '无此交易' };
   if (state.player.stage < offer.stageMin) return { ok: false, offer, reason: '修为不足' };
@@ -81,6 +82,10 @@ export function executeTrade(state: GameState, offerId: string): TradeResult {
   }
   // 先扣 give；若 receive 因容量失败则回滚，保证原子性。
   mutateItem(state.player, offer.give.itemId, -offer.give.qty);
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: offer.receive.itemId, count: offer.receive.qty }], ctx.content)) {
+    mutateItem(state.player, offer.give.itemId, offer.give.qty);
+    return { ok: false, offer, reason: '储物戒已满' };
+  }
   const got = mutateItem(state.player, offer.receive.itemId, offer.receive.qty);
   if (!got) {
     mutateItem(state.player, offer.give.itemId, offer.give.qty);

@@ -4,10 +4,10 @@
  * 动作按 DayInput.actions 顺序执行；体力不足则跳过该动作（不致命错误）。
  */
 import type { GameState } from '@sim/world/state';
-import { tileAt, nextEntityId, emit } from '@sim/world/state';
+import { tileAt, nextEntityId, emit, groundItemAtIndex } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { PlayerAction } from '@sim/world/input';
-import { inventoryCanFitRewards, mutateItem, itemCount, mutateQualityItem } from '@sim/world/player';
+import { inventoryCanFitRewards, inventoryUsed, mutateItem, itemCount, mutateQualityItem, normalItemCount, qualityItemCount } from '@sim/world/player';
 import { MILLI } from '@sim/world/types';
 import { shipItem, shipQualityItem } from '@sim/economy/shipping';
 import { buyShopItem } from '@sim/economy/shop';
@@ -18,7 +18,7 @@ import { acceptSpecialOrder, claimSpecialOrder, completeCommission, submitSpecia
 import { claimArchiveMilestone, donateToArchive } from '@sim/collection/archive';
 import { assignGuardBeastPatrol, feedGuardBeast, tameGuardBeast } from '@sim/celestial/beastSystem';
 import { buyFestivalStallItem, participateFestival } from '@sim/celestial/celestialSystem';
-import { depositItem, depositQualityItem, withdrawItem, withdrawQualityItem } from '@sim/storage/storage';
+import { dropInventoryItem, transferInventoryItem } from '@sim/inventory/transfers';
 import { collectFacility, placeFacility, startDryingJob, startFacilityRecipeJob, startFurnaceJob, startSealingJob } from '@sim/buildings/facilities';
 import { dryHerb, sealHerb } from '@sim/processing/processing';
 import { claimMainlineQuest } from '@sim/story/mainline';
@@ -58,7 +58,7 @@ function canFitPotentialHarvestRewards(state: GameState, ctx: SimContext, crop: 
     rewards.push({ itemId: yieldDef.itemId, count: yieldDef.count });
   }
 
-  return inventoryCanFitRewards(state.player, rewards);
+  return inventoryCanFitRewards(state.player, rewards, ctx.content);
 }
 
 /**
@@ -91,6 +91,40 @@ function crossTiles(state: GameState, x: number, y: number, maxCount: number) {
     .filter((t): t is NonNullable<ReturnType<typeof tileAt>> => Boolean(t));
 }
 
+function pickupGroundItemIntoPlayer(state: GameState, ctx: SimContext): void {
+  const p = state.player;
+  const gi = groundItemAtIndex(state, p.position);
+  if (!gi) return;
+
+  const maxStack = Math.max(1, ctx.content.items.get(gi.itemId)?.stack ?? gi.count);
+  const current = gi.quality ? qualityItemCount(p, gi.itemId, gi.quality) : normalItemCount(p, gi.itemId);
+  const opensNewSlot = current <= 0;
+  if (opensNewSlot && inventoryUsed(p) >= p.inventoryCapacity) {
+    emit(state, 'pickup-blocked', { itemId: gi.itemId, count: gi.count, quality: gi.quality, reason: 'inventory-full' });
+    return;
+  }
+
+  const room = Math.max(0, maxStack - current);
+  const picked = Math.min(gi.count, room);
+  if (picked <= 0) {
+    emit(state, 'pickup-blocked', { itemId: gi.itemId, count: gi.count, quality: gi.quality, reason: 'stack-full' });
+    return;
+  }
+
+  const added = gi.quality ? mutateQualityItem(p, gi.itemId, gi.quality, picked) : mutateItem(p, gi.itemId, picked);
+  if (!added) {
+    emit(state, 'pickup-blocked', { itemId: gi.itemId, count: gi.count, quality: gi.quality, reason: 'inventory-full' });
+    return;
+  }
+
+  gi.count -= picked;
+  if (gi.count <= 0) {
+    const idx = state.groundItems.indexOf(gi);
+    if (idx >= 0) state.groundItems.splice(idx, 1);
+  }
+  emit(state, 'pickup', { itemId: gi.itemId, count: picked, quality: gi.quality, remaining: Math.max(0, gi.count) });
+}
+
 export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext): void {
   const p = state.player;
   const params = ctx.params;
@@ -104,7 +138,8 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
   switch (a.kind) {
     case 'move': {
       const t = tileAt(state, a.to.x, a.to.y);
-      if (t && t.blockType === 'none') {
+      const adjacent = Math.abs(a.to.x - p.position.x) + Math.abs(a.to.y - p.position.y) === 1;
+      if (adjacent && t && t.blockType === 'none') {
         p.position = { x: a.to.x, y: a.to.y };
       }
       return;
@@ -223,7 +258,7 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       if (mainYield && harvestedMain + bonusYield > 0) {
         rewardPlan.push({ itemId: mainYield.itemId, quality, count: harvestedMain + bonusYield });
       }
-      if (!inventoryCanFitRewards(p, rewardPlan)) return;
+      if (!inventoryCanFitRewards(p, rewardPlan, ctx.content)) return;
       for (const reward of rewardPlan) {
         if ('quality' in reward) mutateQualityItem(p, reward.itemId, reward.quality, reward.count);
         else mutateItem(p, reward.itemId, reward.count);
@@ -259,19 +294,27 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       return;
     }
     case 'deposit-item': {
-      depositItem(state, a.itemId, a.count);
+      transferInventoryItem(state, ctx, { from: 'player', to: 'storage', itemId: a.itemId, count: a.count });
       return;
     }
     case 'withdraw-item': {
-      withdrawItem(state, a.itemId, a.count);
+      transferInventoryItem(state, ctx, { from: 'storage', to: 'player', itemId: a.itemId, count: a.count });
       return;
     }
     case 'deposit-quality-item': {
-      depositQualityItem(state, a.itemId, a.quality, a.count);
+      transferInventoryItem(state, ctx, { from: 'player', to: 'storage', itemId: a.itemId, quality: a.quality, count: a.count });
       return;
     }
     case 'withdraw-quality-item': {
-      withdrawQualityItem(state, a.itemId, a.quality, a.count);
+      transferInventoryItem(state, ctx, { from: 'storage', to: 'player', itemId: a.itemId, quality: a.quality, count: a.count });
+      return;
+    }
+    case 'move-item': {
+      transferInventoryItem(state, ctx, a);
+      return;
+    }
+    case 'drop-item': {
+      dropInventoryItem(state, a);
       return;
     }
     case 'place-facility': {
@@ -295,7 +338,7 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       return;
     }
     case 'collect-facility': {
-      collectFacility(state, a.facilityId);
+      collectFacility(state, a.facilityId, ctx);
       return;
     }
     case 'dry-herb': {
@@ -303,11 +346,11 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       return;
     }
     case 'seal-herb': {
-      sealHerb(state);
+      sealHerb(state, ctx);
       return;
     }
     case 'buy-shop-item': {
-      buyShopItem(state, a.itemId, a.count);
+      buyShopItem(state, a.itemId, a.count, ctx);
       return;
     }
     case 'buy-festival-stall-item': {
@@ -347,27 +390,27 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       return;
     }
     case 'claim-special-order': {
-      claimSpecialOrder(state, a.orderId);
+      claimSpecialOrder(state, a.orderId, ctx);
       return;
     }
     case 'claim-mainline-quest': {
-      claimMainlineQuest(state, a.questId);
+      claimMainlineQuest(state, a.questId, ctx);
       return;
     }
     case 'claim-ruin-chapter': {
-      claimRuinChapter(state, a.chapterId);
+      claimRuinChapter(state, a.chapterId, ctx);
       return;
     }
     case 'claim-npc-quest': {
-      claimNpcQuest(state, a.questId);
+      claimNpcQuest(state, a.questId, ctx);
       return;
     }
     case 'donate-archive': {
-      donateToArchive(state, a.donationId);
+      donateToArchive(state, a.donationId, ctx);
       return;
     }
     case 'claim-archive-milestone': {
-      claimArchiveMilestone(state, a.milestoneId);
+      claimArchiveMilestone(state, a.milestoneId, ctx);
       return;
     }
     case 'participate-festival': {
@@ -428,7 +471,7 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       let coreDropped = false;
       const coreDef = ctx.content.items.get('item.beast-core');
       const rolledCore = ctx.rng.drop.chance(cfg.lootChancePerBeast);
-      if (rolledCore && coreDef && itemCount(p, coreDef.id) < coreDef.stack) {
+      if (rolledCore && coreDef && inventoryCanFitRewards(p, [{ itemId: coreDef.id, count: 1 }], ctx.content)) {
         coreDropped = mutateItem(p, coreDef.id, 1);
         if (coreDropped) emit(state, 'beast-loot', { cores: 1, itemId: coreDef.id });
       }
@@ -437,7 +480,7 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       const seedCandidates = [...ctx.content.herbs.values()].filter(h => h.tier >= 1 && h.tier <= seedTierMax);
       if (seedCandidates.length > 0 && ctx.rng.drop.chance(cfg.seedDropChance)) {
         const herb = ctx.rng.drop.pick(seedCandidates);
-        if (mutateItem(p, herb.seedId, 1)) emit(state, 'beast-seed', { itemId: herb.seedId });
+        if (inventoryCanFitRewards(p, [{ itemId: herb.seedId, count: 1 }], ctx.content) && mutateItem(p, herb.seedId, 1)) emit(state, 'beast-seed', { itemId: herb.seedId });
       }
       emit(state, 'beast-hunted', { beastsRemaining: surge.beastsRemaining, damage: cfg.huntDamage, coreDropped });
       if (surge.beastsRemaining <= 0) {
@@ -467,6 +510,11 @@ export function applyAction(state: GameState, a: PlayerAction, ctx: SimContext):
       const gain = herb.rawPoisonValue * stageMul;
       p.pillPoison = Math.min(ctx.params.pillPoison.cap * MILLI, p.pillPoison + gain);
       emit(state, 'eat-raw', { defId: herb.id, poisonGain: gain });
+      return;
+    }
+    case 'pickup-ground-item': {
+      // 场景拾取：走至物品所在格按 Space 拾入背包。确定性（无 RNG/IO）。
+      pickupGroundItemIntoPlayer(state, ctx);
       return;
     }
     case 'rest': {

@@ -36,7 +36,7 @@ async function pressUntilDebugState(page: Page, key: string, label: string, pred
   });
 }
 
-test('public build is playable with real first-screen farm inputs', async ({ page }) => {
+test('public build is playable with real first-screen click-first farm inputs', async ({ page }) => {
   test.setTimeout(process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 150_000 : 120_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -57,18 +57,24 @@ test('public build is playable with real first-screen farm inputs', async ({ pag
   expect(before.frontTileTilled).toBe(false);
   expect(before.frontTileCropId).toBeNull();
 
-  await pressUntilDebugState(page, 'Space', 'first tile tilled', debug => debug.frontTileTilled === true && debug.frontTileCropId == null && debug.onboardingObjectiveId === 'first-sow');
+  const journey = page.locator('#world-journey-action');
+  await journey.click();
+  await waitForDebugState(page, 'first tile tilled', debug => debug.frontTileTilled === true && debug.frontTileCropId == null && debug.onboardingObjectiveId === 'first-sow');
+  await clearIntroDialogue(page);
 
   const beforeSow = await gameDebugSnapshot(page);
   expect(beforeSow.hotbarSlotKind).toBe('till');
-  await pressUntilDebugState(page, 'Z', 'first seed sown through onboarding shortcut', debug => debug.frontTileTilled === true && debug.frontTileCropId != null && debug.onboardingObjectiveId === 'first-water' && debug.starterMosslingSeedCount === (beforeSow.starterMosslingSeedCount ?? 0) - 1 && debug.hotbarSlotKind === 'seed' && debug.hotbarSeedId === 'seed.mossling');
+  await journey.click();
+  await waitForDebugState(page, 'first seed sown through journey action', debug => debug.frontTileTilled === true && debug.frontTileCropId != null && debug.onboardingObjectiveId === 'first-water' && debug.starterMosslingSeedCount === (beforeSow.starterMosslingSeedCount ?? 0) - 1);
 
   const sown = await gameDebugSnapshot(page);
-  await pressUntilDebugState(page, 'X', 'first crop watered through onboarding shortcut', debug => debug.frontTileWateredToday === true && (debug.frontTileMoisture ?? 0) > (sown.frontTileMoisture ?? 0) && debug.onboardingObjectiveId === 'first-harvest');
+  await journey.click();
+  await waitForDebugState(page, 'first crop watered through journey action', debug => debug.frontTileWateredToday === true && (debug.frontTileMoisture ?? 0) > (sown.frontTileMoisture ?? 0) && debug.onboardingObjectiveId === 'first-harvest');
 
   const watered = await gameDebugSnapshot(page);
   await clearIntroDialogue(page);
-  await pressUntilDebugState(page, 'Enter', 'next day after real end-day shortcut', debug => (debug.day ?? 0) > (watered.day ?? 0) && debug.frontTileCropId === watered.frontTileCropId && (debug.frontTileCropGrowth ?? 0) > (watered.frontTileCropGrowth ?? 0) && debug.frontTileWateredToday === false, { attempts: 2, timeoutMs: 5_000 });
+  await page.locator('#world-command-bar [data-game-command="end-day"]').click();
+  await waitForDebugState(page, 'next day after real end-day button', debug => (debug.day ?? 0) > (watered.day ?? 0) && debug.frontTileCropId === watered.frontTileCropId && (debug.frontTileCropGrowth ?? 0) > (watered.frontTileCropGrowth ?? 0) && debug.frontTileWateredToday === false, 5_000);
 
   const nextDay = await gameDebugSnapshot(page);
   expect(nextDay.onboardingObjectiveId).toBe('first-water');

@@ -20,9 +20,11 @@ export const ALLOWED_ASSET_LICENSES = ['OFL-1.1', 'MIT', 'Apache-2.0', 'CC0-1.0'
 
 /** 允许的资产文件类型。 */
 export const ALLOWED_ASSET_TYPES = ['png', 'webp', 'json', 'wav', 'mp3', 'ogg', 'ttf', 'otf', 'woff', 'woff2', 'glsl'] as const;
+export const ASSET_STATUSES = ['draft', 'generated', 'vision_passed', 'human_signed', 'published'] as const;
 
 export type AssetLicense = (typeof ALLOWED_ASSET_LICENSES)[number];
 export type AssetFileType = (typeof ALLOWED_ASSET_TYPES)[number];
+export type AssetStatus = (typeof ASSET_STATUSES)[number];
 export type AssetKind = 'sprites' | 'audio' | 'fonts' | 'shaders';
 
 /**
@@ -53,6 +55,8 @@ export const assetEntrySchema = z.object({
   license: z.enum(ALLOWED_ASSET_LICENSES),
   /** 来源 URL 或取得说明，版权留痕。 */
   source: z.string().min(1),
+  /** 资产验收状态；旧条目未标注时按已发布资产处理。 */
+  status: z.enum(ASSET_STATUSES).default('published'),
   /** 私有仓保留的详细来源参数；公开树会清洗。 */
   src: assetSourceDetailsSchema.optional(),
   /** 人眼/像素工具做过的实际修改，诚实记录，可为空数组。 */

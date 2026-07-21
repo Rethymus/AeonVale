@@ -32,6 +32,7 @@ jobs:
       - run: pnpm governance:check
       - run: pnpm governance:readiness
       - run: pnpm prepare:public-tree .public-tree
+      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
       - run: pnpm --dir .public-tree governance:readiness
       - run: pnpm --dir .public-tree governance:public
       - run: pnpm --dir .public-tree governance:check
@@ -109,6 +110,11 @@ jobs:
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
           PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
       - run: pnpm test:browser:public-tree:keypoint
+        env:
+          PLAYWRIGHT_APP_DIR: .public-tree
+          PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
+          PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
+      - run: pnpm test:browser:public-tree:r1-input
         env:
           PLAYWRIGHT_APP_DIR: .public-tree
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/

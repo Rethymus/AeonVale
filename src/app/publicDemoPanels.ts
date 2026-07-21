@@ -90,7 +90,7 @@ function outcomePreview(outcome: ReturnType<typeof resolveBrew>['outcome']): str
 }
 
 function brewResultLabel(payload: TutorialBrewPayload | null, brewed: boolean): string {
-  if (brewed) return '首枚避雷丹已经出炉。教学药包已转化为一枚正式丹药。';
+  if (brewed) return '首枚承雷丹已经出炉。教学药包已转化为一枚正式丹药。';
   if (!payload) return '教学药包不会占用背包；失败后材料会保留，可继续调整火候。';
   switch (payload.outcome) {
     case 'waste':
@@ -99,7 +99,7 @@ function brewResultLabel(payload: TutorialBrewPayload | null, brewed: boolean): 
       return '本炉未能成丹，教学药包已完整保留。先把火候调回安全区间。';
     case 'flawed':
     case 'pill':
-      return payload.completed ? '避雷丹已经出炉。' : '本炉尚未完成教学丹药，可以继续重试。';
+      return payload.completed ? '承雷丹已经出炉。' : '本炉尚未完成教学丹药，可以继续重试。';
     default:
       return '教学药包仍在，可以继续调整火候。';
   }
@@ -161,7 +161,7 @@ export function buildPublicDemoAlchemyView(state: GameState, ctx: SimContext, he
 
   return {
     recipeName: recipe?.displayName ?? '教学丹方不可用',
-    pillName: recipe ? (ctx.content.items.get(recipe.outputPillId)?.displayName ?? recipe.outputPillId) : '避雷丹',
+    pillName: recipe ? (ctx.content.items.get(recipe.outputPillId)?.displayName ?? recipe.outputPillId) : '承雷丹',
     materials,
     heatPercent: normalizedHeat,
     idealHeatLabel: recipe ? `${idealHeatLo}–${idealHeatHi}%` : '不可用',
@@ -171,7 +171,7 @@ export function buildPublicDemoAlchemyView(state: GameState, ctx: SimContext, he
     pairingLabel: recipe ? tutorialAlchemyPairingLabel(recipe.inputs, ctx.content) : '七情配伍：丹方数据缺失。',
     previewLabel: preview ? outcomePreview(preview.outcome) : '丹方数据缺失，暂时无法炼制。',
     resultLabel: !brewed && !kitReady ? '先在灵田收获第一批灵草，山谷才会交付一次性教学药包。' : brewResultLabel(latestBrew, brewed),
-    primaryLabel: brewed ? '携丹返回农庄' : latestBrew?.retryable ? '重新炼制' : '炼制备劫丹',
+    primaryLabel: brewed ? '携丹返回农庄' : latestBrew?.retryable ? '重新炼制' : '炼制承雷丹',
     primaryDisabled: !brewed && (!kitReady || recipe == null),
     brewed
   };
@@ -184,7 +184,7 @@ function hitLabel(hitType: TutorialBoltPayload['hitType']): string {
     case 'rod':
       return '引雷阵承接';
     case 'miss':
-      return '走位避开';
+      return '偏离雷心';
     case 'blocked':
       return '擦弹完美格挡';
     default:
@@ -206,16 +206,16 @@ export function buildPublicDemoTribulationView(state: GameState): PublicDemoTrib
   return {
     phase: tutorial.phase,
     hpLabel: `${Math.max(0, Math.round(state.player.hp / 1_000))} / ${Math.round(state.player.maxHp / 1_000)}`,
-    pillLabel: `避雷丹 ×${pillCount}`,
-    wardLabel: state.player.wardMitigation > 0 ? `避雷护体 ${Math.round(state.player.wardMitigation * 100)}%` : '尚未服用备劫丹',
+    pillLabel: `承雷丹 ×${pillCount}`,
+    wardLabel: state.player.wardMitigation > 0 ? `承雷稳脉 ${Math.round(state.player.wardMitigation * 100)}%` : '尚未服用承雷丹',
     warningLabel:
       tutorial.phase === 'active' && warnedTile
         ? `第 ${activeBolt}/${TUTORIAL_TRIBULATION_BOLT_COUNT} 雷将落在 (${warnedTile.x}, ${warnedTile.y})。${
-            inWarningZone ? '你仍在落雷区内——可就地擦弹，或先走位再确认落雷。' : '你已离开落雷区，确认后将安全避过本雷。'
+            inWarningZone ? '区内可擦弹承雷；走位则降险。' : '已离雷心：余雷擦身，收益降低。'
           }`
         : tutorial.phase === 'aftermath'
           ? '三雷已经结束，战后结算正在等待确认。'
-          : '服丹后开始教学。每一雷先标落点：可走位离开，或在区内确认时擦弹。',
+          : '服丹后开始：先标雷点；区内擦弹承雷，离心降险降收益。',
     positionLabel: `当前位置 (${player.x}, ${player.y})`,
     lastBoltLabel: lastBolt ? `第 ${lastBolt.boltIndex ?? tutorial.boltIndex} 雷：${hitLabel(lastBolt.hitType)}，损失 ${Math.round((lastBolt.damageMilli ?? 0) / 1_000)} 气血。` : '尚无雷击结果。',
     primaryLabel: tutorial.phase === 'active' ? (perfectBlockAvailable ? `擦弹·第 ${activeBolt} 雷` : `确认第 ${activeBolt} 雷`) : '开始三雷教学',
@@ -235,7 +235,7 @@ export function buildPublicDemoAftermathView(state: GameState): PublicDemoAfterm
     heading: survived ? '三雷已过' : tutorial.outcome === 'rescued' ? '山谷将你救回' : '等待天劫结果',
     outcomeLabel: survived ? '你完成了教学小天劫，正式境界保持不变。' : '本次未能撑过三雷，但不会永久死亡，可以重新准备。',
     hpLabel: `${Math.round(tutorial.startingHpMilli / 1_000)} → ${Math.round((tutorial.finalHpBeforeRescueMilli ?? state.player.hp) / 1_000)}，当前 ${Math.round(state.player.hp / 1_000)}`,
-    hitLabel: `正面 ${hits.direct} · 走位 ${hits.miss} · 引雷 ${hits.rod} · 擦弹 ${hits.blocked}`,
+    hitLabel: `正面 ${hits.direct} · 余雷 ${hits.miss} · 引雷 ${hits.rod} · 擦弹 ${hits.blocked}`,
     temperingLabel: `${Math.round(tutorial.rawTemperingMilli / 1_000)} 点雷劫淬炼记录`,
     rewardLabel: survived ? `淬体与修为各 +${Math.round(tutorial.rewardMilli / 1_000)}` : '本次不发放淬体奖励',
     nextLabel: survived ? '返回农庄，四段试玩旅程即告完成。' : '返回后会补回教学药包，可重新炼丹再试。',

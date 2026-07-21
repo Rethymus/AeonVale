@@ -157,7 +157,7 @@ describe('service panel preview', () => {
 
     expect(teaShedToastPresentation(state)).toEqual({
       message: expect.stringContaining('旧茶棚·'),
-      assetId: 'sprite.npc.tea-shed-elder'
+      assetId: 'map-sprite.tea-shed-elder-v1'
     });
     expect(teaShedToastPresentation(state).message).toContain('留世后可来此歇脚听闻');
   });
@@ -265,7 +265,7 @@ describe('service panel preview', () => {
 
     const greenhouseToast = greenhouseToastPresentation(state, reg, '空格/E/回车养护暖棚·Esc返回');
 
-    expect(greenhouseToast.assetId).toBe('sprite.npc.herb-gatherer');
+    expect(greenhouseToast.assetId).toBe('portrait.avatar.herb-gatherer-v1');
     expect(greenhouseToast.message.startsWith('暖棚·')).toBe(true);
     expect(greenhouseToast.message).toContain('四时育苗');
     expect(greenhouseToast.message).toContain('棚温 68%｜连护 3 日｜棚势已稳｜离季育苗更顺手');
@@ -273,15 +273,15 @@ describe('service panel preview', () => {
     expect(greenhouseToast.message.endsWith('空格/E/回车养护暖棚·Esc返回')).toBe(true);
 
     expect(processingServiceToastPresentation('空格/E/回车进入')).toEqual({
-      message: '加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜Tab切换到农庄加工项·空格/E/回车进入',
+      message: '加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜选择农庄加工项·空格/E/回车进入',
       assetId: 'loc.farmstead'
     });
-    expect(arraysServiceToastPresentation('R布引雷阵·F布绝缘阵')).toEqual({
-      message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线｜R布引雷阵·F布绝缘阵',
+    expect(arraysServiceToastPresentation('点阵器棚或农务入口布阵')).toEqual({
+      message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成导雷阵势｜点阵器棚或农务入口布阵',
       assetId: 'loc.farmstead'
     });
-    expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作')).toEqual({
-      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+    expect(farmWorkServiceToastPresentation('空格/E主交互·农务入口打开面板')).toEqual({
+      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜点击地块/设施执行·空格/E主交互·农务入口打开面板',
       assetId: 'loc.farmstead'
     });
   });
@@ -290,41 +290,41 @@ describe('service panel preview', () => {
     expect(farmWorkServiceToastPresentation('确认').message).toContain('翻地、补种、浇水、收获与出货');
     expect(processingServiceToastPresentation('确认').message).toContain('余货先晾晒');
     expect(processingServiceToastPresentation('确认').message).toContain('炼丹与阵法');
-    expect(arraysServiceToastPresentation('确认').message).toContain('备劫防线');
+    expect(arraysServiceToastPresentation('确认').message).toContain('导雷阵势');
   });
 
   it('reuses the shared person-led service actor mapping for tea shed and greenhouse open toasts', () => {
     const { state, reg } = setup();
 
-    expect(teaShedToastPresentation(state).assetId).toBe('sprite.npc.tea-shed-elder');
-    expect(greenhouseToastPresentation(state, reg).assetId).toBe('sprite.npc.herb-gatherer');
+    expect(teaShedToastPresentation(state).assetId).toBe('map-sprite.tea-shed-elder-v1');
+    expect(greenhouseToastPresentation(state, reg).assetId).toBe('portrait.avatar.herb-gatherer-v1');
   });
 
   it('keeps child-location service toasts on the child place art when processing or arrays are entered there directly', () => {
     expect(processingServiceToastPresentation('空格/E/回车进入', 'drying-yard')).toEqual({
-      message: '加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜Tab切换到农庄加工项·空格/E/回车进入',
+      message: '加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜选择农庄加工项·空格/E/回车进入',
       assetId: 'loc.drying-yard'
     });
 
-    expect(arraysServiceToastPresentation('R布引雷阵·F布绝缘阵', 'array-shed')).toEqual({
-      message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线｜R布引雷阵·F布绝缘阵',
+    expect(arraysServiceToastPresentation('点阵器棚或农务入口布阵', 'array-shed')).toEqual({
+      message: '阵法：布设引雷阵与绝缘阵，把农庄产出转成导雷阵势｜点阵器棚或农务入口布阵',
       assetId: 'loc.array-shed'
     });
   });
 
   it('lets farm-work shortcut toasts reuse the current farmstead focus asset when one is provided', () => {
-    expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作')).toEqual({
-      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+    expect(farmWorkServiceToastPresentation('空格/E主交互·农务入口打开面板')).toEqual({
+      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜点击地块/设施执行·空格/E主交互·农务入口打开面板',
       assetId: 'loc.farmstead'
     });
 
-    expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作', 'facility.shipping-bin')).toEqual({
-      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+    expect(farmWorkServiceToastPresentation('空格/E主交互·农务入口打开面板', 'facility.shipping-bin')).toEqual({
+      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜点击地块/设施执行·空格/E主交互·农务入口打开面板',
       assetId: 'loc.farmstead'
     });
 
-    expect(farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作', 'loc.herb-plot')).toEqual({
-      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·空格/E主交互·M开农庄操作',
+    expect(farmWorkServiceToastPresentation('空格/E主交互·农务入口打开面板', 'loc.herb-plot')).toEqual({
+      message: '农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜点击地块/设施执行·空格/E主交互·农务入口打开面板',
       assetId: 'loc.herb-plot'
     });
   });
@@ -344,7 +344,7 @@ describe('service panel preview', () => {
       })
     ).toEqual({
       message: '旧茶棚：炉火旧闻｜养神歇脚，气血+8，丹毒-1，意志+0',
-      assetId: 'sprite.npc.tea-shed-elder'
+      assetId: 'map-sprite.tea-shed-elder-v1'
     });
   });
 

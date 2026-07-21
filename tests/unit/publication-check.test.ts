@@ -54,6 +54,14 @@ describe('公开树发布检查', () => {
     expect(() => runPublicationCheck(dir)).toThrow(/forbidden design document/);
   });
 
+  it('拒绝本地规划目录进入公开树', () => {
+    const dir = makePublicTree();
+    write(dir, '.planning/patches/01bf653-pixel-ambient.patch', 'private local planning patch\n');
+    execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
+
+    expect(() => runPublicationCheck(dir)).toThrow(/forbidden planning document/);
+  });
+
   it('拒绝美术状态文档', () => {
     const dir = makePublicTree();
     write(dir, 'assets/ART-ASSETS-STATUS.md', '# private art status\n');
@@ -81,7 +89,7 @@ describe('公开树发布检查', () => {
 
   it('拒绝 README 引用未公开设计目录或 Agent 入口文档', () => {
     const dir = makePublicTree();
-    write(dir, 'README.md', 'See docs/00-DESIGN-BRIEF.md and AGENTS.md.\n');
+    write(dir, 'README.md', 'See docs/00-DESIGN-BRIEF.md, .planning/ROADMAP.md, and AGENTS.md.\n');
     execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
 
     expect(() => runPublicationCheck(dir)).toThrow(/README\.md references private or unpublished document pattern/);

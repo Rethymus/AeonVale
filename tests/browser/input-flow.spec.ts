@@ -3,9 +3,14 @@ import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
 import { saveGame } from '@sim/serialize';
 import { mutateItem } from '@sim/world/player';
-import { openGame } from './openGame';
+import { continueToWorld, openGame as openProductGame, waitForInitialSurface } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
+const LOGICAL_CANVAS = { width: 960, height: 540 } as const;
+
+async function openGame(page: Page): Promise<void> {
+  await openProductGame(page, { legacyShortcuts: true });
+}
 
 interface SaveSnapshot {
   gameVersion?: string;
@@ -83,6 +88,18 @@ async function waitForDebugState(page: Page, expected: Partial<AeonDebugSnapshot
     const actual = await page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__ ?? {});
     throw new Error(`Timed out waiting for debug state ${JSON.stringify(expected)}; actual ${JSON.stringify(actual)}`, { cause: error });
   }
+}
+
+async function clickCanvasLogical(page: Page, x: number, y: number): Promise<void> {
+  const canvas = page.locator('canvas');
+  const box = await canvas.boundingBox();
+  expect(box).not.toBeNull();
+  await canvas.click({
+    position: {
+      x: (x / LOGICAL_CANVAS.width) * box!.width,
+      y: (y / LOGICAL_CANVAS.height) * box!.height
+    }
+  });
 }
 
 async function clearBlockingDialogue(page: Page): Promise<void> {
@@ -172,20 +189,40 @@ async function clearIntroDialogue(page: Page): Promise<void> {
 
 async function clearNarrativeBeat(page: Page, beatId: string): Promise<void> {
   const flag = `narr-${beatId}`;
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 8; i += 1) {
     const save = await readSave(page);
     const flags = save.state?.player?.flags ?? [];
-    if (flags.includes(flag)) break;
+    const activeBeatId = await page.evaluate(() => {
+      const debug = (window as typeof window & { __AEON_DEBUG__?: { dialogueBeatId?: string | null } }).__AEON_DEBUG__;
+      return debug?.dialogueBeatId ?? null;
+    });
+    if (flags.includes(flag) && activeBeatId == null) break;
+    if (activeBeatId == null) {
+      await page.waitForTimeout(40);
+      continue;
+    }
     await page.keyboard.press('Enter');
     await page.waitForTimeout(40);
   }
 }
 
 async function clearCommissionDialogue(page: Page): Promise<void> {
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 8; i += 1) {
     const save = await readSave(page);
     const flags = save.state?.flags ?? [];
-    if (flags.includes('commission.6.commission.human-ward-patrol')) break;
+    const debug = await page.evaluate(() => {
+      const snapshot = (window as typeof window & { __AEON_DEBUG__?: { dialogueBeatId?: string | null; interactionPanelKind?: string } }).__AEON_DEBUG__;
+      return {
+        dialogueBeatId: snapshot?.dialogueBeatId ?? null,
+        interactionPanelKind: snapshot?.interactionPanelKind ?? 'none'
+      };
+    });
+    if (flags.includes('commission.6.commission.human-ward-patrol') && debug.dialogueBeatId == null && debug.interactionPanelKind !== 'commission') break;
+    if (flags.includes('commission.6.commission.human-ward-patrol') && debug.dialogueBeatId == null && debug.interactionPanelKind === 'commission') {
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(40);
+      continue;
+    }
     await page.keyboard.press('Enter');
     await page.waitForTimeout(40);
   }
@@ -202,6 +239,7 @@ function buildSavePayload(mode: SaveFixtureMode): string {
     state.player.flags.add('narr-intro');
   };
   const markStageNarrativeCleared = (): void => {
+    state.player.flags.add('narr-shennong-art-truth');
     state.player.flags.add('narr-stage-3');
     state.player.flags.add('narr-stage-5');
     state.player.flags.add('narr-stage-7');
@@ -317,9 +355,9 @@ function buildSavePayload(mode: SaveFixtureMode): string {
   } else if (mode === 'second-sow-raw-front') {
     state.player.flags.add('onboarding-first-market-restock');
     state.player.flags.add('narr-first-till');
-    state.player.position = { x: 8, y: 3 };
+    state.player.position = { x: 7, y: 3 };
     state.player.facing = 'down';
-    const targetTile = state.tiles.find(tile => tile.x === 8 && tile.y === 4);
+    const targetTile = state.tiles.find(tile => tile.x === 7 && tile.y === 4);
     if (!targetTile) throw new Error('missing second sow fixture front tile');
     targetTile.tilled = false;
     targetTile.cropId = null;
@@ -342,6 +380,8 @@ function buildSavePayload(mode: SaveFixtureMode): string {
     state.postAscension.mode = 'stayed-in-world';
     state.postAscension.ascensionDay = state.day;
     state.day = 6;
+    // This fixture isolates daily commission turn-in through the location directory.
+    state.stayingWorld.resolvedIncidentDay = state.day;
     mutateItem(state.player, 'item.beast-core', 2);
     markStageNarrativeCleared();
   } else if (mode === 'post-ascension-tea-shed') {
@@ -418,6 +458,18 @@ async function readSave(page: Page): Promise<SaveSnapshot> {
   const save = await page.evaluate(key => window.localStorage.getItem(key), SAVE_KEY);
   expect(save).not.toBeNull();
   return JSON.parse(save ?? '{}') as SaveSnapshot;
+}
+
+async function clickCanvasTile(page: Page, x: number, y: number, button: 'left' | 'right' = 'left'): Promise<void> {
+  const position = await page.evaluate(
+    target => {
+      const testApi = (window as typeof window & { __AEON_TEST__?: { canvasPointForTile?: (x: number, y: number) => { x: number; y: number } | null } }).__AEON_TEST__;
+      return testApi?.canvasPointForTile?.(target.x, target.y) ?? null;
+    },
+    { x, y }
+  );
+  expect(position).not.toBeNull();
+  await page.locator('canvas').click({ button, position: position! });
 }
 
 test('legacy F5 now preselects build in farm action panel and Enter remains the real confirm path', async ({ page }) => {
@@ -937,7 +989,7 @@ test('legacy O key now preselects market trade via location services and period 
   expect(parsed.state?.player?.inventory?.['seed.frostmarrow']?.count ?? 0).toBeGreaterThan(beforeFrostmarrowSeeds);
 });
 
-test('legacy semicolon key now only preselects valley exploration until Enter confirms the trip', async ({ page }) => {
+test('legacy semicolon key opens a location action panel before confirming valley exploration', async ({ page }) => {
   await installSave(page, 'exploration-panel');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -955,6 +1007,52 @@ test('legacy semicolon key now only preselects valley exploration until Enter co
 
   const afterPreselect = await readSave(page);
   expect(afterPreselect).toEqual(before);
+
+  await page.keyboard.press('Enter');
+  await waitForDebugState(page, { locationSelectionActive: false, interactionPanelKind: 'location-action' });
+
+  const afterPanelOpen = await readSave(page);
+  expect(afterPanelOpen).toEqual(before);
+
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(
+    ({ key, previousStamina }) => {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw) as SaveSnapshot;
+      return (parsed.state?.player?.stamina ?? 0) < previousStamina;
+    },
+    { key: SAVE_KEY, previousStamina: before.state?.player?.stamina ?? 0 }
+  );
+
+  const parsed = await readSave(page);
+  expect(parsed.state?.player?.stamina ?? 0).toBeLessThan(before.state?.player?.stamina ?? 0);
+});
+
+test('legacy L key opens a location action panel before confirming ruin exploration', async ({ page }) => {
+  await installSave(page, 'exploration-panel');
+  await openGame(page);
+  await expect(page.locator('canvas')).toBeVisible();
+
+  await clearIntroDialogue(page);
+  const before = await readSave(page);
+
+  await clearBlockingDialogue(page);
+  await page.keyboard.press('l');
+  await waitForDebugState(page, {
+    locationSelectionActive: true,
+    selectedLocationId: 'ruin-gate',
+    selectedLocationServiceCommand: 'explore-ruin'
+  });
+
+  const afterPreselect = await readSave(page);
+  expect(afterPreselect).toEqual(before);
+
+  await page.keyboard.press('Enter');
+  await waitForDebugState(page, { locationSelectionActive: false, interactionPanelKind: 'location-action' });
+
+  const afterPanelOpen = await readSave(page);
+  expect(afterPanelOpen).toEqual(before);
 
   await page.keyboard.press('Enter');
   await page.waitForFunction(
@@ -987,7 +1085,7 @@ test('Escape closes location selection without mutating save', async ({ page }) 
   expect(after).toEqual(before);
 });
 
-test('left click mirrors default confirm through location service preselect and shop purchase flow', async ({ page }) => {
+test('left click only confirms location and interaction panels from their visible preview area', async ({ page }) => {
   await installSave(page, 'shop-panel-stable');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1000,9 +1098,22 @@ test('left click mirrors default confirm through location service preselect and 
   const afterPreselect = await readSave(page);
   expect(afterPreselect).toEqual(before);
 
-  await page.locator('canvas').click();
+  await clickCanvasLogical(page, 96, 96);
+  await page.waitForTimeout(120);
+  await waitForDebugState(page, { locationSelectionActive: true, interactionPanelKind: 'none' });
+  expect(await readSave(page)).toEqual(before);
+
+  await clickCanvasLogical(page, 800, 168);
   await waitForDebugState(page, { interactionPanelKind: 'shop' });
-  await page.locator('canvas').click();
+  const beforePurchase = await readSave(page);
+  expect(beforePurchase).toEqual(before);
+
+  await clickCanvasLogical(page, 96, 96);
+  await page.waitForTimeout(120);
+  await waitForDebugState(page, { interactionPanelKind: 'shop' });
+  expect(await readSave(page)).toEqual(beforePurchase);
+
+  await clickCanvasLogical(page, 800, 348);
   await page.waitForFunction(
     ({ key, previousCount }) => {
       const raw = window.localStorage.getItem(key);
@@ -1064,7 +1175,7 @@ test('right click closes location selection before any secondary world tool can 
   expect(debug?.locationSelectionActive).toBe(false);
 });
 
-test('Tab toggles inventory while Shift+Tab remains the location-service entry key', async ({ page }) => {
+test('B toggles inventory while Shift+Tab remains the location-service entry key', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1072,10 +1183,10 @@ test('Tab toggles inventory while Shift+Tab remains the location-service entry k
   await clearIntroDialogue(page);
   const before = await readSave(page);
 
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(120);
+  await page.keyboard.press('b');
+  await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: { inventoryVisible?: boolean } }).__AEON_DEBUG__?.inventoryVisible === true);
+  await page.keyboard.press('b');
+  await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: { inventoryVisible?: boolean } }).__AEON_DEBUG__?.inventoryVisible === false);
 
   const afterInventoryToggle = await readSave(page);
   expect(afterInventoryToggle).toEqual(before);
@@ -1151,7 +1262,7 @@ test('first restock purchase closes the shop and advances onboarding to the seco
   expect(objective).toBe('first-second-sow');
 });
 
-test('after the first restock purchase, Space immediately sows the second loop crop on the front tile', async ({ page }) => {
+test('after the first restock purchase, the journey action immediately sows the second loop crop on the front tile', async ({ page }) => {
   await installSave(page, 'first-restock-ready');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1174,7 +1285,8 @@ test('after the first restock purchase, Space immediately sows the second loop c
     { key: SAVE_KEY, previousSeedCount: beforeSeedCount }
   );
 
-  await page.keyboard.press('Space');
+  const journey = page.locator('#world-journey-action');
+  await journey.click();
   await page.waitForFunction(
     ({ key, previousSeedCount }) => {
       const raw = window.localStorage.getItem(key);
@@ -1219,7 +1331,7 @@ test('after the first restock purchase, Space immediately sows the second loop c
   }, SAVE_KEY);
   expect(objectiveAfterSow).toBe('first-second-water');
 
-  await page.keyboard.press('Space');
+  await journey.click();
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
@@ -1233,21 +1345,20 @@ test('after the first restock purchase, Space immediately sows the second loop c
   expect(watered.state?.player?.flags ?? []).not.toContain('onboarding-first-second-water');
 });
 
-test('during the second sow onboarding step, Space auto-tills before sowing when the front tile is still raw', async ({ page }) => {
+test('during the second sow onboarding step, the journey action auto-tills before sowing when the target tile is still raw', async ({ page }) => {
   await installSave(page, 'second-sow-raw-front');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
 
-  await page.keyboard.press('5');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Space');
+  const journey = page.locator('#world-journey-action');
+  await journey.click();
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
     const parsed = JSON.parse(raw) as SaveSnapshot;
-    const targetTile = parsed.state?.tiles?.find(tile => tile.x === 8 && tile.y === 4);
+    const targetTile = parsed.state?.tiles?.find(tile => tile.x === 7 && tile.y === 4);
     const flags = parsed.state?.player?.flags ?? [];
     return targetTile?.tilled === true && targetTile?.cropId != null && flags.includes('onboarding-first-second-sow');
   }, SAVE_KEY);
@@ -1263,20 +1374,20 @@ test('during the second sow onboarding step, Space auto-tills before sowing when
   expect(debug?.hotbarIdx).toBe(1);
 
   const afterSow = await readSave(page);
-  const frontTile = findTile(afterSow, 8, 4);
+  const frontTile = findTile(afterSow, 7, 4);
   expect(frontTile?.tilled).toBe(true);
   expect(frontTile?.cropId).not.toBeNull();
 
-  await page.keyboard.press('Space');
+  await journey.click();
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
     const parsed = JSON.parse(raw) as SaveSnapshot;
-    return parsed.state?.tiles?.some(tile => tile.x === 8 && tile.y === 4 && tile.wateredToday) ?? false;
+    return parsed.state?.tiles?.some(tile => tile.x === 7 && tile.y === 4 && tile.wateredToday) ?? false;
   }, SAVE_KEY);
 
   const watered = await readSave(page);
-  expect(findTile(watered, 8, 4)?.wateredToday).toBe(true);
+  expect(findTile(watered, 7, 4)?.wateredToday).toBe(true);
 });
 
 test('Enter does not advance the day while location selection is open and only works after the directory is dismissed', async ({ page }) => {
@@ -1353,7 +1464,6 @@ test('right click closes interaction panels before any secondary world tool can 
   await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
-  await waitForDebugState(page, { postAscensionMode: 'choice-pending' });
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
   await page.keyboard.press('Space');
@@ -1557,7 +1667,7 @@ test('legacy Delete now only preselects quality shipping in farm action panel un
   expect(afterOpen).toEqual(before);
 });
 
-test('Escape closes inventory after Tab opens it without mutating save', async ({ page }) => {
+test('Escape closes inventory after B opens it without mutating save', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1565,7 +1675,7 @@ test('Escape closes inventory after Tab opens it without mutating save', async (
   await clearIntroDialogue(page);
   const before = await readSave(page);
 
-  await page.keyboard.press('Tab');
+  await page.keyboard.press('b');
   await page.waitForTimeout(40);
   await page.keyboard.press('Escape');
   await page.waitForTimeout(120);
@@ -1574,7 +1684,7 @@ test('Escape closes inventory after Tab opens it without mutating save', async (
   expect(after).toEqual(before);
 });
 
-test('Enter does not advance the day while inventory is open and only works after the overlay is closed', async ({ page }) => {
+test('Enter does not advance the day while inventory is open and the rest button works after the overlay is closed', async ({ page }) => {
   await installSave(page, 'end-day-ready');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1583,7 +1693,7 @@ test('Enter does not advance the day while inventory is open and only works afte
   const before = await readSave(page);
   const beforeDay = before.state?.day ?? 0;
 
-  await page.keyboard.press('Tab');
+  await page.keyboard.press('b');
   await page.waitForTimeout(40);
   await page.keyboard.press('Enter');
   await page.waitForTimeout(120);
@@ -1592,9 +1702,11 @@ test('Enter does not advance the day while inventory is open and only works afte
   expect(whileInventoryOpen.state?.day ?? 0).toBe(beforeDay);
   expect(whileInventoryOpen).toEqual(before);
 
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Enter');
+  if (await page.locator('[data-app-surface="inventory"]').isVisible()) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(40);
+  }
+  await page.locator('#world-command-bar [data-game-command="end-day"]').click();
   await page.waitForFunction(
     ({ key, previousDay }) => {
       const raw = window.localStorage.getItem(key);
@@ -1609,7 +1721,7 @@ test('Enter does not advance the day while inventory is open and only works afte
   expect(afterEndDay.state?.day ?? 0).toBeGreaterThan(beforeDay);
 });
 
-test('right click closes inventory after Tab opens it without mutating save', async ({ page }) => {
+test('the inventory close button closes the overlay without mutating save', async ({ page }) => {
   await installSave(page, 'shop-panel');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1617,16 +1729,16 @@ test('right click closes inventory after Tab opens it without mutating save', as
   await clearIntroDialogue(page);
   const before = await readSave(page);
 
-  await page.keyboard.press('Tab');
+  await page.keyboard.press('b');
   await page.waitForTimeout(40);
-  await page.locator('canvas').click({ button: 'right' });
+  await page.locator('#flow-inventory-close').click();
   await page.waitForTimeout(120);
 
   const after = await readSave(page);
   expect(after).toEqual(before);
 });
 
-test('inventory overlay blocks keyboard farm actions until it is closed', async ({ page }) => {
+test('inventory overlay blocks keyboard farm actions until it is closed and the visible journey action resumes play', async ({ page }) => {
   await installSave(page, 'hotbar-primary');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -1637,7 +1749,7 @@ test('inventory overlay blocks keyboard farm actions until it is closed', async 
   expect(findTile(before, 7, 4)?.tilled).toBe(false);
   expect(before.state?.player?.inventory?.['seed.mossling']?.count ?? 0).toBe(3);
 
-  await page.keyboard.press('Tab');
+  await page.keyboard.press('b');
   await page.waitForTimeout(40);
   await page.keyboard.press('1');
   await page.waitForTimeout(40);
@@ -1648,12 +1760,18 @@ test('inventory overlay blocks keyboard farm actions until it is closed', async 
   expect(findTile(blocked, 7, 4)?.tilled).toBe(false);
   expect(blocked.state?.player?.inventory?.['seed.mossling']?.count ?? 0).toBe(3);
 
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('1');
-  await page.waitForTimeout(40);
-  await page.keyboard.press(' ');
-  await page.waitForTimeout(80);
+  const stillInInventory = await page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: { inventoryVisible?: boolean } }).__AEON_DEBUG__?.inventoryVisible === true);
+  if (stillInInventory) {
+    await page.keyboard.press('b');
+    await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: { inventoryVisible?: boolean } }).__AEON_DEBUG__?.inventoryVisible === false);
+  }
+  await page.locator('#world-journey-action').click();
+  await page.waitForFunction(key => {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as SaveSnapshot;
+    return parsed.state?.tiles?.some(tile => tile.x === 7 && tile.y === 4 && tile.tilled) ?? false;
+  }, SAVE_KEY);
 
   const afterClose = await readSave(page);
   expect(findTile(afterClose, 7, 4)?.tilled).toBe(true);
@@ -1818,7 +1936,7 @@ test('cultivation overview blocks left-click world confirm until it is dismissed
   await page.waitForTimeout(40);
   await page.keyboard.press('C');
   await page.waitForTimeout(40);
-  await page.locator('canvas').click({ button: 'left' });
+  await clickCanvasTile(page, 7, 4);
   await page.waitForTimeout(80);
 
   const blocked = await readSave(page);
@@ -1826,7 +1944,7 @@ test('cultivation overview blocks left-click world confirm until it is dismissed
 
   await page.keyboard.press('Escape');
   await page.waitForTimeout(40);
-  await page.locator('canvas').click({ button: 'left' });
+  await clickCanvasTile(page, 7, 4);
   await page.waitForTimeout(80);
 
   const afterClose = await readSave(page);
@@ -2854,16 +2972,9 @@ test('post-ascension commission board persists staying-world ward commission com
   await clearNarrativeBeat(page, 'stage-3');
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(40);
+
+  await openLocationSelection(page);
+  await preselectLocationService(page, '4', 'ruin-gate', '4', 'show-commission');
   await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
@@ -2913,26 +3024,14 @@ test('post-ascension tea shed service persists one calm-life rest visit', async 
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
 
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('Enter');
-  await page.waitForTimeout(40);
+  await openLocationSelection(page);
+  await preselectLocationService(page, '6', 'tea-shed', '2', 'show-tea-shed');
   await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
     const parsed = JSON.parse(raw) as SaveSnapshot;
-    return parsed.state?.flags?.includes('tea-shed-visit.6') ?? false;
+    return parsed.state?.flags?.includes('tea-shed-visit.1') ?? false;
   }, SAVE_KEY);
 
   const parsed = await readSave(page);
@@ -2988,8 +3087,8 @@ test('post-ascension greenhouse upkeep survives a page reload without granting a
   const seedCountAfterVisit = afterVisit.state?.player?.inventory?.['seed.dewroot']?.count ?? 0;
 
   await page.reload();
-  await expect(page.locator('canvas')).toBeVisible();
-  await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: unknown }).__AEON_DEBUG__ != null);
+  await waitForInitialSurface(page);
+  await continueToWorld(page);
 
   await page.keyboard.press('Alt+E');
   await waitForDebugState(page, { interactionPanelKind: 'greenhouse' });
@@ -3001,7 +3100,7 @@ test('post-ascension greenhouse upkeep survives a page reload without granting a
   expect(afterReload.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBe(seedCountAfterVisit);
 });
 
-test('location selection digit direct-select plus Space confirm reduces staying-world daily service friction', async ({ page }) => {
+test('location selection digit direct-select plus Space opens daily service panel before confirmation', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -3011,29 +3110,26 @@ test('location selection digit direct-select plus Space confirm reduces staying-
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
 
-  for (let i = 0; i < 9; i += 1) {
-    await page.keyboard.press(i === 0 ? 'Shift+Tab' : 'Tab');
-    await page.waitForTimeout(40);
-  }
-  await page.keyboard.press('Shift+0');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('2');
-  await page.waitForTimeout(40);
+  await openLocationSelection(page);
+  await preselectLocationService(page, '7', 'greenhouse', '2', 'show-greenhouse');
   await page.keyboard.press('Space');
   await page.waitForTimeout(300);
+  await waitForDebugState(page, { interactionPanelKind: 'greenhouse', locationSelectionActive: false });
+
+  const parsed = await readSave(page);
+  expect(parsed.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
+  expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBe(0);
+
+  await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
-    const parsed = JSON.parse(raw) as SaveSnapshot;
-    return (parsed.state?.flags?.includes('greenhouse-tended.1') ?? false) && (parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0) >= 2;
+    const confirmed = JSON.parse(raw) as SaveSnapshot;
+    return (confirmed.state?.flags?.includes('greenhouse-tended.1') ?? false) && (confirmed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0) >= 2;
   }, SAVE_KEY);
-
-  const parsed = await readSave(page);
-  expect(parsed.state?.flags?.includes('greenhouse-tended.1')).toBe(true);
-  expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBeGreaterThanOrEqual(2);
 });
 
-test('location selection supports E confirm after Shift+Tab service preselect', async ({ page }) => {
+test('location selection supports E opening the preselected service panel without spending the daily visit', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -3043,29 +3139,26 @@ test('location selection supports E confirm after Shift+Tab service preselect', 
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
 
-  for (let i = 0; i < 9; i += 1) {
-    await page.keyboard.press(i === 0 ? 'Shift+Tab' : 'Tab');
-    await page.waitForTimeout(40);
-  }
-  await page.keyboard.press('Shift+0');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('2');
-  await page.waitForTimeout(40);
+  await openLocationSelection(page);
+  await preselectLocationService(page, '7', 'greenhouse', '2', 'show-greenhouse');
   await page.keyboard.press('e');
   await page.waitForTimeout(300);
+  await waitForDebugState(page, { interactionPanelKind: 'greenhouse', locationSelectionActive: false });
+
+  const parsed = await readSave(page);
+  expect(parsed.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
+  expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBe(0);
+
+  await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
-    const parsed = JSON.parse(raw) as SaveSnapshot;
-    return (parsed.state?.flags?.includes('greenhouse-tended.1') ?? false) && (parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0) >= 2;
+    const confirmed = JSON.parse(raw) as SaveSnapshot;
+    return (confirmed.state?.flags?.includes('greenhouse-tended.1') ?? false) && (confirmed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0) >= 2;
   }, SAVE_KEY);
-
-  const parsed = await readSave(page);
-  expect(parsed.state?.flags?.includes('greenhouse-tended.1')).toBe(true);
-  expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBeGreaterThanOrEqual(2);
 });
 
-test('location selection supports single Enter confirm for auto-confirm daily services', async ({ page }) => {
+test('location selection Enter opens the daily service panel before the second confirm spends the visit', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -3075,33 +3168,33 @@ test('location selection supports single Enter confirm for auto-confirm daily se
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
 
-  for (let i = 0; i < 9; i += 1) {
-    await page.keyboard.press(i === 0 ? 'Shift+Tab' : 'Tab');
-    await page.waitForTimeout(40);
-  }
-  await page.keyboard.press('Shift+0');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('2');
-  await page.waitForTimeout(40);
+  await openLocationSelection(page);
+  await preselectLocationService(page, '7', 'greenhouse', '2', 'show-greenhouse');
 
   const before = await readSave(page);
   expect(before.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
 
   await page.keyboard.press('Enter');
   await page.waitForTimeout(300);
+  await waitForDebugState(page, { interactionPanelKind: 'greenhouse', locationSelectionActive: false });
+
+  const parsed = await readSave(page);
+  expect(parsed.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
+  expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBe(0);
+
+  await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
-    const parsed = JSON.parse(raw) as SaveSnapshot;
-    return (parsed.state?.flags?.includes('greenhouse-tended.1') ?? false) && (parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0) >= 2;
+    const confirmed = JSON.parse(raw) as SaveSnapshot;
+    return (confirmed.state?.flags?.includes('greenhouse-tended.1') ?? false) && (confirmed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0) >= 2;
   }, SAVE_KEY);
-
-  const parsed = await readSave(page);
-  expect(parsed.state?.flags?.includes('greenhouse-tended.1')).toBe(true);
-  expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBeGreaterThanOrEqual(2);
+  const confirmed = await readSave(page);
+  expect(confirmed.state?.flags?.includes('greenhouse-tended.1')).toBe(true);
+  expect(confirmed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBeGreaterThanOrEqual(2);
 });
 
-test('legacy Ctrl+Enter shares the same auto-confirm location-service path', async ({ page }) => {
+test('legacy Ctrl+Enter still allows a second explicit confirm from the opened service panel', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -3111,20 +3204,20 @@ test('legacy Ctrl+Enter shares the same auto-confirm location-service path', asy
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
 
-  for (let i = 0; i < 9; i += 1) {
-    await page.keyboard.press(i === 0 ? 'Shift+Tab' : 'Tab');
-    await page.waitForTimeout(40);
-  }
-  await page.keyboard.press('Shift+0');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('2');
-  await page.waitForTimeout(40);
+  await openLocationSelection(page);
+  await preselectLocationService(page, '7', 'greenhouse', '2', 'show-greenhouse');
 
   const before = await readSave(page);
   expect(before.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
 
   await page.keyboard.press('Control+Enter');
   await page.waitForTimeout(300);
+  await waitForDebugState(page, { interactionPanelKind: 'greenhouse', locationSelectionActive: false });
+  const opened = await readSave(page);
+  expect(opened.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
+  expect(opened.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBe(0);
+
+  await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
@@ -3137,7 +3230,7 @@ test('legacy Ctrl+Enter shares the same auto-confirm location-service path', asy
   expect(parsed.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBeGreaterThanOrEqual(2);
 });
 
-test('legacy period confirm shares the same auto-confirm location-service path', async ({ page }) => {
+test('legacy period confirm opens the daily service panel before explicit confirmation', async ({ page }) => {
   await installSave(page, 'post-ascension-greenhouse');
   await openGame(page);
   await expect(page.locator('canvas')).toBeVisible();
@@ -3147,20 +3240,20 @@ test('legacy period confirm shares the same auto-confirm location-service path',
   await clearNarrativeBeat(page, 'stage-5');
   await clearNarrativeBeat(page, 'stage-7');
 
-  for (let i = 0; i < 9; i += 1) {
-    await page.keyboard.press(i === 0 ? 'Shift+Tab' : 'Tab');
-    await page.waitForTimeout(40);
-  }
-  await page.keyboard.press('Shift+0');
-  await page.waitForTimeout(40);
-  await page.keyboard.press('2');
-  await page.waitForTimeout(40);
+  await openLocationSelection(page);
+  await preselectLocationService(page, '7', 'greenhouse', '2', 'show-greenhouse');
 
   const before = await readSave(page);
   expect(before.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
 
   await page.keyboard.press('.');
   await page.waitForTimeout(300);
+  await waitForDebugState(page, { interactionPanelKind: 'greenhouse', locationSelectionActive: false });
+  const opened = await readSave(page);
+  expect(opened.state?.flags?.includes('greenhouse-tended.1')).toBe(false);
+  expect(opened.state?.player?.inventory?.['seed.dewroot']?.count ?? 0).toBe(0);
+
+  await page.keyboard.press('Enter');
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;

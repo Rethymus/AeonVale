@@ -6,13 +6,29 @@ import { validateManifest, type AssetManifest } from '../../src/io/assets';
 
 const manifest: AssetManifest = validateManifest(JSON.parse(readFileSync(resolve('assets/manifest.json'), 'utf8')));
 const refs = manifest.sprites.filter(entry => entry.id.startsWith('reference.master.'));
+const referencesDir = resolve('assets/references');
+
+function publicTreeWithoutPrivateReferences(): boolean {
+  return refs.length === 0 && !existsSync(referencesDir);
+}
 
 describe('Phase 1 master reference assets', () => {
-  it('登记至少一个 master reference 候选图', () => {
+  it('公开树排除 master reference，开发树登记至少一个候选图', () => {
+    if (publicTreeWithoutPrivateReferences()) {
+      expect(refs).toHaveLength(0);
+      expect(existsSync(referencesDir)).toBe(false);
+      return;
+    }
+
     expect(refs.length).toBeGreaterThanOrEqual(1);
   });
 
   it('保留私有 provenance 字段而不伪造 human edits', () => {
+    if (publicTreeWithoutPrivateReferences()) {
+      expect(refs).toHaveLength(0);
+      return;
+    }
+
     for (const ref of refs) {
       expect(ref.path.startsWith('references/')).toBe(true);
       expect(ref.license).toBe('AI-Generated');
@@ -25,6 +41,11 @@ describe('Phase 1 master reference assets', () => {
   });
 
   it('每张 master reference 文件存在、为合法 PNG、checksum 匹配 manifest', () => {
+    if (publicTreeWithoutPrivateReferences()) {
+      expect(refs).toHaveLength(0);
+      return;
+    }
+
     for (const ref of refs) {
       const filePath = resolve('assets', ref.path);
       expect(existsSync(filePath), `${ref.id} should exist on disk`).toBe(true);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FARM_ACTION_ORDER, cycleSelection, farmActionIndexFromDigitKey, farmActionLabel, interactionPanelActive, normalizeSelection, npcActionIndexFromDigitKey, selectionLabel, type InteractionPanelState } from '@app/interactionPanels';
+import { FARM_ACTION_ORDER, cycleSelection, farmActionIndexFromDigitKey, farmActionLabel, interactionPanelActive, isLocationActionPanelCommand, normalizeSelection, npcActionIndexFromDigitKey, selectionLabel, type InteractionPanelState } from '@app/interactionPanels';
 
 describe('交互面板状态工具', () => {
   it('可识别面板是否激活', () => {
@@ -11,6 +11,7 @@ describe('交互面板状态工具', () => {
     const npc: InteractionPanelState = { kind: 'npc', mode: 'gift' };
     const festival: InteractionPanelState = { kind: 'festival' };
     const trade: InteractionPanelState = { kind: 'trade' };
+    const locationAction: InteractionPanelState = { kind: 'location-action', locationId: 'valley-outskirts', command: 'explore-valley' };
     const storage: InteractionPanelState = { kind: 'storage', mode: 'deposit' };
     const processing: InteractionPanelState = { kind: 'processing', mode: 'drying' };
     expect(interactionPanelActive(none)).toBe(false);
@@ -21,6 +22,7 @@ describe('交互面板状态工具', () => {
     expect(interactionPanelActive(npc)).toBe(true);
     expect(interactionPanelActive(festival)).toBe(true);
     expect(interactionPanelActive(trade)).toBe(true);
+    expect(interactionPanelActive(locationAction)).toBe(true);
     expect(interactionPanelActive(storage)).toBe(true);
     expect(interactionPanelActive(processing)).toBe(true);
   });
@@ -34,6 +36,16 @@ describe('交互面板状态工具', () => {
     expect(cycleSelection(0, 0)).toBe(0);
   });
 
+  it('消耗型地点服务必须先进入确认面板', () => {
+    expect(isLocationActionPanelCommand('explore-valley')).toBe(true);
+    expect(isLocationActionPanelCommand('explore-ruin')).toBe(true);
+    expect(isLocationActionPanelCommand('delve-ruin')).toBe(true);
+    expect(isLocationActionPanelCommand('show-archive')).toBe(true);
+    expect(isLocationActionPanelCommand('explore-spirit-vein')).toBe(true);
+    expect(isLocationActionPanelCommand('browse-shop')).toBe(false);
+    expect(isLocationActionPanelCommand('show-greenhouse')).toBe(false);
+  });
+
   it('可生成人类可读的序号标签', () => {
     expect(selectionLabel(0, 3)).toBe('[1/3]');
     expect(selectionLabel(4, 3)).toBe('[2/3]');
@@ -42,7 +54,7 @@ describe('交互面板状态工具', () => {
 
   it('农庄操作顺序稳定且具有人类可读标签', () => {
     expect(FARM_ACTION_ORDER).toEqual(['build', 'facility-collect', 'storage-deposit', 'storage-withdraw', 'processing-drying', 'processing-sealing', 'processing-furnace', 'shipping-normal', 'shipping-quality', 'upgrade']);
-    expect(farmActionLabel('build')).toBe('建造');
+    expect(farmActionLabel('build')).toBe('建造/布阵');
     expect(farmActionLabel('facility-collect')).toBe('设施收取');
     expect(farmActionLabel('upgrade')).toBe('扩建');
   });

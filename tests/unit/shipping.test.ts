@@ -2,9 +2,9 @@
  * 出货箱经济循环：白天入箱，日终结算为灵石。
  */
 import { describe, expect, it } from 'vitest';
-import { applyAction, createSimContext, createWorld, DEFAULT_BALANCE, FIRST_HARVEST_FLAG, FIRST_SHIPMENT_FLAG, FIRST_SHIPPING_SETTLEMENT_FLAG, getOnboardingObjectiveId, settleShipping, shippingUnitPrice, simulateDay } from '@sim';
+import { applyAction, createSimContext, createWorld, DEFAULT_BALANCE, FIRST_HARVEST_FLAG, FIRST_SHIPMENT_FLAG, FIRST_SHIPPING_SETTLEMENT_FLAG, getOnboardingObjectiveId, settleShipping, shipItem, unshipItem, unshipQualityItem, shippingUnitPrice, simulateDay } from '@sim';
 import { buildRegistry } from '@content/registry';
-import { itemCount, mutateItem } from '@sim/world/player';
+import { itemCount, mutateItem, mutateQualityItem, qualityItemCount } from '@sim/world/player';
 import type { GameState, SimContext } from '@sim';
 
 function setup(seed = 1): { state: GameState; ctx: SimContext } {
@@ -60,10 +60,23 @@ describe('出货箱经济循环', () => {
     mutateItem(state.player, 'item.spirit-stone', 5);
     applyAction(state, { kind: 'ship-item', itemId: 'item.spirit-stone', count: 1 }, ctx);
     expect(itemCount(state.player, 'item.spirit-stone')).toBe(5);
-    expect(state.shippingBin['item.spirit-stone']).toBeUndefined;
+    expect(state.shippingBin['item.spirit-stone']).toBeUndefined();
 
     applyAction(state, { kind: 'ship-item', itemId: 'herb.mossling', count: 1 }, ctx);
-    expect(state.shippingBin['herb.mossling']).toBeUndefined;
+    expect(state.shippingBin['herb.mossling']).toBeUndefined();
+  });
+
+  it('普通出货不会把品质批次降级消耗', () => {
+    const { state, ctx } = setup();
+    mutateQualityItem(state.player, 'herb.mossling', 'spirit', 1);
+
+    applyAction(state, { kind: 'ship-item', itemId: 'herb.mossling', count: 1 }, ctx);
+    const direct = shipItem(state, 'herb.mossling', 1, ctx);
+
+    expect(direct.ok).toBe(false);
+    expect(qualityItemCount(state.player, 'herb.mossling', 'spirit')).toBe(1);
+    expect(state.shippingBin['herb.mossling']).toBeUndefined();
+    expect(state.events.some(e => e.type === 'ship-item')).toBe(false);
   });
 
   it('日终结算清空出货箱并发放灵石', () => {
@@ -122,5 +135,73 @@ describe('出货箱经济循环', () => {
     expect(state.shippingBin['herb.mossling']).toBe(1);
     expect(itemCount(state.player, 'item.spirit-stone')).toBe(0);
     expect(state.events.some(e => e.type === 'shipping-blocked')).toBe(true);
+  });
+
+  it('日终结算只在灵石栈有足够空间时发放并清空出货箱', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'item.spirit-stone', 49);
+    state.shippingBin['seed.mossling'] = 1;
+
+    const result = settleShipping(state, ctx);
+
+    expect(result.ok).toBe(true);
+    expect(result.total).toBe(1);
+    expect(itemCount(state.player, 'item.spirit-stone')).toBe(50);
+    expect(state.shippingBin).toEqual({});
+  });
+
+  it('日终结算不会让已满灵石栈超堆叠，且保留出货箱', () => {
+    const { state, ctx } = setup();
+    state.player.inventoryCapacity = 1;
+    mutateItem(state.player, 'item.spirit-stone', 50);
+    state.shippingBin['herb.mossling'] = 1;
+
+    const result = settleShipping(state, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('灵石堆叠已满');
+    expect(itemCount(state.player, 'item.spirit-stone')).toBe(50);
+    expect(state.shippingBin['herb.mossling']).toBe(1);
+    expect(state.events.some(e => e.type === 'shipping-blocked')).toBe(true);
+    expect(state.events.some(e => e.type === 'shipping-settlement')).toBe(false);
+  });
+
+  it('日终大额结算超过单个新灵石栈时阻塞并保留出货箱', () => {
+    const { state, ctx } = setup();
+    state.shippingBin['item.array-core'] = 5;
+
+    const result = settleShipping(state, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(result.total).toBe(60);
+    expect(result.reason).toBe('灵石堆叠已满');
+    expect(itemCount(state.player, 'item.spirit-stone')).toBe(0);
+    expect(state.shippingBin['item.array-core']).toBe(5);
+  });
+
+  it('direct unship 遵守普通物品目标堆叠上限', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'item.beast-core', 5);
+    state.shippingBin['item.beast-core'] = 1;
+
+    const result = unshipItem(state, 'item.beast-core', 1, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('堆叠已满');
+    expect(itemCount(state.player, 'item.beast-core')).toBe(5);
+    expect(state.shippingBin['item.beast-core']).toBe(1);
+  });
+
+  it('direct unship 遵守品质批次目标堆叠上限', () => {
+    const { state, ctx } = setup();
+    mutateQualityItem(state.player, 'herb.mossling', 'spirit', 30);
+    state.qualityShippingBin.spirit = { 'herb.mossling': 1 };
+
+    const result = unshipQualityItem(state, 'herb.mossling', 'spirit', 1, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('堆叠已满');
+    expect(qualityItemCount(state.player, 'herb.mossling', 'spirit')).toBe(30);
+    expect(state.qualityShippingBin.spirit?.['herb.mossling']).toBe(1);
   });
 });

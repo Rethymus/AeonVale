@@ -1,9 +1,10 @@
 /**
  * 阵法系统。
- * 引雷阵（需金属性灵草阵眼）把覆盖圈内天雷锁向阵心；绝缘阵把雷排斥开保护核心。
+ * 引雷阵（需金属性灵草阵眼）把覆盖圈内天雷锁向阵心；绝缘阵把雷势分流到阵缘，稳住核心区。
  * arrayModifierFor：该格的阵法权重乘子（乘性），供 targeting 使用。
  */
 import type { GameState, ArrayInstance } from '@sim/world/state';
+import type { ArrayDef } from '@content/defs';
 import { tileAt, nextEntityId, emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import { itemCount, mutateItem } from '@sim/world/player';
@@ -25,6 +26,22 @@ export const ARRAY_BUILD_COSTS: Record<string, readonly ArrayCost[]> = {
   'array.insulation': [
     { itemId: 'item.array-core', count: 1 },
     { itemId: 'item.spirit-stone', count: 2 }
+  ],
+  // R3-B1 引水阵分级：阵核 + 灵石 + 灵壤肥（水脉媒介），按级递增。
+  'array.water-channel-1': [
+    { itemId: 'item.array-core', count: 1 },
+    { itemId: 'item.spirit-stone', count: 2 },
+    { itemId: 'item.spirit-compost', count: 1 }
+  ],
+  'array.water-channel-2': [
+    { itemId: 'item.array-core', count: 1 },
+    { itemId: 'item.spirit-stone', count: 3 },
+    { itemId: 'item.spirit-compost', count: 2 }
+  ],
+  'array.water-channel-3': [
+    { itemId: 'item.array-core', count: 2 },
+    { itemId: 'item.spirit-stone', count: 4 },
+    { itemId: 'item.spirit-compost', count: 3 }
   ]
 };
 
@@ -78,6 +95,31 @@ export function coveringRodArray(state: GameState, tileId: number): ArrayInstanc
   return activeArraysCoveringTile(state, tileId).find(arr => arr.modifier > 1);
 }
 
+/**
+ * 覆盖该格的激活引水阵（R3-B1）。多阵叠加时取水量最强者（同强度按 id 稳定 tiebreak），
+ * 不累加——防堆阵把 moisture 顶满掏空浇水劳动（守 docs/00 C5）。
+ * arraysLookup 为内容查询表，避免本模块硬依赖 RegistryContent 类型。
+ */
+export function coveringWaterArray(
+  state: GameState,
+  tileId: number,
+  arrays: Map<string, ArrayDef>
+): ArrayInstance | undefined {
+  const covering = activeArraysCoveringTile(state, tileId).filter(arr => arr.defId.startsWith('array.water-channel'));
+  if (covering.length === 0) return undefined;
+  let best = covering[0]!;
+  let bestAmt = arrays.get(best.defId)?.waterAmountMilli ?? 0;
+  for (let i = 1; i < covering.length; i++) {
+    const cand = covering[i]!;
+    const amt = arrays.get(cand.defId)?.waterAmountMilli ?? 0;
+    if (amt > bestAmt || (amt === bestAmt && cand.id < best.id)) {
+      best = cand;
+      bestAmt = amt;
+    }
+  }
+  return best;
+}
+
 export interface PlaceResult {
   placed: boolean;
   reason?: string;
@@ -89,6 +131,10 @@ export function placeArray(state: GameState, defId: string, coreX: number, coreY
   if (!def) return { placed: false, reason: '无此阵法' };
   const core = tileAt(state, coreX, coreY);
   if (!core || core.blockType !== 'none') return { placed: false, reason: '不可放置' };
+  // R3-B1：stageMin 硬门控（引水阵 stage 4+）。防 bot/headless 绕过 UI 层放置中期阵法，守 docs/02:88 序章不前移。
+  if (def.stageMin != null && state.player.stage < def.stageMin) {
+    return { placed: false, reason: `需体修 ${def.stageMin} 阶以上方可布设` };
+  }
   if (def.needsMetalCore) {
     const crop = core.cropId != null ? state.crops.get(core.id) : undefined;
     const herb = crop ? ctx.content.herbs.get(crop.defId) : undefined;

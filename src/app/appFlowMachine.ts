@@ -1,6 +1,6 @@
-export type AppScreen = 'boot' | 'boot-error' | 'title' | 'prologue' | 'world' | 'alchemy' | 'tribulation' | 'aftermath' | 'ending';
+export type AppScreen = 'boot' | 'boot-error' | 'title' | 'prologue' | 'world' | 'tribulation' | 'aftermath' | 'ending' | 'narration';
 
-export type AppOverlay = 'inventory' | 'cultivation' | 'map' | 'pause' | 'settings';
+export type AppOverlay = 'inventory' | 'cultivation' | 'map' | 'pause' | 'settings' | 'codex';
 
 export type AppFocusSelector = `#${string}`;
 
@@ -10,9 +10,10 @@ export const APP_FLOW_FOCUS_TARGETS = {
   titleNewGame: '#flow-title-new-game',
   titleContinue: '#flow-title-continue',
   titleSettings: '#flow-title-settings',
-  prologue: '#flow-prologue-continue',
+  titleNarration: '#flow-title-narration',
+  prologue: '#prologue-vn-stage',
+  narration: '#narration-stage',
   world: '#game-canvas',
-  alchemy: '#flow-alchemy-primary',
   tribulation: '#flow-tribulation-primary',
   aftermath: '#flow-aftermath-continue',
   ending: '#flow-ending-return',
@@ -21,6 +22,7 @@ export const APP_FLOW_FOCUS_TARGETS = {
   map: '#flow-map-close',
   pause: '#flow-pause-resume',
   settings: '#flow-settings-close',
+  codex: '#flow-codex-close',
   orientation: '#orientation-heading'
 } as const satisfies Record<string, AppFocusSelector>;
 
@@ -37,7 +39,7 @@ export interface AppFlowState {
   focus: AppFlowFocus;
 }
 
-export type AppFlowEvent = { type: 'boot-ready' } | { type: 'boot-error' } | { type: 'start-new-game' } | { type: 'continue-game' } | { type: 'finish-prologue' } | { type: 'skip-prologue' } | { type: 'open-alchemy' } | { type: 'close-alchemy' } | { type: 'start-tribulation' } | { type: 'finish-tribulation' } | { type: 'continue-aftermath' } | { type: 'show-ending' } | { type: 'return-title' } | { type: 'open-overlay'; overlay: AppOverlay; returnFocus?: AppFocusSelector } | { type: 'close-overlay' };
+export type AppFlowEvent = { type: 'boot-ready' } | { type: 'boot-error' } | { type: 'start-new-game' } | { type: 'continue-game' } | { type: 'finish-prologue' } | { type: 'skip-prologue' } | { type: 'start-tribulation' } | { type: 'finish-tribulation' } | { type: 'continue-aftermath' } | { type: 'show-ending' } | { type: 'return-title' } | { type: 'start-narration' } | { type: 'return-title-from-narration' } | { type: 'open-overlay'; overlay: AppOverlay; returnFocus?: AppFocusSelector } | { type: 'close-overlay' };
 
 const WORLD_OVERLAYS: readonly AppOverlay[] = ['inventory', 'cultivation', 'map', 'pause', 'settings'];
 const GAMEPLAY_OVERLAYS: readonly AppOverlay[] = ['pause', 'settings'];
@@ -68,14 +70,14 @@ export function appFocusTargetFor(screen: AppScreen, overlay: AppOverlay | null)
       return APP_FLOW_FOCUS_TARGETS.prologue;
     case 'world':
       return APP_FLOW_FOCUS_TARGETS.world;
-    case 'alchemy':
-      return APP_FLOW_FOCUS_TARGETS.alchemy;
     case 'tribulation':
       return APP_FLOW_FOCUS_TARGETS.tribulation;
     case 'aftermath':
       return APP_FLOW_FOCUS_TARGETS.aftermath;
     case 'ending':
       return APP_FLOW_FOCUS_TARGETS.ending;
+    case 'narration':
+      return APP_FLOW_FOCUS_TARGETS.narration;
   }
 }
 
@@ -86,9 +88,11 @@ function validReturnFocusSelector(selector: AppFocusSelector | undefined): boole
 function canOpenOverlay(screen: AppScreen, overlay: AppOverlay): boolean {
   if (screen === 'title') return overlay === 'settings';
   if (screen === 'world') return WORLD_OVERLAYS.includes(overlay);
-  if (screen === 'prologue' || screen === 'alchemy' || screen === 'tribulation' || screen === 'aftermath') {
+  if (screen === 'prologue' || screen === 'tribulation' || screen === 'aftermath') {
     return GAMEPLAY_OVERLAYS.includes(overlay);
   }
+  // 灵韵叙录内可开「叙录」图鉴覆盖层（docs/22 §11）。
+  if (screen === 'narration') return overlay === 'codex';
   return false;
 }
 
@@ -135,10 +139,6 @@ export function transitionAppFlow(state: AppFlowState, event: AppFlowEvent): App
     case 'finish-prologue':
     case 'skip-prologue':
       return state.screen === 'prologue' ? moveTo('world') : state;
-    case 'open-alchemy':
-      return state.screen === 'world' ? moveTo('alchemy') : state;
-    case 'close-alchemy':
-      return state.screen === 'alchemy' ? moveTo('world') : state;
     case 'start-tribulation':
       return state.screen === 'world' ? moveTo('tribulation') : state;
     case 'finish-tribulation':
@@ -146,8 +146,12 @@ export function transitionAppFlow(state: AppFlowState, event: AppFlowEvent): App
     case 'continue-aftermath':
       return state.screen === 'aftermath' ? moveTo('world') : state;
     case 'show-ending':
-      return state.screen === 'world' || state.screen === 'alchemy' || state.screen === 'tribulation' || state.screen === 'aftermath' ? moveTo('ending') : state;
+      return state.screen === 'world' || state.screen === 'tribulation' || state.screen === 'aftermath' ? moveTo('ending') : state;
     case 'return-title':
       return state.screen === 'ending' ? moveTo('title') : state;
+    case 'start-narration':
+      return state.screen === 'title' ? moveTo('narration') : state;
+    case 'return-title-from-narration':
+      return state.screen === 'narration' ? moveTo('title') : state;
   }
 }

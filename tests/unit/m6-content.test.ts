@@ -28,7 +28,7 @@ describe('M6 内容广度扩充', () => {
     expect(p.baseProperty.warm).toBeGreaterThan(p.baseProperty.cold + p.baseProperty.hot);
   });
 
-  it('fulgurseed 为第三种金属性避雷草（metalAttract>0）', () => {
+  it('fulgurseed 为第三种金属性引雷草（metalAttract>0）', () => {
     const metalHerbs = [...reg.herbs.values()].filter(h => h.metalAttract > 1);
     expect(metalHerbs.map(h => h.id)).toContain('herb.fulgurseed');
     expect(metalHerbs.length).toBeGreaterThanOrEqual(3); // metalpine / thunderreed / ironwill-thorn / fulgurseed

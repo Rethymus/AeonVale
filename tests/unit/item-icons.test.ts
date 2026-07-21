@@ -26,9 +26,14 @@ describe('item icon helper', () => {
     expect(itemIconAssetId('item.inner-core')).toBe('icon.item.beast-core');
   });
 
+  it('uses dedicated icons for processed material outputs', () => {
+    expect(itemIconAssetId('item.herbal-wine')).toBe('icon.item.herbal-wine');
+    expect(itemIconAssetId('item.spirit-poultice')).toBe('icon.item.spirit-poultice');
+  });
+
   it('can resolve herb icon from seed id through content registry', () => {
     expect(itemIconAssetId('seed.frostmarrow', reg)).toBe('icon.seed.frostmarrow');
-    expect(itemIconAssetId('unknown.item', reg)).toBeUndefined;
+    expect(itemIconAssetId('unknown.item', reg)).toBeUndefined();
   });
 
   it('keeps all manifest-backed high-frequency content families resolvable to real icon assets', () => {

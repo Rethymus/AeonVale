@@ -37,7 +37,7 @@ function processingPurposeLine(outputItemId: string): string {
     case 'item.sealed-herb':
       return '用途：炼丹、交付或备劫药材';
     case 'item.array-core':
-      return '用途：布阵与抗劫防线';
+      return '用途：布阵与导雷控伤';
     default:
       return '用途：接上农庄加工循环';
   }
@@ -104,7 +104,7 @@ export function staticProcessingPanelPreview(mode: 'sealing' | 'furnace', conten
 export function processingToastPresentation(mode: 'drying' | 'sealing' | 'furnace', title: string, indexLabel: string | null, confirmHint: string, assetId?: string): ProcessingToastPresentation {
   const prefix = mode === 'drying' ? `加工-晾晒${indexLabel ?? ''}` : mode === 'sealing' ? '加工-封藏' : '加工-熔炼';
   return {
-    message: `${prefix}：${title}｜Tab切换·${confirmHint}`,
+    message: `${prefix}：${title}｜点选候选·${confirmHint}`,
     assetId: assetId ?? processingFacilityAssetId(mode)
   };
 }
@@ -160,7 +160,7 @@ export function furnaceHeatToastPresentation(furnaceHeat: number): ProcessingToa
 
 export function furnaceVisibilityToastPresentation(visible: boolean): ProcessingToastPresentation {
   return {
-    message: visible ? '打开丹炉（Y 切丹方·[/] 调火候·B 炼制）' : '关闭丹炉',
+    message: visible ? '打开丹炉：在行囊丹炉页点选丹方、调火候并炼制' : '关闭丹炉',
     assetId: 'facility.talisman-furnace'
   };
 }

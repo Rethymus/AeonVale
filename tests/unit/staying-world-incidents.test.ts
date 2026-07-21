@@ -1443,7 +1443,7 @@ describe('妖潮预兆镇守事件 ', () => {
     expect(state.player.inventory['item.spirit-poultice']?.count ?? 0).toBe(0);
     expect(state.stayingWorld.wardingPressure).toBe(beforePressure - incident.pressureRelief);
   });
-  it('巡逻巡守兽可提前布防，免去灵药膏消耗并额外减压', () => {
+  it('巡逻巡守兽可提前巡守，免去灵药膏消耗并额外减压', () => {
     const { state, ctx } = setup();
     state.day = 11;
     const incident = getCurrentStayingWorldIncident(state)!;

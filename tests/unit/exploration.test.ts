@@ -45,7 +45,7 @@ describe('外出寻访', () => {
     expect(a.state.player.inventory).toEqual(b.state.player.inventory);
   });
 
-  it('残脉低阶只稳定产灵石，高阶可额外发现避雷种', () => {
+  it('残脉低阶只稳定产灵石，高阶可额外发现引雷种', () => {
     const low = setup(1, 0);
     exploreSite(low.state, 'spirit-vein', low.ctx);
     expect(itemCount(low.state.player, 'item.spirit-stone')).toBeGreaterThan(0);
@@ -76,6 +76,24 @@ describe('外出寻访', () => {
     expect(state.player.hp).toBe(hpBefore - result.damage * 1000);
     expect(result.grants.length).toBeGreaterThan(0);
     expect(state.events.some(e => e.type === 'ruin-delve')).toBe(true);
+  });
+
+  it('遗迹奖励目标满栈时不深入、不扣资源且恢复掉落 RNG', () => {
+    const { state, ctx } = setup(13, 1);
+    state.player.inventory['item.recipe-fragment'] = { itemId: 'item.recipe-fragment', count: 8 };
+    const hpBefore = state.player.hp;
+    const staminaBefore = state.player.stamina;
+    const rngBefore = ctx.rng.drop.snapshot();
+
+    const result = delveRuin(state, ctx);
+
+    expect(result).toMatchObject({ ok: false, reason: '背包已满' });
+    expect(state.exploration.deepestRuinLevel).toBe(0);
+    expect(state.player.hp).toBe(hpBefore);
+    expect(state.player.stamina).toBe(staminaBefore);
+    expect(itemCount(state.player, 'item.recipe-fragment')).toBe(8);
+    expect(ctx.rng.drop.snapshot()).toBe(rngBefore);
+    expect(state.events.some(e => e.type === 'ruin-delve')).toBe(false);
   });
 
   it('每五层遗迹触发里程碑并额外给稀有种子', () => {

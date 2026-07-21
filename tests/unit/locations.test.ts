@@ -141,6 +141,8 @@ describe('地点目录与每日动线', () => {
     expect(getQuickLocationServiceOption(state, 'greenhouse')).toBeNull;
 
     state.postAscension.mode = 'stayed-in-world';
+    expect(getLocationDirectory(state).find(location => location.id === 'ruin-gate')?.serviceLabels).toEqual(['偶遇', '遗迹寻访', '深入遗迹', '藏经', '委托']);
+    expect(getLocationServiceOptions(state, 'ruin-gate').map(option => option.command)).toEqual(['show-location-encounter', 'explore-ruin', 'delve-ruin', 'show-archive', 'show-commission']);
     expect(getQuickLocationServiceOption(state, 'staying-commission')).toMatchObject({
       locationId: 'ruin-gate',
       service: 'commission-board',

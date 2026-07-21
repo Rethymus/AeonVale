@@ -4,6 +4,7 @@
  */
 import type { Direction, EntityId, Vec2, CultivationStage } from './types';
 import { MILLI } from './types';
+import type { ContentRegistry } from '@content/defs';
 import type { CropQuality } from '@sim/farm/quality';
 
 export interface InventorySlot {
@@ -15,6 +16,7 @@ export interface InventorySlot {
 export type QualityInventory = Partial<Record<CropQuality, Record<string, number>>>;
 
 export type InventoryReward = { itemId: string; count: number } | { itemId: string; quality: CropQuality; count: number };
+type InventoryStackContent = Pick<ContentRegistry, 'items'>;
 
 const QUALITY_ORDER: readonly CropQuality[] = ['mortal', 'spirit', 'treasure'];
 
@@ -32,7 +34,7 @@ export interface Player {
   stage: CultivationStage; // 0..7
   madnessValue: number; // 走火值
   temperingStack: number; // 淬体积淀（毫点）
-  wardMitigation: number; // 避雷护体减伤 0..1（服避雷丹设置，渡劫时消耗）
+  wardMitigation: number; // 承雷稳脉减伤 0..1（服承雷丹设置，渡劫时消耗）
   temperBoostMult: number; // 淬体效率倍率（服淬体丹设置，下次天劫淬体 ×此值后消耗）
   ironBoneMitigation: number; // 铁骨整场减伤 0..1（服铁骨丹设置，整场天劫减伤后消耗）
   stamina: number; // 当日体力毫点
@@ -43,7 +45,7 @@ export interface Player {
   /** 灵草品质批次：quality → itemId → count。普通接口会把它计入材料总量。 */
   qualityInventory: QualityInventory;
   inventoryCapacity: number;
-  flags: Set<string>; // 解锁标记（首次炼丹/首次硬抗雷…）
+  flags: Set<string>; // 解锁标记（首次炼丹/首次承雷…）
 }
 
 export function defaultPlayer(staminaCapMilli: number): Player {
@@ -103,14 +105,42 @@ export function totalQualityItemCount(p: Player, itemId: string): number {
   return QUALITY_ORDER.reduce((sum, quality) => sum + qualityItemCount(p, itemId, quality), 0);
 }
 
+/** 仅统计普通库存（不包含品质批次）。 */
+export function normalItemCount(p: Player, itemId: string): number {
+  return p.inventory[itemId]?.count ?? 0;
+}
+
+/** 仅增减普通库存，不回落到品质批次。 */
+export function mutateNormalItem(p: Player, itemId: string, delta: number): boolean {
+  const slot = p.inventory[itemId];
+  if (delta < 0) {
+    const need = -delta;
+    if (normalItemCount(p, itemId) < need) return false;
+    slot!.count -= need;
+    if (slot!.count <= 0) delete p.inventory[itemId];
+    return true;
+  }
+  if (delta > 0) {
+    if (!slot) {
+      if (inventoryUsed(p) >= p.inventoryCapacity) return false;
+      p.inventory[itemId] = { itemId, count: delta };
+    } else {
+      slot.count += delta;
+    }
+    return true;
+  }
+  return true;
+}
+
 /** 增减指定品质的灵草批次。新增批次会占用一个背包槽位。 */
 export function mutateQualityItem(p: Player, itemId: string, quality: CropQuality, delta: number): boolean {
   const inv = qualityInventory(p);
-  const batch = (inv[quality] ??= {});
-  const current = batch[itemId] ?? 0;
+  const batch = inv[quality];
+  const current = batch?.[itemId] ?? 0;
   if (delta < 0) {
     if (current < -delta) return false;
     const next = current + delta;
+    if (!batch) return false;
     if (next <= 0) delete batch[itemId];
     else batch[itemId] = next;
     if (Object.keys(batch).length === 0) delete inv[quality];
@@ -118,7 +148,8 @@ export function mutateQualityItem(p: Player, itemId: string, quality: CropQualit
   }
   if (delta > 0) {
     if (current <= 0 && inventoryUsed(p) >= p.inventoryCapacity) return false;
-    batch[itemId] = current + delta;
+    const targetBatch = batch ?? (inv[quality] = {});
+    targetBatch[itemId] = current + delta;
     return true;
   }
   return true;
@@ -168,32 +199,53 @@ export function itemCount(p: Player, itemId: string): number {
   return (p.inventory[itemId]?.count ?? 0) + totalQualityItemCount(p, itemId);
 }
 
+function rewardStackLimit(content: InventoryStackContent | undefined, itemId: string, fallbackCount: number): number {
+  if (!content) return Number.POSITIVE_INFINITY;
+  const stack = content.items.get(itemId)?.stack;
+  return typeof stack === 'number' && Number.isInteger(stack) && stack > 0 ? stack : Math.max(1, fallbackCount);
+}
+
 /**
  * 预检一组奖励是否能完整装入背包；不允许“收获成功但部分掉落丢失”。
+ * 传入内容表时同时检查物品堆叠上限；未传内容表则保留旧的槽位-only 预览语义。
  */
-export function inventoryCanFitRewards(p: Player, rewards: readonly InventoryReward[]): boolean {
-  const reservedNormal = new Set<string>();
-  const reservedQuality = new Set<string>();
-  let neededSlots = 0;
+export function inventoryCanFitRewards(p: Player, rewards: readonly InventoryReward[], content?: InventoryStackContent): boolean {
+  const normalCounts = new Map<string, number>();
+  for (const [itemId, slot] of Object.entries(p.inventory)) {
+    if ((slot?.count ?? 0) > 0) normalCounts.set(itemId, slot.count);
+  }
 
-  for (const reward of rewards) {
-    if (reward.count <= 0) continue;
-    if ('quality' in reward) {
-      const current = qualityItemCount(p, reward.itemId, reward.quality);
-      const key = `${reward.quality}:${reward.itemId}`;
-      if (current <= 0 && !reservedQuality.has(key)) {
-        reservedQuality.add(key);
-        neededSlots += 1;
-      }
-      continue;
-    }
-
-    const current = p.inventory[reward.itemId]?.count ?? 0;
-    if (current <= 0 && !reservedNormal.has(reward.itemId)) {
-      reservedNormal.add(reward.itemId);
-      neededSlots += 1;
+  const qualityCounts = new Map<string, number>();
+  const inv = qualityInventory(p);
+  for (const quality of QUALITY_ORDER) {
+    const batch = inv[quality];
+    if (!batch) continue;
+    for (const [itemId, count] of Object.entries(batch)) {
+      if (count > 0) qualityCounts.set(`${quality}:${itemId}`, count);
     }
   }
 
-  return inventoryUsed(p) + neededSlots <= p.inventoryCapacity;
+  let usedSlots = inventoryUsed(p);
+
+  for (const reward of rewards) {
+    if (reward.count <= 0) continue;
+    const maxStack = rewardStackLimit(content, reward.itemId, reward.count);
+    if ('quality' in reward) {
+      const key = `${reward.quality}:${reward.itemId}`;
+      const current = qualityCounts.get(key) ?? 0;
+      if (current <= 0) usedSlots += 1;
+      const next = current + reward.count;
+      if (usedSlots > p.inventoryCapacity || next > maxStack) return false;
+      qualityCounts.set(key, next);
+      continue;
+    }
+
+    const current = normalCounts.get(reward.itemId) ?? 0;
+    if (current <= 0) usedSlots += 1;
+    const next = current + reward.count;
+    if (usedSlots > p.inventoryCapacity || next > maxStack) return false;
+    normalCounts.set(reward.itemId, next);
+  }
+
+  return true;
 }

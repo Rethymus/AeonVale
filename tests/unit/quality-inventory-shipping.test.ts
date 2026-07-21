@@ -31,7 +31,7 @@ describe('品质库存与品质出货', () => {
     mutateQualityItem(state.player, 'herb.mossling', 'treasure', 1);
 
     expect(mutateItem(state.player, 'herb.mossling', -2)).toBe(true);
-    expect(state.player.inventory['herb.mossling']).toBeUndefined;
+    expect(state.player.inventory['herb.mossling']).toBeUndefined();
     expect(qualityItemCount(state.player, 'herb.mossling', 'mortal')).toBe(0);
     expect(qualityItemCount(state.player, 'herb.mossling', 'treasure')).toBe(1);
   });
@@ -68,11 +68,22 @@ describe('品质库存与品质出货', () => {
 
     applyAction(state, { kind: 'ship-quality-item', itemId: 'herb.mossling', quality: 'treasure', count: 2 }, ctx);
     expect(qualityItemCount(state.player, 'herb.mossling', 'treasure')).toBe(1);
-    expect(state.qualityShippingBin.treasure?.['herb.mossling']).toBeUndefined;
+    expect(state.qualityShippingBin.treasure?.['herb.mossling']).toBeUndefined();
 
     mutateQualityItem(state.player, 'item.spirit-stone', 'treasure', 1);
     applyAction(state, { kind: 'ship-quality-item', itemId: 'item.spirit-stone', quality: 'treasure', count: 1 }, ctx);
     expect(qualityItemCount(state.player, 'item.spirit-stone', 'treasure')).toBe(1);
+  });
+
+  it('品质库存失败路径不会留下空品质批次', () => {
+    const { state } = setup();
+
+    expect(mutateQualityItem(state.player, 'herb.mossling', 'spirit', -1)).toBe(false);
+    expect(state.player.qualityInventory.spirit).toBeUndefined();
+
+    state.player.inventoryCapacity = 0;
+    expect(mutateQualityItem(state.player, 'herb.mossling', 'spirit', 1)).toBe(false);
+    expect(state.player.qualityInventory.spirit).toBeUndefined();
   });
 
   it('序列化往返保留品质库存与品质出货箱', () => {

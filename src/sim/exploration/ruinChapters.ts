@@ -1,6 +1,7 @@
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
-import { mutateItem } from '@sim/world/player';
+import type { SimContext } from '@sim/world/context';
+import { inventoryCanFitRewards, mutateItem } from '@sim/world/player';
 
 export interface RuinChapterReward {
   itemId?: string;
@@ -124,12 +125,18 @@ export function getCurrentRuinChapter(state: GameState): RuinChapterStatus | nul
   return null;
 }
 
-export function claimRuinChapter(state: GameState, chapterId: string): RuinChapterResult {
+function canFitReward(state: GameState, reward: RuinChapterReward, ctx?: SimContext): boolean {
+  if (!ctx || !reward.itemId || !reward.count) return true;
+  return inventoryCanFitRewards(state.player, [{ itemId: reward.itemId, count: reward.count }], ctx.content);
+}
+
+export function claimRuinChapter(state: GameState, chapterId: string, ctx?: SimContext): RuinChapterResult {
   const chapter = RUIN_CHAPTER_CATALOG.find(entry => entry.id === chapterId) ?? null;
   if (!chapter) return { ok: false, chapter: null, reason: '无此遗迹章节' };
   if (!chapter.isAvailable(state)) return { ok: false, chapter, reason: '遗迹章节未解锁' };
   if (isRuinChapterClaimed(state, chapter.id)) return { ok: false, chapter, reason: '已领取' };
   if (state.exploration.deepestRuinLevel < chapter.floorEnd) return { ok: false, chapter, reason: '进度未成' };
+  if (!canFitReward(state, chapter.reward, ctx)) return { ok: false, chapter, reason: '储物戒已满' };
   if (!grantReward(state, chapter.reward)) return { ok: false, chapter, reason: '储物戒已满' };
 
   state.flags.add(ruinChapterFlag(chapter.id));

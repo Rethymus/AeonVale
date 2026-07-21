@@ -1,6 +1,6 @@
 /**
  * 地块 Tile。
- * 瓦片是世界最小空间单元；同时承载"种田"与"塔防布防"双重语义。
+ * 瓦片是世界最小空间单元；同时承载"种田"与"导雷布阵"双重语义。
  */
 import type { EntityId, SoilType } from '@sim/world/types';
 
@@ -29,7 +29,7 @@ export interface Tile {
 /**
  * 土壤导电性表。
  * R5 裁定：直接作乘性权重倍率，区间 0.1–1.8。
- * 这是"种田即布防"的数学桥梁——平时铺什么土，战时引不引雷。
+ * 这是"种田即布阵"的数学桥梁——平时铺什么土，战时引不引雷。
  */
 export const SOIL_CONDUCTIVITY: Record<SoilType, number> = {
   'wet-loam': 1.8, // 浇水后/水边：强导电

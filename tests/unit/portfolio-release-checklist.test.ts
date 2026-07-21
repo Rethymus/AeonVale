@@ -35,7 +35,7 @@ describe('公开试玩发布清单', () => {
     expect(output).toContain('4 张 test-results/portfolio/*.png 截图为本次生成');
     expect(output).toContain('test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成');
     expect(output).toContain('runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10');
-    expect(output).toContain('screenshotEvidence：3 张桌面 CSS 渲染截图为 960x542，1 张横屏小视口 keyboard-first 截图为 736x414');
+    expect(output).toContain('screenshotEvidence：01/03 桌面 CSS 渲染截图为 1440x810，02 叠层背景截图为 1440x825，1 张横屏小视口 keyboard-first 截图为 736x414');
     expect(output).toContain('paintedRatio 达到阈值，colors 达到阈值');
     expect(output).toContain('该文件仍是生成物，不进入公开树');
     expect(output).toContain('每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成');

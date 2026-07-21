@@ -14,7 +14,7 @@ import { emit } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { SpiritHerbDef } from '@content/defs';
 import { greenhouseProtectedGrowthMultiplier, greenhouseProtectedHealthDelta } from '@sim/social/greenhouse';
-import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
+import { hasActiveArrayCoverage, coveringWaterArray } from '@sim/tribulation/arrays';
 import { arrayWardenResonanceForTile } from '@sim/celestial/beastSystem';
 import type { Tile } from './tile';
 import type { CropInstance } from './crop';
@@ -160,6 +160,18 @@ export function applyFarmDayEnd(state: GameState, ctx: SimContext, growthMod = 1
     tile.channeledToday = false;
     const tileResonance = insulatedTile ? arrayWardenResonanceForTile(state, tile.id) : null;
     tile.moisture = Math.max(0, tile.moisture - 10 * MILLI + (insulatedTile ? INSULATION_ARRAY_MOISTURE_RETENTION + (tileResonance?.moistureRetentionBonus ?? 0) : 0));
+    // R3-B1 引水阵：次日清晨自动浇灌覆盖圈灵田（对标星露谷洒水器；纯确定性零 RNG）。
+    // 阀：覆盖内取最强单阵不堆叠 + moisture 上限 100*MILLI 天然封顶，守 docs/00 C5（凡人挣扎不被自动化掏空）。
+    if (!tile.wateredToday) {
+      const waterArr = coveringWaterArray(state, tile.id, content.arrays);
+      if (waterArr) {
+        const waterAmount = content.arrays.get(waterArr.defId)?.waterAmountMilli ?? 0;
+        if (waterAmount > 0) {
+          tile.wateredToday = true;
+          tile.moisture = Math.min(100 * MILLI, tile.moisture + waterAmount);
+        }
+      }
+    }
   }
 
   // 3. 玩家日终：过夜休养回血 + 丹毒衰减（体力在清晨重置，见 simulateDay）

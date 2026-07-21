@@ -4,15 +4,15 @@ import { auditPublicWorktree, classifyPublicCandidateGroup, shouldFailPublicWork
 
 describe('公开工作区审查', () => {
   it('按公开树边界分类未提交路径', () => {
-    const report = auditPublicWorktree([' M README.md', ' M src/app/main.ts', ' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md', ' D .omc/state/session.json', '?? .agents/state.json', '?? test-results/portfolio/home.png', '?? dist/assets/index.js.map', '?? .env.local', ''].join('\0'));
+    const report = auditPublicWorktree([' M README.md', ' M src/app/main.ts', ' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md', '?? .planning/patches/01bf653-pixel-ambient.patch', ' D .omc/state/session.json', '?? .agents/state.json', '?? .superpowers/brainstorm/session.html', '?? test-results/portfolio/home.png', '?? dist/assets/index.js.map', '?? tmp/visual-audit/report.json', '?? .env.local', ''].join('\0'));
 
     expect(report.counts['public-candidate']).toBe(2);
-    expect(report.counts['private-design']).toBe(2);
-    expect(report.counts['local-state']).toBe(2);
-    expect(report.counts['generated']).toBe(2);
+    expect(report.counts['private-design']).toBe(3);
+    expect(report.counts['local-state']).toBe(3);
+    expect(report.counts['generated']).toBe(3);
     expect(report.counts['secret-risk']).toBe(1);
     expect(report.byClass['public-candidate']).toEqual([' M README.md', ' M src/app/main.ts']);
-    expect(report.byClass['private-design']).toEqual([' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md']);
+    expect(report.byClass['private-design']).toEqual([' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md', '?? .planning/patches/01bf653-pixel-ambient.patch']);
     expect(report.publicCandidateGroupCounts['public-governance']).toBe(1);
     expect(report.publicCandidateGroupCounts['portfolio-runtime']).toBe(1);
     expect(report.publicCandidatesByGroup['public-governance']).toEqual([' M README.md']);

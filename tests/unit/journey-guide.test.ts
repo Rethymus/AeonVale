@@ -45,7 +45,7 @@ describe('journey guide', () => {
       stageId: 'herbs',
       progressLabel: '1/4 · 获得灵草',
       currentAction: '面对空地翻出第一块灵田',
-      cta: '开始翻地 (Space/E)'
+      cta: '开始翻地'
     });
     expect(buildJourneyGuide('first-market-restock').currentAction).toBe('补充种子并返回农庄');
     expect(buildJourneyGuide('first-loop-complete')).toMatchObject({
@@ -58,11 +58,11 @@ describe('journey guide', () => {
   it('gates harvest CTA until a crop is mature', () => {
     expect(buildJourneyGuide('first-harvest', { hasMatureCrop: false })).toMatchObject({
       currentAction: '照料灵田，等待灵草成熟',
-      cta: '等待成熟 · 歇息'
+      cta: '查看长势'
     });
-    expect(buildJourneyGuide('first-harvest', { hasMatureCrop: true }).cta).toBe('收获灵草 (V)');
+    expect(buildJourneyGuide('first-harvest', { hasMatureCrop: true }).cta).toBe('收获灵草');
     // Default context does not claim immaturity — keep harvest copy for mature-ready path
-    expect(buildJourneyGuide('first-harvest').cta).toBe('收获灵草 (V)');
+    expect(buildJourneyGuide('first-harvest').cta).toBe('收获灵草');
   });
 
   it('keeps the later public-demo stages distinct and progressive', () => {
@@ -122,21 +122,21 @@ describe('journey guide', () => {
   it('soft-collapses secondary journey detail while keeping full copy available', () => {
     const guide = buildJourneyGuide('first-till');
     expect(journeyGuidePrimaryLine(guide)).toBe('面对空地翻出第一块灵田');
-    expect(journeyGuideDetailLines(guide)).toEqual(['意义：灵草是炼丹、布阵与备劫的第一批资源', '行动：开始翻地 (Space/E)']);
+    expect(journeyGuideDetailLines(guide)).toEqual(['意义：灵草是炼丹、淬体与引劫的第一批资源——种田只是凡骨的开端', '行动：开始翻地']);
     expect(formatJourneyGuideBody(guide, 'compact')).toBe('面对空地翻出第一块灵田');
     expect(formatJourneyGuideBody(guide, 'compact')).not.toContain('\n');
     expect(formatJourneyGuideBody(guide, 'full')).toBe(
-      ['面对空地翻出第一块灵田', '意义：灵草是炼丹、布阵与备劫的第一批资源', '行动：开始翻地 (Space/E)'].join('\n')
+      ['面对空地翻出第一块灵田', '意义：灵草是炼丹、淬体与引劫的第一批资源——种田只是凡骨的开端', '行动：开始翻地'].join('\n')
     );
     expect(formatJourneyGuideSummary(guide)).toBe('1/4 · 获得灵草 · 面对空地翻出第一块灵田');
   });
 
-  it('mirrors farm hotkeys on early CTAs without binding DOM selectors', () => {
-    expect(buildJourneyGuide('first-sow').cta).toBe('选择种子 (Z)');
-    expect(buildJourneyGuide('first-water').cta).toBe('浇灌灵草 (X)');
-    expect(buildJourneyGuide('first-second-sow').cta).toBe('继续播种 (Z)');
-    expect(buildJourneyGuide('first-second-water').cta).toBe('浇灌新苗 (X)');
-    // Non-farm journey CTAs stay free of key chords
+  it('keeps early CTAs input-agnostic for mouse, touch, and keyboard', () => {
+    expect(buildJourneyGuide('first-sow').cta).toBe('选择种子');
+    expect(buildJourneyGuide('first-water').cta).toBe('浇灌灵草');
+    expect(buildJourneyGuide('first-second-sow').cta).toBe('继续播种');
+    expect(buildJourneyGuide('first-second-water').cta).toBe('浇灌新苗');
+    expect(buildJourneyGuide('first-till').cta).not.toContain('(');
     expect(buildJourneyGuide('journey-alchemy').cta).toBe('开始炼丹');
   });
 
@@ -152,8 +152,7 @@ describe('journey guide', () => {
     for (const objectiveId of objectiveIds) {
       const guide = buildJourneyGuide(objectiveId);
       const text = `${guide.progressLabel}\n${guide.currentAction}\n${guide.motivation}\n${guide.cta}`;
-      // Allow single-key farm hints (Z/X/V/Space/E); forbid DOM / modifier chord leakage
-      expect(text).not.toMatch(/Shift\+|Enter|Escape|F\d|page\.|querySelector|button/i);
+      expect(text).not.toMatch(/Shift\+|Enter|Escape|F\d|\([ZXV]|Space\/E|page\.|querySelector|button/i);
     }
   });
 });

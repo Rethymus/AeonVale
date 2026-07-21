@@ -20,9 +20,9 @@ describe('AppFlowMachine', () => {
     expect(state.screen).toBe('prologue');
     state = transitionAppFlow(state, { type: 'finish-prologue' });
     expect(state.screen).toBe('world');
-    state = transitionAppFlow(state, { type: 'open-alchemy' });
-    expect(state.screen).toBe('alchemy');
-    state = transitionAppFlow(state, { type: 'close-alchemy' });
+    state = transitionAppFlow(state, { type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+    expect(state).toMatchObject({ screen: 'world', overlay: 'inventory' });
+    state = transitionAppFlow(state, { type: 'close-overlay' });
     expect(state.screen).toBe('world');
     state = transitionAppFlow(state, { type: 'start-tribulation' });
     expect(state.screen).toBe('tribulation');
@@ -129,7 +129,7 @@ describe('AppFlowMachine', () => {
     const boot = createAppFlowState();
     const title = transitionAppFlow(boot, { type: 'boot-ready' });
 
-    expect(transitionAppFlow(boot, { type: 'open-alchemy' })).toBe(boot);
+    expect(transitionAppFlow(boot, { type: 'open-overlay', overlay: 'inventory' })).toBe(boot);
     expect(transitionAppFlow(title, { type: 'finish-tribulation' })).toBe(title);
   });
 
@@ -143,10 +143,9 @@ describe('AppFlowMachine', () => {
     });
   });
 
-  it.each(['world', 'alchemy', 'tribulation', 'aftermath'] as const)('lets terminal state preempt the %s screen', screen => {
+  it.each(['world', 'tribulation', 'aftermath'] as const)('lets terminal state preempt the %s screen', screen => {
     const states = {
       world: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]),
-      alchemy: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'open-alchemy' }]),
       tribulation: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }]),
       aftermath: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }, { type: 'finish-tribulation' }])
     };

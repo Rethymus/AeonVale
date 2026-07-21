@@ -100,12 +100,13 @@ describe('public demo application shell', () => {
   });
 
   it('uses native named buttons for touch commands', () => {
-    for (const command of ['move-up', 'move-left', 'move-down', 'move-right', 'primary', 'secondary', 'menu']) {
+    for (const command of ['move-up', 'move-left', 'move-down', 'move-right', 'primary', 'cancel', 'secondary', 'menu']) {
       expect(html).toContain(`data-game-command="${command}"`);
     }
-    expect(html.match(/<button/g)?.length ?? 0).toBeGreaterThanOrEqual(7);
+    expect(html.match(/<button/g)?.length ?? 0).toBeGreaterThanOrEqual(8);
     expect(html).toContain('aria-label="向上移动"');
     expect(html).toContain('aria-label="主要操作"');
+    expect(html).toContain('aria-label="返回或关闭当前面板"');
     expect(html).toContain('aria-label="打开菜单"');
   });
 
@@ -115,23 +116,37 @@ describe('public demo application shell', () => {
     expect(html).toContain('data-hud-density="compact"');
     expect(html).toContain('id="objective-rail-primary"');
     expect(html).toContain('id="objective-rail-details"');
+    expect(html).toContain('id="fate-status-strip"');
+    expect(html).toContain('id="fate-rail-details"');
+    expect(html).toContain('id="fate-rail-summary"');
+    expect(html).toContain('id="fate-summary-pressure"');
+    expect(html).toContain('id="fate-summary-celestial"');
+    expect(html).toContain('id="world-vital-strip"');
+    expect(html).toContain('id="world-vital-hp-label"');
+    expect(html).toContain('id="world-vital-stamina-label"');
     expect(html).toContain('data-hud-secondary="true"');
     expect(html).toContain('id="flow-continue-status"');
-    for (const command of ['journey', 'farm', 'inventory', 'map', 'cultivation', 'alchemy', 'end-day', 'pause', 'settings']) {
+    const objectiveStart = html.indexOf('id="objective-rail"');
+    const objectiveClose = html.indexOf('</aside>', objectiveStart);
+    const fateStart = html.indexOf('id="fate-status-strip"');
+    expect(objectiveStart).toBeGreaterThanOrEqual(0);
+    expect(objectiveClose).toBeGreaterThan(objectiveStart);
+    expect(fateStart).toBeGreaterThan(objectiveClose);
+    expect(html.slice(objectiveStart, objectiveClose)).not.toContain('id="fate-rail-details"');
+    for (const command of ['journey', 'farm', 'inventory', 'map', 'cultivation', 'furnace', 'end-day', 'pause', 'settings']) {
       expect(html).toContain(`data-game-command="${command}"`);
     }
+    expect(html).not.toContain('data-game-command="alchemy"');
 
-    for (const action of ['alchemy-primary', 'take-pill', 'tribulation-primary', 'move-up', 'move-left', 'move-down', 'move-right']) {
+    for (const action of ['take-pill', 'tribulation-primary', 'move-up', 'move-left', 'move-down', 'move-right']) {
       const button = parseOpeningTags(html).find(tag => tag.name === 'button' && tag.attributes['data-demo-action'] === action);
       expect(button?.attributes.type, action).toBe('button');
       expect(button?.attributes['data-flow-focusable'], action).toBe('true');
     }
 
-    const heat = parseOpeningTags(html).find(tag => tag.attributes.id === 'flow-alchemy-heat');
-    expect(heat?.name).toBe('input');
-    expect(heat?.attributes.type).toBe('range');
-    expect(heat?.attributes['aria-describedby']).toContain('flow-alchemy-preview');
-    expect(html).toContain('for="flow-alchemy-heat"');
+    expect(html).toContain('data-app-slot="inventory"');
+    expect(html).not.toContain('data-app-surface="alchemy"');
+    expect(html).not.toContain('data-demo-action="alchemy-primary"');
     expect(html).toContain('role="status" aria-live="polite" aria-atomic="true"');
   });
 
@@ -157,26 +172,27 @@ describe('public demo application shell', () => {
     expect(syncSource).toContain('setWorldAttention');
     expect(syncSource).toContain('commandBar.hidden');
     expect(syncSource).toContain('objectiveRail.hidden');
+    expect(syncSource).toContain('fateStatusStrip.hidden');
     expect(syncSource).toContain('updateSemanticState');
     expect(debugSource).not.toContain('setWorldAttention');
     expect(debugSource).not.toContain('commandBar.hidden');
     expect(debugSource).not.toContain('objectiveRail.hidden');
+    expect(debugSource).not.toContain('fateStatusStrip.hidden');
     expect(debugSource).not.toContain('updateSemanticState');
   });
 
   it('contains real focusable DOM surfaces for the complete application flow', () => {
     const surfaces = new Set(surfaceBlocks().map(surface => surface.surface));
-    expect(surfaces).toEqual(new Set(['world', 'loading', 'boot-error', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'alchemy', 'tribulation', 'aftermath', 'ending', 'portrait-blocked']));
+    expect(surfaces).toEqual(new Set(['world', 'loading', 'boot-error', 'title', 'prologue', 'narration', 'codex', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'portrait-blocked']));
 
-    for (const action of ['reload-page', 'start-new-game', 'continue-game', 'open-settings', 'finish-prologue', 'skip-prologue', 'close-overlay', 'close-alchemy', 'open-pause', 'continue-aftermath', 'return-title']) {
+    for (const action of ['reload-page', 'start-new-game', 'continue-game', 'open-settings', 'close-overlay', 'open-pause', 'continue-aftermath', 'return-title']) {
       expect(html).toContain(`data-flow-action="${action}"`);
     }
 
     expect(html).toContain('id="flow-title-new-game"');
     expect(html).toContain('id="flow-title-continue"');
     expect(html).toContain('id="flow-title-settings"');
-    expect(html).toContain('id="flow-prologue-continue"');
-    expect(html).toContain('id="flow-prologue-skip"');
+    expect(html).toContain('id="prologue-vn"');
     expect(html).toContain('aria-describedby="flow-continue-status"');
     expect(html).toMatch(/id="flow-title-continue"[^>]*disabled/);
   });
@@ -196,7 +212,7 @@ describe('public demo application shell', () => {
   it('assigns every flow button to one parsed surface with native button semantics', () => {
     const surfaces = surfaceBlocks();
     const buttons = parseOpeningTags(html).filter(tag => tag.name === 'button' && typeof tag.attributes['data-flow-action'] === 'string');
-    expect(buttons.length).toBeGreaterThanOrEqual(15);
+    expect(buttons.length).toBeGreaterThanOrEqual(12);
 
     for (const button of buttons) {
       const owner = surfaces.find(surface => button.start > surface.start && button.end < surface.close);
@@ -209,8 +225,6 @@ describe('public demo application shell', () => {
     const ownerByAction = new Map(buttons.map(button => [String(button.attributes['data-flow-action']), surfaces.find(surface => button.start > surface.start && button.end < surface.close)?.surface]));
     expect(ownerByAction.get('reload-page')).toBe('boot-error');
     expect(ownerByAction.get('start-new-game')).toBe('title');
-    expect(ownerByAction.get('finish-prologue')).toBe('prologue');
-    expect(ownerByAction.get('close-alchemy')).toBe('alchemy');
     expect(ownerByAction.get('continue-aftermath')).toBe('aftermath');
     expect(ownerByAction.get('return-title')).toBe('ending');
   });
@@ -227,12 +241,27 @@ describe('public demo application shell', () => {
     expect(version).toBe('版本 0.1.0 · 试玩构建');
   });
 
-  it('keeps the short prologue to no more than three readable paragraphs', () => {
+  it('mounts the farmstead key art as the title backdrop instead of a text-only menu shell', () => {
+    const titleBlock = surfaceBlocks().find(surface => surface.surface === 'title');
+    const titleMarkup = titleBlock ? html.slice(titleBlock.start, titleBlock.close) : '';
+
+    expect(titleMarkup).toContain('class="title-backdrop"');
+    expect(titleMarkup).toContain('class="title-backdrop-art"');
+    expect(titleMarkup).toContain('src="./maps/map.farmstead-courtyard-v1.png"');
+    expect(titleMarkup).toContain('fetchpriority="high"');
+  });
+
+  it('mounts the branching visual-novel stage inside the prologue surface without static flow buttons', () => {
     const prologue = html.match(/<section[^>]+data-app-surface="prologue"[\s\S]*?<\/section>/)?.[0] ?? '';
     expect(prologue).not.toBe('');
+    expect(prologue).toContain('id="flow-prologue-heading"');
+    expect(prologue).toContain('id="prologue-vn"');
+    expect(prologue).toContain('data-app-slot="prologue-vn"');
+    // 静态阅读段落保持精简（kicker 之外由 VN 运行时渲染）。
     expect(prologue.match(/<p(?:\s|>)/g)?.length ?? 0).toBeLessThanOrEqual(3);
-    expect(prologue).toContain('继续');
-    expect(prologue).toContain('跳过序章');
+    // 控件交由 prologueVN 自管：静态面板不再放 finish/skip 的 data-flow-action 按钮。
+    expect(prologue).not.toContain('data-flow-action="finish-prologue"');
+    expect(prologue).not.toContain('data-flow-action="skip-prologue"');
   });
 
   it('uses native dialog semantics and named return buttons for blocking overlays', () => {
@@ -258,9 +287,8 @@ describe('public demo application shell', () => {
     expect(css).toContain('transition-duration: 0.01ms !important');
     expect(css).not.toMatch(/gradient\s*\(/i);
     expect(css).not.toMatch(/animation\s*:/i);
-    // T1 炼丹炉氛围：静态设施图 + 火候带（无动画声明）
-    expect(css).toContain('.demo-alchemy-furnace');
-    expect(css).toContain('.demo-heat-track');
+    expect(css).toContain('.inv-craft-projection');
+    expect(css).toContain('.inv-furnace-range');
     expect(css).toContain("[data-heat-band='ideal']");
   });
 
@@ -282,7 +310,10 @@ describe('public demo application shell', () => {
 
     const objectiveSummary = cssDeclarations('.objective-rail-summary');
     expect(minimumPixels(objectiveSummary['min-height'])).toBeGreaterThanOrEqual(44);
+    const fateSummary = cssDeclarations('.fate-summary');
+    expect(minimumPixels(fateSummary['min-height'])).toBeGreaterThanOrEqual(44);
     expect(css).toContain('.objective-rail[hidden]');
+    expect(css).toContain('.fate-status-strip[hidden]');
     expect(css).toContain('data-hud-density');
 
     const worldSurface = parseOpeningTags(html).find(tag => tag.attributes.id === 'app');

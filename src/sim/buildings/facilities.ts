@@ -6,10 +6,10 @@ import type { ArrayInstance, FacilityInstance, FacilityKind, GameState, GuardBea
 import { emit, nextEntityId, tileAt } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import type { CropQuality } from '@sim/farm/quality';
-import { itemCount, mutateItem, mutateQualityItem, qualityItemCount } from '@sim/world/player';
+import { inventoryCanFitRewards, itemCount, mutateItem, mutateQualityItem, qualityItemCount } from '@sim/world/player';
 import { hasRelationshipPerk } from '@sim/social/relationshipEvents';
 import { farmExpansionTier, hasUpgrade } from './upgrades';
-import { storageItemCount, storeItemInStorage, takeItemFromStorage } from '@sim/storage/storage';
+import { storageCanFitRewards, storageItemCount, storeItemInStorage, takeItemFromStorage } from '@sim/storage/storage';
 
 export interface PlaceFacilityResult {
   ok: boolean;
@@ -348,10 +348,11 @@ function autoStartFacilityJob(state: GameState, facility: FacilityInstance, ctx:
   return false;
 }
 
-function autoStoreFinishedJob(state: GameState, facility: FacilityInstance): boolean {
+function autoStoreFinishedJob(state: GameState, facility: FacilityInstance, ctx?: SimContext): boolean {
   const job = facility.job;
   if (!job || job.daysRemaining > 0 || !hasUpgrade(state, 'farm-autoload-1')) return false;
-  if (!storeItemInStorage(state.storage, job.outputItemId, job.outputCount)) return false;
+  if (ctx && !storageCanFitRewards(state.storage, [{ itemId: job.outputItemId, count: job.outputCount }], ctx.content)) return false;
+  if (!storeItemInStorage(state.storage, job.outputItemId, job.outputCount, ctx?.content)) return false;
   facility.job = null;
   emit(state, 'facility-auto-store', { facilityId: facility.id, kind: facility.kind, outputItemId: job.outputItemId, outputCount: job.outputCount });
   return true;
@@ -456,15 +457,16 @@ export function advanceFacilityJobs(state: GameState, ctx?: SimContext): void {
     emit(state, 'facility-job-tick', { facilityId: facility.id, kind: facility.kind, daysRemaining: facility.job.daysRemaining, daysReduced });
   }
 
-  for (const facility of state.facilities.values()) autoStoreFinishedJob(state, facility);
+  for (const facility of state.facilities.values()) autoStoreFinishedJob(state, facility, ctx);
 }
 
-export function collectFacility(state: GameState, facilityId: number): FacilityJobResult {
+export function collectFacility(state: GameState, facilityId: number, ctx?: SimContext): FacilityJobResult {
   const facility = state.facilities.get(facilityId) ?? null;
   if (!facility) return { ok: false, facility, reason: '无此设施' };
   if (!facility.job) return { ok: false, facility, reason: '无可收取产物' };
   if (facility.job.daysRemaining > 0) return { ok: false, facility, reason: '尚未完成' };
   const job = facility.job;
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: job.outputItemId, count: job.outputCount }], ctx.content)) return { ok: false, facility, reason: '储物戒已满' };
   if (!mutateItem(state.player, job.outputItemId, job.outputCount)) return { ok: false, facility, reason: '储物戒已满' };
   facility.job = null;
   emit(state, 'facility-collect', { facilityId, kind: facility.kind, outputItemId: job.outputItemId, outputCount: job.outputCount });

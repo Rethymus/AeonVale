@@ -49,7 +49,7 @@ describe('今日简报', () => {
     expect(progress).toBe('首轮进度：1/10 灵草→灵石→补种→备劫');
     expect(purpose).toBe('意义：这块田会产出炼丹、布阵和引劫的第一批资源。');
     expect(payoff).toBe('回报：开出第一块灵田，后面才有药材、灵石和备劫材料。');
-    expect(action).toBe('操作：站到空地前，按 空格 / E 翻地。');
+    expect(action).toBe('操作：点击空地，角色会走到旁边并翻地。');
     expect(route).toBe('动线：先留在农庄，从任意一块空地起手。');
     expect(briefing.assetId).toBe('logo.full');
   });
@@ -100,7 +100,7 @@ describe('今日简报', () => {
     expect(progress).toBe('首轮进度：1/10 灵草→灵石→补种→备劫');
     expect(purpose).toBe('意义：这块田会产出炼丹、布阵和引劫的第一批资源。');
     expect(payoff).toBe('回报：开出第一块灵田，后面才有药材、灵石和备劫材料。');
-    expect(action).toBe('操作：站到空地前，按 空格 / E 翻地。');
+    expect(action).toBe('操作：点击空地，角色会走到旁边并翻地。');
     expect(route).toBe('动线：先留在农庄，从任意一块空地起手。');
   });
 
@@ -109,10 +109,10 @@ describe('今日简报', () => {
     state.player.flags.add(FIRST_SECOND_WATER_FLAG);
     const briefing = buildTodayBriefing(state, ctx, onboardingHelpText('first-loop-complete'));
 
-    expect(briefing.body).toContain('意义：稳定农务后，灵草会持续转成丹药、阵法与抗劫底气。');
+    expect(briefing.body).toContain('意义：稳定农务后，灵草会持续转成丹药、阵法与承雷底气。');
     expect(briefing.body).toContain('回报：日常循环已成立，下一步可以把药材投入炼丹、设施和引劫准备。');
-    expect(briefing.body).toContain('操作：继续补种浇水；有余货时按 Shift+M 打开农庄加工或阵法面板。');
-    expect(briefing.body).toContain('动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。');
+    expect(briefing.body).toContain('操作：继续补种浇水；有余货时点“农务”打开加工或阵法面板。');
+    expect(briefing.body).toContain('动线：农务闭环已成，回农庄点“农务”进入加工或阵法入口，把余货转成炉料与承雷准备。');
   });
 
   it('首轮里程碑简报仍保留修仙回报，让试玩访客看懂下一步价值', () => {
@@ -172,7 +172,7 @@ describe('今日简报', () => {
     const loopBriefing = buildTodayBriefing(state, ctx, '当前目标：今天继续稳住节奏，有余力再做别的。');
     const loopLines = loopBriefing.body.split('\n');
     expect(loopLines[1]).toBe('首轮进度：10/10 灵草→灵石→补种→备劫');
-    expect(loopLines[2]).toBe('里程碑：首轮农务闭环已跑通，按 Shift+M 把余货接入加工、阵法与备劫。');
+    expect(loopLines[2]).toBe('里程碑：首轮农务闭环已跑通，点“农务”把余货接入加工、阵法与备劫。');
   });
 
   it('在非留世状态下优先提示当前主线，再补农务焦点与后续线索', () => {
@@ -495,7 +495,7 @@ describe('今日简报', () => {
     expect(milestone).toBe('里程碑：第一笔出货已经换回灵石，先去集市补种，把第二轮接上。');
     expect(purpose).toBe('意义：补种把一次收获变成稳定经营，后续才有炼丹库存。');
     expect(payoff).toBe('回报：补到新种子后，农庄能立刻接上第二轮药材生产。');
-    expect(action).toBe('操作：按 Shift+Tab 打开地点目录，选集市服务后确认补种。');
+    expect(action).toBe('操作：点下方“地点”打开山河图，选集市服务后补种；快捷键 M 可用。');
     expect(route).toBe('动线：先去山谷集市补种，再回农庄接上第二轮。');
     expect(briefing.assetId).toBe('loc.valley-market');
   });
@@ -539,7 +539,7 @@ describe('今日简报', () => {
     expect(milestone).toBe('里程碑：第一株灵草已经成熟，收下它，首轮农务才算真正开始兑现。');
     expect(purpose).toBe('意义：第一株成熟灵草会把种田接到炼丹、出货和备劫。');
     expect(payoff).toBe('回报：收下灵草后，可以选择出货换灵石，也能留作炼丹库存。');
-    expect(action).toBe('操作：先照料灵田，成熟后面向作物按 V 收获。');
+    expect(action).toBe('操作：先照料灵田，成熟后点击作物收获。');
     expect(route).toBe('动线：先稳住日常照料，等第一株灵草成熟再收。');
     expect(briefing.assetId).toBe('loc.herb-plot');
   });
@@ -570,15 +570,15 @@ describe('今日简报', () => {
     const { state, ctx } = setup(17);
     state.player.flags.add(FIRST_SHIPMENT_FLAG);
 
-    const briefing = buildTodayBriefing(state, ctx, '当前目标：按 Enter 过夜，等次日结算换回灵石。');
+    const briefing = buildTodayBriefing(state, ctx, '当前目标：点击居所或“歇息”过夜，等次日结算换回灵石。');
     const [headline = '', progress = '', milestone = '', purpose = '', payoff = '', action = '', route = ''] = briefing.body.split('\n');
 
-    expect(headline).toBe('目标：按 Enter 过夜，等次日结算换回灵石。');
+    expect(headline).toBe('目标：点击居所或“歇息”过夜，等次日结算换回灵石。');
     expect(progress).toBe('首轮进度：6/10 灵草→灵石→补种→备劫');
     expect(milestone).toBe('里程碑：第一株灵草已经投进出货箱，先过夜，把第一笔灵石结回来。');
     expect(purpose).toBe('意义：过夜结算会证明农务不是装饰，而是资源循环。');
     expect(payoff).toBe('回报：结算后的灵石会直接支持补种，把一次收获变成循环。');
-    expect(action).toBe('操作：确认今日农务已收尾，直接按 Enter 过夜。');
+    expect(action).toBe('操作：确认今日农务已收尾，点击居所或“歇息”过夜。');
     expect(route).toBe('动线：把今日农务收尾，直接过夜等次日结算。');
     expect(briefing.assetId).toBe('loc.farmstead');
   });
@@ -626,11 +626,11 @@ describe('今日简报', () => {
 
     expect(headline).toBe('目标：第二轮药材动线已成立，继续照料新苗、卖余货，或再扩一小片田。');
     expect(progress).toBe('首轮进度：10/10 灵草→灵石→补种→备劫');
-    expect(milestone).toBe('里程碑：首轮农务闭环已跑通，按 Shift+M 把余货接入加工、阵法与备劫。');
-    expect(purpose).toBe('意义：稳定农务后，灵草会持续转成丹药、阵法与抗劫底气。');
+    expect(milestone).toBe('里程碑：首轮农务闭环已跑通，点“农务”把余货接入加工、阵法与备劫。');
+    expect(purpose).toBe('意义：稳定农务后，灵草会持续转成丹药、阵法与承雷底气。');
     expect(payoff).toBe('回报：日常循环已成立，下一步可以把药材投入炼丹、设施和引劫准备。');
-    expect(action).toBe('操作：继续补种浇水；有余货时按 Shift+M 打开农庄加工或阵法面板。');
-    expect(route).toBe('动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。');
+    expect(action).toBe('操作：继续补种浇水；有余货时点“农务”打开加工或阵法面板。');
+    expect(route).toBe('动线：农务闭环已成，回农庄点“农务”进入加工或阵法入口，把余货转成炉料与承雷准备。');
     expect(briefing.assetId).toBe('loc.herb-plot');
   });
 
@@ -667,9 +667,9 @@ describe('今日简报', () => {
     const lines = briefing.body.split('\n');
     const [headline = '', farmFocus = '', followUp = ''] = lines;
 
-    expect(headline).toBe('引劫：体魄已至极限，今日先按 T 主动引劫。');
+    expect(headline).toBe('引劫：体魄已至极限，先打开修行页确认备劫。');
     expect(farmFocus.startsWith('农务：')).toBe(true);
-    expect(followUp).toBe('备劫：缺避雷丹｜阵法未成(0/2)｜准备度0%｜先补避雷丹与两座阵法。');
+    expect(followUp).toBe('备劫：缺承雷丹｜阵法未成(0/2)｜准备度0%｜先补承雷丹与两座阵法。');
     expect(lines.at(-1)).toBe('优先级：备劫 > 农务 > 委托 > 社交');
     expect(briefing.assetId).toBe('loc.array-shed');
   });

@@ -2,7 +2,7 @@ import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
 import { MILLI } from '@sim/world/types';
 import { ensureStayingWorldState } from './stayingWorld';
-import { itemCount, mutateItem } from '@sim/world/player';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 import { applyGuardBeastIncidentAssistBond, applyGuardBeastSpecialtyProgress, guardBeastMasteryReady, guardBeastSpecialtyReady, preferredGuardBeastForPatrol } from '@sim/celestial/beastSystem';
 import type { SimContext } from '@sim/world/context';
 import { activeArraysCoveringTile } from '@sim/tribulation/arrays';
@@ -117,7 +117,7 @@ export const STAYING_WORLD_INCIDENT_CATALOG: readonly StayingWorldIncidentDef[] 
   {
     id: 'incident.beast-tide-omen',
     title: '妖潮预兆',
-    summary: '远山妖气翻涌，似有妖潮将至；得以灵药膏备好疗伤底药，或借巡守兽提前布防，把这一波压在山外。',
+    summary: '远山妖气翻涌，似有妖潮将至；得以灵药膏备好疗伤底药，或借巡守兽提前巡守，把这一波压在山外。',
     itemId: 'item.spirit-poultice',
     count: 1,
     pressureRelief: 7 * MILLI
@@ -1504,7 +1504,7 @@ function assistingGuardBeast(state: GameState, incident: StayingWorldIncidentDef
     };
   }
   if (incident.id === 'incident.beast-tide-omen') {
-    // 妖潮预兆：巡逻巡守兽可提前布防，免去灵药膏消耗并额外减压。
+    // 妖潮预兆：巡逻巡守兽可提前巡守，免去灵药膏消耗并额外减压。
     const best = preferredGuardBeastForPatrol(state);
     if (!best) return null;
     return {
@@ -1606,7 +1606,12 @@ export function resolveStayingWorldIncident(state: GameState, ctx?: SimContext):
     const assistBeast = state.guardBeasts.find(entry => entry.id === assist.beastId);
     if (assistBeast?.specialty === 'courier') {
       courierStipend = guardBeastMasteryReady(assistBeast) ? 2 : 1;
-      mutateItem(state.player, 'item.spirit-stone', courierStipend);
+      if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: 'item.spirit-stone', count: courierStipend }], ctx.content)) {
+        courierStipend = 0;
+        emit(state, 'staying-world-stipend-blocked', { itemId: 'item.spirit-stone', count: guardBeastMasteryReady(assistBeast) ? 2 : 1 });
+      } else {
+        mutateItem(state.player, 'item.spirit-stone', courierStipend);
+      }
     }
   }
   staying.resolvedIncidentDay = state.day;

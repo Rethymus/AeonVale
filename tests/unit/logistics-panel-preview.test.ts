@@ -49,7 +49,7 @@ describe('logistics panel preview', () => {
     const reg = buildRegistry();
 
     expect(storageToastPresentation('withdraw', { itemId: 'herb.mossling', count: 3, quality: 'spirit' }, '（2/4）', '空格/E/回车取出·Esc返回', reg)).toEqual({
-      message: '仓储-取出（2/4）：凡间青苔·灵品×3｜Tab切换·空格/E/回车取出·Esc返回',
+      message: '仓储-取出（2/4）：凡间青苔·灵品×3｜点选物品·空格/E/回车取出·Esc返回',
       assetId: 'loc.farmstead'
     });
   });
@@ -58,7 +58,7 @@ describe('logistics panel preview', () => {
     const reg = buildRegistry();
 
     expect(shippingToastPresentation('quality', { itemId: 'herb.dewroot', quality: 'treasure', count: 2, unitPrice: 6 }, '（1/3）', '空格/E/回车出货·Esc返回', reg)).toEqual({
-      message: '品质出货（1/3）：露根草·珍品×2｜Tab切换·空格/E/回车出货·Esc返回',
+      message: '品质出货（1/3）：露根草·珍品×2｜点选物品·空格/E/回车出货·Esc返回',
       assetId: 'loc.farmstead'
     });
   });

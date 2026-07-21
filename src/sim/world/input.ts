@@ -5,7 +5,7 @@
  */
 import type { Vec2 } from './types';
 import type { CropQuality } from '@sim/farm/quality';
-import type { FacilityKind } from '@sim/world/state';
+import type { FacilityKind, InventoryContainerId } from '@sim/world/state';
 
 export type PlayerAction =
   | { kind: 'move'; to: Vec2 }
@@ -21,6 +21,8 @@ export type PlayerAction =
   | { kind: 'withdraw-item'; itemId: string; count: number }
   | { kind: 'deposit-quality-item'; itemId: string; quality: CropQuality; count: number }
   | { kind: 'withdraw-quality-item'; itemId: string; quality: CropQuality; count: number }
+  | { kind: 'move-item'; from: InventoryContainerId; to: InventoryContainerId; itemId: string; count: number; quality?: CropQuality }
+  | { kind: 'drop-item'; itemId: string; count: number; quality?: CropQuality }
   | { kind: 'place-facility'; at: Vec2; facilityKind: FacilityKind; free?: boolean }
   | { kind: 'start-drying-job'; facilityId: number; itemId: string; quality?: CropQuality }
   | { kind: 'start-facility-recipe-job'; facilityId: number; recipeId: string }
@@ -60,6 +62,7 @@ export type PlayerAction =
   | { kind: 'feed-guard-beast'; herbItemId: string } // 投喂灵草照料巡守兽，恢复精力并提升羁绊
   | { kind: 'assign-guard-beast-patrol'; beastId: number; tileId: number } // 用守田兽哨指派巡逻地块，影响护田与留世协防优先级
   | { kind: 'eat-raw'; herbDefId: string } // 生食灵草（积丹毒）
+  | { kind: 'pickup-ground-item' } // 拾取脚下地面物品（场景拾取）
   | { kind: 'rest' }; // 静室休息（清毒/回体）
 
 /** 一个游戏日的玩家输入（动作按序执行）。 */

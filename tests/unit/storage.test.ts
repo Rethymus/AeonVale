@@ -104,6 +104,62 @@ describe('农庄仓库/箱子', () => {
     expect(storageItemCount(state.storage, 'seed.mossling')).toBe(0);
   });
 
+  it('仓库品质批次失败路径不会留下空品质批次', () => {
+    const { state } = setup();
+
+    expect(withdrawQualityItem(state, 'herb.mossling', 'spirit', 1).ok).toBe(false);
+    expect(state.storage.qualityInventory.spirit).toBeUndefined();
+
+    state.storage.capacity = 0;
+    mutateQualityItem(state.player, 'herb.mossling', 'spirit', 1);
+    expect(depositQualityItem(state, 'herb.mossling', 'spirit', 1).ok).toBe(false);
+    expect(state.storage.qualityInventory.spirit).toBeUndefined();
+  });
+
+  it('直接存仓在目标满栈时拒绝且不消耗随身物品', () => {
+    const { state, ctx } = setup();
+    state.storage.capacity = 1;
+    state.storage.inventory['item.beast-core'] = { itemId: 'item.beast-core', count: 5 };
+    mutateItem(state.player, 'item.beast-core', 1);
+
+    const result = depositItem(state, 'item.beast-core', 1, ctx.content);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('仓库已满');
+    expect(storageItemCount(state.storage, 'item.beast-core')).toBe(5);
+    expect(itemCount(state.player, 'item.beast-core')).toBe(1);
+    expect(state.events.some(e => e.type === 'storage-deposit')).toBe(false);
+  });
+
+  it('直接取仓在随身目标满栈时拒绝且不扣仓库', () => {
+    const { state, ctx } = setup();
+    state.storage.inventory['item.beast-core'] = { itemId: 'item.beast-core', count: 1 };
+    state.player.inventory['item.beast-core'] = { itemId: 'item.beast-core', count: 5 };
+
+    const result = withdrawItem(state, 'item.beast-core', 1, ctx.content);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('储物戒已满');
+    expect(storageItemCount(state.storage, 'item.beast-core')).toBe(1);
+    expect(itemCount(state.player, 'item.beast-core')).toBe(5);
+    expect(state.events.some(e => e.type === 'storage-withdraw')).toBe(false);
+  });
+
+  it('设施自动回仓遇到仓库满栈时保留完成产物且不超堆叠', () => {
+    const { state, ctx } = setup();
+    state.flags.add(upgradeFlag('farm-autoload-1'));
+    state.storage.capacity = 1;
+    state.storage.inventory['item.dried-herb'] = { itemId: 'item.dried-herb', count: 30 };
+    const placed = placeFacility(state, 'drying-rack', 2, 2, { free: true }).facility!;
+    placed.job = { inputItemId: 'herb.mossling', outputItemId: 'item.dried-herb', outputCount: 1, daysRemaining: 0 };
+
+    advanceFacilityJobs(state, ctx);
+
+    expect(placed.job).toEqual({ inputItemId: 'herb.mossling', outputItemId: 'item.dried-herb', outputCount: 1, daysRemaining: 0 });
+    expect(storageItemCount(state.storage, 'item.dried-herb')).toBe(30);
+    expect(state.events.some(e => e.type === 'facility-auto-store')).toBe(false);
+  });
+
   it('农庄协同升级后，晾晒架可从仓库自动取料并在完成后自动回仓', () => {
     const { state } = setup();
     state.player.stage = 1 as 1;
@@ -120,7 +176,7 @@ describe('农庄仓库/箱子', () => {
 
     advanceFacilityJobs(state, ctxForSeed(12));
 
-    expect(placed.job).toBeNull;
+    expect(placed.job).toBeNull();
     expect(storageItemCount(state.storage, 'herb.mossling')).toBe(0);
     expect(storageItemCount(state.storage, 'item.dried-herb')).toBe(1);
     expect(state.events.some(e => e.type === 'facility-job-autostart')).toBe(true);
@@ -161,7 +217,7 @@ describe('农庄仓库/箱子', () => {
 
     advanceFacilityJobs(state, ctxForSeed(12));
 
-    expect(placed.job).toBeNull;
+    expect(placed.job).toBeNull();
     expect(storageItemCount(state.storage, 'herb.mossling')).toBe(1);
     expect(storageItemCount(state.storage, 'item.dried-herb')).toBe(0);
     expect(state.events.some(e => e.type === 'facility-job-autostart')).toBe(false);

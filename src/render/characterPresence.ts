@@ -8,9 +8,88 @@ import { ColorPalette } from './ColorPalette';
 
 export type Facing4 = 'up' | 'down' | 'left' | 'right';
 
+export const PLAYER_WORLD_MAP_SPRITE_ID = 'map-sprite.player-v1' as const;
+
+const NPC_WORLD_MAP_SPRITE_ID_BY_ASSET_ID: Readonly<Record<string, string>> = {
+  'sprite.npc.wandering-cultivator': 'map-sprite.liaochen-v1',
+  'sprite.npc.herb-gatherer': 'map-sprite.herb-gatherer-v1',
+  'portrait.avatar.herb-gatherer-v1': 'map-sprite.herb-gatherer-v1',
+  'sprite.npc.array-smith': 'map-sprite.array-smith-lu-v1',
+  'portrait.avatar.array-smith-lu-v1': 'map-sprite.array-smith-lu-v1',
+  'sprite.npc.market-merchant': 'map-sprite.market-merchant-v1',
+  'sprite.npc.tea-shed-elder': 'map-sprite.tea-shed-elder-v1',
+  'sprite.npc.processing-artisan': 'map-sprite.processing-artisan-v1',
+  'sprite.npc.patrol-guard': 'map-sprite.patrol-guard-v1'
+};
+
 /** left 镜像 scale.x = -1，其余 1。 */
 export function facingScaleX(facing: Facing4): number {
   return facing === 'left' ? -1 : 1;
+}
+
+export function playerWorldMapSpriteAssetId(): string {
+  return PLAYER_WORLD_MAP_SPRITE_ID;
+}
+
+export function npcWorldMapSpriteAssetId(assetId: string): string | undefined {
+  return NPC_WORLD_MAP_SPRITE_ID_BY_ASSET_ID[assetId];
+}
+
+export interface WorldCharacterSpriteMetrics {
+  readonly width: number;
+  readonly height: number;
+  readonly yOffset: number;
+}
+
+export function worldCharacterSpriteMetrics(kind: 'player' | 'npc'): WorldCharacterSpriteMetrics {
+  if (kind === 'player') return { width: 84, height: 84, yOffset: -26 };
+  return { width: 74, height: 74, yOffset: -22 };
+}
+
+export interface WorldCharacterReadabilityHaloSpec {
+  readonly width: number;
+  readonly height: number;
+  readonly yOffset: number;
+  readonly fillAlpha: number;
+  readonly strokeAlpha: number;
+}
+
+export function worldCharacterReadabilityHaloSpec(kind: 'player' | 'npc'): WorldCharacterReadabilityHaloSpec {
+  if (kind === 'player') {
+    return { width: 38, height: 72, yOffset: worldCharacterSpriteMetrics(kind).yOffset, fillAlpha: 0.16, strokeAlpha: 0.26 };
+  }
+  return { width: 34, height: 66, yOffset: worldCharacterSpriteMetrics(kind).yOffset, fillAlpha: 0.13, strokeAlpha: 0.22 };
+}
+
+export type NpcWorldFallbackRole = 'merchant' | 'elder' | 'artisan' | 'guard' | 'gatherer' | 'smith' | 'cultivator';
+
+export interface NpcWorldFallbackPresentation {
+  readonly role: NpcWorldFallbackRole;
+  readonly robeColor: number;
+  readonly trimColor: number;
+  readonly propColor: number;
+}
+
+export function npcWorldFallbackPresentation(assetId: string): NpcWorldFallbackPresentation {
+  if (assetId.includes('market') || assetId.includes('wandering')) {
+    return { role: 'merchant', robeColor: ColorPalette.soil, trimColor: ColorPalette.gilt, propColor: ColorPalette.giltBright };
+  }
+  if (assetId.includes('tea') || assetId.includes('elder')) {
+    return { role: 'elder', robeColor: ColorPalette.water, trimColor: ColorPalette.paperWarm, propColor: ColorPalette.qiBright };
+  }
+  if (assetId.includes('processing')) {
+    return { role: 'artisan', robeColor: ColorPalette.soilDeep, trimColor: ColorPalette.moss, propColor: ColorPalette.ember };
+  }
+  if (assetId.includes('patrol') || assetId.includes('guard')) {
+    return { role: 'guard', robeColor: ColorPalette.inkPanelDeep, trimColor: ColorPalette.qiFlow, propColor: ColorPalette.qiBright };
+  }
+  if (assetId.includes('array') || assetId.includes('smith')) {
+    return { role: 'smith', robeColor: ColorPalette.soilDeep, trimColor: ColorPalette.gilt, propColor: ColorPalette.giltBright };
+  }
+  if (assetId.includes('herb') || assetId.includes('gatherer')) {
+    return { role: 'gatherer', robeColor: ColorPalette.moss, trimColor: ColorPalette.success, propColor: ColorPalette.qiBright };
+  }
+  return { role: 'cultivator', robeColor: ColorPalette.mountain, trimColor: ColorPalette.paperWarm, propColor: ColorPalette.qiBright };
 }
 
 /** 朝向指示相对角色中心的像素偏移（与 TILE≈42 对齐）。 */
@@ -39,6 +118,63 @@ export function footShadowSpec(kind: 'player' | 'npc' = 'player'): FootShadowSpe
     return { width: 18, height: 6, alpha: 0.28, yOffset: 14 };
   }
   return { width: 22, height: 7, alpha: 0.34, yOffset: 15 };
+}
+
+export interface WalkFootfall {
+  readonly x: number;
+  readonly y: number;
+  readonly alpha: number;
+}
+
+export interface CharacterWalkCycle {
+  readonly bodyScaleX: number;
+  readonly bodyScaleY: number;
+  readonly bodyTilt: number;
+  readonly shadowScaleX: number;
+  readonly shadowScaleY: number;
+  readonly leftFoot: WalkFootfall;
+  readonly rightFoot: WalkFootfall;
+}
+
+const STILL_WALK_CYCLE: CharacterWalkCycle = {
+  bodyScaleX: 1,
+  bodyScaleY: 1,
+  bodyTilt: 0,
+  shadowScaleX: 1,
+  shadowScaleY: 1,
+  leftFoot: { x: -5, y: 13, alpha: 0 },
+  rightFoot: { x: 5, y: 13, alpha: 0 }
+};
+
+/** 单张世界角色图的伪行走相位：足影交替 + 身体轻微压缩摆动。 */
+export function characterWalkCycle(facing: Facing4, progress: number, moving: boolean, reducedMotion = false): CharacterWalkCycle {
+  if (!moving || reducedMotion) return STILL_WALK_CYCLE;
+  const p = Number.isFinite(progress) ? Math.max(0, Math.min(1, progress)) : 0;
+  const wave = Math.sin(p * Math.PI * 2);
+  const stride = Math.cos(p * Math.PI * 2);
+  const horizontal = facing === 'left' || facing === 'right';
+  const dir = facing === 'left' || facing === 'up' ? -1 : 1;
+  const leftStep = wave >= 0 ? 1 : -1;
+  const rightStep = -leftStep;
+  const travel = Math.abs(wave);
+
+  return {
+    bodyScaleX: 1 + travel * 0.018,
+    bodyScaleY: 1 - travel * 0.024,
+    bodyTilt: horizontal ? stride * 0.018 * dir : stride * 0.012 * dir,
+    shadowScaleX: 1 + travel * 0.18,
+    shadowScaleY: 1 - travel * 0.12,
+    leftFoot: {
+      x: horizontal ? -2 + leftStep * 4 * dir : -6,
+      y: horizontal ? 14 + rightStep * 1.2 : 13 + leftStep * 3,
+      alpha: 0.22 + Math.max(0, wave) * 0.28
+    },
+    rightFoot: {
+      x: horizontal ? 2 + rightStep * 4 * dir : 6,
+      y: horizontal ? 14 + leftStep * 1.2 : 13 + rightStep * 3,
+      alpha: 0.22 + Math.max(0, -wave) * 0.28
+    }
+  };
 }
 
 /** 灵气微粒相位 0..1；ambient 驱动。 */

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt, placeArray, applyFarmDayEnd } from '@sim';
+import { applyAction, createWorld, simulateDay, createSimContext, DEFAULT_BALANCE, tileAt, placeArray, applyFarmDayEnd } from '@sim';
 import { buildRegistry } from '@content/registry';
-import { mutateItem, itemCount } from '@sim/world/player';
+import { mutateItem, itemCount, mutateQualityItem, qualityItemCount } from '@sim/world/player';
 import { MILLI } from '@sim/world/types';
 import type { GameState, GuardBeast } from '@sim/world/state';
 
@@ -13,6 +13,21 @@ function setup(seed = 1) {
 }
 
 describe('种田 sim ', () => {
+  it('普通移动一次只允许走到相邻可通行地块', () => {
+    const { state, ctx } = setup();
+    state.player.position = { x: 2, y: 2 };
+
+    applyAction(state, { kind: 'move', to: { x: 3, y: 2 } }, ctx);
+    expect(state.player.position).toEqual({ x: 3, y: 2 });
+
+    applyAction(state, { kind: 'move', to: { x: 5, y: 5 } }, ctx);
+    expect(state.player.position).toEqual({ x: 3, y: 2 });
+
+    tileAt(state, 3, 3)!.blockType = 'building';
+    applyAction(state, { kind: 'move', to: { x: 3, y: 3 } }, ctx);
+    expect(state.player.position).toEqual({ x: 3, y: 2 });
+  });
+
   it('翻地 → 播种 → 浇水供灵 → 成熟 → 收获 闭环', () => {
     const { state, ctx } = setup();
     mutateItem(state.player, 'seed.mossling', 5);
@@ -97,6 +112,34 @@ describe('种田 sim ', () => {
 
     expect(tileAt(state, 1, 1)!.cropId).toBe(null);
     expect(itemCount(state.player, 'herb.mossling')).toBeGreaterThan(0);
+  });
+
+  it('对应品质批次满栈时无法收获，灵草保留在地里且不扣体力', () => {
+    const { state, ctx } = setup();
+    mutateQualityItem(state.player, 'herb.mossling', 'mortal', 30);
+
+    const tile = tileAt(state, 1, 1)!;
+    tile.tilled = true;
+    tile.cropId = 99;
+    state.crops.set(tile.id, {
+      id: 99,
+      defId: 'herb.mossling',
+      tileId: tile.id,
+      growth: 100_000,
+      health: 100_000,
+      stage: 'mature',
+      plantedDay: 1,
+      property: { cold: 0, hot: 0, warm: 0, neutral: 1_000 },
+      tempered: false
+    });
+
+    const staminaBefore = state.player.stamina;
+    simulateDay(state, { actions: [{ kind: 'harvest', at: { x: 1, y: 1 } }] }, ctx);
+
+    expect(tileAt(state, 1, 1)!.cropId).toBe(99);
+    expect(state.crops.has(tile.id)).toBe(true);
+    expect(qualityItemCount(state.player, 'herb.mossling', 'mortal')).toBe(30);
+    expect(state.player.stamina).toBe(staminaBefore);
   });
 
   it('缺照料（不浇水不供灵）的灵草生长极慢', () => {

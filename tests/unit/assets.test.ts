@@ -17,6 +17,7 @@ function entry(over: Partial<AssetEntry> = {}): AssetEntry {
     checksum: GOOD_CHECKSUM,
     license: 'OFL-1.1',
     source: 'https://example.invalid/test',
+    status: 'published',
     ...over
   };
 }

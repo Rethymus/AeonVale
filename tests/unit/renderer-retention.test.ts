@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { describe, expect, it } from 'vitest';
 import { buildRegistry } from '@content/registry';
-import { createWorld, DEFAULT_BALANCE, FIRST_SECOND_WATER_FLAG } from '@sim';
+import { createWorld, DEFAULT_BALANCE, FIRST_SECOND_WATER_FLAG, placeGroundItem } from '@sim';
 import { createLayers, drawWorld, type RuntimeRenderAssets } from '@render/renderer';
 import { npcWorldPreviewPlacements } from '@render/npcWorldPreview';
 import type { Application } from 'pixi.js';
@@ -27,17 +27,27 @@ function createRenderAssets(): {
   assets: RuntimeRenderAssets;
   dryingRack: Texture;
   herbGatherer: Texture;
+  herbGathererMap: Texture;
   marketMerchant: Texture;
+  marketMerchantMap: Texture;
+  playerLegacy: Texture;
+  playerMap: Texture;
   sealingCabinet: Texture;
+  spiritStone: Texture;
 } {
   const fallback = new Texture({ source: Texture.EMPTY.source });
+  const playerLegacy = new Texture({ source: Texture.EMPTY.source });
   const dryingRack = new Texture({ source: Texture.EMPTY.source });
   const herbGatherer = new Texture({ source: Texture.EMPTY.source });
+  const herbGathererMap = new Texture({ source: Texture.EMPTY.source });
   const marketMerchant = new Texture({ source: Texture.EMPTY.source });
+  const marketMerchantMap = new Texture({ source: Texture.EMPTY.source });
+  const playerMap = new Texture({ source: Texture.EMPTY.source });
   const sealingCabinet = new Texture({ source: Texture.EMPTY.source });
+  const spiritStone = new Texture({ source: Texture.EMPTY.source });
   return {
     assets: {
-      player: fallback,
+      player: playerLegacy,
       guardBeast: fallback,
       guardBeastVariants: textureMap(fallback),
       cropHerbs: textureMap(fallback),
@@ -49,17 +59,29 @@ function createRenderAssets(): {
       locations: textureMap(fallback),
       logos: textureMap(fallback),
       hotbarIcons: textureMap(fallback),
-      itemIcons: textureMap(fallback),
+      itemIcons: textureMap(fallback, {
+        'icon.item.spirit-stone': spiritStone
+      }),
       npcs: textureMap(fallback, {
         'sprite.npc.herb-gatherer': herbGatherer,
         'sprite.npc.market-merchant': marketMerchant
+      }),
+      mapSprites: textureMap(fallback, {
+        'map-sprite.player-v1': playerMap,
+        'map-sprite.herb-gatherer-v1': herbGathererMap,
+        'map-sprite.market-merchant-v1': marketMerchantMap
       }),
       tiles: textureMap(fallback)
     },
     dryingRack,
     herbGatherer,
+    herbGathererMap,
     marketMerchant,
-    sealingCabinet
+    marketMerchantMap,
+    playerLegacy,
+    playerMap,
+    sealingCabinet,
+    spiritStone
   };
 }
 
@@ -105,7 +127,7 @@ describe('renderer retained world objects', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);
     const { content, state } = createRetentionFixture();
-    const { assets } = createRenderAssets();
+    const { assets, herbGatherer, herbGathererMap } = createRenderAssets();
 
     drawWorld(layers, state, content, undefined, assets);
     expect(layers.worldRoot.visible).toBe(true);
@@ -181,14 +203,14 @@ describe('renderer retained world objects', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);
     const { content, state } = createRetentionFixture();
-    const { assets, herbGatherer } = createRenderAssets();
+    const { assets, herbGathererMap } = createRenderAssets();
 
     state.season = 'spring';
     state.seasonDay = 6;
     expect(npcWorldPreviewPlacements(state).find(placement => placement.npcId === 'npc.herb-gatherer')?.locationId).toBe('herb-plot');
     drawWorld(layers, state, content, undefined, assets);
 
-    const springMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === herbGatherer);
+    const springMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === herbGathererMap);
     expect(springMatches).toHaveLength(1);
     const retained = springMatches[0]!;
     const springX = retained.x;
@@ -199,7 +221,7 @@ describe('renderer retained world objects', () => {
     expect(npcWorldPreviewPlacements(state).find(placement => placement.npcId === 'npc.herb-gatherer')?.locationId).toBe('creek-field');
     drawWorld(layers, state, content, undefined, assets);
 
-    const summerMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === herbGatherer);
+    const summerMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === herbGathererMap);
     expect(summerMatches).toHaveLength(1);
     expect(summerMatches[0]).toBe(retained);
     expect(retained.destroyed).toBe(false);
@@ -210,7 +232,7 @@ describe('renderer retained world objects', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);
     const { content, state } = createRetentionFixture();
-    const { assets } = createRenderAssets();
+    const { assets, herbGatherer, herbGathererMap } = createRenderAssets();
     state.season = 'summer';
     state.seasonDay = 8;
     state.social['npc.herb-gatherer'] = { affection: 160, lastGiftDay: 0 };
@@ -227,6 +249,8 @@ describe('renderer retained world objects', () => {
     const marker = layers.npcMarkers.getChildByLabel(markerLabel);
 
     expect(npc).toBeInstanceOf(Sprite);
+    expect((npc as Sprite).texture).toBe(herbGathererMap);
+    expect((npc as Sprite).texture).not.toBe(herbGatherer);
     expect(marker).toBeInstanceOf(Graphics);
     expect(layers.worldRoot.getChildIndex(layers.npcMarkers)).toBeGreaterThan(layers.worldRoot.getChildIndex(layers.sceneSprites));
 
@@ -240,7 +264,7 @@ describe('renderer retained world objects', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);
     const { content, state, facilityId } = createRetentionFixture();
-    const { assets } = createRenderAssets();
+    const { assets, playerLegacy, playerMap } = createRenderAssets();
     const facilityLabel = `world:facility:${facilityId}`;
 
     drawWorld(layers, state, content, undefined, assets);
@@ -250,6 +274,8 @@ describe('renderer retained world objects', () => {
     expect(retainedFacility).toBeInstanceOf(Sprite);
     expect(retainedLocation).toBeInstanceOf(Sprite);
     expect(retainedPlayer).toBeInstanceOf(Sprite);
+    expect((retainedPlayer as Sprite).texture).toBe(playerMap);
+    expect((retainedPlayer as Sprite).texture).not.toBe(playerLegacy);
 
     state.facilities.get(facilityId)!.job = {
       inputItemId: 'herb.mossling',
@@ -272,7 +298,7 @@ describe('renderer retained world objects', () => {
     const app = createFakeApplication();
     const layers = createLayers(app);
     const { content, state } = createRetentionFixture();
-    const { assets, marketMerchant } = createRenderAssets();
+    const { assets, marketMerchantMap } = createRenderAssets();
 
     state.season = 'spring';
     state.seasonDay = 6;
@@ -281,7 +307,7 @@ describe('renderer retained world objects', () => {
     expect(initialPlacements.map(placement => placement.locationId)).toEqual(['valley-market']);
     drawWorld(layers, state, content, undefined, assets);
 
-    const initialMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === marketMerchant && child.label.startsWith('world:npc:'));
+    const initialMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === marketMerchantMap && child.label.startsWith('world:npc:'));
     expect(initialMatches).toHaveLength(1);
     const retained = initialMatches[0]!;
     const initialPosition = { x: retained.x, y: retained.y };
@@ -297,7 +323,7 @@ describe('renderer retained world objects', () => {
     expect(festivalPlacements.map(placement => placement.locationId)).toEqual(['festival-ground', 'valley-market']);
     drawWorld(layers, state, content, undefined, assets);
 
-    const festivalMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === marketMerchant && child.label.startsWith('world:npc:'));
+    const festivalMatches = layers.sceneSprites.children.filter(child => child instanceof Sprite && child.texture === marketMerchantMap && child.label.startsWith('world:npc:'));
     expect(festivalMatches).toHaveLength(2);
     expect(festivalMatches).toContain(retained);
     expect(retained.destroyed).toBe(false);
@@ -354,6 +380,31 @@ describe('renderer retained world objects', () => {
     expect(layers.sceneSprites.getChildByLabel(secondLabel)).toBe(second);
     expect(first?.destroyed).toBe(true);
     expect(second?.destroyed).toBe(false);
+  });
+
+  it('renders ground item icons as retained scene sprites and removes them after pickup', () => {
+    const app = createFakeApplication();
+    const layers = createLayers(app);
+    const { content, state } = createRetentionFixture();
+    const { assets, spiritStone } = createRenderAssets();
+    const groundItemId = placeGroundItem(state, { itemId: 'item.spirit-stone', count: 3, pos: { ...state.player.position } });
+    const label = `world:ground-item:${groundItemId}`;
+
+    drawWorld(layers, state, content, undefined, assets);
+    const retained = layers.sceneSprites.getChildByLabel(label);
+
+    expect(retained).toBeInstanceOf(Sprite);
+    if (!(retained instanceof Sprite)) throw new Error('Expected a retained ground item Sprite.');
+    expect(retained.texture).toBe(spiritStone);
+
+    drawWorld(layers, state, content, undefined, assets);
+    expect(layers.sceneSprites.getChildByLabel(label)).toBe(retained);
+
+    state.groundItems.length = 0;
+    drawWorld(layers, state, content, undefined, assets);
+
+    expect(layers.sceneSprites.getChildByLabel(label)).toBeNull();
+    expect(retained.destroyed).toBe(true);
   });
 
   it('keeps an existing array object when a newly inserted array sorts before it', () => {

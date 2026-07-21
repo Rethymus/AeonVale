@@ -194,6 +194,21 @@ describe('农庄设施空间化', () => {
     expect(itemCount(state.player, 'item.dried-herb')).toBe(2);
   });
 
+  it('手动收取产物遇到随身背包满栈时不清空设施产物', () => {
+    const { state, ctx } = setup();
+    const placed = placeFree(state, 'drying-rack', 1, 1).facility!;
+    state.player.inventory['item.dried-herb'] = { itemId: 'item.dried-herb', count: 30 };
+    placed.job = { inputItemId: 'herb.mossling', outputItemId: 'item.dried-herb', outputCount: 1, daysRemaining: 0 };
+
+    const result = collectFacility(state, placed.id, ctx);
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('储物戒已满');
+    expect(placed.job).toEqual({ inputItemId: 'herb.mossling', outputItemId: 'item.dried-herb', outputCount: 1, daysRemaining: 0 });
+    expect(itemCount(state.player, 'item.dried-herb')).toBe(30);
+    expect(state.events.some(e => e.type === 'facility-collect')).toBe(false);
+  });
+
   it('忙碌设施拒绝新加工队列', () => {
     const { state, ctx } = setup();
     const placed = placeFree(state, 'drying-rack', 1, 1).facility!;

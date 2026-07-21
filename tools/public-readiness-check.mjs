@@ -132,7 +132,8 @@ requireIncludes('tools/portfolio-mvp-preflight.mjs', 'paintedRatio', 'Public dem
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'minPaintedRatio: 0.55', 'Public demo preflight must preserve the nonblank screenshot paint threshold');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'readUInt32BE(16)', 'Public demo preflight must parse PNG screenshot width');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'readUInt32BE(20)', 'Public demo preflight must parse PNG screenshot height');
-requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 960, height: 542', 'Public demo preflight must verify generated desktop CSS-rendered canvas screenshot dimensions');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 1440, height: 810', 'Public demo preflight must verify generated desktop CSS-rendered canvas screenshot dimensions');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 1440, height: 825', 'Public demo preflight must verify generated backdrop CSS-rendered canvas screenshot dimensions');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 736, height: 414', 'Public demo preflight must verify generated small-viewport landscape canvas screenshot dimensions');
 requireIncludes('tests/browser/openGame.ts', "scale: 'css'", 'Portfolio screenshot helper must capture the CSS-rendered canvas instead of its internal bitmap');
 requireIncludes('tests/browser/portfolio-capture.spec.ts', 'renderedCanvasPngSnapshot', 'Portfolio screenshot capture must use the CSS-rendered canvas helper');
@@ -169,7 +170,7 @@ requireIncludes('tools/portfolio-release-checklist.mjs', 'Go / No-Go 证据', 'P
 requireIncludes('tools/portfolio-release-checklist.mjs', '4 张 test-results/portfolio/*.png 截图为本次生成', 'Portfolio release checklist must require fresh portfolio screenshot evidence');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成', 'Portfolio release checklist must require fresh public demo evidence JSON');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10', 'Portfolio release checklist must require maintainers to inspect today briefing proof evidence');
-requireIncludes('tools/portfolio-release-checklist.mjs', '3 张桌面 CSS 渲染截图为 960x542，1 张横屏小视口 keyboard-first 截图为 736x414', 'Portfolio release checklist must require maintainers to inspect honest CSS-rendered screenshot dimensions');
+requireIncludes('tools/portfolio-release-checklist.mjs', '01/03 桌面 CSS 渲染截图为 1440x810，02 叠层背景截图为 1440x825，1 张横屏小视口 keyboard-first 截图为 736x414', 'Portfolio release checklist must require maintainers to inspect honest CSS-rendered screenshot dimensions');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'paintedRatio 达到阈值，colors 达到阈值', 'Portfolio release checklist must require maintainers to inspect screenshot paint stats');
 requireIncludes('tools/portfolio-release-checklist.mjs', '该文件仍是生成物，不进入公开树', 'Portfolio release checklist must keep public demo evidence JSON out of the public tree');
 requireIncludes('tools/portfolio-release-checklist.mjs', '每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成', 'Portfolio release checklist must keep live Pages verification as the GitHub Pages completion gate');

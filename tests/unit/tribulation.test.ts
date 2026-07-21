@@ -22,7 +22,7 @@ describe('天雷 Targeting ', () => {
     expect(sum).toBeCloseTo(1, 6);
   });
 
-  it('金属性灵草格权重 > 空地（种田即布防）', () => {
+  it('金属性灵草格权重 > 空地（种田即布阵）', () => {
     const { state, ctx } = setup();
     // 同一格 (1,1)（远离玩家中心）：种植雷击木前后的权重对比，隔离金属因子
     const t = tileAt(state, 1, 1)!;

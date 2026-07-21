@@ -27,15 +27,18 @@ content/saves/*.json
 .omc/
 .codex/
 .agents/
+.superpowers/
 **/.claude/
 **/.omc/
 **/.codex/
 **/.agents/
+**/.superpowers/
 
 # Local reports and browser artifacts
 playwright-report/
 test-results/
 dogfood-output/
+tmp/
 *.tsbuildinfo
 .tmp.playwright-*.config.ts
 

@@ -16,25 +16,25 @@ const ONBOARDING_ROUTE_LINES: Readonly<Record<OnboardingObjectiveId, string>> = 
   'first-market-restock': '动线：先去山谷集市补种，再回农庄接上第二轮。',
   'first-second-sow': '动线：回到农庄，把新买到的种子立刻播回田里。',
   'first-second-water': '动线：别让第二轮断掉，先给新苗浇上第一轮水。',
-  'first-loop-complete': '动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。'
+  'first-loop-complete': '动线：农务闭环已成，回农庄点“农务”进入加工或阵法入口，把余货转成炉料与承雷准备。'
 };
 
 const ONBOARDING_ACTION_LINES: Readonly<Record<OnboardingObjectiveId, string>> = {
-  'first-till': '操作：站到空地前，按 空格 / E 翻地。',
-  'first-sow': '操作：保持站在已翻土地前，按 Z 直接播种；若要手动换种子，可按 Space / Q 切换热栏，或按 1-0 直选。',
-  'first-water': '操作：面向刚播下的幼苗，按 X 浇第一轮水。',
-  'first-harvest': '操作：先照料灵田，成熟后面向作物按 V 收获。',
-  'first-ship': '操作：靠近出货箱，打开出货面板后按 Enter 投货。',
-  'first-sleep': '操作：确认今日农务已收尾，直接按 Enter 过夜。',
-  'first-market-restock': '操作：按 Shift+Tab 打开地点目录，选集市服务后确认补种。',
-  'first-second-sow': '操作：回农庄后面向已翻土地，按 Z 把新种子补回去；若要手动换种子，可按 Space / Q 切换热栏，或按 1-0 直选。',
-  'first-second-water': '操作：刚补种完别停，面向新苗按 X 补第一轮水。',
-  'first-loop-complete': '操作：继续补种浇水；有余货时按 Shift+M 打开农庄加工或阵法面板。'
+  'first-till': '操作：点击空地，角色会走到旁边并翻地。',
+  'first-sow': '操作：点击已翻灵田播种；需要指定种子时先在行囊里选择。',
+  'first-water': '操作：点击刚播下的幼苗浇第一轮水。',
+  'first-harvest': '操作：先照料灵田，成熟后点击作物收获。',
+  'first-ship': '操作：靠近出货箱或点击出货箱，打开出货面板后确认投货。',
+  'first-sleep': '操作：确认今日农务已收尾，点击居所或“歇息”过夜。',
+  'first-market-restock': '操作：点下方“地点”打开山河图，选集市服务后补种；快捷键 M 可用。',
+  'first-second-sow': '操作：回农庄后点击已翻灵田补种；需要指定种子时先在行囊里选择。',
+  'first-second-water': '操作：刚补种完别停，点击新苗补第一轮水。',
+  'first-loop-complete': '操作：继续补种浇水；有余货时点“农务”打开加工或阵法面板。'
 };
 
 const ONBOARDING_PURPOSE_LINES: Readonly<Record<OnboardingObjectiveId, string>> = {
   'first-till': '意义：这块田会产出炼丹、布阵和引劫的第一批资源。',
-  'first-sow': '意义：种子入土后，农务才会转成丹药、阵法和抗劫底气。',
+  'first-sow': '意义：种子入土后，农务才会转成丹药、阵法和承雷底气。',
   'first-water': '意义：浇稳第一轮水，才能把灵草养成后续炼丹材料。',
   'first-harvest': '意义：第一株成熟灵草会把种田接到炼丹、出货和备劫。',
   'first-ship': '意义：出货换回灵石，下一轮补种和修行才不断档。',
@@ -42,7 +42,7 @@ const ONBOARDING_PURPOSE_LINES: Readonly<Record<OnboardingObjectiveId, string>> 
   'first-market-restock': '意义：补种把一次收获变成稳定经营，后续才有炼丹库存。',
   'first-second-sow': '意义：第二轮播种接上后，农庄才从教程变成循环。',
   'first-second-water': '意义：第二轮浇水完成，种田即备战的节奏才真正成立。',
-  'first-loop-complete': '意义：稳定农务后，灵草会持续转成丹药、阵法与抗劫底气。'
+  'first-loop-complete': '意义：稳定农务后，灵草会持续转成丹药、阵法与承雷底气。'
 };
 
 const ONBOARDING_PAYOFF_LINES: Readonly<Record<OnboardingObjectiveId, string>> = {
@@ -210,7 +210,7 @@ export function onboardingRestockReturnToastPresentation(): OnboardingToastPrese
 
 export function onboardingSecondWaterCompletionToastPresentation(): OnboardingToastPresentation {
   return {
-    message: '第二轮药材已接上：稳住农务；有余货时按 Shift+M 转去炼丹、阵法与备劫。',
+    message: '第二轮药材已接上：稳住农务；有余货时点“农务”转去炼丹、阵法与备劫。',
     assetId: 'loc.herb-plot'
   };
 }

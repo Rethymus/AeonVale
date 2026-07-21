@@ -19,6 +19,15 @@ export function resolvePreviewTexture(renderAssets: RuntimeRenderAssets, assetId
   if (assetId.startsWith('sprite.guard-beast')) {
     return renderAssets.guardBeastVariants?.[assetId] ?? renderAssets.guardBeast;
   }
+  if (assetId.startsWith('portrait.')) {
+    return renderAssets.portraits?.[assetId] ?? renderAssets.npcs[assetId];
+  }
+  if (assetId.startsWith('map-sprite.')) {
+    return renderAssets.mapSprites?.[assetId];
+  }
+  if (assetId.startsWith('inventory-icon.')) {
+    return renderAssets.inventoryIcons?.[assetId];
+  }
   if (assetId.startsWith('tile.')) {
     return renderAssets.tiles[assetId];
   }

@@ -14,7 +14,7 @@ export function locationPreviewFocusReason(state: GameState, objectiveId: Onboar
     return '回农庄把刚买到的种子播回田里，让药材不断档。';
   }
   if (objectiveId === 'first-loop-complete' && locationId === 'farmstead' && command === 'show-processing') {
-    return '首轮农务已成，回农庄按 Shift+M 把余货先排进加工，再接炼丹、阵法与备劫。';
+    return '首轮农务已成，回农庄点“农务”把余货先排进加工，再接炼丹、阵法与备劫。';
   }
   if (objectiveId === 'first-sleep' && locationId === 'farmstead') {
     return '今日农务已收尾，直接过夜等次日结算。';
@@ -74,7 +74,7 @@ export function locationPreviewFocusReason(state: GameState, objectiveId: Onboar
       }
       return '先巡暖棚，把育苗与回养节奏稳在今天这轮。';
     case 'show-arrays':
-      return '阵器与农庄小阵在这里维护，把产出转成备劫防线。';
+      return '阵器与农庄小阵在这里维护，把产出转成导雷阵势。';
     case 'browse-festival-stall':
       return '节日限定货只在当下，先看完再回日常。';
     case 'show-festival':

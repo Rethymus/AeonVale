@@ -74,7 +74,7 @@ function commandButton(command: string): FakeElement {
 }
 
 function createFixture() {
-  const buttons = Object.fromEntries(['move-up', 'move-down', 'move-left', 'move-right', 'primary', 'secondary', 'menu', 'farm', 'inventory', 'cultivation', 'map', 'alchemy', 'journey', 'pause', 'settings', 'end-day', 'unknown'].map(command => [command, commandButton(command)])) as Record<string, FakeElement>;
+  const buttons = Object.fromEntries(['move-up', 'move-down', 'move-left', 'move-right', 'primary', 'cancel', 'secondary', 'menu', 'farm', 'inventory', 'cultivation', 'map', 'furnace', 'journey', 'pause', 'settings', 'end-day', 'unknown'].map(command => [command, commandButton(command)])) as Record<string, FakeElement>;
   const semanticNodes = {
     '#game-instructions': new FakeElement({}, '使用当前页面控件。'),
     '#game-surface': new FakeElement({}, '当前页面将在载入后显示。'),
@@ -106,20 +106,21 @@ describe('responsive shell', () => {
     fixture.buttons['move-left']!.emit('click');
     fixture.buttons['move-right']!.emit('click');
     fixture.buttons.primary!.emit('click');
+    fixture.buttons.cancel!.emit('click');
     fixture.buttons.secondary!.emit('click');
     fixture.buttons.menu!.emit('click');
     fixture.buttons.farm!.emit('click');
     fixture.buttons.inventory!.emit('click');
     fixture.buttons.cultivation!.emit('click');
     fixture.buttons.map!.emit('click');
-    fixture.buttons.alchemy!.emit('click');
+    fixture.buttons.furnace!.emit('click');
     fixture.buttons.journey!.emit('click');
     fixture.buttons.pause!.emit('click');
     fixture.buttons.settings!.emit('click');
     fixture.buttons['end-day']!.emit('click');
     fixture.buttons.unknown!.emit('click');
 
-    expect(commands).toEqual([{ kind: 'move', direction: 'up' }, { kind: 'move', direction: 'down' }, { kind: 'move', direction: 'left' }, { kind: 'move', direction: 'right' }, { kind: 'confirm' }, { kind: 'cycle', direction: 'next' }, { kind: 'open', target: 'pause' }, { kind: 'open', target: 'menu' }, { kind: 'open', target: 'inventory' }, { kind: 'open', target: 'cultivation' }, { kind: 'open', target: 'map' }, { kind: 'open', target: 'alchemy' }, { kind: 'open', target: 'journey' }, { kind: 'open', target: 'pause' }, { kind: 'open', target: 'settings' }, { kind: 'end-day' }]);
+    expect(commands).toEqual([{ kind: 'move', direction: 'up' }, { kind: 'move', direction: 'down' }, { kind: 'move', direction: 'left' }, { kind: 'move', direction: 'right' }, { kind: 'confirm' }, { kind: 'cancel' }, { kind: 'cycle', direction: 'next' }, { kind: 'open', target: 'pause' }, { kind: 'open', target: 'menu' }, { kind: 'open', target: 'inventory' }, { kind: 'open', target: 'cultivation' }, { kind: 'open', target: 'map' }, { kind: 'open', target: 'furnace' }, { kind: 'open', target: 'journey' }, { kind: 'open', target: 'pause' }, { kind: 'open', target: 'settings' }, { kind: 'end-day' }]);
     expect(fixture.root.queriedSelectors).toContain('button[data-game-command]');
     shell.destroy();
   });

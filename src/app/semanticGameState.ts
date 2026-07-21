@@ -16,10 +16,8 @@ export interface SemanticWorldAttention {
   readonly actions?: string;
 }
 
-export interface SemanticAlchemyState {
-  readonly resultLabel: string;
-  readonly primaryLabel: string;
-  readonly primaryDisabled: boolean;
+export interface SemanticInventoryState {
+  readonly viewMode: 'full' | 'furnace-focus';
 }
 
 export interface SemanticTribulationState {
@@ -43,13 +41,14 @@ export interface SemanticGameStateInput {
   readonly journey?: SemanticJourneyState;
   readonly worldAttention?: SemanticWorldAttention;
   readonly pauseWorldNavigationAvailable?: boolean;
-  readonly alchemy?: SemanticAlchemyState;
+  readonly inventory?: SemanticInventoryState;
   readonly tribulation?: SemanticTribulationState;
   readonly aftermath?: SemanticAftermathState;
   readonly saveHealth?: SaveHealth;
 }
 
 interface SemanticPageContent {
+  readonly surfaceLabel?: string;
   readonly status: string;
   readonly objective: string;
   readonly actions: readonly string[];
@@ -105,7 +104,7 @@ function worldContent(input: SemanticGameStateInput): SemanticPageContent {
   return {
     status: input.worldStatus,
     objective: journey ? `${journey.progressLabel}。${journey.currentAction}。${journey.motivation}` : '在农庄中选择下一步行动',
-    actions: journey ? [journey.cta, '方向移动', '主要操作', '切换', '菜单'] : ['方向移动', '主要操作', '菜单'],
+    actions: journey ? [journey.cta, '点击目标移动或互动', '行囊', '丹炉', '山河图', '修行'] : ['点击目标移动或互动', '行囊', '丹炉', '山河图', '修行'],
     panel: null
   };
 }
@@ -135,31 +134,34 @@ function pageContent(input: SemanticGameStateInput): SemanticPageContent {
       return {
         status: save ? `${input.worldStatus} ${save.pauseStatus}` : input.worldStatus,
         objective: '选择系统页面，或继续游戏',
-        actions: input.pauseWorldNavigationAvailable ? ['农务', '背包', '地点', '修行', '丹炉', '设置', '继续游戏'] : ['设置', '继续游戏'],
+        actions: input.pauseWorldNavigationAvailable ? ['农务', '行囊', '地点', '修行', '丹炉', '设置', '继续游戏'] : ['设置', '继续游戏'],
         panel: '暂停菜单'
       };
     case 'inventory':
-      return { status: input.worldStatus, objective: '查看随身物品', actions: ['返回农庄'], panel: '背包' };
+      if (input.inventory?.viewMode === 'furnace-focus') {
+        return {
+          surfaceLabel: '丹炉',
+          status: input.worldStatus,
+          objective: '按丹方投影填入九宫药盘并开炉炼制',
+          actions: ['自动入药', '调整炉火', '开炉炼制', '返回农庄'],
+          panel: '丹炉'
+        };
+      }
+      return {
+        surfaceLabel: '物品管理',
+        status: input.worldStatus,
+        objective: '整理随身行囊、农庄仓库与出货箱',
+        actions: ['切换行囊/仓库/出货箱/丹炉', '拖拽换位或转移', '拆分/使用/丢弃', '返回农庄'],
+        panel: '物品管理'
+      };
     case 'map':
       return { status: input.worldStatus, objective: '查看山谷地点', actions: ['返回农庄'], panel: '地点' };
     case 'cultivation':
       return { status: input.worldStatus, objective: '查看体魄与备劫状态', actions: ['返回农庄'], panel: '修行' };
-    case 'alchemy': {
-      const alchemy = input.alchemy;
-      const actions = ['调整炉火'];
-      if (alchemy && !alchemy.primaryDisabled) actions.push(alchemy.primaryLabel);
-      actions.push('返回农庄');
-      return {
-        status: input.worldStatus,
-        objective: alchemy?.resultLabel ?? '控制炉火，炼制首枚备劫丹',
-        actions,
-        panel: '炼丹'
-      };
-    }
     case 'tribulation': {
       const tribulation = input.tribulation;
       const actions: string[] = [];
-      if (tribulation && !tribulation.takePillDisabled) actions.push('服用避雷丹');
+      if (tribulation && !tribulation.takePillDisabled) actions.push('服用承雷丹');
       if (tribulation && !tribulation.movementDisabled) actions.push('预警后走位');
       if (tribulation && !tribulation.primaryDisabled) actions.push(tribulation.primaryLabel);
       actions.push('暂停');
@@ -182,8 +184,12 @@ function pageContent(input: SemanticGameStateInput): SemanticPageContent {
     }
     case 'ending':
       return { status: save?.endingStatus ?? '旅程已经结束', objective: '查看本次旅程结局', actions: ['返回标题'], panel: '结局' };
+    case 'narration':
+      return { status: '灵韵叙录进行中', objective: '阅读第一人称叙事，或在叙录界面回看章节与结局', actions: ['继续', '略过', '前文', '叙录'], panel: '灵韵叙录' };
     case 'portrait-blocked':
       return { status: save?.portraitStatus ?? '当前存档状态尚未确认', objective: '旋转设备后继续', actions: ['请将设备横置'], panel: '设备方向提示' };
+    default:
+      return { status: input.worldStatus, objective: '在当前页面选择下一步行动', actions: ['返回', '继续'], panel: null };
   }
 }
 
@@ -196,7 +202,7 @@ export function interactionPanelSemanticLabel(panel: InteractionPanelState): str
     case 'npc-action':
       return '人物操作';
     case 'build':
-      return '建造';
+      return '建造/布阵';
     case 'upgrade':
       return '扩建';
     case 'npc':
@@ -213,6 +219,8 @@ export function interactionPanelSemanticLabel(panel: InteractionPanelState): str
       return '旧茶棚';
     case 'greenhouse':
       return '暖棚养护';
+    case 'location-action':
+      return '地点行动';
     case 'storage':
       return panel.mode === 'deposit' ? '仓储存入' : '仓储取出';
     case 'shipping':
@@ -228,8 +236,8 @@ export function deriveSemanticGameState(input: SemanticGameStateInput): Semantic
   const surface = input.presentation?.surface ?? 'loading';
   const content = pageContent(input);
   return {
-    instructions: surface === 'world' ? '使用方向键或 WASD 移动，空格或 E 执行当前操作，Escape 返回。' : '使用 Tab 浏览当前页面控件，Enter 或 Space 激活。',
-    surface: field('当前页面', APP_SURFACE_LABELS[surface]),
+    instructions: surface === 'world' ? '点击目标移动或互动；行囊常驻，丹炉、山河图与修行收在更多中；键盘仅需 B、Enter、Escape。' : '使用 Tab 浏览当前页面控件，Enter 或 Space 激活。',
+    surface: field('当前页面', content.surfaceLabel ?? APP_SURFACE_LABELS[surface]),
     status: field('当前状态', content.status),
     objective: field('当前目标', content.objective),
     actions: actionsField(content.actions),

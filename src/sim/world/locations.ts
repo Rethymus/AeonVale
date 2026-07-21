@@ -243,6 +243,7 @@ export function getLocationDirectory(state: GameState): LocationStatus[] {
   return LOCATION_DEFS.map(location => {
     const dynamicServices: LocationService[] = [...location.services];
     if (location.id === 'festival-ground' && festival) dynamicServices.push('festival-ritual', 'festival-stall');
+    if (location.id === 'ruin-gate' && state.postAscension.mode === 'stayed-in-world') dynamicServices.push('commission-board');
     const npcs = npcNamesByLocation.get(location.id) ?? [];
     if (npcs.length > 0) dynamicServices.unshift('encounter');
     const serviceStates = dynamicServices.map(service => ({ service, availability: locationServiceAvailability(state, location.id, service) }));

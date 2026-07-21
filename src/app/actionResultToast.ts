@@ -99,7 +99,7 @@ function facilityOutputPurpose(outputItemId: string | undefined): string {
     case 'item.sealed-herb':
       return '可炼丹、交付或留作备劫药材';
     case 'item.array-core':
-      return '可布阵，把农庄产出转成备劫防线';
+      return '可布阵，把农庄产出转成导雷阵材';
     default:
       return '接上农庄加工循环';
   }
@@ -150,7 +150,7 @@ export function firstHarvestMilestoneToast(events: readonly GameEvent[], content
   const defId = (harvest.payload as { defId?: string })?.defId ?? '';
   const herbName = content.herbs.get(defId)?.displayName ?? (defId || '灵草');
   const guidance = normalizeGuidanceLine(nextStep);
-  const purpose = '可炼丹、可出货，也是布阵备劫的第一份材料';
+  const purpose = '可炼丹、可出货，也是布阵承雷的第一份材料';
   return guidance ? `首轮收获：${herbName} 已入手｜${purpose}｜${guidance}` : `首轮收获：${herbName} 已入手｜${purpose}`;
 }
 
@@ -182,11 +182,11 @@ export function facilityStatusToast(action: 'drying' | 'sealing' | 'furnace', re
   if (daysRemaining <= 0) {
     switch (action) {
       case 'drying':
-        return '晾晒完成，Shift+M 后按 2 收取（F1 兼容）';
+        return '晾晒完成，点“农务”进入设施收取';
       case 'sealing':
-        return '封藏完成，Shift+M 后按 2 收取（F1 兼容）';
+        return '封藏完成，点“农务”进入设施收取';
       case 'furnace':
-        return '熔炼完成，Shift+M 后按 2 收取（F1 兼容）';
+        return '熔炼完成，点“农务”进入设施收取';
     }
   }
   switch (action) {
@@ -237,8 +237,8 @@ export function pillUseToast(pillId: string, result: PillUseResult, content: Con
 }
 
 function pillUsePurposeLine(effects: readonly string[]): string {
-  if (effects.some(effect => effect.includes('避雷护体') || effect.includes('铁骨减伤'))) {
-    return '备劫防线已补强';
+  if (effects.some(effect => effect.includes('承雷稳脉') || effect.includes('铁骨减伤'))) {
+    return '承雷准备已稳住';
   }
   if (effects.some(effect => effect.includes('回血') || effect.includes('强骨'))) {
     return '续航和抗伤余量提高';

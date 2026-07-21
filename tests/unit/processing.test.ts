@@ -36,6 +36,20 @@ describe('农庄加工设施', () => {
     expect(itemCount(state.player, 'item.dried-herb')).toBe(3);
   });
 
+  it('晾晒产出超过目标堆叠剩余空间时失败且不消耗灵草', () => {
+    const { state, ctx } = setup();
+    state.player.inventory['item.dried-herb'] = { itemId: 'item.dried-herb', count: 29 };
+    mutateQualityItem(state.player, 'herb.dewroot', 'treasure', 1);
+
+    const result = dryHerb(state, 'herb.dewroot', ctx, 'treasure');
+
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('储物戒已满');
+    expect(itemCount(state.player, 'item.dried-herb')).toBe(29);
+    expect(qualityItemCount(state.player, 'herb.dewroot', 'treasure')).toBe(1);
+    expect(state.events.some(e => e.type === 'process-dry-herb')).toBe(false);
+  });
+
   it('非法材料失败且不改变状态', () => {
     const { state, ctx } = setup();
     mutateItem(state.player, 'item.spirit-stone', 1);

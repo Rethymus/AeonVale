@@ -1,10 +1,10 @@
-const forbiddenPathPatterns = [/^docs\//, /^assets\/references\//, /^\.public-tree\//, /^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /^node_modules\//, /^\.git\//, /^\.tmp\.playwright-.*\.config\.ts$/, /(^|\/)\.env($|\.)/, /\.map$/];
+const forbiddenPathPatterns = [/^docs\//, /^\.planning\//, /^assets\/references\//, /^\.public-tree\//, /^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//, /^\.superpowers\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /^dogfood-output\//, /^tmp\//, /^node_modules\//, /^\.git\//, /^\.tmp\.playwright-.*\.config\.ts$/, /(^|\/)\.env($|\.)/, /\.map$/];
 
-const privateDesignPathPatterns = [/^docs\//, /^assets\/ART-ASSETS-STATUS\.md$/, /^assets\/references\//];
+const privateDesignPathPatterns = [/^docs\//, /^\.planning\//, /^assets\/ART-ASSETS-STATUS\.md$/, /^assets\/references\//];
 
-const localStatePathPatterns = [/^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//];
+const localStatePathPatterns = [/^\.omc\//, /^\.claude\//, /^\.codex\//, /^\.agents\//, /^\.superpowers\//];
 
-const generatedPathPatterns = [/^\.public-tree\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /^node_modules\//, /^\.tmp\.playwright-.*\.config\.ts$/, /\.map$/];
+const generatedPathPatterns = [/^\.public-tree\//, /^dist\//, /^coverage\//, /^playwright-report\//, /^test-results\//, /^dogfood-output\//, /^tmp\//, /^node_modules\//, /^\.tmp\.playwright-.*\.config\.ts$/, /\.map$/];
 
 const secretPathPatterns = [/(^|\/)\.env($|\.)/];
 

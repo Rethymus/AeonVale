@@ -24,33 +24,13 @@ export interface JourneyGuideContext {
   readonly hasMatureCrop?: boolean;
 }
 
-/**
- * Hotkey hints mirrored onto journey CTAs so mouse and keyboard paths stay aligned
- * (player audit P2). Keep labels short; keys match world shortcuts Z/X/V/Space.
- */
-const JOURNEY_CTA_HOTKEY: Readonly<Partial<Record<JourneyGuideObjectiveId, string>>> = {
-  'first-till': 'Space/E',
-  'first-sow': 'Z',
-  'first-water': 'X',
-  'first-harvest': 'V',
-  'first-second-sow': 'Z',
-  'first-second-water': 'X'
-};
-
-function withHotkey(cta: string, objectiveId: JourneyGuideObjectiveId | null): string {
-  if (objectiveId == null) return cta;
-  const key = JOURNEY_CTA_HOTKEY[objectiveId];
-  if (!key || cta.includes(`(${key})`)) return cta;
-  return `${cta} (${key})`;
-}
-
 type ActiveJourneyGuide = Omit<JourneyGuide, 'totalStages' | 'completed'>;
 
 function activeGuide(guide: ActiveJourneyGuide): JourneyGuide {
   return Object.freeze({ ...guide, totalStages: JOURNEY_STAGE_COUNT, completed: false });
 }
 
-const FARM_MOTIVATION = '灵草是炼丹、布阵与备劫的第一批资源';
+const FARM_MOTIVATION = '灵草是炼丹、淬体与引劫的第一批资源——种田只是凡骨的开端';
 
 const GUIDES: Readonly<Record<JourneyGuideObjectiveId, JourneyGuide>> = {
   'first-till': activeGuide({
@@ -130,16 +110,16 @@ const GUIDES: Readonly<Record<JourneyGuideObjectiveId, JourneyGuide>> = {
     stage: 2,
     stageId: 'alchemy',
     progressLabel: '2/4 · 炼制丹药',
-    currentAction: '前往丹炉准备首枚备劫丹',
-    motivation: '备劫丹会把农庄收获转成抵御天雷的手段',
+    currentAction: '前往丹炉准备首枚承雷丹',
+    motivation: '承雷丹会把灵草药性转成稳住经络、引雷入体的手段',
     cta: '打开丹炉'
   }),
   'journey-alchemy': activeGuide({
     stage: 2,
     stageId: 'alchemy',
     progressLabel: '2/4 · 炼制丹药',
-    currentAction: '选择材料并炼出首枚备劫丹',
-    motivation: '这枚丹药会为第一次教学天劫提供容错',
+    currentAction: '选择材料并炼出首枚承雷丹',
+    motivation: '这枚丹药不是避开雷，而是让凡骨能承住第一缕雷气',
     cta: '开始炼丹'
   }),
   'journey-tribulation': activeGuide({
@@ -209,15 +189,12 @@ export function buildJourneyGuide(objectiveId: JourneyGuideObjectiveId | null, c
     return Object.freeze({
       ...base,
       currentAction: '照料灵田，等待灵草成熟',
-      motivation: '幼苗还需生长；歇息推进日期，或再浇水稳住长势',
-      cta: withHotkey('等待成熟 · 歇息', null)
+      motivation: '幼苗还需生长；点歇息推进日期，或再浇水稳住长势',
+      cta: '查看长势'
     });
   }
 
-  return Object.freeze({
-    ...base,
-    cta: withHotkey(base.cta, objectiveId)
-  });
+  return Object.freeze({ ...base });
 }
 
 /** Always-visible primary objective line for cozy HUD density (V1-T6). */

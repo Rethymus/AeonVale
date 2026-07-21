@@ -106,7 +106,7 @@ const RAW_HERBS = [
     growthThreshold: 120_000,
     qiNeed: 35_000,
     qiDrainPerDay: 1_600,
-    metalAttract: 3.2, // 金属性避雷草
+    metalAttract: 3.2, // 金属性引雷草
     preferredSeason: 'autumn' as const,
     seedId: 'seed.metalpine',
     rawPoisonValue: 5_000,
@@ -142,7 +142,7 @@ const RAW_HERBS = [
     growthThreshold: 130_000,
     qiNeed: 32_000,
     qiDrainPerDay: 1_500,
-    metalAttract: 2.4, // 第二种避雷草
+    metalAttract: 2.4, // 第二种引雷草
     preferredSeason: 'spring' as const,
     seedId: 'seed.thunderreed',
     rawPoisonValue: 4_000,
@@ -178,7 +178,7 @@ const RAW_HERBS = [
     growthThreshold: 220_000,
     qiNeed: 52_000,
     qiDrainPerDay: 2_000,
-    metalAttract: 4.0, // 最强避雷草（塔防核心布防件）
+    metalAttract: 4.0, // 最强引雷草（导雷核心布阵件）
     seedId: 'seed.ironwill-thorn',
     rawPoisonValue: 4_000,
     yield: [
@@ -291,7 +291,7 @@ const RAW_HERBS = [
       { itemId: 'seed.dao-root', count: 1, chance: 0.5 }
     ]
   },
-  // —— M6 内容广度扩充：补早期种田多样性 + 温性/避雷草缺口 ——
+  // —— M6 内容广度扩充：补早期种田多样性 + 温性/引雷草缺口 ——
   {
     id: 'herb.stonegrain',
     displayName: '粟石草',
@@ -425,7 +425,7 @@ const RAW_HERBS = [
     growthThreshold: 130_000,
     qiNeed: 33_000,
     qiDrainPerDay: 1_500,
-    metalAttract: 2.0, // 第三种金属性避雷草（塔防布防多样性）
+    metalAttract: 2.0, // 第三种金属性引雷草（导雷布阵多样性）
     preferredSeason: 'spring' as const,
     seedId: 'seed.fulgurseed',
     rawPoisonValue: 4_500,
@@ -458,7 +458,7 @@ const RAW_HERBS = [
 const RAW_RECIPES: RecipeDef[] = [
   {
     id: 'recipe.ward-pill',
-    displayName: '避雷丹方',
+    displayName: '承雷丹方',
     inputs: [
       { herbId: 'herb.metalpine', qty: 1 },
       { herbId: 'herb.frostmarrow', qty: 1 }
@@ -518,7 +518,7 @@ const RAW_RECIPES: RecipeDef[] = [
   },
   {
     id: 'recipe.ward-greater',
-    displayName: '大避雷丹方',
+    displayName: '大承雷丹方',
     inputs: [
       { herbId: 'herb.ironwill-thorn', qty: 1 },
       { herbId: 'herb.frostmarrow', qty: 1 },
@@ -573,7 +573,7 @@ const RAW_RECIPES: RecipeDef[] = [
   },
   {
     id: 'recipe.ward-heaven',
-    displayName: '偷天避雷方',
+    displayName: '偷天承雷方',
     inputs: [
       { herbId: 'herb.ironwill-thorn', qty: 1 },
       { herbId: 'herb.violet-ascend', qty: 1 },
@@ -602,7 +602,7 @@ const RAW_RECIPES: RecipeDef[] = [
   // —— M6 广度：新材料路径涌现（同效丹、不同料/火候）
   {
     id: 'recipe.ward-fulgur',
-    displayName: '雷种避雷方（涌现）',
+    displayName: '雷种承雷方（涌现）',
     inputs: [
       { herbId: 'herb.fulgurseed', qty: 1 },
       { herbId: 'herb.tidegrass', qty: 1 }
@@ -683,15 +683,20 @@ const RAW_EVENTS: CelestialEventDef[] = [
   },
   { id: 'event.demon-seed-rain', displayName: '魔种雨', type: 'opportunity', weight: 4, durationDays: 1, growthMod: 1.1, qiMod: 1.0, grants: [{ kind: 'item', itemId: 'seed.griefvein', count: 2, chance: 0.8 }], desc: '天降异种，可种九死草——收益伴生妖兽风险。' },
   // —— T8 天象机制扩展：携带机制倍率的剩余事件 ——
-  { id: 'event.heaven-eye', displayName: '天道注视', type: 'crisis', weight: 5, durationDays: 1, growthMod: 1.0, qiMod: 1.0, damageMod: 1.3, desc: '天道注视偷天者，当次天劫强度 +30%。务必备大避雷丹。' },
+  { id: 'event.heaven-eye', displayName: '天道注视', type: 'crisis', weight: 5, durationDays: 1, growthMod: 1.0, qiMod: 1.0, damageMod: 1.3, desc: '天道注视偷天者，当次天劫强度 +30%。务必备大承雷丹。' },
   { id: 'event.blood-moon', displayName: '血月', type: 'crisis', weight: 4, durationDays: 1, growthMod: 1.0, qiMod: 1.0, madnessMod: 2, desc: '血月当空，妖兽狂化，走火累积翻倍——宜静守，不宜炼丹。' },
   { id: 'event.kindling-flame', displayName: '炉心焰', type: 'opportunity', weight: 5, durationDays: 3, growthMod: 1.0, qiMod: 1.0, alchemyTolMod: 10, desc: '地火涌动，炼丹火候易控，炸炉容差 +10。趁机炼高难丹方。' }
 ];
 
 /** 阵法原始数据。 */
 const RAW_ARRAYS: ArrayDef[] = [
-  { id: 'array.lightning-rod', displayName: '引雷阵', type: 'rod', modifier: 4.0, radius: 2, needsMetalCore: true, desc: '以金属性灵草为阵眼，把范围内天雷锁向阵心（种田即布防）。' },
-  { id: 'array.insulation', displayName: '绝缘阵', type: 'insulation', modifier: 0.3, radius: 1, needsMetalCore: false, desc: '绝缘垫层铺设，把范围内天雷排斥开，保护核心药草。' }
+  { id: 'array.lightning-rod', displayName: '引雷阵', type: 'rod', modifier: 4.0, radius: 2, needsMetalCore: true, desc: '以金属性灵草为阵眼，把范围内天雷锁向阵心（种田即布阵）。' },
+  { id: 'array.insulation', displayName: '绝缘阵', type: 'insulation', modifier: 0.3, radius: 1, needsMetalCore: false, desc: '绝缘垫层铺设，把范围内天雷分流到阵缘，稳住核心药草。' },
+  // R3-B1 引水阵：清晨自动浇灌覆盖圈灵田（对标星露谷洒水器 Lv2/6/9 分级）。stage 4+ 中期内容，不前移序章（守 docs/02:88）。
+  // waterAmountMilli 单位为毫（MILLI=1000）；modifier 1.0 不参与雷权重。
+  { id: 'array.water-channel-1', displayName: '引水阵', type: 'water', modifier: 1.0, radius: 1, needsMetalCore: false, waterAmountMilli: 20000, stageMin: 4, desc: '以阵核牵引灵水，每日清晨自动浇灌覆盖圈灵田，把日常浇水从日循环移除（洗髓境方可布设）。' },
+  { id: 'array.water-channel-2', displayName: '引水阵·扩脉', type: 'water', modifier: 1.0, radius: 2, needsMetalCore: false, waterAmountMilli: 30000, stageMin: 5, desc: '扩脉引水阵，覆盖更广、水量更足（凝血境方可布设）。' },
+  { id: 'array.water-channel-3', displayName: '引水阵·广泽', type: 'water', modifier: 1.0, radius: 3, needsMetalCore: false, waterAmountMilli: 40000, stageMin: 6, desc: '广泽引水阵，覆盖整片灵田（雷骨境方可布设）。' }
 ];
 
 /** 独立物品（非灵草派生）：货币/知识/战利品/工具。 */
@@ -715,7 +720,7 @@ const RAW_STANDALONE_ITEMS: ItemDef[] = [
 const RAW_PILLS: PillDef[] = [
   {
     id: 'pill.ward-basic',
-    displayName: '避雷丹',
+    displayName: '承雷丹',
     tier: 2,
     effects: [{ kind: 'lightningWard', power: 0.4 }],
     load: 5_000,
@@ -755,7 +760,7 @@ const RAW_PILLS: PillDef[] = [
   },
   {
     id: 'pill.ward-greater',
-    displayName: '大避雷丹',
+    displayName: '大承雷丹',
     tier: 4,
     effects: [{ kind: 'lightningWard', power: 0.6 }],
     load: 7_000,
@@ -795,9 +800,9 @@ const RAW_PILLS: PillDef[] = [
   },
   {
     id: 'pill.ward-heaven',
-    displayName: '偷天避雷丹',
+    displayName: '偷天承雷丹',
     tier: 5,
-    effects: [{ kind: 'lightningWard', power: 0.75 }], // 单次抗雷减伤 0.75
+    effects: [{ kind: 'lightningWard', power: 0.75 }], // 单次承雷减伤 0.75
     load: 12_000,
     stack: 10
   },

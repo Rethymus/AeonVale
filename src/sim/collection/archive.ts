@@ -4,7 +4,8 @@
  */
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
-import { itemCount, mutateItem } from '@sim/world/player';
+import type { SimContext } from '@sim/world/context';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 
 export interface ArchiveDonationReward {
   itemId?: string;
@@ -230,13 +231,19 @@ function rollbackReward(state: GameState, reward: ArchiveDonationReward): void {
   state.player.willpower -= reward.willpower ?? 0;
 }
 
-export function donateToArchive(state: GameState, donationId: string): ArchiveDonationResult {
+function canFitReward(state: GameState, reward: ArchiveDonationReward, ctx?: SimContext): boolean {
+  if (!ctx || !reward.itemId || !reward.count) return true;
+  return inventoryCanFitRewards(state.player, [{ itemId: reward.itemId, count: reward.count }], ctx.content);
+}
+
+export function donateToArchive(state: GameState, donationId: string, ctx?: SimContext): ArchiveDonationResult {
   const donation = ARCHIVE_DONATION_CATALOG.find(entry => entry.id === donationId) ?? null;
   if (!donation) return { ok: false, donation: null, reason: '无此藏经条目' };
   if (state.player.stage < donation.stageMin) return { ok: false, donation, reason: '修为不足' };
   const flag = archiveDonationFlag(donation.id);
   if (state.flags.has(flag)) return { ok: false, donation, reason: '已捐献' };
   if (itemCount(state.player, donation.request.itemId) < donation.request.count) return { ok: false, donation, reason: '物品不足' };
+  if (!canFitReward(state, donation.reward, ctx)) return { ok: false, donation, reason: '储物戒已满' };
 
   mutateItem(state.player, donation.request.itemId, -donation.request.count);
   if (!grantReward(state, donation.reward)) {
@@ -250,13 +257,14 @@ export function donateToArchive(state: GameState, donationId: string): ArchiveDo
   return { ok: true, donation };
 }
 
-export function claimArchiveMilestone(state: GameState, milestoneId: string): ArchiveMilestoneResult {
+export function claimArchiveMilestone(state: GameState, milestoneId: string, ctx?: SimContext): ArchiveMilestoneResult {
   const milestone = ARCHIVE_MILESTONE_CATALOG.find(entry => entry.id === milestoneId) ?? null;
   if (!milestone) return { ok: false, milestone: null, reason: '无此藏经里程碑' };
   const donationCount = archiveDonationCount(state);
   if (donationCount < milestone.requiredDonations) return { ok: false, milestone, reason: '捐献不足' };
   const flag = archiveMilestoneFlag(milestone.id);
   if (state.flags.has(flag)) return { ok: false, milestone, reason: '已领取' };
+  if (!canFitReward(state, milestone.reward, ctx)) return { ok: false, milestone, reason: '储物戒已满' };
 
   if (!grantReward(state, milestone.reward)) {
     rollbackReward(state, milestone.reward);

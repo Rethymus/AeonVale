@@ -4,17 +4,17 @@
  * 启动：pnpm dev（当前以浏览器作为开发/测试/作品展示入口；游戏核心仍按离线单机、多端适配方向推进）。全程中文 UI（C8）。
  */
 import { Application, Assets, Texture } from 'pixi.js';
-import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, getPublicDemoObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, resolveBrew, recordTribulationInvocation, readyToInvokeTribulation, adjacentFacility, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, locationSummary, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
+import { createWorld, createSimContext, createSimContextFromState, DEFAULT_BALANCE, ARRAY_BUILD_COSTS, FACILITY_BUILD_COSTS, FACILITY_LABEL, FACILITY_EXPANSION_REQUIREMENT, LOCATION_CATALOG, applyAction, applyMvpStarterKit, startPurpleOmenIfDue, advanceDay, applyPill, brewPills, brewTutorialWardPill, placeArray, checkGameEnd, canShipItem, shippingUnitPrice, getTradeOffers, executeTrade, getShopItems, buyShopItem, getAvailableUpgrades, performUpgrade, getNpcList, bestGiftItemForNpc, getActiveSpecialOrders, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getDailySpecialOrder, getOnboardingObjectiveId, getPublicDemoObjectiveId, greenhouseClimate, greenhouseCareStreak, hasResolvedStayingWorldIncidentForDay, nextArchiveDonation, nextArchiveMilestone, recordTribulationInvocation, readyToInvokeTribulation, adjacentFacility, facilityAt, calendarEntriesForDay, upcomingCalendarEntries, getNpcDailySchedules, getFestivalStallItems, getActiveLocationDirectory, getGreenhouseRumor, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, getLocationEncounters, getLocationServiceOptions, getPreferredLocationSelection, getQuickLocationServiceOption, getTeaShedRumor, locationIndexFromDigitCode, locationServiceIndexFromDigitKey, claimRelationshipEvent, resolveAscensionChoice, tendGreenhouse, visitTeaShed, facilityPlacementRuleText, farmExpansionTier, storageUsed, tileAt, groundItemAtIndex, placeGroundItem, FIRST_SECOND_WATER_FLAG, FIRST_SHIPMENT_FLAG, TUTORIAL_ALCHEMY_BREWED_FLAG, TUTORIAL_ALCHEMY_KIT_FLAG, TUTORIAL_TRIBULATION_BOLT_COUNT, type ArchiveDonationReward, type CalendarEntry, type FacilityKind, type GameState, type LocationId, type LocationServiceCommand, type SimContext, type UpgradeDef } from '@sim';
 import { saveGame, deserializeState } from '@sim/serialize';
 import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
-import { t } from '@content/i18n';
+import { t, tList } from '@content/i18n';
 import manifestJson from '../../assets/manifest.json';
 import { itemCount } from '@sim/world/player';
-import { createLayers, drawWorld, setToast, setHotbar, setTextIfChanged, triggerTribFlash, triggerTribBolt, triggerShake, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, spawnBurst, spawnFloatText, updateParticles, updateFloatTexts, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, drawTodayBriefing, hideTodayBriefing, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
+import { dropInventoryItem, transferInventoryItem } from '@sim/inventory/transfers';
+import { createLayers, drawWorld, setToast, setHotbar, setTextIfChanged, triggerTribFlash, triggerTribBolt, triggerShake, drawDialogue, hideDialogue, drawPauseOverlay, renderCultivationOverview, screenPointForTile, tileCoordinatesFromScreenPoint, spawnBurst, spawnFloatText, updateParticles, updateFloatTexts, drawLocationPreview, hideLocationPreview, drawHotbarIcon, drawPanelItemPreview, hidePanelItemPreview, hideTodayBriefing, PANEL_PREVIEW_BOX, LOCATION_PREVIEW_BOX, itemPreviewBoxHeight, locationPreviewBoxHeight, locationPreviewMaxTextHeight, type PendingWorldVisual, type RenderLayers, type RuntimeRenderAssets } from '@render/renderer';
 import { GUARD_BEAST_ASSET_IDS } from '@render/guardBeastPreview';
 import { nextPendingBeat, markSeen, type NarrativeBeat } from '@content/narrative';
 import { createTitleAmbience } from './titleAmbience';
-import { createFurnaceLayer, drawFurnace } from '@render/furnacePanel';
 import { createRenderScheduler, type RenderScheduler } from '@render/renderScheduler';
 import { computeViewportLayout } from '@render/viewportLayout';
 import { runTribulation } from '@sim/tribulation/tribulationSystem';
@@ -24,7 +24,7 @@ import type { Season } from '@sim/world/types';
 import { AudioEngine } from '@io/audio';
 import type { CropQuality } from '@sim/farm/quality';
 import { HOTBAR_SLOTS, cycleHotbarIndex, findNextOwnedSeedHotbarIndex, hotbarIndexFromDigitKey, hotbarSlotAssetId, hotbarStatusText, hotbarToastPresentation, hotbarWheelDelta, ownedSeedHotbarIndex, type HotbarSlotKind } from './hotbar';
-import { FARM_ACTION_ORDER, cycleSelection, farmActionIndexFromDigitKey, farmActionLabel, interactionPanelActive, normalizeSelection, npcActionIndexFromDigitKey, selectionLabel, type FarmActionKind, type InteractionPanelState } from './interactionPanels';
+import { FARM_ACTION_ORDER, cycleSelection, farmActionIndexFromDigitKey, farmActionLabel, interactionPanelActive, isLocationActionPanelCommand, normalizeSelection, npcActionIndexFromDigitKey, selectionLabel, type FarmActionKind, type InteractionPanelState, type LocationActionPanelCommand } from './interactionPanels';
 import { resolveCommandShortcut, resolveDigitShortcut, resolveEnterShortcut, resolveEscapeShortcut, resolveExplorationLocationShortcut, resolveFarmActionShortcut, resolveFarmMenuShortcut, resolveLegacyBuildShortcut, resolveLegacyConfirmShortcut, resolveLocationServiceShortcut, resolvePageDownShortcut, resolvePageUpShortcut, resolvePrimaryInteractionShortcut, resolveQShortcut, resolveQuickLocationShortcut, resolveTabShortcut, resolveWorldActionShortcut, shouldPreserveInteractionPanelForKey, shouldPreserveLocationSelectionForKey } from './keybindings';
 import { composeEndDayToastMessage, daySummaryMessage, daySummaryPresentation } from './daySummary';
 import { endDaySfxQueue } from './endDaySfx';
@@ -38,6 +38,7 @@ import { onboardingEndDayWarningToastPresentation, onboardingHelpText, onboardin
 import { AssetStore, assetUrlForId, validateManifest } from '@io/assets';
 import { preloadUiFont } from './fontPreload';
 import { buildProceduralCropTextures } from './cropSprites';
+import { createInventoryUI, type InventoryAction, type InventoryActionFeedback, type InventoryUIController } from './inventoryUI';
 import { arrayPlacementToastPresentation, cultivationPanelToastPresentation, deriveFarmActionOutcome, farmActionBlockedReason, farmActionBlockedToastPresentation, farmActionSuccessToastPresentation, fertilizeSuccessToastPresentation, overlayToastPresentation, restSuccessToastPresentation, snapshotFarmTiles, sowSuccessToastPresentation, sowUnavailableToastPresentation, type FarmActionFeedbackKind } from './actionFeedback';
 import { bodyTrainingToastPresentation, brewMaterialFailureToastPresentation, facilityCollectFailureToastPresentation, facilityCollectResultToast, facilityCollectResultToastPresentation, facilityFailureToastPresentation, facilityJobStartToast, facilityJobStartToastPresentation, facilityStatusToastPresentation, firstHarvestMilestoneToast, firstHarvestMilestoneToastPresentation, firstShipmentMilestoneToast, firstShipmentMilestoneToastPresentation, guardBeastFeedFailureToastPresentation, guardBeastFeedResultToastPresentation, pillUseToastPresentation, shippingFailureToastPresentation, shippingResultToast, shippingResultToastPresentation, storageFailureToastPresentation, storageResultToast, storageResultToastPresentation } from './actionResultToast';
 import { toolFeedbackToastPresentation } from './toolFeedback';
@@ -49,12 +50,13 @@ import { tribulationPrepStatusLine } from './tribulationPrepText';
 import { ambientPanelPreview } from './ambientPanelPreview';
 import { locationPreviewFocusReason } from './locationFocusReason';
 import { farmsteadRootContextAssetId, getFarmsteadFocus } from './farmsteadFocus';
+import { applyFarmsteadSceneLayout, farmsteadSceneObjectAt, farmsteadSceneObjectByKind, farmsteadSceneTileKind, firstFarmsteadFarmPlotTile, firstNonFarmsteadFarmPlotTile, frontFarmsteadSceneObject, isFarmsteadFarmPlotTile, type FarmsteadSceneObject, type FarmsteadSceneObjectKind, type FarmsteadSceneZoneKind } from './farmsteadScene';
 import { inventoryPreviewSelection } from './inventoryPreview';
-import { brewResultToastPresentation, dryingProcessingPanelPreview, furnaceHeatToastPresentation, furnaceRecipeToastPresentation, furnaceVisibilityToastPresentation, processingPositionRequiredToastPresentation, processingRecipeUnavailableToastPresentation, processingToastPresentation, processingUnavailableToastPresentation, staticProcessingPanelPreview } from './processingPreview';
+import { brewResultToastPresentation, dryingProcessingPanelPreview, processingPositionRequiredToastPresentation, processingRecipeUnavailableToastPresentation, processingToastPresentation, processingUnavailableToastPresentation, staticProcessingPanelPreview } from './processingPreview';
 import { beastHuntResultToastPresentation, beastHuntUnavailableToastPresentation, explorationFailureToastPresentation, explorationResultToastPresentation, ruinDelveFailureToastPresentation, ruinDelveToastPresentation, tribulationBlockedToastPresentation, tribulationEndingToastPresentation, tribulationResultToastPresentation } from './explorationToast';
-import { buildPanelPreview, buildResultToastPresentation, buildToastPresentation, facilityCollectPanelPreview, facilityCollectToastPresentation, facilityCollectUnavailableToastPresentation, upgradePanelPreview, upgradeResultToastPresentation, upgradeToastPresentation, upgradeUnavailableToastPresentation } from './facilityPanelPreview';
+import { buildPanelPreview, buildResultToastPresentation, facilityCollectPanelPreview, facilityCollectToastPresentation, facilityCollectUnavailableToastPresentation, upgradePanelPreview, upgradeResultToastPresentation, upgradeToastPresentation, upgradeUnavailableToastPresentation } from './facilityPanelPreview';
 import { shippingPanelPreview, shippingToastPresentation, shippingUnavailableToastPresentation, storagePanelPreview, storageToastPresentation, storageUnavailableToastPresentation } from './logisticsPanelPreview';
-import { arraysServiceToastPresentation, farmWorkServiceToastPresentation, festivalPanelPreview, festivalResultToastPresentation, festivalToastPresentation, festivalUnavailableToastPresentation, greenhousePanelPreview, greenhouseResultToastPresentation, greenhouseToastPresentation, processingServiceToastPresentation, quickServiceUnavailableToastPresentation, teaShedPanelPreview, teaShedResultToastPresentation, teaShedToastPresentation } from './servicePanelPreview';
+import { arraysServiceToastPresentation, farmWorkServiceToastPresentation, festivalPanelPreview, festivalResultToastPresentation, festivalToastPresentation, festivalUnavailableToastPresentation, greenhousePanelPreview, greenhouseResultToastPresentation, greenhouseToastPresentation, locationActionConfirmHint, locationActionPanelPreview, locationActionToastPresentation, processingServiceToastPresentation, quickServiceUnavailableToastPresentation, teaShedPanelPreview, teaShedResultToastPresentation, teaShedToastPresentation } from './servicePanelPreview';
 import { shopPanelPreview, shopResultToastPresentation, shopToastPresentation, shopUnavailableToastPresentation, tradePanelPreview, tradeResultToastPresentation, tradeToastPresentation, tradeUnavailableToastPresentation } from './commercePanelPreview';
 import { farmActionMenuPreview, farmActionMenuToastPresentation, npcActionMenuPreview, npcActionMenuToastPresentation, npcBrowsePanelPreview, npcBrowseToastPresentation, npcGiftPanelPreview, npcGiftResultToastPresentation, npcGiftToastPresentation, npcQuestPanelPreview, npcQuestResultToastPresentation, npcQuestToastPresentation, npcUnavailableToastPresentation } from './actionPanelPreview';
 import { activeSpecialOrderPanelPreview, archiveDonationFailureToastPresentation, archiveDonationToastPresentation, archiveEmptyToastPresentation, archiveMilestoneFailureToastPresentation, archiveMilestoneToastPresentation, commissionBoardEmptyToastPresentation, commissionCompleteToastPresentation, commissionIncompleteToastPresentation, commissionToastPresentation, dailyCommissionPanelPreview, dailySpecialOrderPanelPreview, mainlineQuestClaimFailureToastPresentation, mainlineQuestClaimToastPresentation, mainlineQuestPanelPreview, mainlineQuestUnavailableToastPresentation, ruinChapterClaimFailureToastPresentation, ruinChapterClaimToastPresentation, ruinChapterPanelPreview, ruinChapterUnavailableToastPresentation, specialOrderAcceptFailureToastPresentation, specialOrderAcceptToastPresentation, specialOrderClaimFailureToastPresentation, specialOrderClaimToastPresentation, specialOrderPendingToastPresentation, specialOrderProgressToastPresentation, specialOrderSubmitFailureToastPresentation, stayingWorldIncidentPanelPreview, stayingWorldIncidentResolveFailureToastPresentation, stayingWorldIncidentResolveToastPresentation } from './commissionPreview';
@@ -62,20 +64,37 @@ import { resolvePreviewTexture } from './previewTexture';
 import { buildEncounterDialogueBeat, buildRelationshipDialogueBeat, type DialogueBeatWithAsset } from './dialoguePreview';
 import { buildJourneyGuide, formatJourneyGuideBody, isJourneyTeachingActive, isJourneyTeachingDialogueBeat, journeyGuideContextFromState } from './journeyGuide';
 import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
-import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState } from './appFlowMachine';
+import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState, type AppFocusSelector, type AppOverlay } from './appFlowMachine';
 import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
+import { createPrologueVN, type PrologueVNController } from './prologueVN';
+import { createNarrationIntro, type NarrationIntroController } from './narrationIntro';
+import { createNarrationSurface, NARRATION_E7_FLAG_KEY, type NarrationSurfaceController } from './narrationSurface';
+import { createNarrationCodex, type NarrationCodexController } from './narrationCodex';
+import { renderEndingSurface } from './endingSurface';
 import { gameCommandFromKeyboard, type GameCommand } from './semanticInputRouter';
+import { directionBetween, findGridPath, interactionAdjacentGoals, isAdjacentCardinal, playerMovementVisualPosition, sameGridPoint, type GridPoint, type PlayerMovementAnimation, type PlayerMovementVisual } from './worldMovement';
 import { createPublicDemoPanelsController, type PublicDemoPanelAction, type PublicDemoPanelsController } from './publicDemoPanelsView';
-import { buildPublicDemoAftermathView, buildPublicDemoAlchemyView, buildPublicDemoTribulationView } from './publicDemoPanels';
+import { buildPublicDemoAftermathView, buildPublicDemoTribulationView } from './publicDemoPanels';
 import { deriveSemanticGameState, interactionPanelSemanticLabel, type SemanticWorldAttention } from './semanticGameState';
 import { decodeStoredSave, deriveSaveHealthPresentation, saveHealthAfterClear, saveHealthAfterLoad, saveHealthAfterWrite, type SaveHealth } from './saveHealth';
 import { DEFAULT_RUNTIME_SETTINGS, RUNTIME_SETTINGS_STORAGE_KEY, decodeRuntimeSettings, runtimeSettingsPersistenceText, serializeRuntimeSettings, type RuntimeSettings } from './runtimeSettings';
+import { renderCultivationSurface, renderMapSurface } from './surfacePanels';
 import { applyColorPaletteCssVariables, ColorPalette, cssColor } from '@render/ColorPalette';
+import { locationWorldPreviewPlacementAt, locationWorldPreviewPlacements, npcWorldPreviewPlacementAt, npcWorldPreviewPlacements, type LocationWorldPreviewPlacement, type NpcWorldPreviewPlacement } from '@render/npcWorldPreview';
 
 applyColorPaletteCssVariables(document.documentElement);
 document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', cssColor('shellPine'));
 
 type DirectFarmActionKind = Exclude<FarmActionFeedbackKind, 'sow' | 'fertilize'>;
+
+type PointerWorldActionKind = 'none' | 'object' | 'build-place' | 'array-place' | 'farm-till' | 'farm-sow' | 'farm-water' | 'farm-harvest' | 'farm-channel-qi' | 'farm-stable' | 'pickup' | 'move' | 'blocked';
+
+interface PendingWorldCommand {
+  readonly target: GridPoint;
+  readonly destination: GridPoint;
+  readonly description: string;
+  readonly run: () => boolean;
+}
 
 interface TerrainSemanticsKeypoint {
   tillableX: number;
@@ -88,6 +107,20 @@ interface TerrainSemanticsKeypoint {
   selectedY: number;
 }
 
+interface BuildArrayKeypoint {
+  targetX: number;
+  targetY: number;
+  playerX: number;
+  playerY: number;
+  arrayDefId: 'array.lightning-rod' | 'array.insulation';
+}
+
+interface ArraySnapshot {
+  count: number;
+  defIds: string[];
+  activeCount: number;
+}
+
 interface QiFlowKeypoint {
   lowX: number;
   lowY: number;
@@ -96,6 +129,11 @@ interface QiFlowKeypoint {
 }
 
 const RENDER_ASSET_LOAD_TIMEOUT_MS = 8_000;
+const PLAYER_STEP_DURATION_MS = 420;
+
+function useNearestScaleMode(assetId: string): boolean {
+  return assetId.startsWith('sprite.') || assetId.startsWith('map-sprite.') || assetId.startsWith('icon.') || assetId.startsWith('inventory-icon.') || assetId.startsWith('facility.') || assetId.startsWith('loc.') || assetId.startsWith('tile.');
+}
 
 async function loadTextureWithTimeout(url: string): Promise<Texture | undefined> {
   let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -134,17 +172,33 @@ async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets>
     .list('sprites')
     .map(entry => entry.id)
     .filter(id => id.startsWith('logo.'));
+  const portraitIds = store
+    .list('sprites')
+    .map(entry => entry.id)
+    .filter(id => id.startsWith('portrait.'));
+  const mapSpriteIds = store
+    .list('sprites')
+    .map(entry => entry.id)
+    .filter(id => id.startsWith('map-sprite.'));
+  const mapIds = store
+    .list('sprites')
+    .map(entry => entry.id)
+    .filter(id => id.startsWith('map.'));
+  const inventoryIconIds = store
+    .list('sprites')
+    .map(entry => entry.id)
+    .filter(id => id.startsWith('inventory-icon.'));
   const allNpcAssetIds = runtimeNpcAssetIds(store);
   const hotbarIconIds = [...new Set(HOTBAR_SLOTS.map(slot => hotbarSlotAssetId(slot)).filter((id): id is string => Boolean(id)))];
 
-  const ids = ['sprite.player', ...GUARD_BEAST_ASSET_IDS, ...allNpcAssetIds, ...facilityIds, ...hotbarIconIds, ...locationIds, ...tileIds, ...logoIds, ...iconIds] as const;
+  const ids = [...new Set(['sprite.player', ...GUARD_BEAST_ASSET_IDS, ...allNpcAssetIds, ...portraitIds, ...mapSpriteIds, ...mapIds, ...inventoryIconIds, ...facilityIds, ...hotbarIconIds, ...locationIds, ...tileIds, ...logoIds, ...iconIds])] as const;
 
   const loaded = await Promise.all(
     ids.map(async id => {
       const url = assetUrlForId(store, id);
       if (!url) return [id, undefined] as const;
       const texture = await loadTextureWithTimeout(url);
-      if (texture?.source) texture.source.scaleMode = 'nearest';
+      if (texture?.source && useNearestScaleMode(id)) texture.source.scaleMode = 'nearest';
       return [id, texture] as const;
     })
   );
@@ -163,7 +217,11 @@ async function loadRenderAssets(store: AssetStore): Promise<RuntimeRenderAssets>
     logos: Object.fromEntries(logoIds.map(id => [id, textureById.get(id)])),
     hotbarIcons: Object.fromEntries(hotbarIconIds.map(id => [id, textureById.get(id)])),
     itemIcons: Object.fromEntries(iconIds.map(id => [id, textureById.get(id)])),
-    npcs: Object.fromEntries(allNpcAssetIds.map(id => [id, textureById.get(id)])),
+    npcs: Object.fromEntries([...allNpcAssetIds, ...portraitIds].map(id => [id, textureById.get(id)])),
+    portraits: Object.fromEntries(portraitIds.map(id => [id, textureById.get(id)])),
+    mapSprites: Object.fromEntries(mapSpriteIds.map(id => [id, textureById.get(id)])),
+    maps: Object.fromEntries(mapIds.map(id => [id, textureById.get(id)])),
+    inventoryIcons: Object.fromEntries(inventoryIconIds.map(id => [id, textureById.get(id)])),
     tiles: Object.fromEntries(tileIds.map(id => [id, textureById.get(id)]))
   };
 }
@@ -176,6 +234,8 @@ async function main(): Promise<void> {
   const BUILD_REVISION = import.meta.env.VITE_BUILD_REVISION ?? 'dev';
   const BUILD_LABEL = BUILD_REVISION === 'dev' ? '版本 0.1.0 · 本地试玩' : '版本 0.1.0 · 试玩构建';
   const BUILD_TITLE = BUILD_REVISION === 'dev' ? '' : `构建 ${BUILD_REVISION}`;
+  const LEGACY_SHORTCUTS_ENABLED = import.meta.env.VITE_ENABLE_LEGACY_SHORTCUTS === 'true' || new URLSearchParams(window.location.search).get('legacyShortcuts') === '1';
+  document.documentElement.dataset.legacyShortcuts = String(LEGACY_SHORTCUTS_ENABLED);
   let requestRender: (() => void) | null = null;
   let renderScheduler: RenderScheduler | null = null;
   let publicDemoPanels: PublicDemoPanelsController | null = null;
@@ -235,6 +295,7 @@ async function main(): Promise<void> {
   const createFreshState = (): GameState => {
     const fresh = createWorld({ seed: SEED, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
     applyMvpStarterKit(fresh, DEFAULT_BALANCE);
+    applyFarmsteadSceneLayout(fresh, { resetHerbPlot: true });
     return fresh;
   };
   const loaded = loadSave();
@@ -243,6 +304,17 @@ async function main(): Promise<void> {
   let runtimeSettings = loadedRuntimeSettings.settings;
   let runtimeSettingsPersistenceAvailable = loadedRuntimeSettings.persistenceAvailable;
   let state: GameState = loaded.state ?? createFreshState();
+  const farmsteadLayoutMigrated = loaded.state != null && state.gameOver !== true && applyFarmsteadSceneLayout(state);
+  if (farmsteadLayoutMigrated) {
+    let succeeded = false;
+    try {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(saveGame(state, reg.schemaHash)));
+      succeeded = true;
+    } catch {
+      /* 存储满/禁用 */
+    }
+    saveHealth = saveHealthAfterWrite(saveHealth, succeeded);
+  }
   let ctx: SimContext = createSimContextFromState(state, reg, DEFAULT_BALANCE);
   document.documentElement.dataset.reducedMotion = String(runtimeSettings.reducedMotion);
 
@@ -270,10 +342,13 @@ async function main(): Promise<void> {
   renderAssets.cropSeeds = proceduralCropTextures.seeds;
 
   const layers: RenderLayers = createLayers(app);
-  const furnace = createFurnaceLayer(app);
   const audio = new AudioEngine();
   audio.setMasterVolume(runtimeSettings.masterVolume);
-  let furnaceHeat = 50; // 玩家炉温 0..100
+  // 第一刀音频接入：注入 narration 茎 AssetId → URL 解析器（io 层不反向依赖 asset store）。
+  // playNarrationTrack(trackId) 据此取烘焙 ogg URL；缺失时静默 no-op。
+  audio.setNarrationTrackResolver(id => assetUrlForId(assetStore, id));
+  // 第二刀：文件型 SFX（dizi/erhu 等真实录音）解析器，与合成 playSfx 分流。
+  audio.setSfxFileResolver(id => assetUrlForId(assetStore, id));
 
   const seasonShort: Record<Season, string> = { spring: '春', summer: '夏', autumn: '秋', winter: '冬' };
   const describeCalendarEntry = (entry: CalendarEntry): string => `${seasonShort[entry.season]}${entry.day} ${entry.title}`;
@@ -298,13 +373,38 @@ async function main(): Promise<void> {
   let npcActionIdx = 0;
   let cultivationPanelVisible = false;
   const facilityBuildChoices: FacilityKind[] = ['drying-rack', 'sealing-cabinet', 'talisman-furnace'];
+  type ArrayBuildChoice = {
+    kind: 'array';
+    defId: 'array.lightning-rod' | 'array.insulation';
+    placementKind: 'lightning-rod' | 'insulation';
+    title: string;
+    assetId: 'facility.array-eye' | 'facility.array-flag';
+  };
+  type BuildChoice = { kind: 'facility'; facilityKind: FacilityKind } | ArrayBuildChoice;
+  const buildChoices: readonly BuildChoice[] = [
+    { kind: 'facility', facilityKind: 'drying-rack' },
+    { kind: 'facility', facilityKind: 'sealing-cabinet' },
+    { kind: 'facility', facilityKind: 'talisman-furnace' },
+    { kind: 'array', defId: 'array.lightning-rod', placementKind: 'lightning-rod', title: '引雷阵', assetId: 'facility.array-eye' },
+    { kind: 'array', defId: 'array.insulation', placementKind: 'insulation', title: '绝缘阵', assetId: 'facility.array-flag' }
+  ];
   let facilityBuildIdx = 0;
   const brewRecipes = ['recipe.ward-pill', 'recipe.bone-pill', 'recipe.detox-pill', 'recipe.cold-mud', 'recipe.ward-fulgur', 'recipe.bone-herbal', 'recipe.detox-plume'];
-  let recipeIdx = 0;
   let dialogueBeat: DialogueBeatWithAsset | null = null;
   let paused = false;
   let responsiveShell: ResponsiveShellController | null = null;
   let flowView: AppFlowViewController | null = null;
+  let prologueVN: PrologueVNController | null = null;
+  let narrationIntro: NarrationIntroController | null = null;
+  let narrationSurface: NarrationSurfaceController | null = null;
+  let narrationCodex: NarrationCodexController | null = null;
+  let pointerTile: { x: number; y: number } | null = null;
+  let lastPointerTile: { x: number; y: number } | null = null;
+  let lastPointerAction: PointerWorldActionKind = 'none';
+  let playerMovementAnimation: PlayerMovementAnimation | null = null;
+  let queuedMovementPath: GridPoint[] = [];
+  let pendingWorldCommand: PendingWorldCommand | null = null;
+  let deferredPointerTile: GridPoint | null = null;
   const runtimeSettingsAbortController = new AbortController();
   let npcNameToId = new Map(getNpcList(state).map(npc => [npc.displayName, npc.id] as const));
   const prologueBeatIds = ['awaken', 'spirit-test', 'intro'] as const;
@@ -400,7 +500,6 @@ async function main(): Promise<void> {
     layers.showInv = false;
     cultivationPanelVisible = false;
     paused = false;
-    furnace.visible = false;
     layers.cultivation.visible = false;
     hideDialogue(layers);
     hidePanelItemPreview(layers);
@@ -412,8 +511,6 @@ async function main(): Promise<void> {
     state = nextState;
     ctx = createSimContextFromState(state, reg, DEFAULT_BALANCE);
     npcNameToId = new Map(getNpcList(state).map(npc => [npc.displayName, npc.id] as const));
-    furnaceHeat = 50;
-    layers.furnaceHeat = furnaceHeat;
     hotbarIdx = 0;
     tradeIdx = 0;
     shopIdx = 0;
@@ -430,7 +527,6 @@ async function main(): Promise<void> {
     locationEncounterIdx = 0;
     npcActionIdx = 0;
     facilityBuildIdx = 0;
-    recipeIdx = 0;
     dialogueBeat = null;
     clearLegacyAttentionSurfaces();
     refreshHotbarHint();
@@ -447,21 +543,202 @@ async function main(): Promise<void> {
     if (target && target.textContent !== text) target.textContent = text;
   }
 
+  function setFlowSlotHtml(slot: string, html: string): void {
+    const target = document.querySelector<HTMLElement>(`[data-app-slot="${slot}"]`);
+    if (!target) return;
+    if (target.innerHTML !== html) target.innerHTML = html;
+    target.scrollTop = 0;
+  }
+
+  let inventoryUI: InventoryUIController | null = null;
+  let inventoryFlowMode: 'inventory' | 'furnace' = 'inventory';
+  function ensureInventoryUI(): InventoryUIController | null {
+    if (inventoryUI) return inventoryUI;
+    const invRoot = document.querySelector<HTMLElement>('[data-app-slot="inventory"]');
+    if (!invRoot) return null;
+    inventoryUI = createInventoryUI({
+      root: invRoot,
+      getState: () => state,
+      getRegistry: () => reg,
+      craftRecipeIds: brewRecipes,
+      tutorialRecipeId: 'recipe.ward-pill',
+      viewMode: () => (inventoryFlowMode === 'furnace' ? 'furnace-focus' : 'full'),
+      hasTutorialAlchemyKit: () => state.player.flags.has(TUTORIAL_ALCHEMY_KIT_FLAG),
+      hasBrewedTutorialAlchemy: () => state.player.flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG),
+      onAction: handleInventoryAction
+    });
+    return inventoryUI;
+  }
+  const inventoryContainerLabel = {
+    player: '行囊',
+    storage: '仓库',
+    shipping: '出货箱'
+  } as const;
+  const inventoryQualityLabel: Partial<Record<CropQuality, string>> = {
+    mortal: '凡品',
+    spirit: '灵品',
+    treasure: '珍品'
+  };
+
+  function inventoryItemLabel(itemId: string, quality?: CropQuality): string {
+    const name = reg.items.get(itemId)?.displayName ?? itemId;
+    return `${name}${quality ? `·${inventoryQualityLabel[quality] ?? quality}` : ''}`;
+  }
+
+  function normalizedFurnaceHeat(heatPercent: number): number {
+    return Math.min(100, Math.max(0, Math.round(heatPercent)));
+  }
+
+  function rejectedInventoryBrew(message: string, assetId?: string): InventoryActionFeedback {
+    toast(message, assetId);
+    return { ok: false, message, clearCraftSlots: false };
+  }
+
+  function acceptedInventoryBrew(message: string, clearCraftSlots = true): InventoryActionFeedback {
+    return { ok: true, message, clearCraftSlots };
+  }
+
+  function brewInventoryRecipe(recipeId: string, heatPercentRaw: number): InventoryActionFeedback {
+    const recipe = ctx.content.recipes.get(recipeId);
+    if (!recipe) {
+      const presentation = processingRecipeUnavailableToastPresentation('furnace');
+      return rejectedInventoryBrew(presentation.message, presentation.assetId);
+    }
+
+    const heatPercent = normalizedFurnaceHeat(heatPercentRaw);
+    const avgHeatMilli = heatPercent * 1000;
+    const name = recipe.displayName;
+    const tutorialKitReady = recipeId === 'recipe.ward-pill' && state.player.flags.has(TUTORIAL_ALCHEMY_KIT_FLAG) && !state.player.flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG);
+    if (tutorialKitReady) {
+      const result = brewTutorialWardPill(state, avgHeatMilli, ctx);
+      if (!result.attempted) {
+        const reason = result.reason === 'inventory-full' ? '行囊已满，先腾出一格再开炉。' : result.reason === 'harvest-required' ? '先在灵田收获第一批灵草。' : result.reason === 'already-completed' ? '首枚承雷丹已经出炉。' : '教学药包尚未备好。';
+        return rejectedInventoryBrew(reason, 'pill.ward-basic');
+      }
+      const outcome = result.brew?.outcome ?? 'waste';
+      audio.playSfx(outcome === 'exploded' ? 'explosion' : 'brew');
+      if (outcome === 'exploded') spawnBurst(layers, 480, 240, 36, ColorPalette.dangerOrange);
+      else if (outcome === 'pill' || outcome === 'flawed') spawnBurst(layers, 480, 240, 18, ColorPalette.mossBright);
+      const presentation = brewResultToastPresentation(outcome, { name, furnaceHeat: heatPercent });
+      const message = result.completed ? '首枚承雷丹已经出炉。' : presentation.message;
+      toast(message, presentation.assetId);
+      saveState(state);
+      return acceptedInventoryBrew(message, result.completed);
+    }
+
+    for (const input of recipe.inputs) {
+      if (itemCount(state.player, input.herbId) < input.qty) {
+        const presentation = brewMaterialFailureToastPresentation({ herbId: input.herbId }, ctx.content);
+        return rejectedInventoryBrew(presentation.message, presentation.assetId);
+      }
+    }
+
+    const result = brewPills(state, { materials: recipe.inputs.map(input => ({ herbId: input.herbId, qty: input.qty })), avgHeatMilli }, ctx);
+    audio.playSfx(result.outcome === 'exploded' ? 'explosion' : 'brew');
+    if (result.outcome === 'exploded') spawnBurst(layers, 480, 240, 36, ColorPalette.dangerOrange);
+    else if (result.outcome === 'pill' || result.outcome === 'flawed') spawnBurst(layers, 480, 240, 18, ColorPalette.mossBright);
+    const presentation = brewResultToastPresentation(result.outcome, { name, furnaceHeat: heatPercent });
+    toast(presentation.message, presentation.assetId);
+    saveState(state);
+    return acceptedInventoryBrew(presentation.message);
+  }
+
+  function handleInventoryAction(action: InventoryAction): InventoryActionFeedback | void {
+    let actionFeedback: InventoryActionFeedback | undefined;
+    switch (action.type) {
+      case 'use':
+        applyAction(state, { kind: 'eat-pill', pillId: action.itemId }, ctx);
+        saveState(state);
+        break;
+      case 'drop':
+        {
+          const result = dropInventoryItem(state, action);
+          if (result.ok) {
+            toast(`已丢弃 ${inventoryItemLabel(action.itemId, action.quality)} ×${action.count}`, itemIconAssetId(action.itemId, reg));
+            saveState(state);
+          } else {
+            toast(result.reason ?? '丢弃失败', itemIconAssetId(action.itemId, reg));
+          }
+        }
+        break;
+      case 'move':
+        {
+          const result = transferInventoryItem(state, ctx, action);
+          if (result.ok) {
+            const message = `已移动 ${inventoryItemLabel(action.itemId, action.quality)} ×${result.count}：${inventoryContainerLabel[action.from]} → ${inventoryContainerLabel[action.to]}`;
+            toast(message, itemIconAssetId(action.itemId, reg));
+            saveState(state);
+            actionFeedback = { ok: true, message };
+          } else {
+            const message = result.reason ?? '移动失败';
+            toast(message, itemIconAssetId(action.itemId, reg));
+            actionFeedback = { ok: false, message };
+          }
+        }
+        break;
+      case 'reorder':
+        state.inventoryLayout.orders[action.container] = [...action.order];
+        saveState(state);
+        break;
+      case 'view-prefs':
+        state.inventoryLayout.view = {
+          activeTab: action.view.activeTab,
+          pageByContainer: { ...action.view.pageByContainer },
+          searchTerm: action.view.searchTerm,
+          sortKey: action.view.sortKey
+        };
+        saveState(state);
+        return;
+      case 'brew':
+        {
+          const feedback = brewInventoryRecipe(action.recipeId, action.heatPercent);
+          refreshAppPresentation();
+          requestRender?.();
+          return feedback;
+        }
+      case 'select-seed': {
+        const idx = ownedSeedHotbarIndex(action.itemId, id => itemCount(state.player, id));
+        if (idx != null) {
+          hotbarIdx = idx;
+          flowView?.dispatch({ type: 'close-overlay' });
+          toast(`已选 ${reg.items.get(action.itemId)?.displayName ?? action.itemId}，点击灵田播种。`);
+        } else {
+          toast('该种子未在热栏快捷槽。');
+        }
+        return;
+      }
+      case 'select-tool':
+        toast('工具经农务入口与热栏使用。');
+        return;
+    }
+    inventoryUI?.render();
+    refreshAppPresentation();
+    requestRender?.();
+    return actionFeedback;
+  }
+
   function updateFlowSurfaceContent(flow: AppFlowState): void {
     if (flow.overlay === 'inventory') {
-      const entries = Object.values(state.player.inventory)
-        .filter(entry => entry.count > 0)
-        .map(entry => `${reg.items.get(entry.itemId)?.displayName ?? entry.itemId} ×${entry.count}`);
-      setFlowSlotText('inventory', entries.length > 0 ? entries.join('\n') : '背包还是空的。先从灵田收获第一批材料。');
+      ensureInventoryUI()?.render();
       return;
     }
     if (flow.overlay === 'map') {
-      const locations = locationSummary(state);
-      setFlowSlotText('map', locations.length > 0 ? locations.join('\n') : '山谷尚未显露新的去处。');
+      setFlowSlotHtml(
+        'map',
+        renderMapSurface(state, ctx, {
+          locationNetwork: assetUrlForId(assetStore, 'map.location-network-v1'),
+          valleyOverview: assetUrlForId(assetStore, 'map.valley-overview-v1')
+        })
+      );
       return;
     }
     if (flow.overlay === 'cultivation') {
-      setFlowSlotText('cultivation', renderCultivationOverview(state, ctx));
+      setFlowSlotHtml(
+        'cultivation',
+        renderCultivationSurface(state, ctx, {
+          playerAvatar: assetUrlForId(assetStore, 'portrait.avatar.player-v1')
+        })
+      );
       return;
     }
     if (flow.overlay === 'pause') {
@@ -474,11 +751,140 @@ async function main(): Promise<void> {
       return;
     }
     if (flow.screen === 'ending') {
-      setFlowSlotText('ending', `${t('ending.' + (state.ending ?? ''))}\n第 ${state.day} 日 · ${state.year} 年\n${deriveSaveHealthPresentation(saveHealth).endingStatus}`);
+      setFlowSlotHtml(
+        'ending',
+        renderEndingSurface({
+          state,
+          endingStatus: deriveSaveHealthPresentation(saveHealth).endingStatus,
+          assetUrlForId: id => assetUrlForId(assetStore, id)
+        })
+      );
     }
   }
 
-  function handleFlowStateChange(next: AppFlowState, _previous: AppFlowState, event: AppFlowEvent): void {
+  function startPrologueVN(): void {
+    destroyPrologueVN();
+    const root = document.querySelector<HTMLElement>('#prologue-vn');
+    if (!root) return;
+    // 序章视觉小说自管控件：完成 → finish-prologue，跳过 → skip-prologue。
+    // 既有 finish/skip 处理（标记节拍已见 + 存档）保持不变，这里只负责派发事件。
+    prologueVN = createPrologueVN({
+      root,
+      reducedMotion: runtimeSettings.reducedMotion,
+      onFinish: () => {
+        flowView?.dispatch({ type: 'finish-prologue' });
+      },
+      onSkip: () => {
+        flowView?.dispatch({ type: 'skip-prologue' });
+      },
+      assetUrlForId: id => assetUrlForId(assetStore, id)
+    });
+    // VN 挂载后其首控件才存在，补一次焦点让 appFlowView 的焦点兜底命中舞台。
+    flowView?.refocusCurrentSurface();
+  }
+
+  function destroyPrologueVN(): void {
+    prologueVN?.destroy();
+    prologueVN = null;
+  }
+
+  function startNarrationSurface(): void {
+    destroyNarrationSurface();
+    const root = document.querySelector<HTMLElement>('#narration-vn');
+    if (!root) return;
+    // narration 层独立状态机：不读 sim，用 firstPersonView.initialState()（docs/22 §5）。
+    narrationSurface = createNarrationSurface({
+      root,
+      reducedMotion: runtimeSettings.reducedMotion,
+      audio: {
+        playBlip: speaker => audio.playBlip(speaker),
+        playSfx: id => audio.playSfx(id),
+        playNarrationTrack: (trackId, opts) => audio.playNarrationTrack(trackId, opts),
+        stopNarrationTrack: opts => audio.stopNarrationTrack(opts),
+        setMusicContext: ctx => audio.setMusicContext(ctx)
+      },
+      assetUrlForId: id => assetUrlForId(assetStore, id),
+      onReturnToTitle: () => flowView?.dispatch({ type: 'return-title-from-narration' })
+    });
+    narrationSurface.start();
+    // 挂载后 #narration-stage 才存在，补一次焦点让 appFlowView 焦点兜底命中舞台。
+    flowView?.refocusCurrentSurface();
+  }
+
+  function destroyNarrationSurface(): void {
+    narrationSurface?.destroy();
+    narrationSurface = null;
+  }
+
+  function startNarrationCodex(): void {
+    destroyNarrationCodex();
+    const root = document.querySelector<HTMLElement>('#codex-root');
+    if (!root) return;
+    narrationCodex = createNarrationCodex({
+      root,
+      reducedMotion: runtimeSettings.reducedMotion,
+      assetUrlForId: id => assetUrlForId(assetStore, id)
+    });
+    narrationCodex.open();
+    flowView?.refocusCurrentSurface();
+  }
+
+  function destroyNarrationCodex(): void {
+    narrationCodex?.destroy();
+    narrationCodex = null;
+  }
+
+  /**
+   * E7 改写标题屏（docs/22 §2.5）：触发 E7 后回标题，入口变暗 + 立绘隔屏凝视 + 文案改写。
+   * 在 title surface 渲染后调用——有 flag 则加诅咒层，无则确保移除（防上轮残留）。
+   */
+  function applyE7TitleCurse(): void {
+    const titleSurface = document.querySelector<HTMLElement>('[data-app-surface="title"]');
+    if (!titleSurface) return;
+    let cursed = false;
+    try {
+      cursed = typeof localStorage !== 'undefined' && localStorage.getItem(NARRATION_E7_FLAG_KEY) === '1';
+    } catch {
+      cursed = false;
+    }
+    titleSurface.classList.toggle('e7-cursed', cursed);
+    const narrationBtn = document.querySelector<HTMLElement>('#flow-title-narration');
+    if (narrationBtn) {
+      const label = narrationBtn.querySelector<HTMLElement>('.flow-button-label');
+      if (label) label.textContent = cursed ? '你确定还要再来一次吗？' : '灵韵叙录';
+      // 立绘隔屏凝视占位（仅 cursed 时注入；cg.first-person.ending.e7-usurp-v2）。
+      let portrait = titleSurface.querySelector<HTMLImageElement>('#flow-title-e7-portrait');
+      if (cursed) {
+        // MEDIUM7：assetUrlForId 返回空串（资源缺失/manifest 未登记）则不注入 img，
+        // 避免浏览器加载空 src 触发破图占位。同时绑 error 兜底：URL 解析失败/网络错时
+        // 也 remove img，让诅咒层仅靠入口文案生效。
+        const portraitUrl = assetUrlForId(assetStore, 'cg.first-person.ending.e7-usurp-v2');
+        if (!portraitUrl) {
+          portrait?.remove();
+        } else if (!portrait || portrait.dataset.url !== portraitUrl) {
+          portrait?.remove();
+          const img = document.createElement('img');
+          img.id = 'flow-title-e7-portrait';
+          img.className = 'flow-title-e7-portrait';
+          img.alt = '';
+          img.setAttribute('aria-hidden', 'true');
+          img.decoding = 'async';
+          img.dataset.url = portraitUrl;
+          img.src = portraitUrl;
+          img.addEventListener('error', () => img.remove(), { once: true });
+          titleSurface.appendChild(img);
+          portrait = img;
+        }
+      } else {
+        portrait?.remove();
+      }
+    }
+  }
+
+  function handleFlowStateChange(next: AppFlowState, previous: AppFlowState, event: AppFlowEvent): void {
+    if (previous.screen === 'world' && (next.screen !== 'world' || next.overlay != null)) {
+      cancelWorldMovementForSurfaceTransition();
+    }
     if (event.type === 'continue-game' && enterEndingIfNeeded()) return;
     if (event.type === 'start-new-game') {
       clearSave();
@@ -487,22 +893,33 @@ async function main(): Promise<void> {
       for (const beatId of prologueBeatIds) markSeen(state, beatId);
       dialogueBeat = null;
       saveState(state);
-    } else if (event.type === 'open-alchemy') {
-      applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
-      saveState(state);
     } else if (event.type === 'continue-aftermath') {
       applyAction(state, { kind: 'acknowledge-tutorial-aftermath' }, ctx);
       // V1-L01：战后回世界清教学对白队列，避免残留翻地提示
       dialogueBeat = null;
       saveState(state);
+    } else if (event.type === 'start-narration') {
+      // 标题屏 → 灵韵叙录：挂载 narrationSurface（独立状态机，不读 sim）。
+      startNarrationSurface();
+    } else if (event.type === 'return-title-from-narration') {
+      // 灵韵叙录 → 标题屏（玩家退出 / 结局返回）：拆 surface，BGM 交还帧循环。
+      destroyNarrationSurface();
+    }
+
+    // 叙录覆盖层生命周期（docs/22 §11）：进入 codex overlay 渲染三区，离开时拆。
+    if (next.overlay === 'codex' && previous.overlay !== 'codex') {
+      startNarrationCodex();
+    } else if (next.overlay !== 'codex' && previous.overlay === 'codex') {
+      destroyNarrationCodex();
     }
 
     clearLegacyAttentionSurfaces();
     updateFlowSurfaceContent(next);
     publicDemoPanels?.render(state, ctx);
-    if (event.type === 'open-alchemy') flowView?.refocusCurrentSurface();
     requestRender?.();
     refreshAppPresentation();
+    // E7 改写标题屏：每次流程变更后同步诅咒层（idempotent，docs/22 §2.5）。
+    applyE7TitleCurse();
 
     if (event.type === 'continue-game') {
       if (state.tutorialTribulation.phase === 'active') {
@@ -511,6 +928,13 @@ async function main(): Promise<void> {
         flowView?.dispatch({ type: 'start-tribulation' });
         flowView?.dispatch({ type: 'finish-tribulation' });
       }
+    }
+
+    // 序章视觉小说：进入序章即挂载（每次新进都全新开演），离开即拆除监听。
+    if (next.screen === 'prologue' && previous.screen !== 'prologue') {
+      startPrologueVN();
+    } else if (next.screen !== 'prologue' && previous.screen === 'prologue') {
+      destroyPrologueVN();
     }
   }
 
@@ -531,7 +955,12 @@ async function main(): Promise<void> {
   }
 
   function toast(msg: string, assetId?: string): void {
-    setToast(layers, msg, resolvePreviewTexture(renderAssets, assetId));
+    const profile = computeViewportLayout({
+      width: Math.max(1, window.innerWidth),
+      height: Math.max(1, window.innerHeight),
+      touchCapable: navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches
+    }).profile;
+    setToast(layers, msg, resolvePreviewTexture(renderAssets, assetId), profile === 'portrait-blocked' ? 'compact-landscape' : profile);
     requestRender?.();
   }
 
@@ -566,6 +995,11 @@ async function main(): Promise<void> {
 
   function performFarmAction(kind: DirectFarmActionKind, at = frontTile()): boolean {
     const blockedReason = farmActionBlockedReason(state, ctx, kind, at);
+    if (blockedReason === 'outside-farm-plot') {
+      const presentation = farmActionBlockedToastPresentation(kind, blockedReason);
+      toast(presentation.message, presentation.assetId);
+      return false;
+    }
     const before = snapshotFarmTiles(state);
     const eventStart = state.events.length;
     const objectiveBefore = getPublicDemoObjectiveId(state);
@@ -599,7 +1033,7 @@ async function main(): Promise<void> {
       }
       const objectiveAfter = getPublicDemoObjectiveId(state);
       if (objectiveBefore === 'first-harvest' && objectiveAfter === 'journey-alchemy') {
-        const milestoneToast = firstHarvestMilestoneToastPresentation(actionEvents, reg, '下一步：打开丹炉，把教学药包炼成首枚避雷丹。');
+        const milestoneToast = firstHarvestMilestoneToastPresentation(actionEvents, reg, '下一步：打开丹炉，把教学药包炼成首枚承雷丹。');
         if (milestoneToast) {
           toast(milestoneToast.message, milestoneToast.assetId);
           return true;
@@ -625,11 +1059,11 @@ async function main(): Promise<void> {
   }
 
   function locationSelectionHint(): string {
-    return '空格/E/回车执行·Esc返回';
+    return '点选服务执行·Esc返回';
   }
 
   function confirmHint(verb = '执行'): string {
-    return `空格/E/回车${verb}·Esc返回`;
+    return `点击${verb}·Esc返回`;
   }
 
   function refreshHotbarHint(): void {
@@ -673,8 +1107,16 @@ async function main(): Promise<void> {
         return t('ui.help.teaShed');
       case 'greenhouse':
         return t('ui.help.greenhouse');
-      default:
-        return '方向移动 · 空格/E 行动 · Z 播种 · X 浇水 · Space/Q 切换热栏 · 1-0 直选 · M 农庄 · I 背包 · L 地点 · U 丹炉 · P 暂停';
+      case 'location-action':
+        return '点击确认执行地点行动 · Esc返回';
+      default: {
+        const base = '点击目标移动/互动 · 行囊常驻，丹炉/山河图/修行在更多中 · B 行囊 · Esc 暂停/返回';
+        // 场景拾取提示：脚下有地面物品时附加一行
+        const ground = groundItemAtIndex(state, state.player.position);
+        if (!ground) return base;
+        const groundName = reg.items.get(ground.itemId)?.displayName ?? ground.itemId;
+        return `${base} · 脚下有 ${groundName} ×${ground.count}，点击脚下拾取`;
+      }
     }
   }
 
@@ -695,7 +1137,7 @@ async function main(): Promise<void> {
   function currentSemanticWorldAttention(): SemanticWorldAttention {
     if (dialogueBeat) return { panel: '对话', objective: '阅读当前对话', actions: currentHelpText() };
     if (locationSelectionActive) return { panel: '地点目录', objective: '选择地点与服务', actions: currentHelpText() };
-    if (layers.showInv) return { panel: '背包', objective: '查看随身物品', actions: currentHelpText() };
+    if (layers.showInv) return { panel: '物品管理', objective: '整理随身物品', actions: currentHelpText() };
     if (cultivationPanelVisible) return { panel: '修行', objective: '查看体魄与备劫状态', actions: currentHelpText() };
     const panel = interactionPanelSemanticLabel(interactionPanel) ?? '交互面板';
     return { panel, objective: `使用${panel}`, actions: currentHelpText() };
@@ -717,24 +1159,57 @@ async function main(): Promise<void> {
     setTextIfChanged(layers.help, currentHelpText());
   }
 
+  function setSelectorText(selector: string, text: string): void {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (element && element.textContent !== text) element.textContent = text;
+  }
+
+  function setVitalMeter(selector: string, pct: number): void {
+    const element = document.querySelector<HTMLElement>(selector);
+    if (!element) return;
+    const clamped = Math.max(0, Math.min(100, Math.round(pct)));
+    const next = String(clamped);
+    if (element.style.getPropertyValue('--vital-pct') !== next) element.style.setProperty('--vital-pct', next);
+  }
+
   function syncAppPresentation(): void {
     flowView?.setWorldAttention({
       dialogueActive: dialogueBeat !== null,
-      panelActive: interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible,
+      panelActive: paused || interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible,
       locationActive: locationSelectionActive
     });
     const flow = flowView?.getState() ?? null;
     const presentation = flowView?.getPresentation() ?? null;
     const worldHudVisible = presentation?.mode === 'world';
+    const locationHudVisible = presentation?.surface === 'world' && presentation.mode === 'location';
     const commandBar = document.querySelector<HTMLElement>('#world-command-bar');
     if (commandBar) commandBar.hidden = !worldHudVisible;
+    const locationCommandBar = document.querySelector<HTMLElement>('#world-location-command-bar');
+    if (locationCommandBar) locationCommandBar.hidden = !locationHudVisible;
     const objectiveRail = document.querySelector<HTMLElement>('#objective-rail');
-    if (objectiveRail) objectiveRail.hidden = !worldHudVisible;
-    if (worldHudVisible) {
+    if (objectiveRail) objectiveRail.hidden = !(worldHudVisible || locationHudVisible);
+    const fateStatusStrip = document.querySelector<HTMLElement>('#fate-status-strip');
+    if (fateStatusStrip) fateStatusStrip.hidden = !(worldHudVisible || locationHudVisible);
+    const vitalStrip = document.querySelector<HTMLElement>('#world-vital-strip');
+    if (vitalStrip) vitalStrip.hidden = !(worldHudVisible || locationHudVisible);
+    if (worldHudVisible || locationHudVisible) {
+      const stageNames = tList('ui.hud.stages');
+      const hpPct = Math.max(0, Math.min(100, Math.round((state.player.hp / state.player.maxHp) * 100)));
+      const staminaCap = DEFAULT_BALANCE.player.staminaCap * 1_000;
+      const staminaPct = Math.max(0, Math.min(100, Math.round((state.player.stamina / staminaCap) * 100)));
+      setSelectorText('#world-vital-day', `第 ${state.day} 日`);
+      setSelectorText('#world-vital-season', `${seasonShort[state.season]} ${state.seasonDay}`);
+      setSelectorText('#world-vital-stage', stageNames[state.player.stage] ?? `${state.player.stage}`);
+      setSelectorText('#world-vital-lifespan', `寿元 ${state.player.lifespanRemainingDays ?? '--'}`);
+      setSelectorText('#world-vital-hp-label', `气血 ${hpPct}%`);
+      setSelectorText('#world-vital-stamina-label', `体力 ${staminaPct}%`);
+      setVitalMeter('#world-vital-strip [data-vital="hp"]', hpPct);
+      setVitalMeter('#world-vital-strip [data-vital="stamina"]', staminaPct);
       const pressureCard = document.querySelector<HTMLElement>('#pressure-card');
       const pressureTrib = document.querySelector<HTMLElement>('#pressure-tribulation');
       const pressureLife = document.querySelector<HTMLElement>('#pressure-lifespan');
       const pressurePrep = document.querySelector<HTMLElement>('#pressure-prep');
+      const pressureSummary = document.querySelector<HTMLElement>('#fate-summary-pressure');
       if (pressureCard && pressureTrib && pressureLife && pressurePrep) {
         const pressure = tribulationPressurePresentation({
           status: state.tribulation.status,
@@ -748,12 +1223,18 @@ async function main(): Promise<void> {
         if (pressureLife.textContent !== pressure.lifespanRow) pressureLife.textContent = pressure.lifespanRow;
         if (pressurePrep.textContent !== pressure.prepRow) pressurePrep.textContent = pressure.prepRow;
         if (pressureCard.dataset.pressureDanger !== pressure.danger) pressureCard.dataset.pressureDanger = pressure.danger;
+        if (pressureSummary) {
+          const prepMatch = pressure.prepRow.match(/准备度(\d+)%/);
+          const summary = prepMatch ? `${pressure.tribulationRow}｜备劫${prepMatch[1]}%` : pressure.tribulationRow;
+          if (pressureSummary.textContent !== summary) pressureSummary.textContent = summary;
+        }
       }
       const compassCard = document.querySelector<HTMLElement>('#celestial-compass');
       const compassTitle = document.querySelector<HTMLElement>('#celestial-compass-title');
       const compassPrimary = document.querySelector<HTMLElement>('#celestial-compass-primary');
       const compassCausal = document.querySelector<HTMLElement>('#celestial-compass-causal');
       const compassUpcoming = document.querySelector<HTMLElement>('#celestial-compass-upcoming');
+      const compassSummary = document.querySelector<HTMLElement>('#fate-summary-celestial');
       if (compassCard && compassTitle && compassPrimary && compassCausal && compassUpcoming) {
         const eventDef = state.activeEvent ? ctx.content.events.get(state.activeEvent.defId) : undefined;
         const upcoming = upcomingCalendarEntries(state, ctx, 7).find(entry => (entry.daysFromNow ?? 0) >= 0) ?? null;
@@ -785,12 +1266,12 @@ async function main(): Promise<void> {
         if (compassCausal.textContent !== compass.causal) compassCausal.textContent = compass.causal;
         if (compassUpcoming.textContent !== compass.upcoming) compassUpcoming.textContent = compass.upcoming;
         if (compassCard.dataset.compassTone !== compass.tone) compassCard.dataset.compassTone = compass.tone;
+        if (compassSummary && compassSummary.textContent !== compass.primary) compassSummary.textContent = compass.primary;
       }
     }
 
     const semanticWorldActive = presentation?.surface === 'world';
     const semanticJourney = semanticWorldActive && presentation.mode === 'world' ? buildJourneyGuide(getPublicDemoObjectiveId(state), journeyGuideContextFromState(state)) : undefined;
-    const alchemyHeat = presentation?.surface === 'alchemy' ? Number(document.querySelector<HTMLInputElement>('#flow-alchemy-heat')?.value ?? 47) : 47;
     responsiveShell?.updateSemanticState(
       deriveSemanticGameState({
         presentation,
@@ -799,7 +1280,7 @@ async function main(): Promise<void> {
         journey: semanticJourney,
         worldAttention: semanticWorldActive && presentation.mode !== 'world' ? currentSemanticWorldAttention() : undefined,
         pauseWorldNavigationAvailable: flow?.screen === 'world',
-        alchemy: presentation?.surface === 'alchemy' ? buildPublicDemoAlchemyView(state, ctx, alchemyHeat) : undefined,
+        inventory: presentation?.surface === 'inventory' ? { viewMode: inventoryFlowMode === 'furnace' ? 'furnace-focus' : 'full' } : undefined,
         tribulation: presentation?.surface === 'tribulation' ? buildPublicDemoTribulationView(state) : undefined,
         aftermath: presentation?.surface === 'aftermath' ? buildPublicDemoAftermathView(state) : undefined,
         saveHealth
@@ -812,6 +1293,7 @@ async function main(): Promise<void> {
       __AEON_DEBUG__?: {
         debugSchemaVersion: number;
         buildRevision: string;
+        legacyShortcutsEnabled: boolean;
         flowScreen: string;
         flowOverlay: string | null;
         uiMode: string;
@@ -846,6 +1328,20 @@ async function main(): Promise<void> {
         playerX: number;
         playerY: number;
         playerFacing: Direction;
+        playerVisualX: number;
+        playerVisualY: number;
+        playerMovementActive: boolean;
+        playerMovementProgress: number;
+        playerMovementQueueLength: number;
+        playerMovementFromX: number | null;
+        playerMovementFromY: number | null;
+        playerMovementToX: number | null;
+        playerMovementToY: number | null;
+        pendingWorldCommand: string | null;
+        pendingWorldTargetX: number | null;
+        pendingWorldTargetY: number | null;
+        pendingWorldDestinationX: number | null;
+        pendingWorldDestinationY: number | null;
         tutorialTribulationPhase: string;
         tutorialBoltIndex: number;
         tutorialBoltCount: number;
@@ -866,6 +1362,15 @@ async function main(): Promise<void> {
         frontTileCropGrowth: number;
         frontTileWateredToday: boolean;
         frontTileMoisture: number;
+        frontTileFarmPlot: boolean;
+        frontSceneZoneKind: FarmsteadSceneZoneKind;
+        frontSceneObjectKind: FarmsteadSceneObjectKind | null;
+        frontSceneObjectAction: string | null;
+        pointerTileX: number | null;
+        pointerTileY: number | null;
+        lastPointerTileX: number | null;
+        lastPointerTileY: number | null;
+        lastPointerAction: PointerWorldActionKind;
         onboardingObjectiveId: string | null;
         farmOnboardingObjectiveId: string | null;
         helpText: string;
@@ -874,6 +1379,9 @@ async function main(): Promise<void> {
         todayBriefingVisible: boolean;
         panelPreviewVisible: boolean;
         locationPreviewVisible: boolean;
+        locationPreviewTextBottom: number | null;
+        locationPreviewPanelBottom: number | null;
+        locationPreviewMaxTextBottom: number | null;
         todayBriefingTitle: string;
         todayBriefingBody: string;
         todayBriefingAssetId: string | null;
@@ -890,6 +1398,21 @@ async function main(): Promise<void> {
         configureSowKeypoint: () => boolean;
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
+        configureFarmsteadObjectKeypoint: (kind?: FarmsteadSceneObjectKind) => boolean;
+        configureFarmsteadNonPlotKeypoint: () => boolean;
+        configureFarmsteadClickFarmKeypoint: () => { targetX: number; targetY: number; frontX: number; frontY: number } | null;
+        configureJourneyReachableFarmTargetKeypoint: () => { nearX: number; nearY: number; farX: number; farY: number } | null;
+        configureBuildArrayKeypoint: (kind?: 'lightning-rod' | 'insulation', preservePanel?: boolean) => BuildArrayKeypoint | null;
+        configureBuiltFacilityClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number } | null;
+        configureGroundItemClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number } | null;
+        configureNpcPreviewClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number; npcId: string; locationId: string } | null;
+        configureLocationPreviewClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number; locationId: string } | null;
+        showLongLocationPreviewForTest: (withTexture?: boolean) => { textBottom: number; panelBottom: number; maxTextBottom: number; text: string } | null;
+        canvasPointForTile: (x: number, y: number) => { x: number; y: number } | null;
+        farmsteadObjectTile: (kind?: FarmsteadSceneObjectKind) => { x: number; y: number } | null;
+        tileSnapshot: (x: number, y: number) => { tilled: boolean; cropId: number | null; blockType: string; playerX: number; playerY: number } | null;
+        arraySnapshot: (x: number, y: number) => ArraySnapshot | null;
+        groundItemSnapshot: (x: number, y: number) => { itemId: string; count: number } | null;
         matureFrontCrop: () => boolean;
         waterFrontCrop: () => boolean;
         buyMosslingSeed: () => boolean;
@@ -907,10 +1430,14 @@ async function main(): Promise<void> {
     const ft = frontTile();
     const front = tileAt(state, ft.x, ft.y);
     const frontCrop = front?.cropId != null ? (state.crops.get(front.cropId) ?? state.crops.get(front.id) ?? null) : null;
+    const frontSceneObject = farmsteadSceneObjectAt(state, ft.x, ft.y);
     const shippingChoices = interactionPanel.kind === 'shipping' ? (interactionPanel.mode === 'normal' ? normalShipChoices() : qualityShipChoices()) : [];
     const selectedShippingChoice = interactionPanel.kind === 'shipping' ? (interactionPanel.mode === 'normal' ? (shippingChoices[normalizeSelection(shipIdx, shippingChoices.length)] ?? null) : (shippingChoices[normalizeSelection(qualityShipIdx, shippingChoices.length)] ?? null)) : null;
+    const movementVisual = currentPlayerMovementVisual(performance.now());
     const flow = flowView?.getState() ?? null;
     const presentation = flowView?.getPresentation() ?? null;
+    const locationPreviewTextHeight = layers.locationPreviewText.visible ? layers.locationPreviewText.height : 0;
+    const locationPreviewPanelHeight = layers.locationPreviewText.visible ? locationPreviewBoxHeight(locationPreviewTextHeight) : 0;
     const viewportLayout = computeViewportLayout({
       width: Math.max(1, window.innerWidth),
       height: Math.max(1, window.innerHeight),
@@ -919,6 +1446,7 @@ async function main(): Promise<void> {
     target.__AEON_DEBUG__ = {
       debugSchemaVersion: 2,
       buildRevision: BUILD_REVISION,
+      legacyShortcutsEnabled: LEGACY_SHORTCUTS_ENABLED,
       flowScreen: flow?.screen ?? 'boot',
       flowOverlay: flow?.overlay ?? null,
       uiMode: presentation?.mode ?? 'loading',
@@ -953,6 +1481,20 @@ async function main(): Promise<void> {
       playerX: state.player.position.x,
       playerY: state.player.position.y,
       playerFacing: state.player.facing,
+      playerVisualX: movementVisual.x,
+      playerVisualY: movementVisual.y,
+      playerMovementActive: worldMovementActive(),
+      playerMovementProgress: movementVisual.progress,
+      playerMovementQueueLength: queuedMovementPath.length,
+      playerMovementFromX: playerMovementAnimation?.from.x ?? null,
+      playerMovementFromY: playerMovementAnimation?.from.y ?? null,
+      playerMovementToX: playerMovementAnimation?.to.x ?? null,
+      playerMovementToY: playerMovementAnimation?.to.y ?? null,
+      pendingWorldCommand: pendingWorldCommand?.description ?? null,
+      pendingWorldTargetX: pendingWorldCommand?.target.x ?? null,
+      pendingWorldTargetY: pendingWorldCommand?.target.y ?? null,
+      pendingWorldDestinationX: pendingWorldCommand?.destination.x ?? null,
+      pendingWorldDestinationY: pendingWorldCommand?.destination.y ?? null,
       tutorialTribulationPhase: state.tutorialTribulation.phase,
       tutorialBoltIndex: state.tutorialTribulation.boltIndex,
       tutorialBoltCount: TUTORIAL_TRIBULATION_BOLT_COUNT,
@@ -987,6 +1529,15 @@ async function main(): Promise<void> {
       frontTileCropGrowth: frontCrop?.growth ?? 0,
       frontTileWateredToday: front?.wateredToday ?? false,
       frontTileMoisture: front?.moisture ?? 0,
+      frontTileFarmPlot: isFarmsteadFarmPlotTile(state, ft.x, ft.y),
+      frontSceneZoneKind: front ? farmsteadSceneTileKind(state, ft.x, ft.y) : 'wild',
+      frontSceneObjectKind: frontSceneObject?.kind ?? null,
+      frontSceneObjectAction: frontSceneObject?.actionLabel ?? null,
+      pointerTileX: pointerTile?.x ?? null,
+      pointerTileY: pointerTile?.y ?? null,
+      lastPointerTileX: lastPointerTile?.x ?? null,
+      lastPointerTileY: lastPointerTile?.y ?? null,
+      lastPointerAction,
       onboardingObjectiveId: getPublicDemoObjectiveId(state),
       farmOnboardingObjectiveId: getOnboardingObjectiveId(state),
       helpText,
@@ -995,6 +1546,9 @@ async function main(): Promise<void> {
       todayBriefingVisible: layers.briefing.visible,
       panelPreviewVisible: layers.panelPreviewText.visible,
       locationPreviewVisible: layers.locationPreviewText.visible,
+      locationPreviewTextBottom: layers.locationPreviewText.visible ? layers.locationPreviewText.y + locationPreviewTextHeight : null,
+      locationPreviewPanelBottom: layers.locationPreviewText.visible ? LOCATION_PREVIEW_BOX.y + locationPreviewPanelHeight : null,
+      locationPreviewMaxTextBottom: layers.locationPreviewText.visible ? layers.locationPreviewText.y + locationPreviewMaxTextHeight() : null,
       todayBriefingTitle: briefing?.title ?? '',
       todayBriefingBody: briefing?.body ?? '',
       todayBriefingAssetId: briefing?.assetId ?? null,
@@ -1028,6 +1582,21 @@ async function main(): Promise<void> {
         configureSowKeypoint: () => boolean;
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
+        configureFarmsteadObjectKeypoint: (kind?: FarmsteadSceneObjectKind) => boolean;
+        configureFarmsteadNonPlotKeypoint: () => boolean;
+        configureFarmsteadClickFarmKeypoint: () => { targetX: number; targetY: number; frontX: number; frontY: number } | null;
+        configureJourneyReachableFarmTargetKeypoint: () => { nearX: number; nearY: number; farX: number; farY: number } | null;
+        configureBuildArrayKeypoint: (kind?: 'lightning-rod' | 'insulation', preservePanel?: boolean) => BuildArrayKeypoint | null;
+        configureBuiltFacilityClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number } | null;
+        configureGroundItemClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number } | null;
+        configureNpcPreviewClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number; npcId: string; locationId: string } | null;
+        configureLocationPreviewClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number; locationId: string } | null;
+        showLongLocationPreviewForTest: (withTexture?: boolean) => { textBottom: number; panelBottom: number; maxTextBottom: number; text: string } | null;
+        canvasPointForTile: (x: number, y: number) => { x: number; y: number } | null;
+        farmsteadObjectTile: (kind?: FarmsteadSceneObjectKind) => { x: number; y: number } | null;
+        tileSnapshot: (x: number, y: number) => { tilled: boolean; cropId: number | null; blockType: string; playerX: number; playerY: number } | null;
+        arraySnapshot: (x: number, y: number) => ArraySnapshot | null;
+        groundItemSnapshot: (x: number, y: number) => { itemId: string; count: number } | null;
         matureFrontCrop: () => boolean;
         waterFrontCrop: () => boolean;
         buyMosslingSeed: () => boolean;
@@ -1035,9 +1604,56 @@ async function main(): Promise<void> {
         advanceOneDay: () => void;
       };
     };
+    const clearPanelsForTest = (): void => {
+      interactionPanel = { kind: 'none' };
+      locationSelectionActive = false;
+      cultivationPanelVisible = false;
+      layers.cultivation.visible = false;
+      layers.showInv = false;
+      paused = false;
+      dialogueBeat = null;
+      hideDialogue(layers);
+    };
+    const faceTileForTest = (targetTile: { x: number; y: number }): boolean => {
+      const candidates: Array<{ x: number; y: number; facing: Direction }> = [
+        { x: targetTile.x, y: targetTile.y - 1, facing: 'down' },
+        { x: targetTile.x, y: targetTile.y + 1, facing: 'up' },
+        { x: targetTile.x - 1, y: targetTile.y, facing: 'right' },
+        { x: targetTile.x + 1, y: targetTile.y, facing: 'left' }
+      ];
+      for (const candidate of candidates) {
+        const standTile = tileAt(state, candidate.x, candidate.y);
+        if (!standTile || standTile.blockType !== 'none') continue;
+        state.player.position = { x: candidate.x, y: candidate.y };
+        state.player.facing = candidate.facing;
+        return true;
+      }
+      return false;
+    };
+    const showLongLocationPreviewForTest = (withTexture = false): { textBottom: number; panelBottom: number; maxTextBottom: number; text: string } | null => {
+      clearPanelsForTest();
+      locationSelectionActive = true;
+      drawLocationPreview(
+        layers,
+        '山谷墟市',
+        '今日人声很杂，散修摊位、药材行情、委托传闻、归谷路线和劫后残痕全挤在这一处。'.repeat(36),
+        withTexture ? Texture.WHITE : undefined
+      );
+      publishDebugSnapshot();
+      if (!layers.locationPreviewText.visible) return null;
+      const textHeight = layers.locationPreviewText.height;
+      return {
+        textBottom: layers.locationPreviewText.y + textHeight,
+        panelBottom: LOCATION_PREVIEW_BOX.y + locationPreviewBoxHeight(textHeight),
+        maxTextBottom: layers.locationPreviewText.y + locationPreviewMaxTextHeight(),
+        text: String(layers.locationPreviewText.text)
+      };
+    };
     target.__AEON_TEST__ = {
       configureSowKeypoint: () => {
-        const targetTile = state.tiles.find(tile => tile.y > 0 && tile.blockType === 'none' && tile.soilType !== 'water' && tile.soilType !== 'rock' && tile.soilType !== 'metal-ore') ?? null;
+        const targetPoint = firstFarmsteadFarmPlotTile(state);
+        if (!targetPoint) return false;
+        const targetTile = tileAt(state, targetPoint.x, targetPoint.y);
         if (!targetTile) return false;
 
         for (const tile of state.tiles) {
@@ -1051,18 +1667,10 @@ async function main(): Promise<void> {
 
         targetTile.tilled = true;
         for (const beatId of [...prologueBeatIds, 'first-till']) markSeen(state, beatId);
-        state.player.position = { x: targetTile.x, y: targetTile.y - 1 };
-        state.player.facing = 'down';
+        if (!faceTileForTest(targetTile)) return false;
         state.player.inventory['seed.mossling'] = { itemId: 'seed.mossling', count: Math.max(itemCount(state.player, 'seed.mossling'), 1) };
         hotbarIdx = 0;
-        interactionPanel = { kind: 'none' };
-        locationSelectionActive = false;
-        cultivationPanelVisible = false;
-        layers.cultivation.visible = false;
-        layers.showInv = false;
-        paused = false;
-        dialogueBeat = null;
-        hideDialogue(layers);
+        clearPanelsForTest();
         saveState(state);
         refreshAppPresentation();
         return getPublicDemoObjectiveId(state) === 'first-sow' && tileAt(state, targetTile.x, targetTile.y)?.cropId == null;
@@ -1138,6 +1746,321 @@ async function main(): Promise<void> {
         refreshAppPresentation();
         return { lowX: low.x, lowY: low.y, highX: high.x, highY: high.y };
       },
+      configureFarmsteadObjectKeypoint: (kind = 'storage') => {
+        applyFarmsteadSceneLayout(state);
+        const object = farmsteadSceneObjectByKind(state, kind);
+        if (!object) return false;
+        if (!faceTileForTest({ x: object.x, y: object.y })) return false;
+        state.player.inventory['item.spirit-stone'] = { itemId: 'item.spirit-stone', count: Math.max(itemCount(state.player, 'item.spirit-stone'), 1) };
+        if (kind === 'shipping') {
+          state.player.inventory['herb.mossling'] = { itemId: 'herb.mossling', count: Math.max(itemCount(state.player, 'herb.mossling'), 1) };
+          const mosslingShipIdx = normalShipChoices().findIndex(choice => choice.itemId === 'herb.mossling');
+          if (mosslingShipIdx >= 0) shipIdx = mosslingShipIdx;
+        }
+        hotbarIdx = 0;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return farmsteadSceneObjectAt(state, frontTile().x, frontTile().y)?.kind === kind;
+      },
+      configureFarmsteadNonPlotKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        const targetPoint = firstNonFarmsteadFarmPlotTile(state);
+        if (!targetPoint) return false;
+        const targetTile = tileAt(state, targetPoint.x, targetPoint.y);
+        if (!targetTile) return false;
+        if (targetTile.cropId != null) state.crops.delete(targetTile.cropId);
+        state.crops.delete(targetTile.id);
+        targetTile.cropId = null;
+        targetTile.tilled = false;
+        targetTile.blockType = 'none';
+        if (targetTile.soilType === 'water' || targetTile.soilType === 'rock' || targetTile.soilType === 'metal-ore') targetTile.soilType = 'loam';
+        if (!faceTileForTest(targetTile)) return false;
+        hotbarIdx = 0;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return !isFarmsteadFarmPlotTile(state, targetTile.x, targetTile.y) && farmsteadSceneObjectAt(state, targetTile.x, targetTile.y) == null;
+      },
+      configureFarmsteadClickFarmKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        const targetTile = tileAt(state, 4, 4) ?? null;
+        const frontTileTarget = tileAt(state, 7, 5) ?? null;
+        if (!targetTile || !frontTileTarget) return null;
+        for (const tile of [targetTile, frontTileTarget]) {
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.cropId = null;
+          tile.tilled = false;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+          tile.blockType = 'none';
+          tile.soilType = 'loam';
+        }
+        state.player.position = { x: 7, y: 4 };
+        state.player.facing = 'down';
+        hotbarIdx = 0;
+        playwrightAmbientTimeMs = 900;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return { targetX: targetTile.x, targetY: targetTile.y, frontX: frontTileTarget.x, frontY: frontTileTarget.y };
+      },
+      configureJourneyReachableFarmTargetKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        const nearTile = tileAt(state, 4, 4) ?? null;
+        const farTile = tileAt(state, 3, 7) ?? null;
+        const playerTile = tileAt(state, 2, 4) ?? null;
+        if (!nearTile || !farTile || !playerTile) return null;
+        if (!isFarmsteadFarmPlotTile(state, nearTile.x, nearTile.y) || !isFarmsteadFarmPlotTile(state, farTile.x, farTile.y)) return null;
+
+        for (const tile of state.tiles) {
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.cropId = null;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+          tile.arrayId = null;
+          if (isFarmsteadFarmPlotTile(state, tile.x, tile.y)) {
+            tile.blockType = 'rock';
+            tile.soilType = 'rock';
+            tile.tilled = false;
+          }
+        }
+
+        for (const tile of [nearTile, farTile]) {
+          tile.blockType = 'none';
+          tile.soilType = 'loam';
+          tile.tilled = false;
+          tile.cropId = null;
+        }
+
+        for (const blocker of [
+          tileAt(state, nearTile.x, nearTile.y - 1),
+          tileAt(state, nearTile.x + 1, nearTile.y),
+          tileAt(state, nearTile.x, nearTile.y + 1),
+          tileAt(state, nearTile.x - 1, nearTile.y)
+        ]) {
+          if (!blocker) continue;
+          blocker.blockType = 'rock';
+          blocker.soilType = 'rock';
+          blocker.tilled = false;
+          if (blocker.cropId != null) state.crops.delete(blocker.cropId);
+          state.crops.delete(blocker.id);
+          blocker.cropId = null;
+        }
+
+        for (const clear of [playerTile, tileAt(state, farTile.x - 1, farTile.y)]) {
+          if (!clear) continue;
+          clear.blockType = 'none';
+          if (clear.soilType === 'rock' || clear.soilType === 'water' || clear.soilType === 'metal-ore') clear.soilType = 'loam';
+        }
+
+        state.player.position = { x: playerTile.x, y: playerTile.y };
+        state.player.facing = 'down';
+        if (reachableInteractionPathToTarget({ x: nearTile.x, y: nearTile.y }) != null) return null;
+        if (reachableInteractionPathToTarget({ x: farTile.x, y: farTile.y }) == null) return null;
+        hotbarIdx = 0;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return { nearX: nearTile.x, nearY: nearTile.y, farX: farTile.x, farY: farTile.y };
+      },
+      configureBuildArrayKeypoint: (kind = 'lightning-rod', preservePanel = false) => {
+        applyFarmsteadSceneLayout(state);
+        const targetPoint = tileAt(state, 4, 4) ? { x: 4, y: 4 } : firstFarmsteadFarmPlotTile(state);
+        const targetTile = targetPoint ? tileAt(state, targetPoint.x, targetPoint.y) : null;
+        if (!targetTile) return null;
+        for (const tile of state.tiles) {
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.cropId = null;
+          tile.arrayId = null;
+        }
+        for (const [facilityId, facility] of state.facilities) {
+          if (facility.tileId === targetTile.id) state.facilities.delete(facilityId);
+        }
+        state.arrays.clear();
+        targetTile.blockType = 'none';
+        targetTile.soilType = 'loam';
+        targetTile.tilled = kind === 'lightning-rod';
+        targetTile.wateredToday = false;
+        targetTile.channeledToday = false;
+        if (kind === 'lightning-rod') {
+          state.crops.set(targetTile.id, {
+            id: targetTile.id,
+            defId: 'herb.metalpine',
+            tileId: targetTile.id,
+            growth: 0,
+            health: 100_000,
+            stage: 'seed',
+            plantedDay: state.day,
+            property: { cold: 0, hot: 0, warm: 0, neutral: 0 },
+            tempered: false
+          });
+          targetTile.cropId = targetTile.id;
+        }
+        state.player.inventory['item.array-core'] = { itemId: 'item.array-core', count: Math.max(itemCount(state.player, 'item.array-core'), 2) };
+        state.player.inventory['item.spirit-stone'] = { itemId: 'item.spirit-stone', count: Math.max(itemCount(state.player, 'item.spirit-stone'), 8) };
+        preselectArrayBuildChoice(kind);
+        hotbarIdx = 0;
+        if (preservePanel) {
+          locationSelectionActive = false;
+          cultivationPanelVisible = false;
+          layers.cultivation.visible = false;
+          layers.showInv = false;
+          paused = false;
+          dialogueBeat = null;
+          hideDialogue(layers);
+          interactionPanel = { kind: 'build' };
+        } else {
+          clearPanelsForTest();
+        }
+        saveState(state);
+        refreshAppPresentation();
+        return {
+          targetX: targetTile.x,
+          targetY: targetTile.y,
+          playerX: state.player.position.x,
+          playerY: state.player.position.y,
+          arrayDefId: kind === 'lightning-rod' ? 'array.lightning-rod' : 'array.insulation'
+        };
+      },
+      configureBuiltFacilityClickKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        const targetTile = tileAt(state, 7, 4) ?? null;
+        if (!targetTile) return null;
+        for (const tile of state.tiles) {
+          if (tile.y !== targetTile.y || tile.x < 4 || tile.x > targetTile.x) continue;
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.cropId = null;
+          tile.tilled = false;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+          tile.blockType = 'none';
+          tile.soilType = 'loam';
+        }
+        state.facilities.delete(9101);
+        targetTile.blockType = 'building';
+        state.facilities.set(9101, {
+          id: 9101,
+          kind: 'drying-rack',
+          tileId: targetTile.id,
+          job: { inputItemId: 'herb.mossling', outputItemId: 'item.dried-herb', outputCount: 1, daysRemaining: 0 }
+        });
+        state.player.position = { x: 4, y: 4 };
+        state.player.facing = 'right';
+        hotbarIdx = 0;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return { targetX: targetTile.x, targetY: targetTile.y, playerX: state.player.position.x, playerY: state.player.position.y };
+      },
+      configureGroundItemClickKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        const targetTile = tileAt(state, 4, 4) ?? null;
+        if (!targetTile) return null;
+        for (const tile of state.tiles) {
+          if (tile.y !== targetTile.y || tile.x < targetTile.x || tile.x > 7) continue;
+          if (tile.cropId != null) state.crops.delete(tile.cropId);
+          state.crops.delete(tile.id);
+          tile.cropId = null;
+          tile.tilled = false;
+          tile.wateredToday = false;
+          tile.channeledToday = false;
+          tile.blockType = 'none';
+          tile.soilType = 'loam';
+        }
+        state.groundItems = state.groundItems.filter(item => item.pos.x !== targetTile.x || item.pos.y !== targetTile.y);
+        placeGroundItem(state, { itemId: 'item.spirit-stone', count: 1, pos: { x: targetTile.x, y: targetTile.y } });
+        state.player.position = { x: 7, y: 4 };
+        state.player.facing = 'left';
+        hotbarIdx = 0;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return { targetX: targetTile.x, targetY: targetTile.y, playerX: state.player.position.x, playerY: state.player.position.y };
+      },
+      configureNpcPreviewClickKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        state.player.flags.add(FIRST_SECOND_WATER_FLAG);
+        const placement =
+          npcWorldPreviewPlacements(state).find(entry => entry.npcId.startsWith('npc.') && farmsteadSceneObjectAt(state, entry.x, entry.y) == null) ??
+          npcWorldPreviewPlacements(state).find(entry => farmsteadSceneObjectAt(state, entry.x, entry.y) == null) ??
+          null;
+        if (!placement) return null;
+        if (!faceTileForTest({ x: placement.x, y: placement.y })) return null;
+        hotbarIdx = 0;
+        clearPanelsForTest();
+        saveState(state);
+        refreshAppPresentation();
+        return {
+          targetX: placement.x,
+          targetY: placement.y,
+          playerX: state.player.position.x,
+          playerY: state.player.position.y,
+          npcId: placement.npcId,
+          locationId: placement.locationId
+        };
+      },
+      configureLocationPreviewClickKeypoint: () => {
+        applyFarmsteadSceneLayout(state);
+        state.player.flags.add(FIRST_SECOND_WATER_FLAG);
+        const activeLocationIds = new Set(getActiveLocationDirectory(state).map(location => location.id));
+        for (const placement of locationWorldPreviewPlacements(state)) {
+          if (!activeLocationIds.has(placement.locationId)) continue;
+          if (npcWorldPreviewPlacementAt(state, placement.x, placement.y)) continue;
+          if (farmsteadSceneObjectAt(state, placement.x, placement.y)) continue;
+          const tile = tileAt(state, placement.x, placement.y);
+          if (!tile || facilityAt(state, tile.id)) continue;
+          if (!faceTileForTest({ x: placement.x, y: placement.y })) continue;
+          hotbarIdx = 0;
+          clearPanelsForTest();
+          saveState(state);
+          refreshAppPresentation();
+          return {
+            targetX: placement.x,
+            targetY: placement.y,
+            playerX: state.player.position.x,
+            playerY: state.player.position.y,
+            locationId: placement.locationId
+          };
+        }
+        return null;
+      },
+      showLongLocationPreviewForTest,
+      canvasPointForTile: (x: number, y: number) => canvasLocalPointForTileForTest(x, y),
+      farmsteadObjectTile: (kind = 'storage') => {
+        const object = farmsteadSceneObjectByKind(state, kind);
+        return object ? { x: object.x, y: object.y } : null;
+      },
+      tileSnapshot: (x: number, y: number) => {
+        const tile = tileAt(state, x, y);
+        return tile
+          ? {
+              tilled: tile.tilled,
+              cropId: tile.cropId,
+              blockType: tile.blockType,
+              playerX: state.player.position.x,
+              playerY: state.player.position.y
+            }
+          : null;
+      },
+      arraySnapshot: (x: number, y: number) => {
+        const tile = tileAt(state, x, y);
+        if (!tile) return null;
+        const arrays = [...state.arrays.values()].filter(array => array.coreTileId === tile.id);
+        return {
+          count: arrays.length,
+          defIds: arrays.map(array => array.defId),
+          activeCount: arrays.filter(array => array.active).length
+        };
+      },
+      groundItemSnapshot: (x: number, y: number) => {
+        const item = groundItemAtIndex(state, { x, y });
+        return item ? { itemId: item.itemId, count: item.count } : null;
+      },
       matureFrontCrop: () => {
         const ft = frontTile();
         let tile = tileAt(state, ft.x, ft.y);
@@ -1174,7 +2097,7 @@ async function main(): Promise<void> {
         return watered;
       },
       buyMosslingSeed: () => {
-        const result = buyShopItem(state, 'seed.mossling', 1);
+        const result = buyShopItem(state, 'seed.mossling', 1, ctx);
         if (!result.ok) {
           refreshAppPresentation();
           return false;
@@ -1206,6 +2129,7 @@ async function main(): Promise<void> {
   installPlaywrightTestHooks();
 
   function activateLocationSelection(prefix: '地点' | '服务'): void {
+    cancelWorldMovementForSurfaceTransition();
     applyPreferredLocationSelection();
     interactionPanel = { kind: 'none' };
     locationSelectionActive = true;
@@ -1268,6 +2192,8 @@ async function main(): Promise<void> {
         return 'loc.tea-shed';
       case 'greenhouse':
         return 'loc.greenhouse';
+      case 'location-action':
+        return locationPreviewAssetId(panel.locationId);
       case 'festival':
         return 'loc.festival-ground';
       case 'shop':
@@ -1333,9 +2259,62 @@ async function main(): Promise<void> {
     }
   }
 
+  function toggleInventoryFlowOverlay(): boolean {
+    if (!flowView) return false;
+    const flow = flowView.getState();
+    if (flow.overlay === 'inventory') {
+      flowView.dispatch({ type: 'close-overlay' });
+      return true;
+    }
+    return openInventoryFlowOverlay('inventory');
+  }
+
+  function openFlowOverlay(overlay: AppOverlay, returnFocus: AppFocusSelector = APP_FLOW_FOCUS_TARGETS.world): boolean {
+    if (!flowView) return false;
+    const flow = flowView.getState();
+    if (flow.screen !== 'world' || flow.overlay !== null) return false;
+    cancelWorldMovementForSurfaceTransition();
+    flowView.dispatch({ type: 'open-overlay', overlay, returnFocus });
+    return true;
+  }
+
+  function openInventoryFlowOverlay(tab: 'inventory' | 'furnace', returnFocus: AppFocusSelector = APP_FLOW_FOCUS_TARGETS.world, recipeId?: string): boolean {
+    if (!flowView) return false;
+    const flow = flowView.getState();
+    inventoryFlowMode = tab;
+    const inventory = ensureInventoryUI();
+    if (tab === 'furnace') inventory?.showFurnace(recipeId);
+    else inventory?.showInventory();
+    if (flow.overlay === 'inventory') return true;
+    if (flow.screen !== 'world' || flow.overlay !== null || paused) return false;
+    layers.showInv = false;
+    return openFlowOverlay('inventory', returnFocus);
+  }
+
+  function openFurnaceInventory(returnFocus: AppFocusSelector = APP_FLOW_FOCUS_TARGETS.world, recipeId?: string): boolean {
+    const tutorialAlchemyActive = getPublicDemoObjectiveId(state) === 'journey-alchemy';
+    if (tutorialAlchemyActive) {
+      applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
+      saveState(state);
+    }
+    const preferredRecipeId = recipeId ?? (tutorialAlchemyActive ? 'recipe.ward-pill' : undefined);
+    const opened = openInventoryFlowOverlay('furnace', returnFocus, preferredRecipeId);
+    if (opened) {
+      const presentation = overlayToastPresentation('open-inventory', 'facility.talisman-furnace');
+      toast(presentation.message, presentation.assetId);
+    }
+    return opened;
+  }
+
   function toggleInventoryVisibility(): void {
+    if (toggleInventoryFlowOverlay()) {
+      const presentation = overlayToastPresentation(flowView?.getState().overlay === 'inventory' ? 'open-inventory' : 'close-inventory', inventoryOverlayAssetId());
+      toast(presentation.message, presentation.assetId);
+      return;
+    }
     cultivationPanelVisible = false;
     layers.cultivation.visible = false;
+    if (!layers.showInv) cancelWorldMovementForSurfaceTransition();
     layers.showInv = !layers.showInv;
     {
       const presentation = overlayToastPresentation(layers.showInv ? 'open-inventory' : 'close-inventory', inventoryOverlayAssetId());
@@ -1349,6 +2328,7 @@ async function main(): Promise<void> {
 
   function toggleCultivationPanel(): void {
     layers.showInv = false;
+    if (!cultivationPanelVisible) cancelWorldMovementForSurfaceTransition();
     cultivationPanelVisible = !cultivationPanelVisible;
     if (cultivationPanelVisible) {
       refreshCultivationPanel();
@@ -1425,6 +2405,7 @@ async function main(): Promise<void> {
     if (getOnboardingObjectiveId(state) !== 'first-second-sow') return false;
     const tile = tileAt(state, frontTile().x, frontTile().y);
     if (!tile || tile.tilled || tile.cropId != null || tile.blockType !== 'none') return false;
+    if (!isFarmsteadFarmPlotTile(state, tile.x, tile.y)) return false;
     if (tile.soilType === 'water' || tile.soilType === 'rock' || tile.soilType === 'metal-ore') return false;
     applyAction(state, { kind: 'till', at: frontTile() }, ctx);
     audio.playSfx('till');
@@ -1433,6 +2414,11 @@ async function main(): Promise<void> {
 
   function performSowAction(seedId: string, switched: boolean, at = frontTile()): boolean {
     const blockedReason = farmActionBlockedReason(state, ctx, 'sow', at, { seedId });
+    if (blockedReason === 'outside-farm-plot') {
+      const presentation = farmActionBlockedToastPresentation('sow', blockedReason, { seedId });
+      toast(presentation.message, presentation.assetId);
+      return false;
+    }
     const before = snapshotFarmTiles(state);
     const objectiveBefore = getOnboardingObjectiveId(state);
     applyAction(state, { kind: 'sow', at, seedId }, ctx);
@@ -1508,6 +2494,11 @@ async function main(): Promise<void> {
 
   function performFertilizeAction(at = frontTile(), itemId = 'item.spirit-compost'): boolean {
     const blockedReason = farmActionBlockedReason(state, ctx, 'fertilize', at, { itemId });
+    if (blockedReason === 'outside-farm-plot') {
+      const presentation = farmActionBlockedToastPresentation('fertilize', blockedReason, { itemId });
+      toast(presentation.message, presentation.assetId);
+      return false;
+    }
     const before = snapshotFarmTiles(state);
     applyAction(state, { kind: 'fertilize', at, itemId }, ctx);
     const outcome = deriveFarmActionOutcome('fertilize', before, snapshotFarmTiles(state));
@@ -1582,6 +2573,7 @@ async function main(): Promise<void> {
       toast(presentation.message, presentation.assetId);
       return;
     }
+    cancelWorldMovementForSurfaceTransition();
     interactionPanel = { kind: 'storage', mode };
     if (mode === 'deposit') {
       storageDepositIdx = normalizeSelection(storageDepositIdx, choices.length);
@@ -1597,6 +2589,7 @@ async function main(): Promise<void> {
   }
 
   function openFarmActionPanel(): void {
+    cancelWorldMovementForSurfaceTransition();
     interactionPanel = { kind: 'farm-action' };
     farmActionIdx = normalizeSelection(farmActionIdx, FARM_ACTION_ORDER.length);
     const kind = FARM_ACTION_ORDER[farmActionIdx] ?? FARM_ACTION_ORDER[0]!;
@@ -1621,6 +2614,7 @@ async function main(): Promise<void> {
   }
 
   function openNpcActionPanel(): void {
+    cancelWorldMovementForSurfaceTransition();
     interactionPanel = { kind: 'npc-action' };
     npcActionIdx = normalizeSelection(npcActionIdx, NPC_ACTION_ORDER.length);
     const mode = NPC_ACTION_ORDER[npcActionIdx] ?? NPC_ACTION_ORDER[0];
@@ -1634,6 +2628,7 @@ async function main(): Promise<void> {
   }
 
   function openFarmActionKind(kind: FarmActionKind): void {
+    cancelWorldMovementForSurfaceTransition();
     farmActionIdx = Math.max(0, FARM_ACTION_ORDER.indexOf(kind));
     switch (kind) {
       case 'build':
@@ -1725,33 +2720,98 @@ async function main(): Promise<void> {
     return upgrade.costs.map(cost => `${reg.items.get(cost.itemId)?.displayName ?? cost.itemId}×${cost.count}`).join('、');
   }
 
-  function buildFacility(kind: FacilityKind): void {
-    const ft = frontTile();
+  function buildFacilityAt(kind: FacilityKind, at: GridPoint): boolean {
     const eventStart = state.events.length;
-    applyAction(state, { kind: 'place-facility', at: ft, facilityKind: kind }, ctx);
+    applyAction(state, { kind: 'place-facility', at, facilityKind: kind }, ctx);
     const events = state.events.slice(eventStart);
     const placed = events.some(e => e.type === 'facility-place');
     if (placed) {
       const presentation = buildResultToastPresentation(kind, 'success');
       toast(presentation.message, presentation.assetId);
-      return;
+      return true;
     }
     const failed = events.find(e => e.type === 'facility-place-failed');
     const payload = failed?.payload as { reason?: string; requiredExpansionTier?: number | null; currentExpansionTier?: number } | undefined;
     if (payload?.requiredExpansionTier != null && payload.currentExpansionTier != null && payload.currentExpansionTier < payload.requiredExpansionTier) {
       const presentation = buildResultToastPresentation(kind, 'failure', `${FACILITY_LABEL[kind]}需农庄扩建${payload.requiredExpansionTier}阶，当前为${payload.currentExpansionTier}阶`);
       toast(presentation.message, presentation.assetId);
-      return;
+      return false;
     }
     const presentation = buildResultToastPresentation(kind, 'failure', payload?.reason ?? `需${describeFacilityBuildCost(kind)}，且前方为空地`);
     toast(presentation.message, presentation.assetId);
+    return false;
+  }
+
+  function buildFacility(kind: FacilityKind): boolean {
+    return buildFacilityAt(kind, frontTile());
+  }
+
+  function buildChoicePanelPreview(choice: BuildChoice): { title: string; details: string; assetId?: string } {
+    if (choice.kind === 'facility') return buildPanelPreview(choice.facilityKind, reg);
+    const ruleLine = choice.defId === 'array.lightning-rod' ? '规则：需在金属性灵草上设阵眼，引导雷势落向阵心' : '规则：可设在普通空地，分流雷势、稳住核心区';
+    return {
+      title: choice.title,
+      details: `阵法布设\n材料：${describeArrayBuildCost(choice.defId)}\n目标：点击地图目标格，或面对目标格确认\n${ruleLine}`,
+      assetId: choice.assetId
+    };
+  }
+
+  function buildChoiceToastPresentation(choice: BuildChoice): { message: string; assetId?: string } {
+    const choiceIndex = normalizeSelection(facilityBuildIdx, buildChoices.length);
+    const preview = buildChoicePanelPreview(choice);
+    const action = choice.kind === 'facility' ? '建造' : '布阵';
+    return {
+      message: `${action}${selectionLabel(choiceIndex, buildChoices.length)}：${preview.title}｜点选候选·${confirmHint(action)}`,
+      assetId: preview.assetId
+    };
+  }
+
+  function selectedBuildChoice(): BuildChoice {
+    return buildChoices[normalizeSelection(facilityBuildIdx, buildChoices.length)] ?? buildChoices[0]!;
+  }
+
+  function arrayBuildChoiceIndex(kind: ArrayBuildChoice['placementKind']): number {
+    return buildChoices.findIndex(choice => choice.kind === 'array' && choice.placementKind === kind);
+  }
+
+  function preselectArrayBuildChoice(kind: ArrayBuildChoice['placementKind'] = 'lightning-rod'): void {
+    const index = arrayBuildChoiceIndex(kind);
+    if (index >= 0) facilityBuildIdx = index;
+  }
+
+  function frontBuildTargetNeedsPointerSelection(at: GridPoint): boolean {
+    const tile = tileAt(state, at.x, at.y);
+    return !tile || farmsteadSceneObjectAt(state, at.x, at.y) != null || (tile != null && facilityAt(state, tile.id) != null);
+  }
+
+  function placeArrayFromBuildChoice(choice: ArrayBuildChoice, at?: GridPoint): boolean {
+    const target = at ?? frontTile();
+    if (!at && frontBuildTargetNeedsPointerSelection(target)) {
+      toast(`已选择${choice.title}｜点击药田或空地目标格布阵`, choice.assetId);
+      return false;
+    }
+    const result = placeArray(state, choice.defId, target.x, target.y, ctx);
+    const presentation = arrayPlacementToastPresentation(choice.placementKind, {
+      placed: result.placed,
+      reason: result.reason,
+      costText: describeArrayBuildCost(choice.defId)
+    });
+    toast(presentation.message, presentation.assetId);
+    return result.placed;
+  }
+
+  function performBuildChoice(choice: BuildChoice, at?: GridPoint): boolean {
+    if (choice.kind === 'facility') {
+      return at ? buildFacilityAt(choice.facilityKind, at) : buildFacility(choice.facilityKind);
+    }
+    return placeArrayFromBuildChoice(choice, at);
   }
 
   function openBuildPanel(): void {
     interactionPanel = { kind: 'build' };
-    facilityBuildIdx = normalizeSelection(facilityBuildIdx, facilityBuildChoices.length);
-    const kind = facilityBuildChoices[facilityBuildIdx]!;
-    const presentation = buildToastPresentation(kind, selectionLabel(facilityBuildIdx, facilityBuildChoices.length), confirmHint('建造'), reg);
+    facilityBuildIdx = normalizeSelection(facilityBuildIdx, buildChoices.length);
+    const choice = selectedBuildChoice();
+    const presentation = buildChoiceToastPresentation(choice);
     toast(presentation.message, presentation.assetId);
   }
 
@@ -1817,7 +2877,7 @@ async function main(): Promise<void> {
     toast(presentation.message, presentation.assetId);
   }
 
-  function openFacilityCollectPanel(): void {
+  function openFacilityCollectPanel(preferredFacilityId?: number): void {
     const choices = facilityCollectChoices();
     if (choices.length === 0) {
       const presentation = facilityCollectUnavailableToastPresentation(farmsteadRootContextAssetId(state));
@@ -1825,7 +2885,8 @@ async function main(): Promise<void> {
       return;
     }
     interactionPanel = { kind: 'facility-collect' };
-    facilityCollectIdx = normalizeSelection(facilityCollectIdx, choices.length);
+    const preferredIndex = preferredFacilityId == null ? -1 : choices.findIndex(choice => choice.facilityId === preferredFacilityId);
+    facilityCollectIdx = preferredIndex >= 0 ? preferredIndex : normalizeSelection(facilityCollectIdx, choices.length);
     const choice = choices[facilityCollectIdx]!;
     const presentation = facilityCollectToastPresentation(
       {
@@ -2057,10 +3118,18 @@ async function main(): Promise<void> {
           texture: resolvePreviewTexture(renderAssets, preview.assetId, renderAssets.locations.greenhouse)
         };
       }
+      case 'location-action': {
+        const preview = locationActionPanelPreview(interactionPanel.command, interactionPanel.locationId, state, reg);
+        return {
+          title: preview.title,
+          details: preview.details,
+          texture: resolvePreviewTexture(renderAssets, preview.assetId)
+        };
+      }
       case 'build': {
-        if (facilityBuildChoices.length === 0) return null;
-        const kind = facilityBuildChoices[normalizeSelection(facilityBuildIdx, facilityBuildChoices.length)]!;
-        const preview = buildPanelPreview(kind, reg);
+        if (buildChoices.length === 0) return null;
+        const choice = selectedBuildChoice();
+        const preview = buildChoicePanelPreview(choice);
         return {
           title: preview.title,
           details: preview.details,
@@ -2315,7 +3384,7 @@ async function main(): Promise<void> {
       case 'none':
         return false;
       case 'build':
-        facilityBuildIdx = cycleSelection(facilityBuildIdx, facilityBuildChoices.length, reverse);
+        facilityBuildIdx = cycleSelection(facilityBuildIdx, buildChoices.length, reverse);
         openBuildPanel();
         return true;
       case 'upgrade': {
@@ -2373,6 +3442,9 @@ async function main(): Promise<void> {
         return true;
       case 'commission':
         showCommission();
+        return true;
+      case 'location-action':
+        openLocationActionPanel(interactionPanel.command, interactionPanel.locationId);
         return true;
       case 'storage': {
         const choices = interactionPanel.mode === 'deposit' ? storageDepositChoices() : storageWithdrawChoices();
@@ -2448,7 +3520,7 @@ async function main(): Promise<void> {
         return true;
       }
       case 'build': {
-        buildFacility(facilityBuildChoices[facilityBuildIdx % facilityBuildChoices.length]!);
+        performBuildChoice(selectedBuildChoice());
         return true;
       }
       case 'upgrade': {
@@ -2542,7 +3614,7 @@ async function main(): Promise<void> {
           return true;
         }
         const o = offers[tradeIdx % offers.length]!;
-        const r = executeTrade(state, o.id);
+        const r = executeTrade(state, o.id, ctx);
         if (r.ok) {
           audio.playSfx('ui');
           const presentation = tradeResultToastPresentation(o, 'success', reg);
@@ -2791,6 +3863,12 @@ async function main(): Promise<void> {
         }
         return completeDailyCommissionWithToast(false);
       }
+      case 'location-action': {
+        const { command } = interactionPanel;
+        interactionPanel = { kind: 'none' };
+        performConfirmedLocationAction(command);
+        return true;
+      }
       case 'storage': {
         const choices = interactionPanel.mode === 'deposit' ? storageDepositChoices() : storageWithdrawChoices();
         if (choices.length === 0) {
@@ -2844,7 +3922,7 @@ async function main(): Promise<void> {
             audio.playSfx('ui');
             const presentation = shippingResultToastPresentation('normal', { ...choice, count: 1 }, state, ctx, reg);
             if (firstShipment) {
-              const milestone = firstShipmentMilestoneToastPresentation(presentation.message, '下一步：按 Enter 过夜，等次日出货结算。');
+              const milestone = firstShipmentMilestoneToastPresentation(presentation.message, '下一步：点击居所或“歇息”过夜，等次日出货结算。');
               toast(milestone.message, milestone.assetId);
             } else {
               toast(presentation.message, presentation.assetId);
@@ -2869,7 +3947,7 @@ async function main(): Promise<void> {
           audio.playSfx('ui');
           const presentation = shippingResultToastPresentation('quality', { ...choice, count: 1 }, state, ctx, reg);
           if (firstShipment) {
-            const milestone = firstShipmentMilestoneToastPresentation(presentation.message, '下一步：按 Enter 过夜，等次日出货结算。');
+            const milestone = firstShipmentMilestoneToastPresentation(presentation.message, '下一步：点击居所或“歇息”过夜，等次日出货结算。');
             toast(milestone.message, milestone.assetId);
           } else {
             toast(presentation.message, presentation.assetId);
@@ -3170,6 +4248,23 @@ async function main(): Promise<void> {
     activateLocationSelection('地点');
   }
 
+  function focusLocationSelection(locationId: LocationId, prefix: '地点' | '服务' = '地点'): boolean {
+    const locations = getActiveLocationDirectory(state);
+    const nextLocationIdx = locations.findIndex(location => location.id === locationId);
+    if (nextLocationIdx < 0) return false;
+    const services = getLocationServiceOptions(state, locationId);
+    cancelWorldMovementForSurfaceTransition();
+    interactionPanel = { kind: 'none' };
+    locationIdx = nextLocationIdx;
+    locationServiceIdx = 0;
+    locationSelectionActive = true;
+    const location = locations[nextLocationIdx]!;
+    const selectedService = services.length > 0 ? (services[0] ?? null) : null;
+    const presentation = locationSelectionToastPresentation(prefix, location, selectedService, locationSelectionHint(), locationPreviewFocusReason(state, getOnboardingObjectiveId(state), location.id, selectedService?.command ?? null, getLocationEncounters(state, location.id).length), formatLocationActionSignalLine(state, location.id), location.id === 'farmstead' && selectedService?.command === 'show-farm-work' ? farmsteadRootContextAssetId(state) : undefined);
+    toast(presentation.message, presentation.assetId);
+    return true;
+  }
+
   function focusLocationService(locationId: LocationId, command: LocationServiceCommand, prefix: '地点' | '服务' = '服务'): boolean {
     const locations = getActiveLocationDirectory(state);
     const nextLocationIdx = locations.findIndex(location => location.id === locationId);
@@ -3177,6 +4272,7 @@ async function main(): Promise<void> {
     const services = getLocationServiceOptions(state, locationId);
     const nextServiceIdx = services.findIndex(service => service.command === command);
     if (nextServiceIdx < 0) return false;
+    cancelWorldMovementForSurfaceTransition();
     interactionPanel = { kind: 'none' };
     locationIdx = nextLocationIdx;
     locationServiceIdx = nextServiceIdx;
@@ -3214,7 +4310,40 @@ async function main(): Promise<void> {
     toast(presentation.message, presentation.assetId);
   }
 
+  function openLocationActionPanel(command: LocationActionPanelCommand, locationId: LocationId): void {
+    interactionPanel = { kind: 'location-action', command, locationId };
+    const presentation = locationActionToastPresentation(command, locationId, state, reg, confirmHint(locationActionConfirmHint(command)));
+    toast(presentation.message, presentation.assetId);
+  }
+
+  function performConfirmedLocationAction(command: LocationActionPanelCommand): void {
+    cancelWorldMovementForSurfaceTransition();
+    switch (command) {
+      case 'explore-valley':
+        exploreWithToast('valley');
+        return;
+      case 'explore-ruin':
+        exploreWithToast('ruin');
+        return;
+      case 'delve-ruin':
+        delveRuinWithToast();
+        return;
+      case 'show-archive':
+        donateArchiveWithToast();
+        return;
+      case 'explore-spirit-vein':
+        exploreWithToast('spirit-vein');
+        return;
+    }
+  }
+
   function executeLocationCommand(command: LocationServiceCommand, locationId: LocationId): void {
+    cancelWorldMovementForSurfaceTransition();
+    if (isLocationActionPanelCommand(command)) {
+      openLocationActionPanel(command, locationId);
+      return;
+    }
+
     switch (command) {
       case 'show-location-encounter':
         showLocationEncounter(locationId);
@@ -3240,21 +4369,6 @@ async function main(): Promise<void> {
       case 'show-commission':
         showCommission();
         return;
-      case 'explore-valley':
-        exploreWithToast('valley');
-        return;
-      case 'explore-ruin':
-        exploreWithToast('ruin');
-        return;
-      case 'delve-ruin':
-        delveRuinWithToast();
-        return;
-      case 'show-archive':
-        donateArchiveWithToast();
-        return;
-      case 'explore-spirit-vein':
-        exploreWithToast('spirit-vein');
-        return;
       case 'show-processing':
         {
           const presentation = processingServiceToastPresentation(confirmHint('进入').replace('·Esc返回', ''), locationId);
@@ -3263,13 +4377,13 @@ async function main(): Promise<void> {
         return;
       case 'show-arrays':
         {
-          const presentation = arraysServiceToastPresentation('R布引雷阵·F布绝缘阵', locationId);
+          const presentation = arraysServiceToastPresentation('点阵器棚或农务入口布阵', locationId);
           toast(presentation.message, presentation.assetId);
         }
         return;
       case 'show-farm-work':
         {
-          const presentation = farmWorkServiceToastPresentation('空格/E主交互·M开农庄操作', locationId === 'farmstead' ? farmsteadRootContextAssetId(state) : undefined);
+          const presentation = farmWorkServiceToastPresentation('点地块/设施或点农务入口打开面板', locationId === 'farmstead' ? farmsteadRootContextAssetId(state) : undefined);
           toast(presentation.message, presentation.assetId);
         }
         return;
@@ -3312,11 +4426,144 @@ async function main(): Promise<void> {
     return true;
   }
 
+  function isMovementPassable(point: GridPoint): boolean {
+    const tile = tileAt(state, point.x, point.y);
+    return Boolean(tile && tile.blockType === 'none');
+  }
+
+  function cancelWorldMovement(): void {
+    playerMovementAnimation = null;
+    queuedMovementPath = [];
+    pendingWorldCommand = null;
+    deferredPointerTile = null;
+  }
+
+  function cancelWorldMovementForSurfaceTransition(): void {
+    if (!worldMovementActive()) return;
+    cancelWorldMovement();
+    requestRender?.();
+  }
+
+  function applyAnimatedMoveStep(next: GridPoint, startedAtMs = performance.now()): boolean {
+    const from = { ...state.player.position };
+    const direction = directionBetween(from, next);
+    if (!direction || !isAdjacentCardinal(from, next) || !isMovementPassable(next)) return false;
+    state.player.facing = direction as Direction;
+    if (layers.reducedMotion) {
+      applyAction(state, { kind: 'move', to: next }, ctx);
+      return sameGridPoint(state.player.position, next);
+    }
+    playerMovementAnimation = {
+      from,
+      to: { ...next },
+      startedAtMs,
+      durationMs: PLAYER_STEP_DURATION_MS
+    };
+    return true;
+  }
+
+  function commitCompletedMoveAnimation(animation: PlayerMovementAnimation): boolean {
+    if (!sameGridPoint(state.player.position, animation.from)) return false;
+    if (!isMovementPassable(animation.to)) return false;
+    applyAction(state, { kind: 'move', to: animation.to }, ctx);
+    return sameGridPoint(state.player.position, animation.to);
+  }
+
+  function finishPendingWorldCommand(): boolean {
+    const command = pendingWorldCommand;
+    if (!command) return false;
+    pendingWorldCommand = null;
+    faceTowardTile(command.target);
+    const handled = command.run();
+    saveState(state);
+    return handled;
+  }
+
+  function abortPendingWorldCommand(message = '前路被挡住了，换个落脚点再试'): void {
+    const target = pendingWorldCommand?.target ?? pointerTile;
+    cancelWorldMovement();
+    setLastPointerAction('blocked', target);
+    toast(message, 'loc.farmstead');
+  }
+
+  function beginNextQueuedMoveStep(nowMs: number): boolean {
+    const next = queuedMovementPath.shift();
+    if (!next) return false;
+    const moved = applyAnimatedMoveStep(next, nowMs);
+    if (!moved) {
+      abortPendingWorldCommand();
+      return false;
+    }
+    if (layers.reducedMotion) saveState(state);
+    return true;
+  }
+
+  function advanceWorldMovement(nowMs: number): void {
+    let completedStep = false;
+    if (playerMovementAnimation && nowMs - playerMovementAnimation.startedAtMs >= playerMovementAnimation.durationMs) {
+      const completedAnimation = playerMovementAnimation;
+      playerMovementAnimation = null;
+      if (!commitCompletedMoveAnimation(completedAnimation)) {
+        abortPendingWorldCommand();
+        return;
+      }
+      saveState(state);
+      completedStep = true;
+    }
+
+    if (completedStep && deferredPointerTile) {
+      const nextTarget = { ...deferredPointerTile };
+      cancelWorldMovement();
+      performPointerWorldActionAt(nextTarget);
+      return;
+    }
+
+    while (!playerMovementAnimation && queuedMovementPath.length > 0) {
+      if (!beginNextQueuedMoveStep(nowMs)) return;
+      if (!layers.reducedMotion) return;
+    }
+
+    if (!playerMovementAnimation && queuedMovementPath.length === 0) finishPendingWorldCommand();
+  }
+
+  function currentPlayerMovementVisual(nowMs: number): PlayerMovementVisual {
+    return playerMovementVisualPosition(state.player.position, playerMovementAnimation, nowMs, layers.reducedMotion);
+  }
+
+  function currentPendingWorldVisual(): PendingWorldVisual | null {
+    if (!pendingWorldCommand) return null;
+    const path: GridPoint[] = [];
+    if (playerMovementAnimation?.to) path.push({ ...playerMovementAnimation.to });
+    for (const point of queuedMovementPath) path.push({ ...point });
+    return {
+      target: { ...pendingWorldCommand.target },
+      destination: { ...pendingWorldCommand.destination },
+      path,
+      description: pendingWorldCommand.description
+    };
+  }
+
+  function worldMovementActive(): boolean {
+    return playerMovementAnimation != null || queuedMovementPath.length > 0 || pendingWorldCommand != null;
+  }
+
   function move(dir: Direction): void {
-    state.player.facing = dir;
+    if (playerMovementAnimation && !layers.reducedMotion) return;
+    cancelWorldMovement();
     const dx = dir === 'left' ? -1 : dir === 'right' ? 1 : 0;
     const dy = dir === 'up' ? -1 : dir === 'down' ? 1 : 0;
-    applyAction(state, { kind: 'move', to: { x: state.player.position.x + dx, y: state.player.position.y + dy } }, ctx);
+    const target = { x: state.player.position.x + dx, y: state.player.position.y + dy };
+    state.player.facing = dir;
+    applyAnimatedMoveStep(target);
+  }
+
+  function moveImmediate(dir: Direction): void {
+    cancelWorldMovement();
+    const dx = dir === 'left' ? -1 : dir === 'right' ? 1 : 0;
+    const dy = dir === 'up' ? -1 : dir === 'down' ? 1 : 0;
+    const target = { x: state.player.position.x + dx, y: state.player.position.y + dy };
+    state.player.facing = dir;
+    if (isMovementPassable(target)) applyAction(state, { kind: 'move', to: target }, ctx);
   }
 
   function endDay(): void {
@@ -3354,60 +4601,12 @@ async function main(): Promise<void> {
       toast(presentation.message, presentation.assetId);
       return;
     }
-    recordTribulationInvocation(state, ctx);
-    const res = runTribulation(state, { stage: state.player.stage, boltCount: 3 + state.player.stage, policy: { blockChance: 0 } }, ctx);
-    // 正式劫暂无逐雷落点 UI：屏幕中心一道招牌电光 + 粒子（与教学同语言）
-    triggerTribBolt(layers, { x: app.screen.width / 2, y: app.screen.height * 0.42 }, 34);
-    spawnBurst(layers, app.screen.width / 2, app.screen.height / 2, 45, ColorPalette.giltBright); // 天劫金芒迸发（T9）
-    audio.playSfx('tribulation');
-    const br = breakthrough(state, ctx, res.survived);
-    checkGameEnd(state, ctx);
-    if (state.gameOver) {
-      audio.playSfx(state.ending === 'ascension' ? 'ending' : 'explosion');
-      audio.setBgmMode('off');
-      // 飞升：奏签名主题曲「大道之歌」（固定种子，同路生成、零委约、避 Suno/Udio）。
-      if (state.ending === 'ascension') audio.playSignatureTheme(true);
-      const presentation = tribulationEndingToastPresentation(state.ending === 'ascension' ? 'ascension' : 'death');
-      toast(presentation.message, presentation.assetId);
-      return;
-    }
-    if (!res.survived) {
-      const presentation = tribulationResultToastPresentation('death');
-      toast(presentation.message, presentation.assetId);
-    } else if (br.success) {
-      audio.playSfx('breakthrough');
-      const presentation = tribulationResultToastPresentation('breakthrough', { stage: state.player.stage });
-      toast(presentation.message, presentation.assetId);
-    } else {
-      const presentation = tribulationResultToastPresentation('survived', {
-        temperingGain: Math.floor(res.temperingGainMilli / 1000)
-      });
-      toast(presentation.message, presentation.assetId);
-    }
-  }
-
-  /** 按丹方炼丹（理想火候；完整火候解谜 UI 待 M4） */
-  function brewById(recipeId: string, name: string): void {
-    const r = ctx.content.recipes.get(recipeId);
-    if (!r) {
-      const presentation = processingRecipeUnavailableToastPresentation('furnace');
-      toast(presentation.message, presentation.assetId);
-      return;
-    }
-    for (const inp of r.inputs) {
-      if (itemCount(state.player, inp.herbId) < inp.qty) {
-        const presentation = brewMaterialFailureToastPresentation({ herbId: inp.herbId }, ctx.content);
-        toast(presentation.message, presentation.assetId);
-        return;
-      }
-    }
-    const heat = furnaceHeat * 1000; // 玩家自控炉温（火候解谜）
-    const res = brewPills(state, { materials: r.inputs.map(i => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: heat }, ctx);
-    audio.playSfx(res.outcome === 'exploded' ? 'explosion' : 'brew');
-    if (res.outcome === 'exploded') spawnBurst(layers, 480, 240, 36, ColorPalette.dangerOrange);
-    else if (res.outcome === 'pill') spawnBurst(layers, 480, 240, 18, ColorPalette.mossBright); // 成丹绿芒（T9）
-    const presentation = brewResultToastPresentation(res.outcome, { name, furnaceHeat });
-    toast(presentation.message, presentation.assetId);
+    // R3-C1-a：走 D-27 主动引劫链（invoke→countdown→due），不再 runTribulation+breakthrough 立即短路。
+    // 玩家按引劫→进入 T_trib 日级准备窗（布阵/炼丹/备丹）；countdown 归零由 resolveDueTribulation 结算。
+    // 完整玩家逐雷操作大考（C1-b）与秒级雷场 UI（D-07）是大工程，推迟。
+    applyAction(state, { kind: 'invoke-tribulation' }, ctx);
+    const prepareDays = state.tribulation.daysRemaining;
+    toast(`引劫已启动：${prepareDays} 日准备窗——布阵、炼丹、备承雷丹，归零即渡劫。`, 'loc.array-shed');
   }
 
   function eatById(pillId: string, _name: string): void {
@@ -3454,7 +4653,116 @@ async function main(): Promise<void> {
     }
   }
 
+  function faceTowardTile(target: { x: number; y: number }): void {
+    const dx = target.x - state.player.position.x;
+    const dy = target.y - state.player.position.y;
+    if (Math.abs(dx) >= Math.abs(dy) && dx !== 0) {
+      state.player.facing = dx > 0 ? 'right' : 'left';
+      return;
+    }
+    if (dy !== 0) state.player.facing = dy > 0 ? 'down' : 'up';
+  }
+
+  function setLastPointerAction(action: PointerWorldActionKind, tile: { x: number; y: number } | null): void {
+    lastPointerAction = action;
+    lastPointerTile = tile ? { ...tile } : null;
+  }
+
+  function firstOwnedContextSeed(): { seedId: string; switched: boolean } | null {
+    const current = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
+    if (current.kind === 'seed' && current.seedId && itemCount(state.player, current.seedId) > 0) {
+      return { seedId: current.seedId, switched: false };
+    }
+
+    const nextSeedIdx = findNextOwnedSeedHotbarIndex(hotbarIdx, 1, id => itemCount(state.player, id));
+    if (nextSeedIdx == null) return null;
+    const next = HOTBAR_SLOTS[nextSeedIdx] ?? HOTBAR_SLOTS[4]!;
+    if (next.kind !== 'seed' || !next.seedId) return null;
+    setHotbarIndex(nextSeedIdx, true);
+    return { seedId: next.seedId, switched: true };
+  }
+
+  function performContextFarmActionAt(at: { x: number; y: number }): boolean {
+    const tile = tileAt(state, at.x, at.y);
+    if (!tile) {
+      setLastPointerAction('blocked', at);
+      return false;
+    }
+    faceTowardTile(at);
+
+    const crop = tile.cropId != null ? (state.crops.get(tile.cropId) ?? state.crops.get(tile.id) ?? null) : null;
+    if (tile.blockType !== 'none' && !crop) {
+      toast('这里已有设施或障碍，点设施本体进行处理', 'loc.farmstead');
+      setLastPointerAction('blocked', at);
+      return false;
+    }
+    if (!isFarmsteadFarmPlotTile(state, at.x, at.y) && !crop) {
+      const presentation = farmActionBlockedToastPresentation('till', 'outside-farm-plot');
+      toast(presentation.message, presentation.assetId);
+      setLastPointerAction('blocked', at);
+      return false;
+    }
+
+    if (crop) {
+      const herb = reg.herbs.get(crop.defId);
+      if (herb && crop.growth >= herb.growthThreshold) {
+        const done = performFarmAction('harvest', at);
+        setLastPointerAction(done ? 'farm-harvest' : 'blocked', at);
+        return done;
+      }
+      if (!tile.wateredToday || tile.moisture < 55_000) {
+        const done = performFarmAction('water', at);
+        setLastPointerAction(done ? 'farm-water' : 'blocked', at);
+        return done;
+      }
+      if (!tile.channeledToday || tile.qiDensity < 55_000) {
+        const done = performFarmAction('channel-qi', at);
+        setLastPointerAction(done ? 'farm-channel-qi' : 'blocked', at);
+        return done;
+      }
+      toast('这株灵草状态稳定，明日再照料', itemIconAssetId(crop.defId, reg));
+      setLastPointerAction('farm-stable', at);
+      return true;
+    }
+
+    if (!tile.tilled && getOnboardingObjectiveId(state) === 'first-second-sow') {
+      const seed = firstOwnedContextSeed();
+      if (!seed) {
+        const presentation = sowUnavailableToastPresentation();
+        toast(presentation.message, presentation.assetId);
+        setLastPointerAction('blocked', at);
+        return false;
+      }
+      const tilled = performFarmAction('till', at);
+      if (!tilled) {
+        setLastPointerAction('blocked', at);
+        return false;
+      }
+      const sown = performSowAction(seed.seedId, seed.switched, at);
+      setLastPointerAction(sown ? 'farm-sow' : 'farm-till', at);
+      return sown || tilled;
+    }
+
+    if (!tile.tilled) {
+      const done = performFarmAction('till', at);
+      setLastPointerAction(done ? 'farm-till' : 'blocked', at);
+      return done;
+    }
+
+    const seed = firstOwnedContextSeed();
+    if (!seed) {
+      const presentation = sowUnavailableToastPresentation();
+      toast(presentation.message, presentation.assetId);
+      setLastPointerAction('blocked', at);
+      return false;
+    }
+    const done = performSowAction(seed.seedId, seed.switched, at);
+    setLastPointerAction(done ? 'farm-sow' : 'blocked', at);
+    return done;
+  }
+
   function performSecondaryToolInteraction(): boolean {
+    if (worldMovementActive()) return false;
     const slot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
     switch (slot.kind) {
       case 'water':
@@ -3493,54 +4801,436 @@ async function main(): Promise<void> {
     return true;
   }
 
-  function shouldAutoConfirmLocationPanel(): boolean {
-    return interactionPanel.kind === 'commission' || interactionPanel.kind === 'tea-shed' || interactionPanel.kind === 'greenhouse';
+  function tryPickupGroundItem(): boolean {
+    // 场景拾取：脚下有地面物品时优先拾取，再交给普通前格动作。
+    const gi = groundItemAtIndex(state, state.player.position);
+    if (!gi) return false;
+    const name = reg.items.get(gi.itemId)?.displayName ?? gi.itemId;
+    const eventStart = state.events.length;
+    applyAction(state, { kind: 'pickup-ground-item' }, ctx);
+    const recentEvents = state.events.slice(eventStart);
+    let pickupEvent = recentEvents.find(e => e.type === 'pickup');
+    for (let i = recentEvents.length - 1; i >= 0; i -= 1) {
+      const event = recentEvents[i];
+      if (event?.type === 'pickup') {
+        pickupEvent = event;
+        break;
+      }
+    }
+    const blocked = recentEvents.some(e => e.type === 'pickup-blocked');
+    saveState(state);
+    const pickupPayload = (pickupEvent?.payload ?? {}) as { count?: number; remaining?: number };
+    if (pickupEvent) {
+      const picked = Math.max(1, pickupPayload.count ?? 1);
+      const remaining = Math.max(0, pickupPayload.remaining ?? 0);
+      toast(remaining > 0 ? `拾得 ${name} ×${picked}，余下 ${remaining} 件放不下` : `拾得 ${name} ×${picked}`);
+    } else if (blocked) {
+      toast(`背包已满或堆叠已满，无法拾取 ${name}`);
+    }
+    return true;
+  }
+
+  function performFarmsteadObjectInteraction(objectOverride?: ReturnType<typeof frontFarmsteadSceneObject>): boolean {
+    const object = objectOverride ?? frontFarmsteadSceneObject(state);
+    if (!object) return false;
+    faceTowardTile({ x: object.x, y: object.y });
+
+    switch (object.kind) {
+      case 'house':
+        applyAction(state, { kind: 'rest' }, ctx);
+        audio.playSfx('eat-pill');
+        {
+          const presentation = restSuccessToastPresentation(object.assetId);
+          toast(presentation.message, presentation.assetId);
+        }
+        return true;
+      case 'storage':
+        openStoragePanel('deposit');
+        return true;
+      case 'shipping':
+        openFarmActionKind('shipping-normal');
+        return true;
+      case 'furnace':
+        openFurnaceInventory();
+        return true;
+      case 'array-shed':
+        preselectArrayBuildChoice('lightning-rod');
+        openFarmActionKind('build');
+        return true;
+      case 'map-gate':
+        activateLocationSelection('地点');
+        return true;
+    }
+  }
+
+  function processingActionForFacility(kind: FacilityKind): FarmActionKind {
+    switch (kind) {
+      case 'drying-rack':
+        return 'processing-drying';
+      case 'sealing-cabinet':
+        return 'processing-sealing';
+      case 'talisman-furnace':
+        return 'processing-furnace';
+    }
+  }
+
+  function performBuiltFacilityInteraction(facility: NonNullable<ReturnType<typeof facilityAt>>, at: GridPoint): boolean {
+    faceTowardTile(at);
+    if (facility.job) {
+      openFacilityCollectPanel(facility.id);
+      return interactionPanel.kind === 'facility-collect';
+    }
+    openFarmActionKind(processingActionForFacility(facility.kind));
+    return interactionPanel.kind === 'processing';
+  }
+
+  function performNpcWorldPreviewInteraction(placement: NpcWorldPreviewPlacement, at: GridPoint): boolean {
+    faceTowardTile(at);
+    const npcIndex = getNpcList(state).findIndex(npc => npc.id === placement.npcId);
+    if (npcIndex >= 0) {
+      cancelWorldMovementForSurfaceTransition();
+      locationSelectionActive = false;
+      npcIdx = npcIndex;
+      openNpcPanel('browse');
+      const handled = interactionPanel.kind === 'npc';
+      setLastPointerAction(handled ? 'object' : 'blocked', at);
+      return handled;
+    }
+
+    const handled = focusLocationSelection(placement.locationId, '地点');
+    setLastPointerAction(handled ? 'object' : 'blocked', at);
+    return handled;
+  }
+
+  function performLocationWorldPreviewInteraction(placement: LocationWorldPreviewPlacement, at: GridPoint): boolean {
+    faceTowardTile(at);
+    const handled = focusLocationSelection(placement.locationId, '地点');
+    setLastPointerAction(handled ? 'object' : 'blocked', at);
+    return handled;
   }
 
   function performDefaultConfirm(): boolean {
+    if (worldMovementActive()) return true;
     if (locationSelectionActive) {
       executeSelectedLocationService();
-      if (interactionPanelActive(interactionPanel) && shouldAutoConfirmLocationPanel()) confirmInteractionPanel();
       return true;
     }
     if (confirmInteractionPanel()) return true;
+    if (tryPickupGroundItem()) return true;
+    if (performFarmsteadObjectInteraction()) return true;
     performPrimaryInteraction();
     return true;
   }
 
-  function performFurnaceShortcut(action: 'toggle-furnace' | 'cycle-recipe' | 'decrease-furnace-heat' | 'increase-furnace-heat'): void {
-    switch (action) {
-      case 'toggle-furnace':
-        furnace.visible = !furnace.visible;
-        {
-          const presentation = furnaceVisibilityToastPresentation(furnace.visible);
-          toast(presentation.message, presentation.assetId);
-        }
-        return;
-      case 'cycle-recipe': {
-        recipeIdx = (recipeIdx + 1) % brewRecipes.length;
-        const rr = reg.recipes.get(brewRecipes[recipeIdx]!);
-        const presentation = furnaceRecipeToastPresentation(rr?.displayName ?? '?');
-        toast(presentation.message, presentation.assetId);
-        return;
-      }
-      case 'decrease-furnace-heat':
-        furnaceHeat = Math.max(0, furnaceHeat - 10);
-        layers.furnaceHeat = furnaceHeat;
-        {
-          const presentation = furnaceHeatToastPresentation(furnaceHeat);
-          toast(presentation.message, presentation.assetId);
-        }
-        return;
-      case 'increase-furnace-heat':
-        furnaceHeat = Math.min(100, furnaceHeat + 10);
-        layers.furnaceHeat = furnaceHeat;
-        {
-          const presentation = furnaceHeatToastPresentation(furnaceHeat);
-          toast(presentation.message, presentation.assetId);
-        }
-        return;
+  function frontTileHasFarmContext(at: GridPoint): boolean {
+    const tile = tileAt(state, at.x, at.y);
+    if (!tile) return false;
+    const crop = tile.cropId != null ? (state.crops.get(tile.cropId) ?? state.crops.get(tile.id) ?? null) : null;
+    return crop != null || isFarmsteadFarmPlotTile(state, at.x, at.y);
+  }
+
+  function performProductConfirm(): boolean {
+    if (worldMovementActive()) return true;
+    if (locationSelectionActive) {
+      executeSelectedLocationService();
+      return true;
     }
+    if (confirmInteractionPanel()) return true;
+    if (tryPickupGroundItem()) return true;
+    if (performFarmsteadObjectInteraction()) return true;
+    const at = frontTile();
+    if (frontTileHasFarmContext(at)) {
+      performContextFarmActionAt(at);
+      return true;
+    }
+    performPrimaryInteraction();
+    return true;
+  }
+
+  function canvasLogicalPointFromClient(clientX: number, clientY: number): { x: number; y: number } | null {
+    const rect = app.canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    if (clientX < rect.left || clientY < rect.top || clientX > rect.right || clientY > rect.bottom) return null;
+    return {
+      x: ((clientX - rect.left) / rect.width) * app.screen.width,
+      y: ((clientY - rect.top) / rect.height) * app.screen.height
+    };
+  }
+
+  function canvasLocalPointForTileForTest(x: number, y: number): { x: number; y: number } | null {
+    const tilePoint = screenPointForTile(x, y);
+    const rect = app.canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return null;
+    return {
+      x: (tilePoint.x / app.screen.width) * rect.width,
+      y: (tilePoint.y / app.screen.height) * rect.height
+    };
+  }
+
+  function tileCoordinatesFromClient(clientX: number, clientY: number): { x: number; y: number } | null {
+    const point = canvasLogicalPointFromClient(clientX, clientY);
+    return point ? tileCoordinatesFromScreenPoint(state, point) : null;
+  }
+
+  function logicalPointInRect(point: { x: number; y: number }, rect: { x: number; y: number; width: number; height: number }): boolean {
+    return point.x >= rect.x && point.y >= rect.y && point.x <= rect.x + rect.width && point.y <= rect.y + rect.height;
+  }
+
+  function activeCanvasPanelHit(point: { x: number; y: number }): 'interaction' | 'location' | null {
+    if (interactionPanelActive(interactionPanel)) {
+      const height = itemPreviewBoxHeight(layers.panelPreviewText.visible ? layers.panelPreviewText.height : 0);
+      if (logicalPointInRect(point, { x: PANEL_PREVIEW_BOX.x, y: PANEL_PREVIEW_BOX.y, width: PANEL_PREVIEW_BOX.width, height })) return 'interaction';
+    }
+    if (locationSelectionActive) {
+      const height = locationPreviewBoxHeight(layers.locationPreviewText.visible ? layers.locationPreviewText.height : 0);
+      if (logicalPointInRect(point, { x: LOCATION_PREVIEW_BOX.x, y: LOCATION_PREVIEW_BOX.y, width: LOCATION_PREVIEW_BOX.width, height })) return 'location';
+    }
+    return null;
+  }
+
+  function performCanvasPanelConfirmAt(clientX: number, clientY: number): boolean {
+    const point = canvasLogicalPointFromClient(clientX, clientY);
+    if (!point) return false;
+    const hit = activeCanvasPanelHit(point);
+    if (hit === 'location') return performDefaultConfirm();
+    if (hit === 'interaction') return confirmInteractionPanel();
+    return false;
+  }
+
+  function performBuildPanelWorldTargetAt(clientX: number, clientY: number): boolean {
+    if (interactionPanel.kind !== 'build') return false;
+    const at = tileCoordinatesFromClient(clientX, clientY);
+    if (!at) return false;
+    pointerTile = { ...at };
+    const choice = selectedBuildChoice();
+    const placed = performBuildChoice(choice, at);
+    setLastPointerAction(placed ? (choice.kind === 'array' ? 'array-place' : 'build-place') : 'blocked', at);
+    requestRender?.();
+    refreshAppPresentation();
+    return true;
+  }
+
+  function clearCanvasPanelPointerNoop(): void {
+    pointerTile = null;
+    setLastPointerAction('none', null);
+    requestRender?.();
+    refreshAppPresentation();
+  }
+
+  function uniqueGridPoints(points: readonly GridPoint[]): GridPoint[] {
+    const seen = new Set<string>();
+    const result: GridPoint[] = [];
+    for (const point of points) {
+      const key = `${point.x},${point.y}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(point);
+    }
+    return result;
+  }
+
+  function farmsteadObjectInteractionGoals(object: FarmsteadSceneObject): GridPoint[] {
+    const footprint = object.footprint ?? { x: object.x, y: object.y, width: 1, height: 1 };
+    const candidates: GridPoint[] = [];
+    for (let x = footprint.x; x < footprint.x + footprint.width; x += 1) {
+      candidates.push({ x, y: footprint.y - 1 });
+      candidates.push({ x, y: footprint.y + footprint.height });
+    }
+    for (let y = footprint.y; y < footprint.y + footprint.height; y += 1) {
+      candidates.push({ x: footprint.x - 1, y });
+      candidates.push({ x: footprint.x + footprint.width, y });
+    }
+    return uniqueGridPoints(candidates);
+  }
+
+  function queueWorldCommand(goals: readonly GridPoint[], command: PendingWorldCommand, blockedMessage: string): boolean {
+    cancelWorldMovement();
+    const path = findGridPath({
+      width: state.width,
+      height: state.height,
+      start: state.player.position,
+      goals,
+      isPassable: isMovementPassable
+    });
+
+    if (path == null) {
+      faceTowardTile(command.target);
+      setLastPointerAction('blocked', command.target);
+      toast(blockedMessage, 'loc.farmstead');
+      return false;
+    }
+
+    queuedMovementPath = path.map(point => ({ ...point }));
+    pendingWorldCommand = {
+      ...command,
+      destination: queuedMovementPath[queuedMovementPath.length - 1] ?? { ...state.player.position }
+    };
+    if (queuedMovementPath.length === 0) return finishPendingWorldCommand();
+
+    setLastPointerAction('move', command.target);
+    const started = beginNextQueuedMoveStep(performance.now());
+    if (started && layers.reducedMotion) advanceWorldMovement(performance.now());
+    requestRender?.();
+    return started;
+  }
+
+  function performPointerWorldActionAt(at: { x: number; y: number }): boolean {
+    pointerTile = { ...at };
+    if (playerMovementAnimation && !layers.reducedMotion) {
+      deferredPointerTile = { ...at };
+      setLastPointerAction('move', at);
+      requestRender?.();
+      refreshAppPresentation();
+      return true;
+    }
+
+    const tile = tileAt(state, at.x, at.y);
+    if (!tile) {
+      setLastPointerAction('blocked', at);
+      return false;
+    }
+
+    const object = farmsteadSceneObjectAt(state, at.x, at.y);
+    if (object) {
+      return queueWorldCommand(
+        farmsteadObjectInteractionGoals(object),
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: object.title,
+          run: () => {
+            const handled = performFarmsteadObjectInteraction(object);
+            setLastPointerAction(handled ? 'object' : 'blocked', at);
+            return handled;
+          }
+        },
+        '到不了这个设施旁边，先绕开障碍'
+      );
+    }
+
+    const builtFacility = facilityAt(state, tile.id);
+    if (builtFacility) {
+      return queueWorldCommand(
+        interactionAdjacentGoals({
+          target: at,
+          width: state.width,
+          height: state.height,
+          isPassable: isMovementPassable
+        }),
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: FACILITY_LABEL[builtFacility.kind],
+          run: () => {
+            const handled = performBuiltFacilityInteraction(builtFacility, at);
+            setLastPointerAction(handled ? 'object' : 'blocked', at);
+            return handled;
+          }
+        },
+        '到不了这个设施旁边，先绕开障碍'
+      );
+    }
+
+    const ground = groundItemAtIndex(state, at);
+    if (ground && tile.blockType === 'none') {
+      return queueWorldCommand(
+        [at],
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: '拾取',
+          run: () => {
+            const eventStart = state.events.length;
+            if (tryPickupGroundItem()) {
+              const picked = state.events.slice(eventStart).some(e => e.type === 'pickup');
+              setLastPointerAction(picked ? 'pickup' : 'blocked', at);
+              return true;
+            }
+            setLastPointerAction('blocked', at);
+            return false;
+          }
+        },
+        '到不了这件掉落物旁边，先清出道路'
+      );
+    }
+
+    const npcPreview = npcWorldPreviewPlacementAt(state, at.x, at.y);
+    if (npcPreview) {
+      return queueWorldCommand(
+        interactionAdjacentGoals({
+          target: at,
+          width: state.width,
+          height: state.height,
+          isPassable: isMovementPassable
+        }),
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: npcPreview.npcName,
+          run: () => performNpcWorldPreviewInteraction(npcPreview, at)
+        },
+        '到不了这位人物身边，先绕开障碍'
+      );
+    }
+
+    const locationPreview = locationWorldPreviewPlacementAt(state, at.x, at.y);
+    if (locationPreview) {
+      const locationName = LOCATION_CATALOG.find(location => location.id === locationPreview.locationId)?.displayName ?? '地点';
+      return queueWorldCommand(
+        interactionAdjacentGoals({
+          target: at,
+          width: state.width,
+          height: state.height,
+          isPassable: isMovementPassable
+        }),
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: locationName,
+          run: () => performLocationWorldPreviewInteraction(locationPreview, at)
+        },
+        '到不了这个地点标记旁边，先绕开障碍'
+      );
+    }
+
+    if (isFarmsteadFarmPlotTile(state, at.x, at.y) || tile.cropId != null) {
+      return queueWorldCommand(
+        interactionAdjacentGoals({
+          target: at,
+          width: state.width,
+          height: state.height,
+          isPassable: isMovementPassable
+        }),
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: '照料灵田',
+          run: () => performContextFarmActionAt(at)
+        },
+        '到不了这块灵田，先换一个可达位置'
+      );
+    }
+
+    if (tile.blockType === 'none') {
+      return queueWorldCommand(
+        [at],
+        {
+          target: { ...at },
+          destination: { ...at },
+          description: '前往',
+          run: () => {
+            setLastPointerAction('move', at);
+            return true;
+          }
+        },
+        '到不了这里，先换一个落脚点'
+      );
+    }
+
+    faceTowardTile(at);
+    toast('这里不能处理，点药田、设施或可通行的空地', 'loc.farmstead');
+    setLastPointerAction('blocked', at);
+    return false;
   }
 
   function performCommandShortcut(action: 'toggle-pause' | 'explore-valley' | 'explore-ruin' | 'delve-ruin' | 'explore-spirit-vein' | 'open-upgrade-panel' | 'open-npc-browse' | 'open-npc-gift' | 'open-npc-quest' | 'open-festival-panel' | 'show-calendar-summary'): void {
@@ -3748,6 +5438,11 @@ async function main(): Promise<void> {
       togglePause(true);
       return;
     }
+    if (worldMovementActive()) {
+      cancelWorldMovement();
+      toast('已停下', 'sprite.player');
+      return;
+    }
     const escapeShortcut = resolveEscapeShortcut({
       interactionPanelActive: interactionPanelActive(interactionPanel),
       inventoryVisible: layers.showInv,
@@ -3763,28 +5458,105 @@ async function main(): Promise<void> {
     flowView.dispatch({ type: 'finish-tribulation' });
   }
 
+  function distanceFromPlayer(point: { x: number; y: number }): number {
+    return Math.abs(point.x - state.player.position.x) + Math.abs(point.y - state.player.position.y);
+  }
+
+  function reachableInteractionPathToTarget(target: GridPoint): GridPoint[] | null {
+    return findGridPath({
+      width: state.width,
+      height: state.height,
+      start: state.player.position,
+      goals: interactionAdjacentGoals({
+        target,
+        width: state.width,
+        height: state.height,
+        isPassable: isMovementPassable
+      }),
+      isPassable: isMovementPassable
+    });
+  }
+
+  function journeyFarmTarget(objective: ReturnType<typeof getPublicDemoObjectiveId>): GridPoint | null {
+    const matchesObjective = (tile: (typeof state.tiles)[number]): boolean => {
+      if (!isFarmsteadFarmPlotTile(state, tile.x, tile.y) && tile.cropId == null) return false;
+      if (tile.blockType !== 'none') return false;
+      if (tile.soilType === 'water' || tile.soilType === 'rock' || tile.soilType === 'metal-ore') return false;
+      const crop = tile.cropId != null ? (state.crops.get(tile.cropId) ?? state.crops.get(tile.id) ?? null) : null;
+      switch (objective) {
+        case 'first-till':
+          return isFarmsteadFarmPlotTile(state, tile.x, tile.y) && !tile.tilled && crop == null;
+        case 'first-sow':
+          return isFarmsteadFarmPlotTile(state, tile.x, tile.y) && tile.tilled && crop == null;
+        case 'first-second-sow':
+          return isFarmsteadFarmPlotTile(state, tile.x, tile.y) && crop == null;
+        case 'first-water':
+        case 'first-second-water':
+          return crop != null && (!tile.wateredToday || tile.moisture < 55_000);
+        case 'first-harvest': {
+          if (!crop) return false;
+          const herb = reg.herbs.get(crop.defId);
+          return herb != null && crop.growth >= herb.growthThreshold;
+        }
+        default:
+          return false;
+      }
+    };
+
+    const front = frontTile();
+    const frontTarget = tileAt(state, front.x, front.y);
+    if (frontTarget && matchesObjective(frontTarget)) return front;
+
+    const candidates = state.tiles
+      .filter(matchesObjective)
+      .map(tile => {
+        const path = reachableInteractionPathToTarget({ x: tile.x, y: tile.y });
+        return path == null ? null : { tile, pathLength: path.length };
+      })
+      .filter((entry): entry is { tile: (typeof state.tiles)[number]; pathLength: number } => entry != null)
+      .sort((a, b) => a.pathLength - b.pathLength || distanceFromPlayer(a.tile) - distanceFromPlayer(b.tile) || a.tile.y - b.tile.y || a.tile.x - b.tile.x);
+
+    const target = candidates[0]?.tile;
+    if (target) return { x: target.x, y: target.y };
+    if (objective === 'first-sow') {
+      const fallback = firstFarmsteadFarmPlotTile(state);
+      return fallback && reachableInteractionPathToTarget(fallback) != null ? fallback : null;
+    }
+    return null;
+  }
+
+  function performJourneyFarmTarget(objective: ReturnType<typeof getPublicDemoObjectiveId>): boolean {
+    const target = journeyFarmTarget(objective);
+    return target ? performPointerWorldActionAt(target) : false;
+  }
+
   function performJourneyPrimaryAction(): void {
     const objective = getPublicDemoObjectiveId(state);
     switch (objective) {
       case 'first-till':
+        if (performJourneyFarmTarget(objective)) return;
         performFarmAction('till');
         return;
       case 'first-sow':
+      case 'first-second-sow':
+        if (performJourneyFarmTarget(objective)) return;
         sowFromHotbarSelection(false);
         return;
       case 'first-water':
+      case 'first-second-water':
+        if (performJourneyFarmTarget(objective)) return;
         performFarmAction('water');
         return;
       case 'first-harvest':
-        // 与 CTA 门控一致：未成熟时歇息推进日期，避免空收获反馈（player audit P2）
         if (journeyGuideContextFromState(state).hasMatureCrop === false) {
-          if (!hotbarWheelBlocked() && !dialogueBeat) endDay();
+          toast('灵草尚未成熟。点“歇息”推进到明日，再回来收获。', 'herb.mossling');
           return;
         }
+        if (performJourneyFarmTarget(objective)) return;
         performFarmAction('harvest');
         return;
       case 'journey-alchemy':
-        flowView?.dispatch({ type: 'open-alchemy' });
+        openFurnaceInventory();
         return;
       case 'journey-tribulation':
         flowView?.dispatch({ type: 'start-tribulation' });
@@ -3803,20 +5575,21 @@ async function main(): Promise<void> {
   function navigateFromSystemMenu(target: Extract<GameCommand, { kind: 'open' }>['target']): boolean {
     if (!flowView || flowView.getState().overlay !== 'pause') return false;
     const sourceScreen = flowView.getState().screen;
-    const worldOnlyTarget = target === 'menu' || target === 'inventory' || target === 'cultivation' || target === 'map' || target === 'alchemy' || target === 'journey';
+    const worldOnlyTarget = target === 'menu' || target === 'inventory' || target === 'cultivation' || target === 'map' || target === 'furnace' || target === 'journey';
     if (worldOnlyTarget && sourceScreen !== 'world') return false;
     flowView.dispatch({ type: 'close-overlay' });
     const returnFocus = flowView.getState().focus.initial;
     switch (target) {
       case 'inventory':
+        openInventoryFlowOverlay('inventory', returnFocus);
+        return true;
       case 'cultivation':
       case 'map':
       case 'pause':
       case 'settings':
-        flowView.dispatch({ type: 'open-overlay', overlay: target, returnFocus });
-        return true;
-      case 'alchemy':
-        flowView.dispatch({ type: 'open-alchemy' });
+        return openFlowOverlay(target, returnFocus);
+      case 'furnace':
+        openFurnaceInventory(returnFocus);
         return true;
       case 'journey':
         performJourneyPrimaryAction();
@@ -3829,15 +5602,6 @@ async function main(): Promise<void> {
 
   function handlePublicDemoPanelAction(action: PublicDemoPanelAction): void {
     switch (action.kind) {
-      case 'alchemy-primary':
-        if (state.player.flags.has(TUTORIAL_ALCHEMY_BREWED_FLAG)) {
-          flowView?.dispatch({ type: 'close-alchemy' });
-          return;
-        }
-        applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
-        applyAction(state, { kind: 'brew-tutorial-pill', avgHeatMilli: action.heatPercent * 1_000 }, ctx);
-        audio.playSfx('ui');
-        break;
       case 'take-pill':
         applyAction(state, { kind: 'eat-pill', pillId: 'pill.ward-basic' }, ctx);
         audio.playSfx('ui');
@@ -3865,7 +5629,7 @@ async function main(): Promise<void> {
         if (state.tutorialTribulation.phase === 'aftermath') flowView?.dispatch({ type: 'finish-tribulation' });
         break;
       case 'move':
-        if (state.tutorialTribulation.phase === 'active') move(action.direction);
+        if (state.tutorialTribulation.phase === 'active') moveImmediate(action.direction);
         break;
     }
 
@@ -3873,9 +5637,15 @@ async function main(): Promise<void> {
     refreshAppPresentation();
   }
 
+  function closeWorldCommandMore(): void {
+    const more = document.querySelector<HTMLDetailsElement>('#world-command-more');
+    if (more?.open) more.open = false;
+  }
+
   function dispatchGameCommand(command: GameCommand): void {
     audio.init();
     audio.resume();
+    closeWorldCommandMore();
     if (!flowAllowsWorldInput()) {
       if (command.kind === 'open' && navigateFromSystemMenu(command.target)) {
         saveState(state);
@@ -3894,15 +5664,19 @@ async function main(): Promise<void> {
         break;
       case 'confirm':
         if (dialogueBeat) performDialogueConfirm();
-        else if (!paused) performDefaultConfirm();
+        else if (!paused) performProductConfirm();
         break;
       case 'cancel':
-        cancelCurrentSurface();
+        if (worldMovementActive() && !dialogueBeat && !paused && flowView?.getState().screen === 'world' && flowView.getState().overlay == null) {
+          openFlowOverlay('pause');
+        } else {
+          cancelCurrentSurface();
+        }
         break;
       case 'cycle':
         if (interactionPanelActive(interactionPanel)) cycleActiveInteractionPanel(command.direction === 'previous');
         else if (locationSelectionActive) cycleLocation(command.direction === 'previous');
-        else if (!hotbarWheelBlocked()) cycleHotbar(command.direction === 'previous' ? -1 : 1, true);
+        else if (LEGACY_SHORTCUTS_ENABLED && !hotbarWheelBlocked()) cycleHotbar(command.direction === 'previous' ? -1 : 1, true);
         break;
       case 'hotbar':
         if (!hotbarWheelBlocked()) setHotbarIndex(command.index, true);
@@ -3913,27 +5687,26 @@ async function main(): Promise<void> {
             if (!paused) openFarmActionPanel();
             break;
           case 'inventory':
-            if (!paused && flowView) flowView.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            if (!paused && flowView) openInventoryFlowOverlay('inventory');
             else if (!paused) toggleInventoryVisibility();
             break;
           case 'cultivation':
-            if (!paused && flowView) flowView.dispatch({ type: 'open-overlay', overlay: 'cultivation', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            if (!paused && flowView) openFlowOverlay('cultivation');
             else if (!paused) toggleCultivationPanel();
             break;
           case 'map':
-            if (!paused && flowView) flowView.dispatch({ type: 'open-overlay', overlay: 'map', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            if (!paused && flowView) openFlowOverlay('map');
             else if (!paused) activateLocationSelection('地点');
             break;
-          case 'alchemy':
-            if (!paused && flowView) flowView.dispatch({ type: 'open-alchemy' });
-            else if (!paused && !furnace.visible) performFurnaceShortcut('toggle-furnace');
+          case 'furnace':
+            if (!paused) openFurnaceInventory();
             break;
           case 'journey':
             if (!paused) performJourneyPrimaryAction();
             break;
           case 'pause':
           case 'settings':
-            if (flowView) flowView.dispatch({ type: 'open-overlay', overlay: command.target, returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+            if (flowView) openFlowOverlay(command.target);
             else togglePause(true);
             break;
         }
@@ -3945,6 +5718,115 @@ async function main(): Promise<void> {
 
     saveState(state);
     refreshAppPresentation();
+  }
+
+  function returnFromOverlay(): void {
+    if (flowView?.getState().overlay != null) flowView.dispatch({ type: 'close-overlay' });
+  }
+
+  function executeMapService(locationId: LocationId, command: LocationServiceCommand): void {
+    const location = getActiveLocationDirectory(state).find(entry => entry.id === locationId);
+    const option = location ? getLocationServiceOptions(state, locationId).find(entry => entry.command === command) : null;
+    if (!location || !option) {
+      const presentation = location ? locationServiceUnavailableToastPresentation(location, state) : locationDirectoryEmptyToastPresentation(farmsteadRootContextAssetId(state));
+      toast(presentation.message, presentation.assetId);
+      refreshAppPresentation();
+      return;
+    }
+
+    returnFromOverlay();
+    clearInteractionPanel(false);
+    clearLocationSelection(false);
+    switch (option.command) {
+      case 'show-farm-work':
+        openFarmActionPanel();
+        break;
+      case 'show-processing':
+        openFarmActionKind('processing-drying');
+        break;
+      case 'show-arrays':
+        preselectArrayBuildChoice('lightning-rod');
+        openFarmActionKind('build');
+        break;
+      default:
+        executeLocationCommand(option.command, option.locationId);
+        break;
+    }
+    saveState(state);
+    refreshAppPresentation();
+  }
+
+  type CultivationSurfaceCommand = 'farm' | 'furnace' | 'arrays' | 'map' | 'tribulation';
+
+  function isCultivationSurfaceCommand(value: string | undefined): value is CultivationSurfaceCommand {
+    return value === 'farm' || value === 'furnace' || value === 'arrays' || value === 'map' || value === 'tribulation';
+  }
+
+  function executeCultivationSurfaceCommand(command: CultivationSurfaceCommand): void {
+    returnFromOverlay();
+    clearInteractionPanel(false);
+    clearLocationSelection(false);
+    switch (command) {
+      case 'farm':
+        openFarmActionPanel();
+        break;
+      case 'furnace':
+        openFurnaceInventory();
+        break;
+      case 'arrays':
+        preselectArrayBuildChoice('lightning-rod');
+        openFarmActionKind('build');
+        break;
+      case 'map':
+        openFlowOverlay('map');
+        break;
+      case 'tribulation':
+        tryTribulation();
+        break;
+    }
+    saveState(state);
+    refreshAppPresentation();
+  }
+
+  function handleMapSurfaceClick(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>('button[data-map-service-command]');
+    if (!button || button.disabled) return;
+    const locationId = button.dataset.mapLocation as LocationId | undefined;
+    const command = button.dataset.mapServiceCommand as LocationServiceCommand | undefined;
+    if (!locationId || !command) return;
+    event.preventDefault();
+    event.stopPropagation();
+    executeMapService(locationId, command);
+  }
+
+  function handleCultivationSurfaceClick(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const button = target.closest<HTMLButtonElement>('button[data-cultivation-command]');
+    const command = button?.dataset.cultivationCommand;
+    if (!button || !isCultivationSurfaceCommand(command)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    executeCultivationSurfaceCommand(command);
+  }
+
+  function handleProductKeydown(ev: KeyboardEvent): boolean {
+    const command = gameCommandFromKeyboard(
+      {
+        key: ev.key,
+        code: ev.code,
+        shiftKey: ev.shiftKey,
+        ctrlKey: ev.ctrlKey,
+        altKey: ev.altKey,
+        metaKey: ev.metaKey
+      },
+      { enterBehavior: 'confirm', shortcutProfile: 'product' }
+    );
+    if (!command) return false;
+    dispatchGameCommand(command);
+    return true;
   }
 
   const portraitMedia = window.matchMedia('(orientation: portrait) and (max-width: 900px)');
@@ -3968,8 +5850,34 @@ async function main(): Promise<void> {
   window.addEventListener('resize', handleViewportResize);
 
   responsiveShell = createResponsiveShell({ dispatch: dispatchGameCommand });
+  document.querySelector<HTMLElement>('[data-app-surface="map"]')?.addEventListener('click', handleMapSurfaceClick);
+  document.querySelector<HTMLElement>('[data-app-surface="cultivation"]')?.addEventListener('click', handleCultivationSurfaceClick);
   publicDemoPanels = createPublicDemoPanelsController({ onAction: handlePublicDemoPanelAction });
   publicDemoPanels.render(state, ctx);
+
+  // 灵韵叙录入口（#flow-title-narration）：点击开「开发者自白」modal；已读则 modal 内部直接 dispatch start-narration。
+  // 该按钮无 data-flow-action，由本处自管点击（appFlowView 不接管），modal 仍留在 title surface 之上。
+  const narrationHost = document.querySelector<HTMLElement>('[data-app-surface="title"]');
+  if (narrationHost) {
+    narrationIntro = createNarrationIntro({
+      host: narrationHost,
+      reducedMotion: runtimeSettings.reducedMotion,
+      onStartNarration: () => flowView?.dispatch({ type: 'start-narration' })
+    });
+    const narrationEntryBtn = document.querySelector<HTMLElement>('#flow-title-narration');
+    narrationEntryBtn?.addEventListener('click', event => {
+      event.preventDefault();
+      narrationIntro?.open();
+    });
+  }
+
+  // 叙录入口（#flow-narration-codex-open）：灵韵叙录内开「叙录」覆盖层（docs/22 §11）。
+  // 该按钮无 data-flow-action（非 appFlowView 既定 action），由本处自管点击派发 open-overlay。
+  const codexOpenBtn = document.querySelector<HTMLElement>('#flow-narration-codex-open');
+  codexOpenBtn?.addEventListener('click', event => {
+    event.preventDefault();
+    flowView?.dispatch({ type: 'open-overlay', overlay: 'codex' });
+  });
 
   refreshHotbarHint();
   refreshHelpHint();
@@ -3978,6 +5886,7 @@ async function main(): Promise<void> {
   window.addEventListener(
     'wheel',
     ev => {
+      if (!LEGACY_SHORTCUTS_ENABLED) return;
       if (!flowAllowsWorldInput()) return;
       if (state.gameOver || dialogueBeat || state.postAscension.mode === 'choice-pending' || hotbarWheelBlocked()) return;
       const delta = hotbarWheelDelta(ev.deltaY);
@@ -3992,7 +5901,30 @@ async function main(): Promise<void> {
     ev.preventDefault();
   });
 
-  app.canvas.addEventListener('mousedown', ev => {
+  app.canvas.addEventListener('pointermove', ev => {
+    if (!flowAllowsWorldInput() || state.gameOver || dialogueBeat || paused || blockingOverlayActive() || interactionPanelActive(interactionPanel) || locationSelectionActive) {
+      if (pointerTile != null) {
+        pointerTile = null;
+        requestRender?.();
+        refreshAppPresentation();
+      }
+      return;
+    }
+    const next = tileCoordinatesFromClient(ev.clientX, ev.clientY);
+    if ((next?.x ?? null) === (pointerTile?.x ?? null) && (next?.y ?? null) === (pointerTile?.y ?? null)) return;
+    pointerTile = next;
+    requestRender?.();
+    refreshAppPresentation();
+  });
+
+  app.canvas.addEventListener('pointerleave', () => {
+    if (pointerTile == null) return;
+    pointerTile = null;
+    requestRender?.();
+    refreshAppPresentation();
+  });
+
+  app.canvas.addEventListener('pointerdown', ev => {
     if (ev.button !== 0 && ev.button !== 2) return;
     audio.init();
     audio.resume();
@@ -4047,8 +5979,37 @@ async function main(): Promise<void> {
       return;
     }
     if (ev.button === 0) {
-      performDefaultConfirm();
+      if (interactionPanelActive(interactionPanel) || locationSelectionActive) {
+        if (performCanvasPanelConfirmAt(ev.clientX, ev.clientY)) {
+          saveState(state);
+          refreshAppPresentation();
+        } else if (performBuildPanelWorldTargetAt(ev.clientX, ev.clientY)) {
+          saveState(state);
+          refreshAppPresentation();
+        } else {
+          clearCanvasPanelPointerNoop();
+        }
+        ev.preventDefault();
+        return;
+      } else {
+        const clickedTile = tileCoordinatesFromClient(ev.clientX, ev.clientY);
+        if (clickedTile) {
+          performPointerWorldActionAt(clickedTile);
+        } else {
+          pointerTile = null;
+          setLastPointerAction('none', null);
+          requestRender?.();
+          refreshAppPresentation();
+        }
+      }
       saveState(state);
+      ev.preventDefault();
+      return;
+    }
+    if (ev.button === 2 && worldMovementActive() && flowView?.getState().screen === 'world' && flowView.getState().overlay == null) {
+      openFlowOverlay('pause');
+      saveState(state);
+      refreshAppPresentation();
       ev.preventDefault();
       return;
     }
@@ -4071,6 +6032,14 @@ async function main(): Promise<void> {
   window.addEventListener('keydown', ev => {
     audio.init();
     audio.resume();
+    if ((ev.key === 'b' || ev.key === 'B') && flowView?.getState().overlay === 'inventory' && !ev.altKey && !ev.ctrlKey && !ev.metaKey) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      toggleInventoryVisibility();
+      saveState(state);
+      refreshAppPresentation();
+      return;
+    }
     if (!flowAllowsWorldInput()) return;
     if (state.gameOver) return;
     if (state.postAscension.mode === 'choice-pending') {
@@ -4110,21 +6079,8 @@ async function main(): Promise<void> {
       }
       return;
     }
-    const semanticCommand = gameCommandFromKeyboard(
-      {
-        key: ev.key,
-        code: ev.code,
-        shiftKey: ev.shiftKey,
-        ctrlKey: ev.ctrlKey,
-        altKey: ev.altKey,
-        metaKey: ev.metaKey
-      },
-      { enterBehavior: interactionPanelActive(interactionPanel) || locationSelectionActive ? 'confirm' : 'end-day' }
-    );
-    const semanticCommandAllowed = semanticCommand?.kind !== 'hotbar' || (!interactionPanelActive(interactionPanel) && !locationSelectionActive);
-    if (semanticCommand && semanticCommandAllowed) {
-      dispatchGameCommand(semanticCommand);
-      ev.preventDefault();
+    if (!LEGACY_SHORTCUTS_ENABLED) {
+      if (handleProductKeydown(ev)) ev.preventDefault();
       return;
     }
     const f = frontTile();
@@ -4236,7 +6192,8 @@ async function main(): Promise<void> {
         tabShortcut,
         pageDownShortcut,
         commandShortcut,
-        farmMenuShortcut
+        farmMenuShortcut,
+        quickLocationShortcut
       });
     if (shouldDismissInteractionPanel) {
       clearInteractionPanel(false);
@@ -4256,7 +6213,8 @@ async function main(): Promise<void> {
         enterShortcut,
         escapeShortcut,
         tabShortcut,
-        commandShortcut
+        commandShortcut,
+        quickLocationShortcut
       });
     if (shouldDismissLocationSelection) {
       clearLocationSelection(false);
@@ -4523,21 +6481,19 @@ async function main(): Promise<void> {
           toast(presentation.message, presentation.assetId);
         }
         break;
-      case 'b': {
-        if (worldActionShortcut === 'brew-selected-recipe') {
-          const rr = reg.recipes.get(brewRecipes[recipeIdx % brewRecipes.length]!);
-          brewById(rr?.id ?? 'recipe.ward-pill', rr?.displayName ?? '避雷丹');
-        }
+      case 'b':
+      case 'B': {
+        if (worldActionShortcut === 'toggle-inventory') toggleInventoryVisibility();
         break;
       }
       case 'n':
-        if (worldActionShortcut === 'brew-bone-pill') brewById('recipe.bone-pill', '生骨丹');
+        if (worldActionShortcut === 'brew-bone-pill') openFurnaceInventory(APP_FLOW_FOCUS_TARGETS.world, 'recipe.bone-pill');
         break;
       case 'm':
-        if (worldActionShortcut === 'brew-detox-pill') brewById('recipe.detox-pill', '净毒丹');
+        if (worldActionShortcut === 'brew-detox-pill') openFurnaceInventory(APP_FLOW_FOCUS_TARGETS.world, 'recipe.detox-pill');
         break;
       case 'h':
-        if (worldActionShortcut === 'eat-ward-pill') eatById('pill.ward-basic', '避雷丹');
+        if (worldActionShortcut === 'eat-ward-pill') eatById('pill.ward-basic', '承雷丹');
         break;
       case 'j':
         if (worldActionShortcut === 'eat-bone-pill') eatById('pill.bone-basic', '生骨丹');
@@ -4582,7 +6538,10 @@ async function main(): Promise<void> {
         switch (legacyBuildShortcut) {
           case 'open-furnace-build-menu':
             farmActionIdx = FARM_ACTION_ORDER.indexOf('build');
-            facilityBuildIdx = facilityBuildChoices.indexOf('talisman-furnace');
+            {
+              const furnaceBuildIdx = buildChoices.findIndex(choice => choice.kind === 'facility' && choice.facilityKind === 'talisman-furnace');
+              facilityBuildIdx = furnaceBuildIdx >= 0 ? furnaceBuildIdx : 0;
+            }
             openFarmActionPanel();
             break;
           case 'preselect-build':
@@ -4703,10 +6662,10 @@ async function main(): Promise<void> {
         break;
       }
       case 'u':
-        if (worldActionShortcut === 'toggle-furnace') performFurnaceShortcut(worldActionShortcut);
+        if (worldActionShortcut === 'toggle-furnace') openFurnaceInventory();
         break;
       case 'y': {
-        if (worldActionShortcut === 'cycle-recipe') performFurnaceShortcut(worldActionShortcut);
+        if (worldActionShortcut === 'cycle-recipe') openFurnaceInventory();
         break;
       }
       case 'q':
@@ -4714,10 +6673,10 @@ async function main(): Promise<void> {
         if (qShortcut) performQShortcut(qShortcut);
         break;
       case '[':
-        if (worldActionShortcut === 'decrease-furnace-heat') performFurnaceShortcut(worldActionShortcut);
+        if (worldActionShortcut === 'decrease-furnace-heat') openFurnaceInventory();
         break;
       case ']':
-        if (worldActionShortcut === 'increase-furnace-heat') performFurnaceShortcut(worldActionShortcut);
+        if (worldActionShortcut === 'increase-furnace-heat') openFurnaceInventory();
         break;
       default:
         return;
@@ -4730,18 +6689,27 @@ async function main(): Promise<void> {
   function renderFrame(timestamp: number): void {
     const worldSurfaceActive = flowAllowsWorldInput();
     layers.ambientTimeMs = worldSurfaceActive ? (playwrightAmbientTimeMs ?? timestamp) : 0;
-    drawWorld(layers, state, reg, ctx, renderAssets);
+    if (worldSurfaceActive && !paused && !dialogueBeat && !blockingOverlayActive()) advanceWorldMovement(timestamp);
+    drawWorld(layers, state, reg, ctx, renderAssets, {
+      pointerTile,
+      playerMovement: currentPlayerMovementVisual(timestamp),
+      pendingWorld: currentPendingWorldVisual()
+    });
     const hotbarSlot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
     drawHotbarIcon(layers, renderAssets.hotbarIcons[hotbarSlotAssetId(hotbarSlot) ?? '']);
     refreshHelpHint();
-    const focusedOverlayActive = !worldSurfaceActive || locationSelectionActive || interactionPanelActive(interactionPanel) || layers.showInv || cultivationPanelVisible || paused || dialogueBeat !== null || state.postAscension.mode === 'choice-pending';
-    if (!state.gameOver && !focusedOverlayActive) {
-      const briefing = currentJourneyBriefing();
-      // Canvas shows the compact primary line only; full detail lives in #objective-rail details.
-      drawTodayBriefing(layers, briefing.title, briefing.compactBody, resolvePreviewTexture(renderAssets, briefing.assetId), briefing.assetId);
-    } else {
-      hideTodayBriefing(layers);
+    const canvasBottomHudVisible = LEGACY_SHORTCUTS_ENABLED;
+    layers.hud.visible = canvasBottomHudVisible;
+    layers.bars.visible = canvasBottomHudVisible;
+    for (const label of layers.barLabels) label.visible = canvasBottomHudVisible;
+    layers.hotbar.visible = canvasBottomHudVisible;
+    layers.help.visible = canvasBottomHudVisible;
+    layers.hotbarIconBg.visible = canvasBottomHudVisible;
+    if (!canvasBottomHudVisible) {
+      layers.hotbarIconBg.clear();
+      layers.hotbarIcon.visible = false;
     }
+    hideTodayBriefing(layers);
     if (worldSurfaceActive && locationSelectionActive) {
       const preview = locationPreviewDetails();
       if (preview) drawLocationPreview(layers, preview.title, preview.details, preview.texture, preview.npcPrimary, preview.npcSecondary);
@@ -4758,20 +6726,10 @@ async function main(): Promise<void> {
     }
     updateParticles(layers); // 程序化粒子推进（T9）
     updateFloatTexts(layers); // 农务/天劫飘字
-    // 丹炉面板（可见时 resolveBrew 实时预览当前火候+丹方的产出）
-    const fr = worldSurfaceActive && furnace.visible ? reg.recipes.get(brewRecipes[recipeIdx % brewRecipes.length]!) : null;
-    if (fr) {
-      const preview = resolveBrew(state, { materials: fr.inputs.map(i => ({ herbId: i.herbId, qty: i.qty })), avgHeatMilli: furnaceHeat * 1000 }, ctx);
-      const pillName = reg.items.get(fr.outputPillId)?.displayName ?? fr.outputPillId;
-      const haveInputs = fr.inputs.map(inp => ({ name: reg.items.get(inp.herbId)?.displayName ?? inp.herbId, have: itemCount(state.player, inp.herbId), need: inp.qty }));
-      drawFurnace(furnace, state, reg, { recipe: fr, heat: furnaceHeat, preview, pillName, haveInputs }, renderAssets.itemIcons);
-    } else {
-      drawFurnace(furnace, state, reg, null);
-    }
     // 叙事节拍（T4）：无对白时寻找下一待浮现节拍；游戏结束清空
     // 纵切片完成后抑制 day-1 教学对白（first-till / first-mature），避免残影重现。
     if (worldSurfaceActive && !state.gameOver) {
-      if (!dialogueBeat) {
+      if (!dialogueBeat && !worldMovementActive()) {
         const teachingActive = isJourneyTeachingActive(getPublicDemoObjectiveId(state));
         const nextBeat = nextPendingBeat(state);
         if (nextBeat && (teachingActive || !isJourneyTeachingDialogueBeat(nextBeat.id))) {
@@ -4779,7 +6737,7 @@ async function main(): Promise<void> {
         } else if (nextBeat && !teachingActive && isJourneyTeachingDialogueBeat(nextBeat.id)) {
           markSeen(state, nextBeat.id);
         }
-      } else if (!isJourneyTeachingActive(getPublicDemoObjectiveId(state)) && isJourneyTeachingDialogueBeat(dialogueBeat.id)) {
+      } else if (dialogueBeat && !isJourneyTeachingActive(getPublicDemoObjectiveId(state)) && isJourneyTeachingDialogueBeat(dialogueBeat.id)) {
         markSeen(state, dialogueBeat.id);
         dialogueBeat = null;
       }
@@ -4791,13 +6749,16 @@ async function main(): Promise<void> {
     else hideDialogue(layers);
     refreshAppPresentation();
     // BGM 自适应（Tone.js 四季调色板）：季节=state.season，分区=引劫在即→tribulation 否则 farm，张力随突破临近 calm→tense。
-    const tense = readyForBreakthrough(state, DEFAULT_BALANCE);
-    audio.setMusicContext({
-      season: state.season,
-      zone: tense ? 'tribulation' : 'farm',
-      tension: tense ? 'tense' : 'calm',
-      active: !state.gameOver
-    });
+    // 灵韵叙录 surface 活跃时由 narrationSurface 自管 narration 语境（docs/22 §12 单点原则），此处跳过避免覆盖。
+    if (flowView?.getPresentation().surface !== 'narration') {
+      const tense = readyForBreakthrough(state, DEFAULT_BALANCE);
+      audio.setMusicContext({
+        season: state.season,
+        zone: tense ? 'tribulation' : 'farm',
+        tension: tense ? 'tense' : 'calm',
+        active: !state.gameOver
+      });
+    }
     app.renderer.render(app.stage);
   }
 
@@ -4822,6 +6783,9 @@ async function main(): Promise<void> {
       window.removeEventListener('resize', handleViewportResize);
       responsiveShell?.destroy();
       publicDemoPanels?.destroy();
+      narrationIntro?.destroy();
+      narrationSurface?.destroy();
+      narrationCodex?.destroy();
       flowView?.destroy();
       runtimeSettingsAbortController.abort();
       renderScheduler?.dispose();

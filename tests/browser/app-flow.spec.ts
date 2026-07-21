@@ -19,6 +19,16 @@ async function clearWorldDialogue(page: Page): Promise<void> {
   }
 }
 
+async function openFurnaceFromPause(page: Page): Promise<void> {
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-app-surface="pause"]')).toBeVisible();
+  await page.locator('[data-app-surface="pause"] [data-game-command="furnace"]').click();
+  await expect(page.locator('[data-app-surface="inventory"]')).toBeVisible();
+  await expect(page.locator('[data-inventory-tab="furnace"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(page.locator('[data-app-slot="inventory"]')).toHaveAttribute('data-inventory-view-mode', 'furnace-focus');
+  await expect(page.locator('[data-inventory-tab="player"]')).toHaveCount(0);
+}
+
 test('title and prologue are real focusable surfaces before the world becomes interactive', async ({ page }) => {
   await page.goto(gameEntryPath());
   const initial = await waitForInitialSurface(page);
@@ -33,7 +43,7 @@ test('title and prologue are real focusable surfaces before the world becomes in
   await newGame.click();
   await expect(page.locator('[data-app-surface="prologue"]')).toBeVisible();
   await expect(page.locator('#flow-prologue-heading')).toContainText('从一块空地开始');
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-prologue-continue');
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('prologue-vn-stage');
 
   await page.locator('#flow-prologue-skip').click();
   await expect(page.locator('canvas')).toBeVisible();
@@ -67,7 +77,7 @@ test('settings and pause close with Escape and restore their trigger focus', asy
   expect(await page.evaluate(() => document.activeElement?.tagName)).toBe('CANVAS');
 });
 
-test('world command bar and keyboard accelerators use the same flow surfaces', async ({ page }) => {
+test('world command bar and product keyboard shortcuts use the same flow surfaces without legacy leakage', async ({ page }) => {
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
   await page.locator('#flow-title-new-game').click();
@@ -75,21 +85,23 @@ test('world command bar and keyboard accelerators use the same flow surfaces', a
 
   const commandBar = page.locator('#world-command-bar');
   await expect(commandBar).toBeVisible();
-  await commandBar.locator('[data-game-command="inventory"]').click();
-  await expect(page.locator('[data-app-surface="inventory"]')).toBeVisible();
+  expect((await debugSnapshot(page)).legacyShortcutsEnabled).toBe(false);
+  await page.keyboard.press('b');
+  const inventorySurface = page.locator('[data-app-surface="inventory"]');
+  await expect(inventorySurface).toBeVisible();
+  await expect(inventorySurface.locator('[data-inventory-tab="player"]')).toHaveAttribute('aria-selected', 'true');
   expect((await debugSnapshot(page)).flowOverlay).toBe('inventory');
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-inventory-close');
-  await page.keyboard.press('Escape');
+  await page.keyboard.press('b');
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('game-canvas');
 
-  await page.keyboard.press('u');
-  await expect(page.locator('[data-app-surface="alchemy"]')).toBeVisible();
-  await expect(page.locator('#flow-alchemy-result')).toContainText('先在灵田收获');
-  await expect(page.locator('#flow-alchemy-primary')).toBeDisabled();
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-alchemy-heat');
+  await openFurnaceFromPause(page);
+  await expect(inventorySurface.locator('.inv-furnace')).toBeVisible();
+  await expect(inventorySurface.locator('[data-furnace-start="true"]')).toBeDisabled();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-inventory-close');
   await page.keyboard.press('Escape');
 
-  await page.keyboard.press('p');
+  await page.keyboard.press('Escape');
   await expect(page.locator('[data-app-surface="pause"]')).toBeVisible();
   await page.locator('[data-app-surface="pause"] [data-game-command="settings"]').click();
   await expect(page.locator('[data-app-surface="settings"]')).toBeVisible();
@@ -99,6 +111,28 @@ test('world command bar and keyboard accelerators use the same flow surfaces', a
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('game-canvas');
 
   await clearWorldDialogue(page);
+  const beforeMapKey = await debugSnapshot(page);
+  await page.keyboard.press('m');
+  await page.waitForTimeout(80);
+  expect((await debugSnapshot(page)).flowOverlay).toBe(beforeMapKey.flowOverlay ?? null);
+  await commandBar.locator('#world-command-more > summary').click();
+  expect(await commandBar.locator('#world-command-more').evaluate(el => (el as HTMLDetailsElement).open)).toBe(true);
+  await commandBar.locator('[data-game-command="map"]').click();
+  expect(await commandBar.locator('#world-command-more').evaluate(el => (el as HTMLDetailsElement).open)).toBe(false);
+  const mapSurface = page.locator('[data-app-surface="map"]');
+  await expect(mapSurface).toBeVisible();
+  await expect(commandBar).toBeHidden();
+  await expect(page.locator('#world-location-command-bar')).toBeHidden();
+  await expect(mapSurface.locator('img[data-asset-id="map.location-network-v1"]')).toBeVisible();
+  await expect(mapSurface.locator('[data-map-service-command="show-farm-work"]').first()).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('canvas')).toBeVisible();
+  expect((await debugSnapshot(page)).flowOverlay).toBeNull();
+  expect(await commandBar.locator('#world-command-more').evaluate(el => (el as HTMLDetailsElement).open)).toBe(false);
+  await expect(commandBar).toBeVisible();
+  await expect(page.locator('#world-location-command-bar')).toBeHidden();
+
+  await commandBar.locator('#world-command-more > summary').click();
   await commandBar.locator('[data-game-command="farm"]').click();
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.interactionPanelKind === 'farm-action');
   expect((await debugSnapshot(page)).uiMode).toBe('panel');
@@ -109,6 +143,36 @@ test('world command bar and keyboard accelerators use the same flow surfaces', a
   expect((await debugSnapshot(page)).uiMode).toBe('world');
   expect((await debugSnapshot(page)).flowOverlay).toBeNull();
   await expect(commandBar).toBeVisible();
+});
+
+test('default product input ignores legacy action keys and keeps B/Escape as the inventory loop', async ({ page }) => {
+  await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
+  await page.locator('#flow-title-new-game').click();
+  await page.locator('#flow-prologue-skip').click();
+  await clearWorldDialogue(page);
+
+  const before = await debugSnapshot(page);
+  expect(before.legacyShortcutsEnabled).toBe(false);
+  expect(before.flowOverlay).toBeNull();
+
+  for (const key of ['1', 'Space', 'e', 'Tab', 'c', 'j', 'm', 'n', 'p', 'u', 'y', '[', ']']) {
+    await page.keyboard.press(key);
+    await page.waitForTimeout(30);
+  }
+
+  const afterLegacyKeys = await debugSnapshot(page);
+  expect(afterLegacyKeys.flowOverlay).toBeNull();
+  expect(afterLegacyKeys.interactionPanelKind).toBe('none');
+  expect(afterLegacyKeys.hotbarIdx).toBe(before.hotbarIdx);
+  expect(afterLegacyKeys.frontTileTilled).toBe(before.frontTileTilled);
+
+  await page.keyboard.press('b');
+  await expect(page.locator('[data-app-surface="inventory"]')).toBeVisible();
+  expect((await debugSnapshot(page)).flowOverlay).toBe('inventory');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('canvas')).toBeVisible();
+  expect((await debugSnapshot(page)).flowOverlay).toBeNull();
 });
 
 test('screen-reader semantics follow the active page instead of leaking the world journey', async ({ page }) => {
@@ -131,25 +195,26 @@ test('screen-reader semantics follow the active page instead of leaking the worl
   await expect(surface).toHaveText('当前页面：农庄世界。');
   await expect(objective).toContainText('面对空地翻出第一块灵田');
   await expect(actions).toContainText('开始翻地');
-  await expect(actions).toContainText('方向移动');
+  await expect(actions).toContainText('点击目标移动或互动');
 
-  await page.locator('#world-command-bar [data-game-command="inventory"]').click();
-  await expect(surface).toHaveText('当前页面：背包。');
-  await expect(objective).toHaveText('当前目标：查看随身物品。');
-  await expect(actions).toHaveText('当前可用动作：返回农庄。');
-  await expect(panel).toHaveText('已打开面板：背包。');
+  await page.keyboard.press('b');
+  await expect(surface).toHaveText('当前页面：物品管理。');
+  await expect(objective).toHaveText('当前目标：整理随身行囊、农庄仓库与出货箱。');
+  await expect(actions).toHaveText('当前可用动作：切换行囊/仓库/出货箱/丹炉；拖拽换位或转移；拆分/使用/丢弃；返回农庄。');
+  await expect(panel).toHaveText('已打开面板：物品管理。');
   await expect(objective).not.toContainText('翻出第一块灵田');
-  await page.keyboard.press('Escape');
+  await page.keyboard.press('b');
 
-  await page.keyboard.press('u');
-  await expect(surface).toHaveText('当前页面：炼丹。');
-  await expect(objective).toContainText('先在灵田收获第一批灵草');
-  await expect(actions).toHaveText('当前可用动作：调整炉火；返回农庄。');
-  await expect(panel).toHaveText('已打开面板：炼丹。');
+  await openFurnaceFromPause(page);
+  await expect(surface).toHaveText('当前页面：丹炉。');
+  await expect(objective).toHaveText('当前目标：按丹方投影填入九宫药盘并开炉炼制。');
+  await expect(actions).toContainText('自动入药');
+  await expect(actions).toContainText('开炉炼制');
+  await expect(panel).toHaveText('已打开面板：丹炉。');
   await expect(actions).not.toContainText('方向移动');
   await page.keyboard.press('Escape');
 
-  await page.keyboard.press('p');
+  await page.keyboard.press('Escape');
   await expect(surface).toHaveText('当前页面：暂停。');
   await expect(objective).toHaveText('当前目标：选择系统页面，或继续游戏。');
   await expect(actions).toContainText('继续游戏');

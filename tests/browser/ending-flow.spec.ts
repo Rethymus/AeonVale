@@ -28,6 +28,13 @@ test('terminal saves enter the real Ending surface and remain explicit until a n
   await expect(page.locator('[data-app-surface="ending"]')).toBeVisible();
   await expect(page.locator('canvas')).toBeHidden();
   await expect(page.locator('[data-app-slot="ending"]')).toContainText('存档');
+  await expect(page.locator('[data-app-slot="ending"] img[data-asset-id="cg.ending-poison-death"]')).toBeVisible();
+  const endingColumnGap = await page.evaluate(() => {
+    const media = document.querySelector('.ending-cg-frame')?.getBoundingClientRect();
+    const copy = document.querySelector('.ending-copy')?.getBoundingClientRect();
+    return media && copy ? Math.round(copy.left - media.right) : 0;
+  });
+  expect(endingColumnGap).toBeGreaterThanOrEqual(12);
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-ending-return');
   await expect.poll(async () => (await page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__))?.appSurface).toBe('ending');
 

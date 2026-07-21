@@ -11,7 +11,7 @@ import type { SimContext } from '@sim/world/context';
 import type { CelestialEventDef } from '@content/defs';
 import type { Rng } from '@sim/world/rng';
 import { stageQiCap } from '@sim/progression/progression';
-import { itemCount, mutateItem } from '@sim/world/player';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 import { normalizeBodyCultivation } from '@sim/progression/bodyCultivation';
 import { MILLI } from '@sim/world/types';
 
@@ -116,6 +116,10 @@ export function buyFestivalStallItem(state: GameState, itemId: string, ctx: SimC
   if (itemCount(state.player, 'item.spirit-stone') < item.price) return { ok: false, item, totalPrice: item.price, reason: '灵石不足' };
 
   mutateItem(state.player, 'item.spirit-stone', -item.price);
+  if (!inventoryCanFitRewards(state.player, [{ itemId: item.itemId, count: 1 }], ctx.content)) {
+    mutateItem(state.player, 'item.spirit-stone', item.price);
+    return { ok: false, item, totalPrice: item.price, reason: '储物戒已满' };
+  }
   if (!mutateItem(state.player, item.itemId, 1)) {
     mutateItem(state.player, 'item.spirit-stone', item.price);
     return { ok: false, item, totalPrice: item.price, reason: '储物戒已满' };
@@ -231,12 +235,15 @@ export function participateFestival(state: GameState, ctx: SimContext): Festival
   if (state.flags.has(flag)) return { ok: false, reason: '本次节日已参与', eventId };
 
   const reward = FESTIVAL_REWARDS[eventId];
+  const rewardPlan = reward.itemGrants.filter(grant => ctx.content.items.has(grant.itemId));
+  if (!inventoryCanFitRewards(state.player, rewardPlan, ctx.content)) {
+    return { ok: false, reason: '背包已满', eventId };
+  }
   const granted: Array<{ itemId: string; count: number }> = [];
-  for (const grant of reward.itemGrants) {
-    if (!ctx.content.items.has(grant.itemId)) continue;
+  for (const grant of rewardPlan) {
     if (mutateItem(state.player, grant.itemId, grant.count)) granted.push(grant);
   }
-  if (granted.length !== reward.itemGrants.length) {
+  if (granted.length !== rewardPlan.length) {
     for (const grant of granted) mutateItem(state.player, grant.itemId, -grant.count);
     return { ok: false, reason: '背包已满', eventId };
   }
@@ -266,6 +273,10 @@ export function resolveEventGrants(state: GameState, def: CelestialEventDef, ctx
   for (const g of def.grants) {
     if (!ctx.rng.celestial.chance(g.chance)) continue;
     if (g.kind === 'item') {
+      if (!inventoryCanFitRewards(state.player, [{ itemId: g.itemId, count: g.count }], ctx.content)) {
+        emit(state, 'event-grant-blocked', { itemId: g.itemId, count: g.count, reason: 'inventory-full' });
+        continue;
+      }
       mutateItem(state.player, g.itemId, g.count);
       emit(state, 'event-grant', { itemId: g.itemId, count: g.count });
     } else {
@@ -273,6 +284,10 @@ export function resolveEventGrants(state: GameState, def: CelestialEventDef, ctx
       const candidates = [...ctx.content.herbs.values()].filter(h => h.tier >= 1 && h.tier <= tierMax);
       if (candidates.length > 0) {
         const herb = ctx.rng.celestial.pick(candidates);
+        if (!inventoryCanFitRewards(state.player, [{ itemId: herb.seedId, count: g.count }], ctx.content)) {
+          emit(state, 'event-grant-blocked', { itemId: herb.seedId, count: g.count, reason: 'inventory-full' });
+          continue;
+        }
         mutateItem(state.player, herb.seedId, g.count);
         emit(state, 'event-grant', { itemId: herb.seedId, count: g.count });
       }

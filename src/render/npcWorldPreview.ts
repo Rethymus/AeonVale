@@ -1,6 +1,7 @@
 import { DEFAULT_BALANCE, currentFestivalEventId, getActiveSpecialOrders, getActiveLocationDirectory, getCurrentMainlineQuest, getCurrentNpcQuest, getCurrentRuinChapter, getCurrentStayingWorldIncident, getDailyCommission, getNpcDailySchedules, greenhouseVisitFlag, hasResolvedStayingWorldIncidentForDay, hasParticipatedCurrentFestival, locationIdForDisplayName, nextArchiveDonation, nextArchiveMilestone, storageUsed, teaShedVisitFlag, type LocationId } from '@sim';
 import { locationServiceActorAssetId } from '@app/locationPreview';
 import { itemIconAssetId } from '@app/itemIcons';
+import { farmsteadSceneObjectAt, farmsteadSceneObjectByKind } from '@app/farmsteadScene';
 import type { GameState } from '@sim/world/state';
 import { itemCount } from '@sim/world/player';
 import { readyForBreakthrough } from '@sim/progression/progression';
@@ -277,21 +278,26 @@ function queuedShippingCount(state: GameState): number {
 }
 
 export function farmsteadPropPlacements(state: GameState): FarmsteadPropPlacement[] {
-  const anchor = anchorTile(state.width, state.height, 'farmstead');
-  return [
-    {
+  const storageObject = farmsteadSceneObjectByKind(state, 'storage');
+  const shippingObject = farmsteadSceneObjectByKind(state, 'shipping');
+  const placements: FarmsteadPropPlacement[] = [];
+  if (storageObject) {
+    placements.push({
       assetId: 'facility.storage-chest',
-      x: clampTile(anchor.x + 1, state.width - 1),
-      y: clampTile(anchor.y, state.height - 1),
+      x: storageObject.x,
+      y: storageObject.y,
       status: storageUsed(state.storage) >= state.storage.capacity ? 'ready' : 'idle'
-    },
-    {
+    });
+  }
+  if (shippingObject) {
+    placements.push({
       assetId: 'facility.shipping-bin',
-      x: clampTile(anchor.x, state.width - 1),
-      y: clampTile(anchor.y + 1, state.height - 1),
+      x: shippingObject.x,
+      y: shippingObject.y,
       status: queuedShippingCount(state) > 0 ? 'ready' : 'idle'
-    }
-  ];
+    });
+  }
+  return placements;
 }
 
 function npcWorldAssetId(npcId: string): string {
@@ -403,8 +409,17 @@ export function locationTaskBadgeAssetId(state: GameState, locationId: LocationI
 }
 
 function placementForLocation(state: GameState, locationId: LocationId, groupIndex: number): Pick<NpcWorldPreviewPlacement, 'locationId' | 'x' | 'y'> {
-  const offset = WORLD_PREVIEW_OFFSETS[groupIndex] ?? WORLD_PREVIEW_OFFSETS[WORLD_PREVIEW_OFFSETS.length - 1]!;
+  let offset = WORLD_PREVIEW_OFFSETS[groupIndex] ?? WORLD_PREVIEW_OFFSETS[WORLD_PREVIEW_OFFSETS.length - 1]!;
   const anchor = groupedAnchorTile(state.width, state.height, locationId);
+  for (let index = Math.min(groupIndex, WORLD_PREVIEW_OFFSETS.length - 1); index < WORLD_PREVIEW_OFFSETS.length; index += 1) {
+    const candidateOffset = WORLD_PREVIEW_OFFSETS[index]!;
+    const candidateX = clampTile(anchor.x + candidateOffset.x, state.width - 1);
+    const candidateY = clampTile(anchor.y + candidateOffset.y, state.height - 1);
+    if (farmsteadSceneObjectAt(state, candidateX, candidateY) == null) {
+      offset = candidateOffset;
+      break;
+    }
+  }
   return {
     locationId,
     x: clampTile(anchor.x + offset.x, state.width - 1),
@@ -532,4 +547,12 @@ export function npcWorldPreviewPlacements(state: GameState): NpcWorldPreviewPlac
   });
 
   return [...scheduledPlacements, ...ambientNpcWorldPreviewPlacements(state, scheduledAssetIds)].sort((a, b) => a.locationId.localeCompare(b.locationId) || a.x - b.x || a.y - b.y || a.assetId.localeCompare(b.assetId) || a.placementKey.localeCompare(b.placementKey));
+}
+
+export function locationWorldPreviewPlacementAt(state: GameState, x: number, y: number): LocationWorldPreviewPlacement | null {
+  return locationWorldPreviewPlacements(state).find(placement => placement.x === x && placement.y === y) ?? null;
+}
+
+export function npcWorldPreviewPlacementAt(state: GameState, x: number, y: number): NpcWorldPreviewPlacement | null {
+  return npcWorldPreviewPlacements(state).find(placement => placement.x === x && placement.y === y) ?? null;
 }

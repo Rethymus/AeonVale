@@ -48,7 +48,8 @@ describe('可试玩 Demo 本地预检', () => {
     expect(script).toContain("'test-results/portfolio/portfolio-mvp-evidence.json'");
     expect(script).toContain('readUInt32BE(16)');
     expect(script).toContain('readUInt32BE(20)');
-    expect(script).toContain('width: 960, height: 542');
+    expect(script).toContain('width: 1440, height: 810');
+    expect(script).toContain('width: 1440, height: 825');
     expect(script).toContain('width: 736, height: 414');
     expect(script).toContain('unexpected dimensions');
     expect(script).toContain("evidence.runtimeSignals?.onboardingObjectiveId !== 'first-loop-complete'");

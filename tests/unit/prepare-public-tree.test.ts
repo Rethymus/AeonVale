@@ -89,11 +89,14 @@ function makeSourceRepo(): string {
     )
   );
   write(dir, 'docs/00-DESIGN-BRIEF.md', '# private design');
+  write(dir, '.planning/patches/01bf653-pixel-ambient.patch', 'private local planning patch');
   write(dir, 'assets/ART-ASSETS-STATUS.md', '# private art status');
   write(dir, 'assets/references/master-cozy-warm-farm-v1.png', 'not-public');
   write(dir, '.omc/state/session.json', '{}');
+  write(dir, '.superpowers/brainstorm/session.html', '<!doctype html>');
   write(dir, '.public-tree/README.md', '# stale public tree');
   write(dir, 'dist/assets/index.js.map', '{}');
+  write(dir, 'tmp/visual-audit/report.json', '{}');
   write(dir, '.env.local', 'SECRET=value');
 
   execFileSync('git', ['add', '-A'], { cwd: dir, stdio: 'ignore' });
@@ -132,11 +135,14 @@ describe('公开树生成脚本', () => {
     expect(existsSync(join(target, 'CLAUDE.md'))).toBe(false);
     expect(existsSync(join(target, 'DESIGN-NOTES.md'))).toBe(false);
     expect(existsSync(join(target, 'docs/00-DESIGN-BRIEF.md'))).toBe(false);
+    expect(existsSync(join(target, '.planning/patches/01bf653-pixel-ambient.patch'))).toBe(false);
     expect(existsSync(join(target, 'assets/ART-ASSETS-STATUS.md'))).toBe(false);
     expect(existsSync(join(target, 'assets/references/master-cozy-warm-farm-v1.png'))).toBe(false);
     expect(existsSync(join(target, '.omc/state/session.json'))).toBe(false);
+    expect(existsSync(join(target, '.superpowers/brainstorm/session.html'))).toBe(false);
     expect(existsSync(join(target, '.public-tree/README.md'))).toBe(false);
     expect(existsSync(join(target, 'dist/assets/index.js.map'))).toBe(false);
+    expect(existsSync(join(target, 'tmp/visual-audit/report.json'))).toBe(false);
     expect(existsSync(join(target, '.env.local'))).toBe(false);
 
     const publicManifest = JSON.parse(execFileSync('cat', [join(target, 'assets/manifest.json')], { encoding: 'utf8' }));

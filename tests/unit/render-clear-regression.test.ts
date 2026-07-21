@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-const renderSources = ['../../src/render/renderer.ts', '../../src/render/furnacePanel.ts', '../../src/render/sprites.ts'] as const;
+const renderSources = ['../../src/render/renderer.ts', '../../src/render/sprites.ts'] as const;
 
 describe('render cleanup regression', () => {
   it.each(renderSources)('%s invokes clear methods instead of referencing them', relativePath => {
@@ -12,15 +12,12 @@ describe('render cleanup regression', () => {
 
   it('guards retained canvas Text writes in renderer hot paths', () => {
     const renderer = readFileSync(new URL('../../src/render/renderer.ts', import.meta.url), 'utf8');
-    const furnace = readFileSync(new URL('../../src/render/furnacePanel.ts', import.meta.url), 'utf8');
     const guardedAssignment = 'target.text = nextText;';
 
     expect(renderer.match(/\.text\s*=(?!=)/g)).toHaveLength(1);
     expect(renderer).toContain(guardedAssignment);
     expect(renderer.replace(guardedAssignment, '')).not.toMatch(/\.text\s*=(?!=)/);
-    expect(furnace).not.toMatch(/\.text\s*=(?!=)/);
     expect(renderer).toContain('setTextIfChanged');
-    expect(furnace).toContain('setTextIfChanged');
   });
 
   it('does not clear or reconstruct retained world display objects inside drawWorld', () => {

@@ -23,7 +23,7 @@ describe('热栏输入骨架', () => {
     );
     expect(text).toContain('热栏[5]');
     expect(text).toContain('青苔');
-    expect(text).toContain('Space/Q切换');
+    expect(text).not.toContain('Q切换');
     expect(text).toContain('1-0直选');
   });
 
@@ -35,7 +35,7 @@ describe('热栏输入骨架', () => {
         () => '翻地'
       )
     ).toEqual({
-      message: '热栏[1] 翻地｜Space/Q切换｜1-0直选',
+      message: '热栏[1] 翻地｜1-0直选',
       assetId: 'icon.item.rust-hoe'
     });
     expect(
@@ -45,7 +45,7 @@ describe('热栏输入骨架', () => {
         () => '翻地'
       )
     ).toEqual({
-      message: '热栏[5] 青苔｜Space/Q切换｜1-0直选',
+      message: '热栏[5] 青苔｜1-0直选',
       assetId: 'icon.seed.mossling'
     });
   });

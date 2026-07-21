@@ -63,7 +63,7 @@ describe('炼丹 sim ', () => {
     expect(res.outcome).toBe('exploded');
   });
 
-  it('避雷丹方（雷击木+寒潭莲）在理想火候出避雷丹', () => {
+  it('承雷丹方（雷击木+寒潭莲）在理想火候出承雷丹', () => {
     const { state, ctx } = setup();
     const res = resolveBrew(
       state,
@@ -135,6 +135,31 @@ describe('炼丹 sim ', () => {
     expect(itemCount(state.player, 'herb.metalpine')).toBe(1);
     expect(itemCount(state.player, 'herb.frostmarrow')).toBe(1);
     expect(itemCount(state.player, 'pill.ward-basic')).toBe(before + 1);
+  });
+
+  it('丹药产物满栈时 brewPills 不消耗材料也不发成功事件', () => {
+    const { state, ctx } = setup();
+    mutateItem(state.player, 'herb.metalpine', 1);
+    mutateItem(state.player, 'herb.frostmarrow', 1);
+    state.player.inventory['pill.ward-basic'] = { itemId: 'pill.ward-basic', count: 20 };
+
+    const res = brewPills(
+      state,
+      {
+        materials: [
+          { herbId: 'herb.metalpine', qty: 1 },
+          { herbId: 'herb.frostmarrow', qty: 1 }
+        ],
+        avgHeatMilli: 47_000
+      },
+      ctx
+    );
+
+    expect(res.outcome).toBe('waste');
+    expect(itemCount(state.player, 'herb.metalpine')).toBe(1);
+    expect(itemCount(state.player, 'herb.frostmarrow')).toBe(1);
+    expect(itemCount(state.player, 'pill.ward-basic')).toBe(20);
+    expect(state.events.some(e => e.type === 'brew-success')).toBe(false);
   });
 
   it('材料不足时 brewPills 不消耗、不出丹', () => {

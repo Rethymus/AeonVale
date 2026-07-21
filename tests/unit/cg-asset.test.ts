@@ -10,10 +10,12 @@ import { validateManifest, verifyChecksum, type AssetManifest } from '../../src/
 const manifest: AssetManifest = validateManifest(JSON.parse(readFileSync(resolve('assets/manifest.json'), 'utf-8')));
 const all = [...manifest.sprites, ...manifest.audio, ...manifest.fonts, ...manifest.shaders];
 const cgs = all.filter(e => e.id.startsWith('cg.'));
+const publishedCgs = cgs.filter(e => e.status !== 'draft');
+const draftCgs = cgs.filter(e => e.status === 'draft');
 
 describe('结局 CG 资产（§1.3 AI 例外）', () => {
   it('至少登记了 3 张结局 CG（ascension / lifespan-death / poison-death）', () => {
-    expect(cgs.length).toBeGreaterThanOrEqual(3);
+    expect(publishedCgs.length).toBeGreaterThanOrEqual(3);
   });
 
   it('所有 CG 条目使用受允许许可且 source 非空（provenance 留痕）', () => {
@@ -24,14 +26,21 @@ describe('结局 CG 资产（§1.3 AI 例外）', () => {
   });
 
   it('每张 CG 文件存在、为合法 PNG、sha256 与 manifest 一致', async () => {
-    expect(cgs.length).toBeGreaterThan(0);
-    for (const cg of cgs) {
+    expect(publishedCgs.length).toBeGreaterThan(0);
+    for (const cg of publishedCgs) {
       const buf = readFileSync(resolve('assets', cg.path));
       expect(buf.length).toBeGreaterThan(20_000); // CG 应有足够细节
       // PNG 魔数：89 50 4E 47 0D 0A 1A 0A
       expect(buf[0]).toBe(0x89);
       expect(buf.subarray(1, 4).toString('ascii')).toBe('PNG');
       await expect(verifyChecksum(new Uint8Array(buf), cg.checksum)).resolves.toBe(true);
+    }
+  });
+
+  it('draft CG 占位必须显式标注，不能误作发布级成品', () => {
+    for (const cg of draftCgs) {
+      expect(cg.source).toMatch(/placeholder|占位|pending/i);
+      expect(cg.ai_disclosed).toBe(true);
     }
   });
 });
