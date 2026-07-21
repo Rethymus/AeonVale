@@ -6,7 +6,7 @@ const base = {
   lifespanRemainingDays: 200,
   readyToInvoke: false,
   frozen: false,
-  prepLine: '备劫：缺避雷丹｜阵法未成(0/2)｜准备度0%'
+  prepLine: '备劫：缺承雷丹｜阵法未成(0/2)｜准备度0%'
 };
 
 describe('tribulation pressure presentation', () => {

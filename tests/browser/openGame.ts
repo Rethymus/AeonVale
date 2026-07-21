@@ -15,6 +15,7 @@ export interface CanvasPngSnapshot {
 export interface AeonDebugSnapshot {
   debugSchemaVersion?: number;
   buildRevision?: string;
+  legacyShortcutsEnabled?: boolean;
   flowScreen?: string;
   flowOverlay?: string | null;
   uiMode?: string;
@@ -49,6 +50,20 @@ export interface AeonDebugSnapshot {
   playerX?: number;
   playerY?: number;
   playerFacing?: string;
+  playerVisualX?: number;
+  playerVisualY?: number;
+  playerMovementActive?: boolean;
+  playerMovementProgress?: number;
+  playerMovementQueueLength?: number;
+  playerMovementFromX?: number | null;
+  playerMovementFromY?: number | null;
+  playerMovementToX?: number | null;
+  playerMovementToY?: number | null;
+  pendingWorldCommand?: string | null;
+  pendingWorldTargetX?: number | null;
+  pendingWorldTargetY?: number | null;
+  pendingWorldDestinationX?: number | null;
+  pendingWorldDestinationY?: number | null;
   tutorialTribulationPhase?: string;
   tutorialBoltIndex?: number;
   tutorialBoltCount?: number;
@@ -69,6 +84,15 @@ export interface AeonDebugSnapshot {
   frontTileCropGrowth?: number;
   frontTileWateredToday?: boolean;
   frontTileMoisture?: number;
+  frontTileFarmPlot?: boolean;
+  frontSceneZoneKind?: string;
+  frontSceneObjectKind?: string | null;
+  frontSceneObjectAction?: string | null;
+  pointerTileX?: number | null;
+  pointerTileY?: number | null;
+  lastPointerTileX?: number | null;
+  lastPointerTileY?: number | null;
+  lastPointerAction?: string;
   onboardingObjectiveId?: string | null;
   farmOnboardingObjectiveId?: string | null;
   helpText?: string;
@@ -77,6 +101,9 @@ export interface AeonDebugSnapshot {
   todayBriefingVisible?: boolean;
   panelPreviewVisible?: boolean;
   locationPreviewVisible?: boolean;
+  locationPreviewTextBottom?: number | null;
+  locationPreviewPanelBottom?: number | null;
+  locationPreviewMaxTextBottom?: number | null;
   todayBriefingTitle?: string;
   todayBriefingBody?: string;
   todayBriefingAssetId?: string | null;
@@ -90,9 +117,14 @@ export interface AeonDebugSnapshot {
   shippingBinItemCount?: number;
 }
 
-export function gameEntryPath(): string {
+export interface GameEntryOptions {
+  readonly legacyShortcuts?: boolean;
+}
+
+export function gameEntryPath(options: GameEntryOptions = {}): string {
   const basePath = process.env.PLAYWRIGHT_GAME_BASE_PATH ?? '/';
-  return basePath.endsWith('/') ? basePath : `${basePath}/`;
+  const normalized = basePath.endsWith('/') ? basePath : `${basePath}/`;
+  return options.legacyShortcuts ? `${normalized}?legacyShortcuts=1` : normalized;
 }
 
 export async function waitForInitialSurface(page: Page): Promise<AeonDebugSnapshot> {
@@ -138,8 +170,8 @@ export async function continueToWorld(page: Page): Promise<void> {
   await canvas.focus();
 }
 
-export async function openGame(page: Page): Promise<void> {
-  await page.goto(gameEntryPath());
+export async function openGame(page: Page, options: GameEntryOptions = {}): Promise<void> {
+  await page.goto(gameEntryPath(options));
   await waitForInitialSurface(page);
   await continueToWorld(page);
 }
@@ -207,7 +239,7 @@ export async function renderedCanvasPngSnapshot(page: Page): Promise<CanvasPngSn
   const box = await canvas.boundingBox();
   if (!box || box.width <= 0 || box.height <= 0) return null;
 
-  const screenshot = await canvas.screenshot({ animations: 'disabled', scale: 'css' });
+  const screenshot = await page.screenshot({ animations: 'disabled', scale: 'css', clip: box });
   if (screenshot.length < 24 || screenshot.subarray(0, 8).toString('hex') !== '89504e470d0a1a0a' || screenshot.subarray(12, 16).toString('ascii') !== 'IHDR') return null;
 
   return {

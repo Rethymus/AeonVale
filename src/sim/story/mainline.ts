@@ -2,7 +2,8 @@ import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
 import { archiveDonationCount } from '@sim/collection/archive';
 import { specialOrderCompleteFlag } from '@sim/social/commissions';
-import { itemCount, mutateItem } from '@sim/world/player';
+import type { SimContext } from '@sim/world/context';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 
 export interface MainlineQuestReward {
   itemId?: string;
@@ -138,12 +139,18 @@ export function getCurrentMainlineQuest(state: GameState): MainlineQuestStatus |
   return null;
 }
 
-export function claimMainlineQuest(state: GameState, questId: string): MainlineQuestResult {
+function canFitReward(state: GameState, reward: MainlineQuestReward, ctx?: SimContext): boolean {
+  if (!ctx || !reward.itemId || !reward.count) return true;
+  return inventoryCanFitRewards(state.player, [{ itemId: reward.itemId, count: reward.count }], ctx.content);
+}
+
+export function claimMainlineQuest(state: GameState, questId: string, ctx?: SimContext): MainlineQuestResult {
   const quest = MAINLINE_QUEST_CATALOG.find(entry => entry.id === questId) ?? null;
   if (!quest) return { ok: false, quest: null, reason: '无此主线委托' };
   if (!quest.isAvailable(state)) return { ok: false, quest, reason: '主线未解锁' };
   if (isMainlineQuestClaimed(state, quest.id)) return { ok: false, quest, reason: '已领取' };
   if (!quest.isComplete(state)) return { ok: false, quest, reason: '进度未成' };
+  if (!canFitReward(state, quest.reward, ctx)) return { ok: false, quest, reason: '储物戒已满' };
   if (!grantReward(state, quest.reward)) {
     return { ok: false, quest, reason: '储物戒已满' };
   }

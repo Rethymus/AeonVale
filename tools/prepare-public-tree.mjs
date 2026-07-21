@@ -1,7 +1,26 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { shouldSkipPublicTreeFile } from './public-tree-rules.mjs';
+
+function sanitizeManifestEntry(entry) {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry;
+  const sanitized = { ...entry };
+  delete sanitized.src;
+  delete sanitized.human_edits;
+  return sanitized;
+}
+
+export function sanitizeManifestForPublicTree(raw) {
+  const manifest = JSON.parse(JSON.stringify(raw));
+  for (const kind of ['sprites', 'audio', 'fonts', 'shaders']) {
+    if (!Array.isArray(manifest[kind])) continue;
+    manifest[kind] = manifest[kind]
+      .filter(entry => !(typeof entry?.path === 'string' && entry.path.startsWith('references/')))
+      .map(sanitizeManifestEntry);
+  }
+  return manifest;
+}
 
 const destination = process.argv[2];
 
@@ -29,6 +48,11 @@ for (const file of publicFiles) {
   if (!existsSync(source)) continue;
   const destinationFile = join(target, file);
   mkdirSync(dirname(destinationFile), { recursive: true });
+  if (file === 'assets/manifest.json') {
+    const manifest = JSON.parse(readFileSync(source, 'utf8'));
+    writeFileSync(destinationFile, `${JSON.stringify(sanitizeManifestForPublicTree(manifest), null, 1)}\n`);
+    continue;
+  }
   cpSync(source, destinationFile, { dereference: true, force: true, preserveTimestamps: true });
 }
 

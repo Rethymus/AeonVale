@@ -5,8 +5,9 @@
  */
 import type { BalanceParams } from '../params';
 import { withDefaultBalanceParams } from '../params';
-import type { EntityId, GameEvent, Season } from './types';
+import type { EntityId, GameEvent, Season, Vec2 } from './types';
 import { MILLI } from './types';
+import type { CropQuality } from '@sim/farm/quality';
 import type { Tile } from '../farm/tile';
 import type { CropInstance } from '../farm/crop';
 import type { Player } from './player';
@@ -20,6 +21,128 @@ export interface StorageState {
   inventory: Record<string, InventorySlot>;
   qualityInventory: QualityInventory;
   capacity: number;
+}
+
+export type InventoryContainerId = 'player' | 'storage' | 'shipping';
+export type InventoryPanelId = InventoryContainerId | 'furnace';
+export type InventorySortKey = 'layout' | 'category' | 'name' | 'count';
+
+export interface InventoryViewState {
+  activeTab: InventoryPanelId;
+  pageByContainer: Partial<Record<InventoryContainerId, number>>;
+  searchTerm: string;
+  sortKey: InventorySortKey;
+}
+
+export interface InventoryLayoutState {
+  orders: Partial<Record<InventoryContainerId, string[]>>;
+  view: InventoryViewState;
+}
+
+export function createDefaultInventoryViewState(): InventoryViewState {
+  return {
+    activeTab: 'player',
+    pageByContainer: {},
+    searchTerm: '',
+    sortKey: 'layout'
+  };
+}
+
+export function createDefaultInventoryLayoutState(): InventoryLayoutState {
+  return { orders: {}, view: createDefaultInventoryViewState() };
+}
+
+export function inventorySlotKey(itemId: string, quality?: CropQuality): string {
+  return quality ? `quality:${quality}:${itemId}` : itemId;
+}
+
+export function parseInventorySlotKey(key: string): { itemId: string; quality?: CropQuality } | null {
+  if (key.startsWith('quality:')) {
+    const [, quality, ...rest] = key.split(':');
+    const itemId = rest.join(':');
+    if (!itemId) return null;
+    if (quality === 'mortal' || quality === 'spirit' || quality === 'treasure') return { itemId, quality };
+    return null;
+  }
+  return key.length > 0 ? { itemId: key } : null;
+}
+
+export interface InventorySlotSnapshot {
+  key: string;
+  itemId: string;
+  count: number;
+  quality?: CropQuality;
+}
+
+const INVENTORY_QUALITY_ORDER: readonly CropQuality[] = ['mortal', 'spirit', 'treasure'];
+
+function compareInventorySlotSnapshot(a: InventorySlotSnapshot, b: InventorySlotSnapshot): number {
+  const aQualityRank = a.quality ? INVENTORY_QUALITY_ORDER.indexOf(a.quality) + 1 : 0;
+  const bQualityRank = b.quality ? INVENTORY_QUALITY_ORDER.indexOf(b.quality) + 1 : 0;
+  if (aQualityRank !== bQualityRank) return aQualityRank - bQualityRank;
+  const byItem = a.itemId.localeCompare(b.itemId, 'zh-CN');
+  if (byItem !== 0) return byItem;
+  return a.key.localeCompare(b.key, 'zh-CN');
+}
+
+export function inventorySlotsForContainer(state: GameState, container: InventoryContainerId): InventorySlotSnapshot[] {
+  const slots: InventorySlotSnapshot[] = [];
+
+  if (container === 'player') {
+    for (const [itemId, entry] of Object.entries(state.player.inventory)) {
+      if ((entry?.count ?? 0) > 0) slots.push({ key: itemId, itemId, count: entry.count });
+    }
+    const qualityInventory = state.player.qualityInventory ?? {};
+    for (const quality of INVENTORY_QUALITY_ORDER) {
+      const batch = qualityInventory[quality];
+      if (!batch) continue;
+      for (const [itemId, count] of Object.entries(batch)) {
+        if (count > 0) slots.push({ key: inventorySlotKey(itemId, quality), itemId, count, quality });
+      }
+    }
+    return slots.sort(compareInventorySlotSnapshot);
+  }
+
+  if (container === 'storage') {
+    for (const [itemId, entry] of Object.entries(state.storage.inventory)) {
+      if ((entry?.count ?? 0) > 0) slots.push({ key: itemId, itemId, count: entry.count });
+    }
+    const qualityInventory = state.storage.qualityInventory ?? {};
+    for (const quality of INVENTORY_QUALITY_ORDER) {
+      const batch = qualityInventory[quality];
+      if (!batch) continue;
+      for (const [itemId, count] of Object.entries(batch)) {
+        if (count > 0) slots.push({ key: inventorySlotKey(itemId, quality), itemId, count, quality });
+      }
+    }
+    return slots.sort(compareInventorySlotSnapshot);
+  }
+
+  for (const [itemId, count] of Object.entries(state.shippingBin)) {
+    if (count > 0) slots.push({ key: itemId, itemId, count });
+  }
+  const qualityShipping = state.qualityShippingBin ?? {};
+  for (const quality of INVENTORY_QUALITY_ORDER) {
+    const batch = qualityShipping[quality];
+    if (!batch) continue;
+    for (const [itemId, count] of Object.entries(batch)) {
+      if (count > 0) slots.push({ key: inventorySlotKey(itemId, quality), itemId, count, quality });
+    }
+  }
+  return slots.sort(compareInventorySlotSnapshot);
+}
+
+export function resolveInventoryOrder(baseOrder: readonly string[] | undefined, currentKeys: readonly string[]): string[] {
+  const current = new Set(currentKeys);
+  const order = (baseOrder ?? []).filter(key => current.has(key));
+  const seen = new Set(order);
+  for (const key of [...currentKeys].sort((a, b) => a.localeCompare(b, 'zh-CN'))) {
+    if (!seen.has(key)) {
+      order.push(key);
+      seen.add(key);
+    }
+  }
+  return order;
 }
 
 export interface ExplorationState {
@@ -163,6 +286,15 @@ export interface StayingWorldState {
   resolvedIncidentDay: number;
 }
 
+/** 场景地面物品：可被玩家走上去拾取（确定性，无 RNG/IO）。 */
+export interface GroundItem {
+  id: EntityId;
+  itemId: string;
+  count: number;
+  quality?: CropQuality;
+  pos: Vec2;
+}
+
 export interface GameState {
   readonly version: number;
   masterSeed: number;
@@ -188,7 +320,9 @@ export interface GameState {
   beastSurge: BeastSurge | null; // 激活中的妖兽潮
   guardBeasts: GuardBeast[]; // 驯养巡守兽：拦截妖兽潮啃食成熟灵草
   guardBeastPatrols: GuardBeastPatrolAssignment[]; // 守田兽哨指派的巡逻地块：改写护田与留世协防优先级
+  groundItems: GroundItem[]; // 场景地面物品：走上去按 Space 拾取
   storage: StorageState; // 农庄仓库/箱子：长期材料与品质灵草存放
+  inventoryLayout: InventoryLayoutState; // 背包/仓库/出货箱的格子顺序（持久化 UI 布局）
   exploration: ExplorationState; // 外出探索进度：遗迹层数等 Stardew-like 长线目标
   shippingBin: Record<string, number>; // 当日出货箱：itemId → count，日终结算为灵石
   qualityShippingBin: QualityInventory; // 品质出货箱：quality → itemId → count
@@ -259,6 +393,24 @@ export function nextEntityId(s: GameState): EntityId {
   return s.nextId++;
 }
 
+/**
+ * 在指定坐标放置一个地面物品（确定性，无 RNG/IO）。
+ * 由未来特性调用（如第一幕遗物落地）；返回新分配的实例 id。
+ */
+export function placeGroundItem(
+  s: GameState,
+  opts: { itemId: string; count: number; pos: Vec2; quality?: CropQuality }
+): EntityId {
+  const id = nextEntityId(s);
+  s.groundItems.push({ id, itemId: opts.itemId, count: opts.count, ...(opts.quality ? { quality: opts.quality } : {}), pos: { x: opts.pos.x, y: opts.pos.y } });
+  return id;
+}
+
+/** 取指定坐标上的首个地面物品（同格多物按放入顺序取第一个）。 */
+export function groundItemAtIndex(s: GameState, pos: Vec2): GroundItem | undefined {
+  return s.groundItems.find(g => g.pos.x === pos.x && g.pos.y === pos.y);
+}
+
 /** 由主种子创建新世界（确定性：同 seed ⇒ 同初始世界）。 */
 export function createWorld(o: WorldInit): GameState {
   const params = withDefaultBalanceParams(o.params);
@@ -267,7 +419,7 @@ export function createWorld(o: WorldInit): GameState {
   const tiles: Tile[] = [];
   for (let y = 0; y < o.height; y++) {
     for (let x = 0; x < o.width; x++) {
-      // 地形生成：水域/岩石/金属矿散布，种田即布防的导电性基础
+      // 地形生成：水域/岩石/金属矿散布，种田即布阵的导电性基础
       // 中心 3×3 保留为可种植的凡人居所
       const isCenter = Math.abs(x - Math.floor(o.width / 2)) <= 1 && Math.abs(y - Math.floor(o.height / 2)) <= 1;
       let soilType: Tile['soilType'] = 'loam';
@@ -336,7 +488,9 @@ export function createWorld(o: WorldInit): GameState {
     beastSurge: null,
     guardBeasts: [],
     guardBeastPatrols: [],
+    groundItems: [],
     storage: { inventory: {}, qualityInventory: {}, capacity: 48 },
+    inventoryLayout: createDefaultInventoryLayoutState(),
     exploration: { deepestRuinLevel: 0 },
     shippingBin: {},
     qualityShippingBin: {},

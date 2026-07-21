@@ -190,6 +190,22 @@ describe('inventory preview selection', () => {
     });
   });
 
+  it('falls back to shipping-bin contents with the shipping panel thread', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 32, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+    state.qualityShippingBin.spirit = { 'herb.mossling': 3 };
+
+    const preview = inventoryPreviewSelection(state, reg);
+
+    expect(preview).toMatchObject({
+      itemId: 'herb.mossling',
+      title: '凡间青苔',
+      details: '出货箱\n灵品 × 3',
+      iconId: 'icon.herb.mossling',
+      panelAssetId: 'facility.shipping-bin'
+    });
+  });
+
   it('returns null when both inventory and storage are empty', () => {
     const reg = buildRegistry();
     const state = createWorld({ seed: 23, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
@@ -197,6 +213,6 @@ describe('inventory preview selection', () => {
 
     const preview = inventoryPreviewSelection(state, reg);
 
-    expect(preview).toBeNull;
+    expect(preview).toBeNull();
   });
 });

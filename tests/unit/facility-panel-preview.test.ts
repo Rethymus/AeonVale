@@ -83,7 +83,7 @@ describe('facility panel preview', () => {
     );
 
     expect(preview).toEqual({
-      message: '设施收取（1/2）：封藏柜｜可收取｜Tab切换·空格/E/回车收取·Esc返回',
+      message: '设施收取（1/2）：封藏柜｜可收取｜点选设施·空格/E/回车收取·Esc返回',
       assetId: 'facility.sealing-cabinet'
     });
   });
@@ -92,7 +92,7 @@ describe('facility panel preview', () => {
     const reg = buildRegistry();
 
     expect(buildToastPresentation('talisman-furnace', '（3/3）', '空格/E/回车建造·Esc返回', reg)).toEqual({
-      message: '建造（3/3）：炼符炉｜Tab切换·空格/E/回车建造·Esc返回',
+      message: '建造（3/3）：炼符炉｜点选候选·空格/E/回车建造·Esc返回',
       assetId: 'loc.farmstead'
     });
   });
@@ -128,7 +128,7 @@ describe('facility panel preview', () => {
     expect(upgrade).toBeTruthy;
 
     expect(upgradeToastPresentation(upgrade!, '（1/2）', '空格/E/回车扩建·Esc返回', reg)).toEqual({
-      message: '扩建（1/2）：农庄扩建一阶｜Tab切换·空格/E/回车扩建·Esc返回',
+      message: '扩建（1/2）：农庄扩建一阶｜点选候选·空格/E/回车扩建·Esc返回',
       assetId: 'loc.herb-plot'
     });
   });

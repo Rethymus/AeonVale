@@ -14,17 +14,6 @@
     <main id="game-shell">
       <div id="app" data-app-surface="world" tabindex="-1" aria-label="永恒山谷游戏画面" aria-describedby="game-instructions" aria-hidden="true" hidden inert>
         <aside id="objective-rail" class="objective-rail" data-hud-density="compact" aria-label="当前旅程目标" hidden>
-          <div id="pressure-card" class="pressure-card fate-card" data-pressure-danger="calm">
-            <p id="pressure-tribulation" class="pressure-row pressure-tribulation">劫势未成</p>
-            <p id="pressure-lifespan" class="pressure-row pressure-lifespan">距大限：——</p>
-            <p id="pressure-prep" class="pressure-row pressure-prep"></p>
-          </div>
-          <div id="celestial-compass" class="celestial-compass fate-card" data-compass-tone="calm" aria-label="天象因果链罗盘">
-            <p id="celestial-compass-title" class="celestial-compass-title">天象罗盘</p>
-            <p id="celestial-compass-primary" class="celestial-compass-primary">天象平稳</p>
-            <p id="celestial-compass-causal" class="celestial-compass-causal">因果：无大势压境</p>
-            <p id="celestial-compass-upcoming" class="celestial-compass-upcoming">后兆：七日内无定期节令</p>
-          </div>
           <p id="objective-rail-progress" class="objective-rail-progress">旅程进度将在载入后显示</p>
           <p id="objective-rail-primary" class="objective-rail-primary">当前目标将在载入后显示</p>
           <details id="objective-rail-details" class="objective-rail-details" data-hud-secondary="true">
@@ -35,20 +24,64 @@
             </div>
           </details>
         </aside>
-        <nav id="world-command-bar" aria-label="农庄主要入口">
-          <button id="world-journey-action" class="world-command world-command-primary" type="button" data-game-command="journey">开始翻地</button>
-          <button class="world-command world-command-secondary" type="button" data-game-command="farm">农务</button>
-          <details id="world-command-more" class="world-command-more">
-            <summary class="world-command world-command-secondary" data-flow-focusable="false">更多入口</summary>
-            <div class="world-command-more-panel" role="group" aria-label="次要农庄入口">
-              <button class="world-command world-command-secondary" type="button" data-game-command="inventory">背包</button>
-              <button class="world-command world-command-secondary" type="button" data-game-command="map">地点</button>
-              <button class="world-command world-command-secondary" type="button" data-game-command="cultivation">修行</button>
-              <button class="world-command world-command-secondary" type="button" data-game-command="alchemy">丹炉</button>
+        <aside id="fate-status-strip" class="fate-status-strip" aria-label="命劫与天象摘要" hidden>
+          <details id="fate-rail-details" class="fate-drawer" data-hud-secondary="true">
+            <summary id="fate-rail-summary" class="fate-summary" data-flow-focusable="true" aria-label="展开备劫与天象详情">
+              <span id="fate-summary-pressure" class="fate-summary-chip">备劫待定</span>
+              <span id="fate-summary-celestial" class="fate-summary-chip">天象平稳</span>
+            </summary>
+            <div class="fate-detail-body">
+              <div id="pressure-card" class="pressure-card fate-card" data-pressure-danger="calm">
+                <p id="pressure-tribulation" class="pressure-row pressure-tribulation">劫势未成</p>
+                <p id="pressure-lifespan" class="pressure-row pressure-lifespan">距大限：——</p>
+                <p id="pressure-prep" class="pressure-row pressure-prep"></p>
+              </div>
+              <div id="celestial-compass" class="celestial-compass fate-card" data-compass-tone="calm" aria-label="天象因果链罗盘">
+                <p id="celestial-compass-title" class="celestial-compass-title">天象罗盘</p>
+                <p id="celestial-compass-primary" class="celestial-compass-primary">天象平稳</p>
+                <p id="celestial-compass-causal" class="celestial-compass-causal">因果：无大势压境</p>
+                <p id="celestial-compass-upcoming" class="celestial-compass-upcoming">后兆：七日内无定期节令</p>
+              </div>
             </div>
           </details>
+        </aside>
+        <div id="world-vital-strip" class="world-vital-strip" aria-label="角色状态" hidden>
+          <div class="world-vital-row world-vital-date">
+            <strong id="world-vital-day">第 1 日</strong>
+            <span id="world-vital-season">春 1</span>
+          </div>
+          <div class="world-vital-row world-vital-stage">
+            <span id="world-vital-stage">凡骨</span>
+            <span id="world-vital-lifespan">寿元 --</span>
+          </div>
+          <div class="world-vital-meter" style="--vital-pct: 100" data-vital="hp">
+            <span id="world-vital-hp-label">气血 100%</span>
+            <i id="world-vital-hp-bar" aria-hidden="true"></i>
+          </div>
+          <div class="world-vital-meter" style="--vital-pct: 100" data-vital="stamina">
+            <span id="world-vital-stamina-label">体力 100%</span>
+            <i id="world-vital-stamina-bar" aria-hidden="true"></i>
+          </div>
+        </div>
+        <nav id="world-command-bar" aria-label="农庄主要入口">
+          <button id="world-journey-action" class="world-command world-command-primary" type="button" data-game-command="journey">开始翻地</button>
+          <button class="world-command world-command-inventory" type="button" data-game-command="inventory" aria-label="打开行囊，快捷键 B">行囊</button>
           <button class="world-command world-command-rest" type="button" data-game-command="end-day">歇息</button>
-          <button class="world-command world-command-secondary" type="button" data-game-command="pause">系统</button>
+          <details id="world-command-more" class="world-command-more">
+            <summary class="world-command world-command-secondary" data-flow-focusable="false">更多</summary>
+            <div class="world-command-more-panel" role="group" aria-label="次要农庄入口">
+              <button class="world-command world-command-secondary" type="button" data-game-command="farm">农务</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="map">地点</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="cultivation">修行</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="furnace">丹炉</button>
+              <button class="world-command world-command-secondary" type="button" data-game-command="pause">系统</button>
+            </div>
+          </details>
+        </nav>
+        <nav id="world-location-command-bar" aria-label="地点选择操作" hidden>
+          <button class="world-command world-location-cycle" type="button" data-game-command="secondary">换地点</button>
+          <button class="world-command world-location-confirm" type="button" data-game-command="primary">前往</button>
+          <button class="world-command world-location-cancel" type="button" data-game-command="cancel">返回</button>
         </nav>
       </div>
 
@@ -76,6 +109,9 @@
       </section>
 
       <section class="app-surface flow-surface title-surface" data-app-surface="title" aria-labelledby="flow-title-heading" aria-hidden="true" hidden inert>
+        <div class="title-backdrop" aria-hidden="true">
+          <img class="title-backdrop-art" src="./maps/map.farmstead-courtyard-v1.png" alt="" width="1680" height="900" decoding="async" fetchpriority="high" />
+        </div>
         <div class="flow-frame flow-frame-title">
           <div class="flow-title-mark" aria-hidden="true"><img src="./logo/logo-emblem.png" alt="" width="104" height="104" /></div>
           <p class="flow-kicker">AEON VALE · 大道之歌</p>
@@ -86,6 +122,16 @@
             <button id="flow-title-new-game" class="flow-button flow-button-primary" type="button" data-flow-action="start-new-game" data-flow-focusable="true">新游戏</button>
             <button id="flow-title-continue" class="flow-button" type="button" data-flow-action="continue-game" data-flow-focusable="true" aria-describedby="flow-continue-status" disabled hidden>继续旅程</button>
             <button id="flow-title-settings" class="flow-button flow-button-quiet" type="button" data-flow-action="open-settings" data-flow-focusable="true">设置</button>
+            <button id="flow-title-narration" class="flow-button flow-button-narration" type="button" data-flow-focusable="true" aria-describedby="flow-title-narration-subtitle">
+              <span class="flow-button-seal" aria-hidden="true">叙</span>
+              <span class="flow-button-narration-body">
+                <span class="flow-button-label-row">
+                  <span class="flow-button-mark" aria-hidden="true">✦</span>
+                  <span class="flow-button-label">灵韵叙录</span>
+                </span>
+                <span class="flow-button-subtitle" id="flow-title-narration-subtitle">以灵韵写就，再叙一遍。</span>
+              </span>
+            </button>
           </div>
           <p id="flow-continue-status" class="flow-note">暂无存档 — 请从「新游戏」开始。</p>
           <p id="flow-title-save-notice" class="flow-note" role="status" aria-live="polite" aria-atomic="true" hidden></p>
@@ -96,12 +142,32 @@
         <div class="flow-frame flow-frame-reading">
           <p class="flow-kicker">序章 · 谷雨之后</p>
           <h1 id="flow-prologue-heading">从一块空地开始</h1>
-          <p>穿越了，却没有系统、没有老爷爷——太一宗测灵柱下，我按出一片死寂。长老以神识探我丹田，猛地缩手：「无灵根，天道弃子——逐。」</p>
-          <p>被逐回这破败的永恒山谷，认命种地：种田以炼丹，炼丹以渡劫，渡劫以偷天——凡骨一线，硬撼天道。此刻你在旧农庄醒来，掌心只有几粒灵草种与未冷的炉灰；先翻出第一块灵田，山谷自会慢慢展开。</p>
-          <div class="flow-actions">
-            <button id="flow-prologue-continue" class="flow-button flow-button-primary" type="button" data-flow-action="finish-prologue" data-flow-focusable="true">继续</button>
-            <button id="flow-prologue-skip" class="flow-button flow-button-quiet" type="button" data-flow-action="skip-prologue" data-flow-focusable="true">跳过序章</button>
-          </div>
+          <!-- 序章视觉小说挂载点：运行时由 prologueVN 接管控件（含 #flow-prologue-skip），不在此放静态 data-flow-action 按钮。 -->
+          <div id="prologue-vn" data-app-slot="prologue-vn" role="group" aria-label="序章叙事舞台"></div>
+        </div>
+      </section>
+
+      <section class="app-surface flow-surface narration-surface" data-app-surface="narration" aria-labelledby="flow-narration-heading" aria-hidden="true" hidden inert>
+        <div class="flow-frame flow-frame-reading">
+          <p class="flow-kicker">灵韵叙录 · 第一人称沉浸叙事</p>
+          <h1 id="flow-narration-heading">灵韵叙录</h1>
+          <!-- 灵韵叙录视觉小说挂载点：运行时由 narrationSurface 接管控件（含 #narration-stage 焦点目标）。 -->
+          <div id="narration-vn" data-app-slot="narration-vn" role="group" aria-label="灵韵叙录叙事舞台"></div>
+          <p class="flow-narration-foot">
+            <button id="flow-narration-codex-open" class="flow-button flow-button-quiet narration-codex-toggle" type="button" data-flow-focusable="true">叙录</button>
+          </p>
+        </div>
+      </section>
+
+      <section class="app-surface flow-surface codex-surface" data-app-surface="codex" role="dialog" aria-modal="true" aria-labelledby="flow-codex-heading" aria-hidden="true" hidden inert>
+        <div class="flow-frame flow-frame-reading codex-frame">
+          <p class="flow-kicker">灵韵叙录 · 叙录</p>
+          <h1 id="flow-codex-heading">叙录</h1>
+          <!-- 叙录界面挂载点：运行时由 narrationCodex 渲染三区（章节轨 / 节点图 / 图鉴墙）。 -->
+          <div id="codex-root" data-app-slot="codex-root" role="group" aria-label="叙录·章节与结局"></div>
+          <p class="flow-codex-foot">
+            <button id="flow-codex-close" class="flow-button flow-button-quiet" type="button" data-flow-action="close-overlay" data-flow-focusable="true">合上叙录</button>
+          </p>
         </div>
       </section>
 
@@ -155,10 +221,10 @@
           <div id="flow-pause-context" class="flow-content" data-app-slot="pause"></div>
           <nav class="flow-menu-grid" aria-label="游戏页面" aria-describedby="flow-pause-context">
             <button class="flow-button" type="button" data-game-command="farm" data-world-only-command data-flow-focusable="true">农务</button>
-            <button class="flow-button" type="button" data-game-command="inventory" data-world-only-command data-flow-focusable="true">背包</button>
+            <button class="flow-button" type="button" data-game-command="inventory" data-world-only-command data-flow-focusable="true">行囊</button>
             <button class="flow-button" type="button" data-game-command="map" data-world-only-command data-flow-focusable="true">地点</button>
             <button class="flow-button" type="button" data-game-command="cultivation" data-world-only-command data-flow-focusable="true">修行</button>
-            <button class="flow-button" type="button" data-game-command="alchemy" data-world-only-command data-flow-focusable="true">丹炉</button>
+            <button class="flow-button" type="button" data-game-command="furnace" data-world-only-command data-flow-focusable="true">丹炉</button>
             <button class="flow-button" type="button" data-game-command="settings" data-flow-focusable="true">设置</button>
           </nav>
           <div class="flow-actions">
@@ -168,86 +234,43 @@
       </section>
 
       <section class="app-surface flow-surface" data-app-surface="inventory" role="dialog" aria-modal="true" aria-labelledby="flow-inventory-heading" aria-hidden="true" hidden inert>
-        <div class="flow-frame flow-frame-wide">
-          <p class="flow-kicker">随身行囊</p>
-          <h1 id="flow-inventory-heading">背包</h1>
+        <div class="flow-frame flow-frame-wide flow-frame-inventory">
+          <button id="flow-inventory-close" class="flow-close-button" type="button" data-flow-action="close-overlay" data-flow-focusable="true" aria-label="关闭物品管理">×</button>
+          <p class="flow-kicker">储物戒匣</p>
+          <h1 id="flow-inventory-heading">物品管理</h1>
           <div class="flow-content flow-empty-state" data-app-slot="inventory">
-            <strong>物品栏将在这里展开</strong>
-            <span>查看灵草、丹药、种子与关键材料。</span>
-          </div>
-          <div class="flow-actions">
-            <button id="flow-inventory-close" class="flow-button flow-button-primary" type="button" data-flow-action="close-overlay" data-flow-focusable="true">返回农庄</button>
+            <strong>行囊、仓储与丹炉将在这里展开</strong>
+            <span>整理灵草、丹药、种子与关键材料，并在丹炉中开炉炼制。</span>
           </div>
         </div>
       </section>
 
       <section class="app-surface flow-surface" data-app-surface="map" role="dialog" aria-modal="true" aria-labelledby="flow-map-heading" aria-hidden="true" hidden inert>
-        <div class="flow-frame flow-frame-wide">
+        <div class="flow-frame flow-frame-wide flow-frame-map">
+          <button id="flow-map-close" class="flow-close-button" type="button" data-flow-action="close-overlay" data-flow-focusable="true" aria-label="关闭山河图">×</button>
           <p class="flow-kicker">山谷去处</p>
-          <h1 id="flow-map-heading">地点</h1>
-          <div class="flow-content flow-empty-state" data-app-slot="map">
+          <h1 id="flow-map-heading">山河图</h1>
+          <div class="flow-content flow-surface-slot" data-app-slot="map">
             <strong>地点目录将在这里展开</strong>
             <span>农庄、集市、药圃与阵器棚将保持一个明确选择。</span>
           </div>
           <div class="flow-actions">
-            <button id="flow-map-close" class="flow-button flow-button-primary" type="button" data-flow-action="close-overlay" data-flow-focusable="true">返回农庄</button>
+            <button id="flow-map-return" class="flow-button flow-button-primary" type="button" data-flow-action="close-overlay" data-flow-focusable="true">返回农庄</button>
           </div>
         </div>
       </section>
 
       <section class="app-surface flow-surface" data-app-surface="cultivation" role="dialog" aria-modal="true" aria-labelledby="flow-cultivation-heading" aria-hidden="true" hidden inert>
-        <div class="flow-frame flow-frame-wide">
+        <div class="flow-frame flow-frame-wide flow-frame-cultivation">
+          <button id="flow-cultivation-close" class="flow-close-button" type="button" data-flow-action="close-overlay" data-flow-focusable="true" aria-label="关闭修行札记">×</button>
           <p class="flow-kicker">修行札记</p>
           <h1 id="flow-cultivation-heading">修行</h1>
-          <div class="flow-content flow-empty-state" data-app-slot="cultivation">
+          <div class="flow-content flow-surface-slot" data-app-slot="cultivation">
             <strong>体魄与备劫状态将在这里展开</strong>
             <span>丹药、阵法和引劫准备将共享同一条清晰动线。</span>
           </div>
           <div class="flow-actions">
-            <button id="flow-cultivation-close" class="flow-button flow-button-primary" type="button" data-flow-action="close-overlay" data-flow-focusable="true">返回农庄</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="app-surface flow-surface" data-app-surface="alchemy" role="dialog" aria-modal="true" aria-labelledby="flow-alchemy-heading" aria-hidden="true" hidden inert>
-        <div class="flow-frame flow-frame-wide">
-          <p class="flow-kicker">草木入炉</p>
-          <h1 id="flow-alchemy-heading">炼丹</h1>
-          <div class="flow-content demo-stage-grid" data-app-slot="alchemy">
-            <div class="demo-stage-section demo-alchemy-hero" aria-labelledby="flow-alchemy-recipe-heading">
-              <figure id="flow-alchemy-furnace" class="demo-alchemy-furnace" data-heat-band="ideal" data-brewed="false" aria-hidden="true">
-                <img src="./facilities/talisman-furnace.png" alt="" width="96" height="96" decoding="async" />
-                <span class="demo-alchemy-flame" data-alchemy-flame></span>
-              </figure>
-              <p class="demo-stage-number">教学丹方</p>
-              <h2 id="flow-alchemy-recipe-heading">避雷丹</h2>
-              <p id="flow-alchemy-recipe">避雷丹方</p>
-              <ul id="flow-alchemy-materials" class="demo-material-list" aria-label="教学药包材料">
-                <li data-alchemy-material="0"><span data-alchemy-material-name="0">材料一</span><strong data-alchemy-material-quantity="0">×1</strong></li>
-                <li data-alchemy-material="1"><span data-alchemy-material-name="1">材料二</span><strong data-alchemy-material-quantity="1">×1</strong></li>
-              </ul>
-              <p id="flow-alchemy-pairing" class="demo-stage-note" role="status">七情配伍：雷击木 相使 寒潭莲，辅药引经，略增药力。</p>
-              <p class="demo-stage-note">使用一次性教学药包，遵循正式丹方；炼制失败不会消耗材料。</p>
-            </div>
-            <div class="demo-stage-section" data-alchemy-heat-section data-heat-band="ideal" aria-labelledby="flow-alchemy-heat-heading">
-              <div class="demo-control-heading">
-                <h2 id="flow-alchemy-heat-heading">炉火</h2>
-                <output id="flow-alchemy-heat-output" for="flow-alchemy-heat">47%</output>
-              </div>
-              <div id="flow-alchemy-heat-track" class="demo-heat-track" style="--heat-pct: 47; --ideal-lo: 40; --ideal-hi: 55" aria-hidden="true">
-                <span class="demo-heat-ideal"></span>
-                <span class="demo-heat-needle"></span>
-              </div>
-              <label class="sr-only" for="flow-alchemy-heat">调整炉火强度</label>
-              <input id="flow-alchemy-heat" class="demo-heat-slider" type="range" min="0" max="100" step="1" value="47" aria-describedby="flow-alchemy-ideal flow-alchemy-preview" data-flow-focusable="true" />
-              <p id="flow-alchemy-ideal" class="demo-stage-note">理想火候 40–55%</p>
-              <p id="flow-alchemy-preview" class="demo-result-line">火候稳定，预计可炼成完整丹药。</p>
-            </div>
-          </div>
-          <p id="flow-alchemy-result" class="demo-announcement" role="status" aria-live="polite" aria-atomic="true">教学药包已经备好。</p>
-          <div class="flow-actions">
-            <button id="flow-alchemy-primary" class="flow-button flow-button-primary" type="button" data-demo-action="alchemy-primary" data-flow-focusable="true" aria-describedby="flow-alchemy-result">炼制备劫丹</button>
-            <button id="flow-alchemy-return" class="flow-button flow-button-quiet" type="button" data-flow-action="close-alchemy" data-flow-focusable="true">返回农庄</button>
+            <button id="flow-cultivation-return" class="flow-button flow-button-primary" type="button" data-flow-action="close-overlay" data-flow-focusable="true">返回农庄</button>
           </div>
         </div>
       </section>
@@ -270,10 +293,10 @@
               </div>
               <div>
                 <dt>丹药</dt>
-                <dd id="flow-tribulation-pill">避雷丹 ×0</dd>
+                <dd id="flow-tribulation-pill">承雷丹 ×0</dd>
               </div>
               <div>
-                <dt>护体</dt>
+                <dt>稳脉</dt>
                 <dd id="flow-tribulation-ward">尚未服丹</dd>
               </div>
             </dl>
@@ -289,7 +312,7 @@
             <p id="flow-tribulation-last-bolt" class="demo-result-line">尚无雷击结果。</p>
           </div>
           <div class="flow-actions">
-            <button id="flow-tribulation-pill-action" class="flow-button" type="button" data-demo-action="take-pill" data-flow-focusable="true" aria-describedby="flow-tribulation-pill flow-tribulation-ward">服用避雷丹</button>
+            <button id="flow-tribulation-pill-action" class="flow-button" type="button" data-demo-action="take-pill" data-flow-focusable="true" aria-describedby="flow-tribulation-pill flow-tribulation-ward">服用承雷丹</button>
             <button id="flow-tribulation-primary" class="flow-button flow-button-primary" type="button" data-demo-action="tribulation-primary" data-flow-focusable="true" aria-describedby="flow-tribulation-warning">开始三雷教学</button>
             <button id="flow-tribulation-pause" class="flow-button flow-button-quiet" type="button" data-flow-action="open-pause" data-flow-focusable="true">暂停</button>
           </div>
@@ -359,6 +382,7 @@
         </div>
         <div class="touch-actions" aria-label="情境操作">
           <button type="button" class="touch-button touch-menu" data-game-command="menu" aria-label="打开菜单">菜单</button>
+          <button type="button" class="touch-button touch-secondary touch-cancel" data-game-command="cancel" aria-label="返回或关闭当前面板">返回</button>
           <button type="button" class="touch-button touch-secondary" data-game-command="secondary" aria-label="次要操作">切换</button>
           <button type="button" class="touch-button touch-primary" data-game-command="primary" aria-label="主要操作">行动</button>
         </div>

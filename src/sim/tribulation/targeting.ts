@@ -1,7 +1,7 @@
 /**
  * 天雷 Targeting。
  * 乘性权重公式：weight = metalAttract × conductivity × arrayModifier × playerProximity × epicenter × noise。
- * "种田即布防"的数学桥梁：金属性灵草(metalAttract↑)吸雷、绝缘垫层(conductivity 0.1)排雷。
+ * "种田即布阵"的数学桥梁：金属性灵草(metalAttract↑)吸雷、绝缘垫层(conductivity 0.1)排雷。
  * 可种子化：noise 由注入 rng 生成，同 state+rng ⇒ 同落点序列。
  */
 import type { GameState } from '@sim/world/state';
@@ -19,7 +19,7 @@ export function chebyshev(a: Vec2, b: Vec2): number {
 /** 纯函数：单格权重（noise01 由外部 rng 预生成，便于属性测试）。 */
 export function tileWeight(state: GameState, ctx: SimContext, tile: Tile, noise01: number): number {
   const tp = ctx.params.lightning.targeting;
-  // metalAttract：该格作物的金属吸引（金属性灵草=活避雷针）
+  // metalAttract：该格作物的金属吸引（金属性灵草=活引雷针）
   let metal = 1;
   if (tile.cropId != null) {
     const crop = state.crops.get(tile.id); // crops Map 以 tile.id 为键

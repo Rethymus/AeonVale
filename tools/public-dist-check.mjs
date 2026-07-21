@@ -7,10 +7,13 @@ const failures = [];
 
 const forbiddenPatterns = [
   { pattern: /(^|\/)docs(\/|$)/, reason: 'private design docs' },
+  { pattern: /(^|\/)\.planning(\/|$)/, reason: 'private planning docs' },
   { pattern: /(^|\/)\.omc(\/|$)/, reason: 'local Agent state' },
   { pattern: /(^|\/)\.claude(\/|$)/, reason: 'local Agent state' },
   { pattern: /(^|\/)\.codex(\/|$)/, reason: 'local Agent state' },
   { pattern: /(^|\/)\.agents(\/|$)/, reason: 'local Agent state' },
+  { pattern: /(^|\/)\.superpowers(\/|$)/, reason: 'local Agent state' },
+  { pattern: /(^|\/)tmp(\/|$)/, reason: 'temporary audit output' },
   { pattern: /(^|\/)\.env($|\.)/, reason: 'environment file' },
   { pattern: /\.map$/, reason: 'production sourcemap' },
   { pattern: /(^|\/)ART-ASSETS-STATUS\.md$/, reason: 'private art/design status document' }

@@ -5,6 +5,7 @@ import type { GameState } from '@sim/world/state';
 import { FACILITY_LABEL } from '@sim';
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { itemIconAssetId } from './itemIcons';
+import { farmsteadSceneObjectAt, farmsteadSceneTileKind, isFarmsteadFarmPlotTile } from './farmsteadScene';
 import { arrayCoreFacilityKind } from '@render/arrayPreview';
 import { tileAssetId } from '@render/tileAsset';
 
@@ -62,6 +63,18 @@ function hasCarriedSeed(state: GameState): boolean {
 
 function describeEmptyTile(state: GameState, tile: Tile): FrontTilePreview {
   const insulationCovered = isInsulationCovered(state, tile.id);
+  const farmPlot = isFarmsteadFarmPlotTile(state, tile.x, tile.y);
+  if (!farmPlot && tile.cropId == null) {
+    const zone = farmsteadSceneTileKind(state, tile.x, tile.y);
+    const title = zone === 'homestead' ? '屋前空地' : zone === 'workyard' ? '工坊院道' : zone === 'gate' ? '谷口山径' : zone === 'wild' ? '山边荒草' : '农庄院道';
+    const details = zone === 'gate' ? '面前山径\n这里不是药田\n走到谷口标记旁可外出' : '面前院道\n这里不是药田\n靠近设施或回到围好的灵田再操作';
+    return {
+      title,
+      details,
+      assetId: zone === 'gate' ? 'loc.valley-outskirts' : 'loc.farmstead'
+    };
+  }
+
   if (tile.blockType !== 'none' || tile.soilType === 'rock' || tile.soilType === 'water' || tile.soilType === 'metal-ore') {
     return {
       title: SOIL_LABEL[tile.soilType] ?? '障碍地块',
@@ -145,7 +158,7 @@ function describeArray(state: GameState, tileId: number, content: ContentRegistr
   const title = def?.displayName ?? array.defId;
   const radius = def?.radius ?? 0;
   const status = array.active ? (array.power > 0 ? `阵势运转中｜覆盖 ${array.coverageTileIds.length} 格｜半径 ${radius}` : '阵势尚在，但灵力已尽') : '阵势未激活';
-  const nextStep = def?.needsMetalCore ? '以金属性灵草为阵眼，外围可作引兽避雷田' : '护住核心药草区，减少雷击与失养风险';
+  const nextStep = def?.needsMetalCore ? '以金属性灵草为阵眼，外围可作引兽导雷田' : '稳住核心药草区，分流雷击与失养风险';
 
   return {
     title,
@@ -162,6 +175,14 @@ export function frontTilePreview(state: GameState, content: ContentRegistry): Fr
   const y = p.position.y + dy;
   const tile = state.tiles.find(entry => entry.x === x && entry.y === y);
   if (!tile) return null;
+  const farmsteadObject = farmsteadSceneObjectAt(state, x, y);
+  if (farmsteadObject) {
+    return {
+      title: farmsteadObject.title,
+      details: `${farmsteadObject.details}\n空格/E：${farmsteadObject.actionLabel}`,
+      assetId: farmsteadObject.assetId
+    };
+  }
   const facilityPreview = describeFacility(state, tile.id, content);
   if (facilityPreview) return facilityPreview;
   const arrayPreview = describeArray(state, tile.id, content);

@@ -124,7 +124,7 @@ function wardingGoals(state: GameState): StayingWorldGoalStatus[] {
   goals.push({
     id: 'warding-array-warden-patrol',
     track: 'warding',
-    title: '阵守布防',
+    title: '阵守巡阵',
     summary: '把阵守专长巡守兽指派到活跃阵法覆盖内巡逻，让阵法与巡守真正互相增益。',
     progressLabel: wardenPatrol ? '已有阵守巡逻共振' : state.guardBeasts.some(beast => beast.specialty === 'array-warden') ? '有阵守兽但未在阵法覆盖内巡逻' : '尚无阵守巡守兽',
     complete: wardenPatrol,

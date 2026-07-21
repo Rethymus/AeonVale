@@ -81,7 +81,7 @@ describe('action panel preview', () => {
     const ctx = createSimContext(99, reg, DEFAULT_BALANCE);
 
     expect(farmActionMenuToastPresentation('processing-furnace', '（3/10）', '空格/E/回车进入·Esc返回', state, ctx)).toEqual({
-      message: '农庄操作（3/10）：加工-熔炼｜数字1-0直达·Tab切换·空格/E/回车进入·Esc返回',
+      message: '农庄操作（3/10）：加工-熔炼｜点选项目进入·空格/E/回车进入·Esc返回',
       assetId: 'loc.farmstead'
     });
   });
@@ -93,7 +93,7 @@ describe('action panel preview', () => {
     expect(farmActionMenuPreview('upgrade', state, ctx).assetId).toBe('loc.herb-plot');
 
     expect(farmActionMenuToastPresentation('upgrade', '（8/10）', '空格/E/回车进入·Esc返回', state, ctx)).toEqual({
-      message: '农庄操作（8/10）：扩建｜数字1-0直达·Tab切换·空格/E/回车进入·Esc返回',
+      message: '农庄操作（8/10）：扩建｜点选项目进入·空格/E/回车进入·Esc返回',
       assetId: 'loc.herb-plot'
     });
   });
@@ -163,7 +163,7 @@ describe('action panel preview', () => {
     });
 
     expect(farmActionMenuToastPresentation('facility-collect', '（2/10）', '空格/E/回车进入·Esc返回', state, ctx)).toEqual({
-      message: '农庄操作（2/10）：设施收取｜数字1-0直达·Tab切换·空格/E/回车进入·Esc返回',
+      message: '农庄操作（2/10）：设施收取｜点选项目进入·空格/E/回车进入·Esc返回',
       assetId: 'loc.farmstead'
     });
   });
@@ -270,7 +270,8 @@ describe('action panel preview', () => {
     const { state, reg } = setup();
     const ctx = createSimContext(104, reg, DEFAULT_BALANCE);
 
-    expect(farmActionMenuPreview('build', state, ctx).details).toContain('炼丹、布阵与备劫');
+    expect(farmActionMenuPreview('build', state, ctx).details).toContain('建造加工设施');
+    expect(farmActionMenuPreview('build', state, ctx).details).toContain('布设引雷阵、绝缘阵');
     expect(farmActionMenuPreview('processing-drying', state, ctx).details).toContain('炼丹与阵材前置');
     expect(farmActionMenuPreview('processing-sealing', state, ctx).details).toContain('丹药与订单底料');
     expect(farmActionMenuPreview('shipping-normal', state, ctx).details).toContain('备劫消耗');
@@ -280,32 +281,32 @@ describe('action panel preview', () => {
     expect(npcActionMenuPreview('gift')).toEqual({
       title: '赠礼',
       details: '人物社交\n按偏好送出背包礼物\n提高好感并推进后续事件',
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
   });
 
-  it('provides portrait asset ids for npc root menu modes', () => {
-    expect(npcActionMenuPreview('browse').assetId).toBe('sprite.npc.wandering-cultivator');
-    expect(npcActionMenuPreview('gift').assetId).toBe('sprite.npc.herb-gatherer');
-    expect(npcActionMenuPreview('quest').assetId).toBe('sprite.npc.array-smith');
+  it('provides actor asset ids for npc root menu modes', () => {
+    expect(npcActionMenuPreview('browse').assetId).toBe('portrait.avatar.liaochen-v1');
+    expect(npcActionMenuPreview('gift').assetId).toBe('portrait.avatar.herb-gatherer-v1');
+    expect(npcActionMenuPreview('quest').assetId).toBe('portrait.avatar.array-smith-lu-v1');
   });
 
   it('reuses npc root menu portrait art for toast presentation', () => {
     expect(npcActionMenuToastPresentation('quest', '（2/3）', '空格/E/回车进入·Esc返回')).toEqual({
-      message: '人物操作（2/3）：人物委托｜数字1-3直达·Tab切换·空格/E/回车进入·Esc返回',
-      assetId: 'sprite.npc.array-smith'
+      message: '人物操作（2/3）：人物委托｜点选互动·空格/E/回车进入·Esc返回',
+      assetId: 'portrait.avatar.array-smith-lu-v1'
     });
   });
 
   it('prefers the currently selected npc portrait for root menu previews when available', () => {
-    expect(npcActionMenuPreview('browse', 'npc.array-smith').assetId).toBe('sprite.npc.array-smith');
-    expect(npcActionMenuPreview('gift', 'npc.herb-gatherer').assetId).toBe('sprite.npc.herb-gatherer');
+    expect(npcActionMenuPreview('browse', 'npc.array-smith').assetId).toBe('portrait.avatar.array-smith-lu-v1');
+    expect(npcActionMenuPreview('gift', 'npc.herb-gatherer').assetId).toBe('portrait.avatar.herb-gatherer-v1');
     expect(npcActionMenuPreview('quest', 'npc.wandering-cultivator').assetId).toBe('sprite.npc.wandering-cultivator');
   });
 
-  it('supports preview-only npc portraits in root menu previews', () => {
-    expect(npcActionMenuPreview('browse', 'npc.tea-shed-elder').assetId).toBe('sprite.npc.tea-shed-elder');
-    expect(npcActionMenuPreview('gift', 'npc.market-merchant').assetId).toBe('sprite.npc.market-merchant');
+  it('supports preview-only actor sprites in root menu previews', () => {
+    expect(npcActionMenuPreview('browse', 'npc.tea-shed-elder').assetId).toBe('map-sprite.tea-shed-elder-v1');
+    expect(npcActionMenuPreview('gift', 'npc.market-merchant').assetId).toBe('map-sprite.market-merchant-v1');
   });
 
   it('describes npc browse panel with schedule and birthday', () => {
@@ -336,7 +337,7 @@ describe('action panel preview', () => {
     const schedule = getNpcDailySchedules(state).find(entry => entry.npc.id === 'npc.wandering-cultivator') ?? null;
 
     expect(npcBrowseToastPresentation(npc!, schedule, null, '（1/3）', '灵石')).toEqual({
-      message: '人物（1/3）：游方散修｜Tab切换人物·Esc返回',
+      message: '人物（1/3）：游方散修｜点选人物查看·Esc返回',
       assetId: 'sprite.npc.wandering-cultivator'
     });
   });
@@ -344,7 +345,7 @@ describe('action panel preview', () => {
   it('keeps npc-unavailable failures anchored to the social browse thread', () => {
     expect(npcUnavailableToastPresentation()).toEqual({
       message: '今日暂无可访人物｜先按农庄与地点动线推进',
-      assetId: 'sprite.npc.wandering-cultivator'
+      assetId: 'portrait.avatar.liaochen-v1'
     });
   });
 
@@ -363,7 +364,7 @@ describe('action panel preview', () => {
     expect(preview.details).toContain('人物委托｜温骨识药');
     expect(preview.details).toContain('携礼：暂无合适礼物｜建议先补社交物资');
     expect(preview.details).toContain('现在可做：去露根药圃推进“温骨识药”。');
-    expect(preview.assetId).toBe('sprite.npc.herb-gatherer');
+    expect(preview.assetId).toBe('portrait.avatar.herb-gatherer-v1');
   });
 
   it('describes npc gift panel without suitable gift', () => {
@@ -375,7 +376,7 @@ describe('action panel preview', () => {
     expect(preview).toEqual({
       title: '阵匠老陆',
       details: '赠予 阵匠老陆\n暂无合适礼物\n建议先去集市、药圃或仓库补货',
-      assetId: 'sprite.npc.array-smith'
+      assetId: 'portrait.avatar.array-smith-lu-v1'
     });
   });
 
@@ -401,7 +402,7 @@ describe('action panel preview', () => {
     expect(preview).toEqual({
       title: '采药女',
       details: '当前最适礼物：露根草\n赠予 采药女\n背包已备好｜可直接赠礼',
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
   });
 
@@ -414,7 +415,7 @@ describe('action panel preview', () => {
     expect(preview).toEqual({
       title: '集市商贩',
       details: '当前最适礼物：未知货签\n赠予 集市商贩\n背包已备好｜可直接赠礼',
-      assetId: 'sprite.npc.market-merchant'
+      assetId: 'map-sprite.market-merchant-v1'
     });
   });
 
@@ -423,7 +424,7 @@ describe('action panel preview', () => {
     const npc = { id: 'npc.wandering-cultivator', displayName: '游方散修' };
 
     expect(npcGiftToastPresentation(npc, '灵石', true, '（2/3）', '空格/E/回车赠礼·Esc返回', 'item.spirit-stone', reg)).toEqual({
-      message: '赠礼（2/3）：游方散修｜灵石｜Tab切换人物·空格/E/回车赠礼·Esc返回',
+      message: '赠礼（2/3）：游方散修｜灵石｜点选人物·空格/E/回车赠礼·Esc返回',
       assetId: 'sprite.npc.wandering-cultivator'
     });
   });
@@ -455,7 +456,7 @@ describe('action panel preview', () => {
     expect(preview.details).toContain('委托人 采药女');
     expect(preview.details).toContain('当前可做');
     expect(preview.details).toContain('持有露根草 4 份');
-    expect(preview.assetId).toBe('sprite.npc.herb-gatherer');
+    expect(preview.assetId).toBe('portrait.avatar.herb-gatherer-v1');
   });
 
   it('keeps npc quest preview anchored to the quest-driving subject once the objective is complete', () => {
@@ -473,7 +474,7 @@ describe('action panel preview', () => {
     expect(preview.title).toBe('温骨识药');
     expect(preview.details).toContain('已满足条件，可领取奖励');
     expect(preview.details).toContain('返回人物面板领取本次谢礼');
-    expect(preview.assetId).toBe('sprite.npc.herb-gatherer');
+    expect(preview.assetId).toBe('portrait.avatar.herb-gatherer-v1');
   });
 
   it('keeps completed npc quest result toasts on the quest-driving subject instead of reward item art', () => {
@@ -488,11 +489,11 @@ describe('action panel preview', () => {
 
     expect(npcQuestResultToastPresentation(npc!, quest, 'complete', reg)).toEqual({
       message: '采药女委托完成：温骨识药',
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
     expect(npcQuestResultToastPresentation(npc!, quest, 'failure', reg)).toEqual({
       message: '采药女委托领取失败：温骨识药',
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
   });
 
@@ -504,8 +505,8 @@ describe('action panel preview', () => {
     const quest = getCurrentNpcQuest(state, 'npc.herb-gatherer');
 
     expect(npcQuestToastPresentation(npc!, quest, '（3/3）', '空格/E/回车推进·Esc返回', reg)).toEqual({
-      message: '人物委托（3/3）：采药女｜温骨识药｜未完成｜Tab切换人物·空格/E/回车推进·Esc返回',
-      assetId: 'sprite.npc.herb-gatherer'
+      message: '人物委托（3/3）：采药女｜温骨识药｜未完成｜点选人物·空格/E/回车推进·Esc返回',
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
   });
 
@@ -518,11 +519,11 @@ describe('action panel preview', () => {
 
     expect(npcQuestResultToastPresentation(npc!, quest, 'advance', reg, '雷酿护身')).toEqual({
       message: '采药女委托推进：温骨识药 → 雷酿护身',
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
     expect(npcQuestResultToastPresentation(npc!, quest, 'failure', reg)).toEqual({
       message: '采药女委托未成：温骨识药',
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
     expect(npcQuestResultToastPresentation(npc!, null, 'missing', reg)).toEqual({
       message: '采药女：暂无人物委托',
@@ -538,14 +539,14 @@ describe('action panel preview', () => {
     const arraySmith = getNpcList(state).find(entry => entry.id === 'npc.array-smith');
     const arrayQuest = getCurrentNpcQuest(state, 'npc.array-smith');
 
-    expect(npcQuestPanelPreview(arraySmith!, arrayQuest, reg).assetId).toBe('sprite.npc.array-smith');
+    expect(npcQuestPanelPreview(arraySmith!, arrayQuest, reg).assetId).toBe('portrait.avatar.array-smith-lu-v1');
 
     state.social['npc.wandering-cultivator'] = { affection: 160, lastGiftDay: 0 };
     state.flags.add('rel-event:wandering-cultivator-160');
     const cultivator = getNpcList(state).find(entry => entry.id === 'npc.wandering-cultivator');
     const cultivatorQuest = getCurrentNpcQuest(state, 'npc.wandering-cultivator');
 
-    expect(npcQuestPanelPreview(cultivator!, cultivatorQuest, reg).assetId).toBe('sprite.npc.wandering-cultivator');
+    expect(npcQuestPanelPreview(cultivator!, cultivatorQuest, reg).assetId).toBe('portrait.avatar.liaochen-v1');
   });
 
   it('falls back to npc portrait when quest reward has no icon mapping', () => {
@@ -571,7 +572,7 @@ describe('action panel preview', () => {
       reg
     );
 
-    expect(preview.assetId).toBe('sprite.npc.array-smith');
+    expect(preview.assetId).toBe('portrait.avatar.array-smith-lu-v1');
   });
 
   it('keeps no-quest preview text-only so caller can retain portrait fallback', () => {

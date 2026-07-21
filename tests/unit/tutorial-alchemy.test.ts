@@ -4,7 +4,7 @@ import { applyAction, brewPills, brewTutorialWardPill, createSimContext, createW
 import { itemCount, mutateItem } from '@sim/world/player';
 
 describe('教学炼丹药包', () => {
-  it('虚拟药包不发高阶材料，失败可重试，成功只产一枚正式避雷丹', () => {
+  it('虚拟药包不发高阶材料，失败可重试，成功只产一枚正式承雷丹', () => {
     const content = buildRegistry();
     const state = createWorld({ seed: 11, width: 6, height: 6, content, params: DEFAULT_BALANCE });
     const ctx = createSimContext(11, content, DEFAULT_BALANCE);

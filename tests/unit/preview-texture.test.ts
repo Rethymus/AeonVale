@@ -14,6 +14,10 @@ function assets(): RuntimeRenderAssets {
   const tile = new Texture({ source: Texture.EMPTY.source });
   const icon = new Texture({ source: Texture.EMPTY.source });
   const logo = new Texture({ source: Texture.EMPTY.source });
+  const portrait = new Texture({ source: Texture.EMPTY.source });
+  const fullPortrait = new Texture({ source: Texture.EMPTY.source });
+  const mapSprite = new Texture({ source: Texture.EMPTY.source });
+  const inventoryIcon = new Texture({ source: Texture.EMPTY.source });
   return {
     player,
     guardBeast,
@@ -26,6 +30,9 @@ function assets(): RuntimeRenderAssets {
     hotbarIcons: {},
     itemIcons: { 'icon.herb.mossling': icon },
     npcs: { 'sprite.npc.herb-gatherer': npc },
+    portraits: { 'portrait.avatar.herb-gatherer-v1': portrait, 'portrait.player-default-v1': fullPortrait },
+    mapSprites: { 'map-sprite.herb-gatherer-v1': mapSprite },
+    inventoryIcons: { 'inventory-icon.item.rust-hoe-v1': inventoryIcon },
     tiles: { 'tile.wet-loam': tile }
   };
 }
@@ -45,6 +52,10 @@ describe('preview texture resolver', () => {
     expect(resolvePreviewTexture(renderAssets, 'tile.wet-loam')).toBe(renderAssets.tiles['tile.wet-loam']);
     expect(resolvePreviewTexture(renderAssets, 'logo.full')).toBe(renderAssets.logos['logo.full']);
     expect(resolvePreviewTexture(renderAssets, 'icon.herb.mossling')).toBe(renderAssets.itemIcons['icon.herb.mossling']);
+    expect(resolvePreviewTexture(renderAssets, 'portrait.avatar.herb-gatherer-v1')).toBe(renderAssets.portraits?.['portrait.avatar.herb-gatherer-v1']);
+    expect(resolvePreviewTexture(renderAssets, 'portrait.player-default-v1')).toBe(renderAssets.portraits?.['portrait.player-default-v1']);
+    expect(resolvePreviewTexture(renderAssets, 'map-sprite.herb-gatherer-v1')).toBe(renderAssets.mapSprites?.['map-sprite.herb-gatherer-v1']);
+    expect(resolvePreviewTexture(renderAssets, 'inventory-icon.item.rust-hoe-v1')).toBe(renderAssets.inventoryIcons?.['inventory-icon.item.rust-hoe-v1']);
   });
 
   it('returns explicit fallback only when asset id is absent', () => {

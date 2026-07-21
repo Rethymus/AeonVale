@@ -1,9 +1,10 @@
 import type { ContentRegistry } from '@content/defs';
 import type { LocationId } from '@sim';
-import { getFestivalStallItems, getGreenhouseRumor, getGreenhouseSeedGrant, getTeaShedRumor, greenhouseCareStreak, greenhouseClimate, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, greenhouseVisitFlag, teaShedVisitFlag, type GameState } from '@sim';
+import { getFestivalStallItems, getGreenhouseRumor, getGreenhouseSeedGrant, getTeaShedRumor, greenhouseCareStreak, greenhouseClimate, greenhouseNurseryCapacity, greenhouseNurserySlotsRemaining, greenhouseNurseryTier, greenhouseProtectedCropCount, greenhouseVisitFlag, nextArchiveDonation, nextArchiveMilestone, teaShedVisitFlag, type GameState } from '@sim';
 import { itemIconAssetId } from './itemIcons';
 import { locationServiceActorAssetId } from './locationPreview';
 import { normalizeFarmsteadRootAssetId } from './farmsteadFocus';
+import type { LocationActionPanelCommand } from './interactionPanels';
 
 export interface ServicePanelPreview {
   title: string;
@@ -178,10 +179,10 @@ export function teaShedPanelPreview(state: GameState): ServicePanelPreview {
 
 export function teaShedToastPresentation(state: GameState, confirmHint?: string): ServiceToastPresentation {
   const preview = teaShedPanelPreview(state);
-  const access = state.postAscension.mode === 'stayed-in-world' ? (confirmHint ?? '空格/E/回车歇脚听闻·Esc返回') : '留世后可来此歇脚听闻';
+  const access = state.postAscension.mode === 'stayed-in-world' ? (confirmHint ?? '点击歇脚听闻·Esc返回') : '留世后可来此歇脚听闻';
   return {
     message: `${preview.title}：${preview.details.split('\n').slice(1).join('｜')}｜${access}`,
-    assetId: locationServiceActorAssetId('show-tea-shed') ?? 'sprite.npc.tea-shed-elder'
+    assetId: locationServiceActorAssetId('show-tea-shed') ?? 'map-sprite.tea-shed-elder-v1'
   };
 }
 
@@ -196,7 +197,7 @@ export function teaShedResultToastPresentation(outcome: 'success' | 'failure', r
   const benefit = ['养神歇脚', `气血+${Math.floor(result.hpGain / 1000)}`, result.poisonRelief > 0 ? `丹毒-${Math.floor(result.poisonRelief / 1000)}` : '', result.willpowerGain > 0 ? `意志+${Math.floor(result.willpowerGain / 1000)}` : ''].filter(Boolean).join('，');
   return {
     message: `旧茶棚：${result.rumor.title}｜${benefit}`,
-    assetId: 'sprite.npc.tea-shed-elder'
+    assetId: 'map-sprite.tea-shed-elder-v1'
   };
 }
 
@@ -225,10 +226,10 @@ export function greenhousePanelPreview(state: GameState, content: ContentRegistr
 
 export function greenhouseToastPresentation(state: GameState, content: ContentRegistry, confirmHint?: string): ServiceToastPresentation {
   const preview = greenhousePanelPreview(state, content);
-  const access = state.postAscension.mode === 'stayed-in-world' ? (confirmHint ?? '空格/E/回车养护暖棚·Esc返回') : '留世后可来此养护育苗';
+  const access = state.postAscension.mode === 'stayed-in-world' ? (confirmHint ?? '点击养护暖棚·Esc返回') : '留世后可来此养护育苗';
   return {
     message: `${preview.title}：${preview.details.split('\n').join('｜')}｜${access}`,
-    assetId: locationServiceActorAssetId('show-greenhouse') ?? 'sprite.npc.herb-gatherer'
+    assetId: locationServiceActorAssetId('show-greenhouse') ?? 'portrait.avatar.herb-gatherer-v1'
   };
 }
 
@@ -250,23 +251,127 @@ export function greenhouseResultToastPresentation(outcome: 'success' | 'failure'
   };
 }
 
+function locationActionAssetId(command: LocationActionPanelCommand, locationId: LocationId): string {
+  switch (command) {
+    case 'explore-valley':
+      return 'loc.valley-outskirts';
+    case 'explore-ruin':
+    case 'delve-ruin':
+    case 'show-archive':
+      return 'loc.ruin-gate';
+    case 'explore-spirit-vein':
+      return 'loc.spirit-vein';
+    default:
+      return `loc.${locationId}`;
+  }
+}
+
+function locationActionConfirmVerb(command: LocationActionPanelCommand): string {
+  switch (command) {
+    case 'show-archive':
+      return '捐献/领取';
+    case 'delve-ruin':
+      return '深入';
+    case 'explore-valley':
+    case 'explore-ruin':
+    case 'explore-spirit-vein':
+      return '出发';
+  }
+}
+
+function archiveActionDetails(state: GameState, content: ContentRegistry): { title: string; details: string } {
+  const milestone = nextArchiveMilestone(state);
+  if (milestone) {
+    const rewardParts = [
+      milestone.reward.itemId && milestone.reward.count ? `${content.items.get(milestone.reward.itemId)?.displayName ?? milestone.reward.itemId}×${milestone.reward.count}` : '',
+      milestone.reward.bodyFoundation ? `体魄+${Math.floor(milestone.reward.bodyFoundation / 1000)}` : '',
+      milestone.reward.willpower ? `意志+${Math.floor(milestone.reward.willpower / 1000)}` : ''
+    ].filter(Boolean);
+    return {
+      title: `藏经阁·${milestone.title}`,
+      details: `旧卷归架\n里程已达，可领取${rewardParts.length > 0 ? rewardParts.join('、') : '奖励'}\n再次确认后领取，Esc 返回`
+    };
+  }
+
+  const donation = nextArchiveDonation(state);
+  if (donation) {
+    const itemName = content.items.get(donation.request.itemId)?.displayName ?? donation.request.itemId;
+    const owned = state.player.inventory[donation.request.itemId]?.count ?? 0;
+    return {
+      title: `藏经阁·${donation.title}`,
+      details: `旧卷归架\n需 ${itemName} × ${donation.request.count}｜现持 ${owned}/${donation.request.count}\n再次确认后捐献，Esc 返回`
+    };
+  }
+
+  return {
+    title: '藏经阁',
+    details: '旧卷归架\n今日暂无可捐献或可领取里程\n再次确认查看，Esc 返回'
+  };
+}
+
+export function locationActionPanelPreview(command: LocationActionPanelCommand, locationId: LocationId, state: GameState, content: ContentRegistry): ServicePanelPreview {
+  if (command === 'show-archive') {
+    const archive = archiveActionDetails(state, content);
+    return { ...archive, assetId: locationActionAssetId(command, locationId) };
+  }
+
+  switch (command) {
+    case 'explore-valley':
+      return {
+        title: '山谷寻访',
+        details: '外出行动\n消耗体力搜寻低阶灵草、散碎灵石与残卷线索\n再次确认后出发，Esc 返回',
+        assetId: locationActionAssetId(command, locationId)
+      };
+    case 'explore-ruin':
+      return {
+        title: '遗迹寻访',
+        details: '外出行动\n消耗体力试探旧阵残痕，可能带回符器与传承碎片\n再次确认后出发，Esc 返回',
+        assetId: locationActionAssetId(command, locationId)
+      };
+    case 'delve-ruin':
+      return {
+        title: '深入遗迹',
+        details: '遗迹行动\n消耗体力与气血压入下一层，推进传承章节与高阶材料\n再次确认后深入，Esc 返回',
+        assetId: locationActionAssetId(command, locationId)
+      };
+    case 'explore-spirit-vein':
+      return {
+        title: '残脉探查',
+        details: '外出行动\n消耗更多体力探查灵气残脉，收益更高但空手风险也更高\n再次确认后出发，Esc 返回',
+        assetId: locationActionAssetId(command, locationId)
+      };
+  }
+}
+
+export function locationActionToastPresentation(command: LocationActionPanelCommand, locationId: LocationId, state: GameState, content: ContentRegistry, confirmHint: string): ServiceToastPresentation {
+  const preview = locationActionPanelPreview(command, locationId, state, content);
+  return {
+    message: `${preview.title}：${preview.details.split('\n').join('｜')}｜${confirmHint}`,
+    assetId: preview.assetId
+  };
+}
+
+export function locationActionConfirmHint(command: LocationActionPanelCommand): string {
+  return locationActionConfirmVerb(command);
+}
+
 export function processingServiceToastPresentation(confirmHint: string, locationId: LocationId = 'farmstead'): ServiceToastPresentation {
   return {
-    message: `加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜Tab切换到农庄加工项·${confirmHint}`,
+    message: `加工：余货先晾晒，封藏稳药性，熔炼出阵核接炼丹与阵法｜选择农庄加工项·${confirmHint}`,
     assetId: farmServiceEntryAssetId(locationId, 'drying-yard')
   };
 }
 
 export function arraysServiceToastPresentation(confirmHint: string, locationId: LocationId = 'farmstead'): ServiceToastPresentation {
   return {
-    message: `阵法：布设引雷阵与绝缘阵，把农庄产出转成备劫防线｜${confirmHint}`,
+    message: `阵法：布设引雷阵与绝缘阵，把农庄产出转成导雷阵势｜${confirmHint}`,
     assetId: farmServiceEntryAssetId(locationId, 'array-shed')
   };
 }
 
 export function farmWorkServiceToastPresentation(confirmHint: string, assetIdOverride?: string): ServiceToastPresentation {
   return {
-    message: `农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜数字键/滚轮切热栏·${confirmHint}`,
+    message: `农事：翻地、补种、浇水、收获与出货从这里收口，先稳住修行资源循环｜点击地块/设施执行·${confirmHint}`,
     assetId: assetIdOverride ? normalizeFarmsteadRootAssetId(assetIdOverride) : 'loc.farmstead'
   };
 }

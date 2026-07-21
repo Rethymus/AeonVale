@@ -52,10 +52,10 @@ test('runtime canvas owns its accessible name and live game description', async 
   await expect(canvas).toHaveAttribute('aria-label', '永恒山谷游戏画面');
   await expect(canvas).toHaveAttribute('aria-describedby', 'game-instructions game-surface game-objective game-actions');
   await expect(canvas).toHaveAccessibleName('永恒山谷游戏画面');
-  await expect(canvas).toHaveAccessibleDescription(/使用方向键或 WASD 移动.*当前页面：农庄世界.*当前目标：.*当前可用动作：/);
+  await expect(canvas).toHaveAccessibleDescription(/点击目标移动或互动.*当前页面：农庄世界.*当前目标：.*当前可用动作：/);
 });
 
-test('real journey entry focuses the enabled Alchemy primary action', async ({ page }) => {
+test('real journey entry focuses the enabled furnace primary action', async ({ page }) => {
   test.setTimeout(90_000);
   await startFreshWorld(page);
   const journey = page.locator('#world-journey-action');
@@ -90,8 +90,10 @@ test('real journey entry focuses the enabled Alchemy primary action', async ({ p
   await expect(journey).toHaveText('开始炼丹');
   await journey.click();
 
-  const primary = page.locator('#flow-alchemy-primary');
-  await expect(page.locator('[data-app-surface="alchemy"]')).toBeVisible();
-  await expect(primary).toBeEnabled();
-  await expect(primary).toBeFocused();
+  const inventorySurface = page.locator('[data-app-surface="inventory"]');
+  await expect(inventorySurface).toBeVisible();
+  await expect(inventorySurface.locator('[data-inventory-tab="furnace"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(inventorySurface.locator('[data-app-slot="inventory"]')).toHaveAttribute('data-inventory-view-mode', 'furnace-focus');
+  await expect(inventorySurface.locator('[data-craft-autofill="true"]')).toBeEnabled();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-inventory-close');
 });

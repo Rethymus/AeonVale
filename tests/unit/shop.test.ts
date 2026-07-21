@@ -73,6 +73,20 @@ describe('基础坊市经济闭环', () => {
     expect(itemCount(state.player, 'item.water-pail')).toBe(0);
   });
 
+  it('目标物品满栈时拒绝购买并回滚灵石', () => {
+    const { state, ctx } = setup(0);
+    mutateItem(state.player, 'item.spirit-stone', 2);
+    state.player.inventory['seed.mossling'] = { itemId: 'seed.mossling', count: 30 };
+
+    const r = buyShopItem(state, 'seed.mossling', 1, ctx);
+
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('储物戒已满');
+    expect(itemCount(state.player, 'item.spirit-stone')).toBe(2);
+    expect(itemCount(state.player, 'seed.mossling')).toBe(30);
+    expect(state.events.some(e => e.type === 'shop-buy')).toBe(false);
+  });
+
   it('buy-shop-item 玩家动作接入动作系统', () => {
     const { state, ctx } = setup(0);
     mutateItem(state.player, 'item.spirit-stone', 1);

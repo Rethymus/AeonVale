@@ -5,7 +5,7 @@
 import type { GameState } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import { emit } from '@sim/world/state';
-import { itemCount, mutateItem } from '@sim/world/player';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 import { getRelationship, NPC_CATALOG } from '@sim/social/relationships';
 import { claimRelationshipEvent } from '@sim/social/relationshipEvents';
 
@@ -238,13 +238,14 @@ export function submitSpecialOrderItems(state: GameState, orderId: string, count
   return { ok: true, order };
 }
 
-export function claimSpecialOrder(state: GameState, orderId: string): SpecialOrderResult {
+export function claimSpecialOrder(state: GameState, orderId: string, ctx?: SimContext): SpecialOrderResult {
   const order = SPECIAL_ORDER_CATALOG.find(entry => entry.id === orderId) ?? null;
   if (!order) return { ok: false, order: null, reason: '无此特别订单' };
   const active = state.specialOrders[order.id];
   if (!active) return { ok: false, order, reason: '未接取' };
   if (active.progress < order.request.count) return { ok: false, order, reason: '进度不足' };
 
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: 'item.spirit-stone', count: order.rewardSpiritStones }], ctx.content)) return { ok: false, order, reason: '储物戒已满' };
   const paid = mutateItem(state.player, 'item.spirit-stone', order.rewardSpiritStones);
   if (!paid) return { ok: false, order, reason: '储物戒已满' };
 
@@ -278,7 +279,7 @@ export function advanceSpecialOrdersDay(state: GameState): void {
   }
 }
 
-export function completeCommission(state: GameState, commissionId: string, _ctx: SimContext): CommissionResult {
+export function completeCommission(state: GameState, commissionId: string, ctx: SimContext): CommissionResult {
   const commission = getDailyCommission(state);
   if (!commission || commission.id !== commissionId) return { ok: false, commission: null, reason: '委托已过期' };
   const doneFlag = commissionFlag(state.day, commission.id);
@@ -286,6 +287,9 @@ export function completeCommission(state: GameState, commissionId: string, _ctx:
   if (!NPC_CATALOG.some(npc => npc.id === commission.npcId)) return { ok: false, commission, reason: '委托人缺失' };
   if (itemCount(state.player, commission.request.itemId) < commission.request.count) {
     return { ok: false, commission, reason: '物品不足' };
+  }
+  if (!inventoryCanFitRewards(state.player, [{ itemId: 'item.spirit-stone', count: commission.rewardSpiritStones }], ctx.content)) {
+    return { ok: false, commission, reason: '储物戒已满' };
   }
 
   mutateItem(state.player, commission.request.itemId, -commission.request.count);

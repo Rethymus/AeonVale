@@ -28,7 +28,7 @@ export function readyForBreakthrough(state: GameState, params: BalanceParams): b
  *
  * 阵法完整度（arrayScore）+ 丹药齐备度（pillScore）两轴：
  * arrayScore = min(activeArrays / MIN_ARRAYS, 1.0) 阵法数 ≥ MIN_ARRAYS(2) 即满分
- * pillScore = 有避雷丹（ward-basic 或 ward-greater）→ 1.0，无 → 0.0
+ * pillScore = 有承雷丹（ward-basic 或 ward-greater）→ 1.0，无 → 0.0
  * prepScore = 0.4 × arrayScore + 0.6 × pillScore ∈ [0, 1]
  *
  * 这是"种田—炼丹—布阵—渡劫"闭环在数值上的体现：充分准备→更高突破成功率。
@@ -38,7 +38,7 @@ export function computePrepScore(state: GameState): number {
   const activeArrays = [...state.arrays.values()].filter(a => a.active).length;
   const arrayScore = Math.min(activeArrays / MIN_ARRAYS, 1.0);
 
-  // 丹药齐备度：wardMitigation>0（服丹后设置）OR 背包有避雷丹（可在突破前服用）
+  // 丹药齐备度：wardMitigation>0（服丹后设置）OR 背包有承雷丹（可在突破前服用）
   const hasWardPill = state.player.wardMitigation > 0 || itemCount(state.player, 'pill.ward-basic') > 0 || itemCount(state.player, 'pill.ward-greater') > 0 || itemCount(state.player, 'pill.ward-heaven') > 0;
   const pillScore = hasWardPill ? 1.0 : 0.0;
 
@@ -108,7 +108,7 @@ export function breakthrough(state: GameState, ctx: SimContext, survivedTribulat
   p.daoAttention = Math.round(p.daoAttention * 0.85);
   emit(state, 'breakthrough', { stage: newStage });
   // 高阶灵草种子获取改由 游方散仙赠种 + 猎妖掉种（rate-limited）提供；
-  // 突破发种会灌满 proxy 16 格背包→挤掉避雷丹/飞升丹发放→代理崩，故不在此发。
+  // 突破发种会灌满 proxy 16 格背包→挤掉承雷丹/飞升丹发放→代理崩，故不在此发。
   // 突破至 stage 7（飞升前夜）：不再自动飞升——需炼服飞升丹 pill.ascend 才达成飞升结局
   if (newStage === 7) {
     emit(state, 'eve-of-ascension', { stage: 7 });

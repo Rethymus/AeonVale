@@ -65,6 +65,8 @@ function touchInputFor(commandName: string | null): TouchInput | null {
       return { control: 'move', direction: 'right' };
     case 'primary':
       return { control: 'confirm' };
+    case 'cancel':
+      return { control: 'cancel' };
     case 'secondary':
       return { control: 'cycle', direction: 'next' };
     case 'menu':
@@ -77,8 +79,8 @@ function touchInputFor(commandName: string | null): TouchInput | null {
       return { control: 'open', target: 'cultivation' };
     case 'map':
       return { control: 'open', target: 'map' };
-    case 'alchemy':
-      return { control: 'open', target: 'alchemy' };
+    case 'furnace':
+      return { control: 'open', target: 'furnace' };
     case 'journey':
       return { control: 'open', target: 'journey' };
     case 'pause':

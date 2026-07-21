@@ -6,7 +6,8 @@
  */
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
-import { itemCount, mutateItem } from '@sim/world/player';
+import type { SimContext } from '@sim/world/context';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 import { hasRelationshipPerk } from '@sim/social/relationshipEvents';
 import { FIRST_MARKET_RESTOCK_FLAG } from '@sim/story/onboarding';
 
@@ -58,7 +59,7 @@ export function getShopItems(state: GameState): ShopItem[] {
   return SHOP_CATALOG.filter(item => state.player.stage >= item.stageMin).map(item => effectiveShopItem(state, item));
 }
 
-export function buyShopItem(state: GameState, itemId: string, count = 1): BuyShopResult {
+export function buyShopItem(state: GameState, itemId: string, count = 1, ctx?: SimContext): BuyShopResult {
   if (!Number.isInteger(count) || count <= 0) {
     return { ok: false, item: null, count, totalPrice: 0, reason: '数量无效' };
   }
@@ -73,6 +74,10 @@ export function buyShopItem(state: GameState, itemId: string, count = 1): BuySho
   }
 
   mutateItem(state.player, 'item.spirit-stone', -totalPrice);
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: item.itemId, count }], ctx.content)) {
+    mutateItem(state.player, 'item.spirit-stone', totalPrice);
+    return { ok: false, item, count, totalPrice, reason: '储物戒已满' };
+  }
   const received = mutateItem(state.player, item.itemId, count);
   if (!received) {
     mutateItem(state.player, 'item.spirit-stone', totalPrice);

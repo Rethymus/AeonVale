@@ -98,7 +98,7 @@ describe('action result toast', () => {
       )
     ).toBe('开始熔炼：item.spare-part×1｜1日后得item.unknown-output×1｜接上农庄加工循环');
 
-    expect(facilityCollectResultToast({ outputItemId: 'item.array-core', outputCount: 1 }, state, reg)).toBe('收取设施：阵核×1｜可布阵，把农庄产出转成备劫防线｜背包 1/16');
+    expect(facilityCollectResultToast({ outputItemId: 'item.array-core', outputCount: 1 }, state, reg)).toBe('收取设施：阵核×1｜可布阵，把农庄产出转成导雷阵材｜背包 1/16');
   });
 
   it('keeps facility collect failures facility-led while no item has actually been received', () => {
@@ -111,7 +111,7 @@ describe('action result toast', () => {
 
   it('keeps facility busy and ready states facility-led before collection begins', () => {
     expect(facilityStatusToast('drying', { daysRemaining: 1 })).toBe('晾晒架忙碌，剩余1日');
-    expect(facilityStatusToast('sealing', { daysRemaining: 0 })).toBe('封藏完成，Shift+M 后按 2 收取（F1 兼容）');
+    expect(facilityStatusToast('sealing', { daysRemaining: 0 })).toBe('封藏完成，点“农务”进入设施收取');
     expect(facilityStatusToastPresentation('furnace', { daysRemaining: 2 })).toEqual({
       message: '炼符炉忙碌，剩余2日',
       assetId: 'facility.talisman-furnace'
@@ -141,13 +141,13 @@ describe('action result toast', () => {
   it('builds first harvest and first shipment milestone toasts for the onboarding loop', () => {
     const { reg } = setup();
 
-    expect(firstHarvestMilestoneToast([{ type: 'harvest', tick: 0, day: 1, payload: { defId: 'herb.mossling' } }], reg, '下一步：把第一株灵草投进出货箱。')).toBe('首轮收获：凡间青苔 已入手｜可炼丹、可出货，也是布阵备劫的第一份材料｜下一步：把第一株灵草投进出货箱。');
+    expect(firstHarvestMilestoneToast([{ type: 'harvest', tick: 0, day: 1, payload: { defId: 'herb.mossling' } }], reg, '下一步：把第一株灵草投进出货箱。')).toBe('首轮收获：凡间青苔 已入手｜可炼丹、可出货，也是布阵承雷的第一份材料｜下一步：把第一株灵草投进出货箱。');
 
-    expect(firstShipmentMilestoneToast('投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项', '下一步：按 Enter 过夜，等次日出货结算。')).toBe('首轮投箱：投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项｜下一步：按 Enter 过夜，等次日出货结算。');
+    expect(firstShipmentMilestoneToast('投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项', '下一步：点击居所或“歇息”过夜，等次日出货结算。')).toBe('首轮投箱：投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项｜下一步：点击居所或“歇息”过夜，等次日出货结算。');
 
-    expect(firstHarvestMilestoneToast([{ type: 'harvest', tick: 0, day: 1, payload: { defId: 'herb.mossling' } }], reg, ['当前目标：把第一株灵草投进出货箱。', '操作：靠近出货箱后按 Enter 投货。', '动线：收下成熟灵草后，顺手投进出货箱。'].join('\n'))).toBe('首轮收获：凡间青苔 已入手｜可炼丹、可出货，也是布阵备劫的第一份材料｜下一步：把第一株灵草投进出货箱。');
+    expect(firstHarvestMilestoneToast([{ type: 'harvest', tick: 0, day: 1, payload: { defId: 'herb.mossling' } }], reg, ['当前目标：把第一株灵草投进出货箱。', '操作：靠近出货箱后按 Enter 投货。', '动线：收下成熟灵草后，顺手投进出货箱。'].join('\n'))).toBe('首轮收获：凡间青苔 已入手｜可炼丹、可出货，也是布阵承雷的第一份材料｜下一步：把第一株灵草投进出货箱。');
 
-    expect(firstShipmentMilestoneToast('投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项', ['当前目标：按 Enter 过夜，等次日结算换回灵石。', '操作：确认今日农务已收尾，直接按 Enter 过夜。'].join('\n'))).toBe('首轮投箱：投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项｜下一步：按 Enter 过夜，等次日结算换回灵石。');
+    expect(firstShipmentMilestoneToast('投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项', ['当前目标：点击居所或“歇息”过夜，等次日结算换回灵石。', '操作：确认今日农务已收尾，点击居所或“歇息”过夜。'].join('\n'))).toBe('首轮投箱：投入出货箱：凡间青苔×1｜本次 灵石×1｜可出 1 项｜已入箱 1 项｜下一步：点击居所或“歇息”过夜，等次日结算换回灵石。');
   });
 
   it('summarizes guard beast feeding with beast-specific preview art', () => {
@@ -176,7 +176,7 @@ describe('action result toast', () => {
   it('keeps pill use results item-led because the player is explicitly consuming a named pill', () => {
     const { reg } = setup();
 
-    expect(pillUseToast('pill.ward-basic', { applied: true, effects: ['避雷护体25%'] }, reg)).toBe('服 避雷丹：避雷护体25%｜备劫防线已补强');
+    expect(pillUseToast('pill.ward-basic', { applied: true, effects: ['承雷稳脉25%'] }, reg)).toBe('服 承雷丹：承雷稳脉25%｜承雷准备已稳住');
 
     expect(pillUseToast('pill.bone-basic', { applied: true, effects: ['回血30'] }, reg)).toBe('服 生骨丹：回血30｜续航和抗伤余量提高');
 
@@ -210,7 +210,7 @@ describe('action result toast', () => {
     expect(firstShipmentMilestoneToastPresentation('投入出货箱：凡间青苔×1', '下一步：过夜。').assetId).toBe('loc.farmstead');
     expect(bodyTrainingToastPresentation('push-up').assetId).toBe('loc.farmstead');
     expect(guardBeastFeedResultToastPresentation({ itemId: 'herb.mossling', count: 1 }, { beastId: 2, vigor: 9, bond: 5 }, reg).assetId).toBe('sprite.guard-beast-wolf');
-    expect(pillUseToastPresentation('pill.ward-basic', { applied: true, effects: ['避雷护体25%'] }, reg).assetId).toBe('icon.pill.ward-basic');
+    expect(pillUseToastPresentation('pill.ward-basic', { applied: true, effects: ['承雷稳脉25%'] }, reg).assetId).toBe('icon.pill.ward-basic');
     expect(facilityJobStartToastPresentation('sealing', null, { outputItemId: 'item.sealed-herb', outputCount: 1, daysRemaining: 2 }, reg).assetId).toBe('facility.sealing-cabinet');
     expect(facilityStatusToastPresentation('drying', { daysRemaining: 0 }).assetId).toBe('facility.drying-rack');
     expect(facilityCollectResultToastPresentation({ outputItemId: 'item.array-core', outputCount: 1 }, state, reg).assetId).toBe('icon.item.array-core');

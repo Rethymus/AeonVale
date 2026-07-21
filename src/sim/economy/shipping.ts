@@ -8,7 +8,7 @@ import type { ItemDef, SpiritHerbDef } from '@content/defs';
 import type { SimContext } from '@sim/world/context';
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
-import { itemCount, mutateItem, mutateQualityItem, qualityItemCount } from '@sim/world/player';
+import { inventoryUsed, mutateNormalItem, mutateQualityItem, normalItemCount, qualityItemCount } from '@sim/world/player';
 import type { CropQuality } from '@sim/farm/quality';
 import { FIRST_HARVEST_FLAG, FIRST_SHIPMENT_FLAG, FIRST_SHIPPING_SETTLEMENT_FLAG } from '@sim/story/onboarding';
 import { marketDemandForItem } from './market';
@@ -54,6 +54,29 @@ function itemDef(ctx: SimContext, itemId: string): ItemDef | undefined {
   return ctx.content.items.get(itemId);
 }
 
+function itemStackLimit(ctx: SimContext, itemId: string, fallbackCount: number): number {
+  const stack = itemDef(ctx, itemId)?.stack;
+  return typeof stack === 'number' && Number.isInteger(stack) && stack > 0 ? stack : Math.max(1, fallbackCount);
+}
+
+function canReceiveNormalItem(state: GameState, ctx: SimContext, itemId: string, count: number): { ok: boolean; reason?: string } {
+  const maxStack = itemStackLimit(ctx, itemId, count);
+  const current = normalItemCount(state.player, itemId);
+  if (current > 0) {
+    return current + count <= maxStack ? { ok: true } : { ok: false, reason: itemId === 'item.spirit-stone' ? '灵石堆叠已满' : '堆叠已满' };
+  }
+  if (inventoryUsed(state.player) >= state.player.inventoryCapacity) return { ok: false, reason: '储物戒已满' };
+  return count <= maxStack ? { ok: true } : { ok: false, reason: itemId === 'item.spirit-stone' ? '灵石堆叠已满' : '堆叠已满' };
+}
+
+function canReceiveQualityItem(state: GameState, ctx: SimContext, itemId: string, quality: CropQuality, count: number): { ok: boolean; reason?: string } {
+  const maxStack = itemStackLimit(ctx, itemId, count);
+  const current = qualityItemCount(state.player, itemId, quality);
+  if (current > 0) return current + count <= maxStack ? { ok: true } : { ok: false, reason: '堆叠已满' };
+  if (inventoryUsed(state.player) >= state.player.inventoryCapacity) return { ok: false, reason: '储物戒已满' };
+  return count <= maxStack ? { ok: true } : { ok: false, reason: '堆叠已满' };
+}
+
 /** 返回灵石单价；0 表示不可通过出货箱出售。 */
 export function shippingUnitPrice(ctx: SimContext, itemId: string, quality?: CropQuality, state?: GameState): number {
   const herb = herbByItemId(ctx, itemId);
@@ -96,6 +119,50 @@ function applyQualityPrice(base: number, quality?: CropQuality): number {
   }
 }
 
+export function shippingItemCount(state: GameState, itemId: string): number {
+  return state.shippingBin[itemId] ?? 0;
+}
+
+export function shippingQualityItemCount(state: GameState, itemId: string, quality: CropQuality): number {
+  return state.qualityShippingBin[quality]?.[itemId] ?? 0;
+}
+
+function mutateShippingItem(state: GameState, itemId: string, delta: number): boolean {
+  const current = state.shippingBin[itemId] ?? 0;
+  if (delta < 0) {
+    if (current < -delta) return false;
+    const next = current + delta;
+    if (next <= 0) delete state.shippingBin[itemId];
+    else state.shippingBin[itemId] = next;
+    return true;
+  }
+  if (delta > 0) {
+    state.shippingBin[itemId] = current + delta;
+    return true;
+  }
+  return true;
+}
+
+function mutateShippingQualityItem(state: GameState, itemId: string, quality: CropQuality, delta: number): boolean {
+  const batch = state.qualityShippingBin[quality];
+  const current = batch?.[itemId] ?? 0;
+  if (delta < 0) {
+    if (current < -delta) return false;
+    if (!batch) return false;
+    const next = current + delta;
+    if (next <= 0) delete batch[itemId];
+    else batch[itemId] = next;
+    if (Object.keys(batch).length === 0) delete state.qualityShippingBin[quality];
+    return true;
+  }
+  if (delta > 0) {
+    const targetBatch = batch ?? (state.qualityShippingBin[quality] = {});
+    targetBatch[itemId] = current + delta;
+    return true;
+  }
+  return true;
+}
+
 export function canShipItem(ctx: SimContext, itemId: string): boolean {
   return shippingUnitPrice(ctx, itemId) > 0;
 }
@@ -109,11 +176,11 @@ export function shipItem(state: GameState, itemId: string, count: number, ctx: S
   }
   const unitPrice = shippingUnitPrice(ctx, itemId, undefined, state);
   if (unitPrice <= 0) return { ok: false, itemId, count, unitPrice, reason: '不可出货' };
-  if (itemCount(state.player, itemId) < count) {
+  if (normalItemCount(state.player, itemId) < count) {
     return { ok: false, itemId, count, unitPrice, reason: '数量不足' };
   }
-  mutateItem(state.player, itemId, -count);
-  state.shippingBin[itemId] = (state.shippingBin[itemId] ?? 0) + count;
+  mutateNormalItem(state.player, itemId, -count);
+  mutateShippingItem(state, itemId, count);
   if (state.player.flags.has(FIRST_HARVEST_FLAG)) state.player.flags.add(FIRST_SHIPMENT_FLAG);
   emit(state, 'ship-item', { itemId, count, unitPrice });
   return { ok: true, itemId, count, unitPrice };
@@ -130,11 +197,36 @@ export function shipQualityItem(state: GameState, itemId: string, quality: CropQ
     return { ok: false, itemId, quality, count, unitPrice, reason: '数量不足' };
   }
   mutateQualityItem(state.player, itemId, quality, -count);
-  const qualityBin = (state.qualityShippingBin[quality] ??= {});
-  qualityBin[itemId] = (qualityBin[itemId] ?? 0) + count;
+  mutateShippingQualityItem(state, itemId, quality, count);
   if (state.player.flags.has(FIRST_HARVEST_FLAG)) state.player.flags.add(FIRST_SHIPMENT_FLAG);
   emit(state, 'ship-quality-item', { itemId, quality, count, unitPrice });
   return { ok: true, itemId, quality, count, unitPrice };
+}
+
+export function unshipItem(state: GameState, itemId: string, count: number, ctx: SimContext): ShipResult {
+  if (!Number.isInteger(count) || count <= 0) {
+    return { ok: false, itemId, count, unitPrice: 0, reason: '数量无效' };
+  }
+  if (shippingItemCount(state, itemId) < count) return { ok: false, itemId, count, unitPrice: 0, reason: '出货箱数量不足' };
+  const receive = canReceiveNormalItem(state, ctx, itemId, count);
+  if (!receive.ok) return { ok: false, itemId, count, unitPrice: 0, reason: receive.reason ?? '储物戒已满' };
+  if (!mutateNormalItem(state.player, itemId, count)) return { ok: false, itemId, count, unitPrice: 0, reason: '储物戒已满' };
+  mutateShippingItem(state, itemId, -count);
+  emit(state, 'unship-item', { itemId, count });
+  return { ok: true, itemId, count, unitPrice: 0 };
+}
+
+export function unshipQualityItem(state: GameState, itemId: string, quality: CropQuality, count: number, ctx: SimContext): ShipResult {
+  if (!Number.isInteger(count) || count <= 0) {
+    return { ok: false, itemId, quality, count, unitPrice: 0, reason: '数量无效' };
+  }
+  if (shippingQualityItemCount(state, itemId, quality) < count) return { ok: false, itemId, quality, count, unitPrice: 0, reason: '出货箱数量不足' };
+  const receive = canReceiveQualityItem(state, ctx, itemId, quality, count);
+  if (!receive.ok) return { ok: false, itemId, quality, count, unitPrice: 0, reason: receive.reason ?? '储物戒已满' };
+  if (!mutateQualityItem(state.player, itemId, quality, count)) return { ok: false, itemId, quality, count, unitPrice: 0, reason: '储物戒已满' };
+  mutateShippingQualityItem(state, itemId, quality, -count);
+  emit(state, 'unship-quality-item', { itemId, quality, count });
+  return { ok: true, itemId, quality, count, unitPrice: 0 };
 }
 
 export function shippingLines(state: GameState, ctx: SimContext): ShippingLine[] {
@@ -172,7 +264,12 @@ export function settleShipping(state: GameState, ctx: SimContext): ShippingSettl
   const total = lines.reduce((sum, line) => sum + line.total, 0);
   if (total <= 0) return { ok: true, total: 0, lines };
 
-  const gotPaid = mutateItem(state.player, 'item.spirit-stone', total);
+  const payment = canReceiveNormalItem(state, ctx, 'item.spirit-stone', total);
+  if (!payment.ok) {
+    emit(state, 'shipping-blocked', { total, lines });
+    return { ok: false, total, lines, reason: payment.reason ?? '储物戒已满' };
+  }
+  const gotPaid = mutateNormalItem(state.player, 'item.spirit-stone', total);
   if (!gotPaid) {
     emit(state, 'shipping-blocked', { total, lines });
     return { ok: false, total, lines, reason: '储物戒已满' };

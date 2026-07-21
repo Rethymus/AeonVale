@@ -4,15 +4,15 @@ import { auditPublicWorktree, classifyPublicCandidateGroup, shouldFailPublicWork
 
 describe('公开工作区审查', () => {
   it('按公开树边界分类未提交路径', () => {
-    const report = auditPublicWorktree([' M README.md', ' M src/app/main.ts', ' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md', ' D .omc/state/session.json', '?? .agents/state.json', '?? test-results/portfolio/home.png', '?? dist/assets/index.js.map', '?? .env.local', ''].join('\0'));
+    const report = auditPublicWorktree([' M README.md', ' M src/app/main.ts', ' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md', '?? .planning/patches/01bf653-pixel-ambient.patch', ' D .omc/state/session.json', '?? .agents/state.json', '?? .superpowers/brainstorm/session.html', '?? test-results/portfolio/home.png', '?? dist/assets/index.js.map', '?? tmp/visual-audit/report.json', '?? .env.local', ''].join('\0'));
 
     expect(report.counts['public-candidate']).toBe(2);
-    expect(report.counts['private-design']).toBe(2);
-    expect(report.counts['local-state']).toBe(2);
-    expect(report.counts['generated']).toBe(2);
+    expect(report.counts['private-design']).toBe(3);
+    expect(report.counts['local-state']).toBe(3);
+    expect(report.counts['generated']).toBe(3);
     expect(report.counts['secret-risk']).toBe(1);
     expect(report.byClass['public-candidate']).toEqual([' M README.md', ' M src/app/main.ts']);
-    expect(report.byClass['private-design']).toEqual([' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md']);
+    expect(report.byClass['private-design']).toEqual([' M docs/00-DESIGN-BRIEF.md', '?? DESIGN-NOTES.md', '?? .planning/patches/01bf653-pixel-ambient.patch']);
     expect(report.publicCandidateGroupCounts['public-governance']).toBe(1);
     expect(report.publicCandidateGroupCounts['portfolio-runtime']).toBe(1);
     expect(report.publicCandidatesByGroup['public-governance']).toEqual([' M README.md']);
@@ -42,6 +42,14 @@ describe('公开工作区审查', () => {
     expect(classifyPublicCandidateGroup('src/vite-env.d.ts')).toBe('portfolio-runtime');
     expect(classifyPublicCandidateGroup('src/app/todayBriefing.ts')).toBe('portfolio-runtime');
     expect(classifyPublicCandidateGroup('tests/property/farm.property.test.ts')).toBe('tests-unit-integration');
+  });
+
+  it('把私有 master reference 资产判为 private-design 而不是公开候选', () => {
+    const report = auditPublicWorktree([' M assets/references/master-cozy-warm-farm-v1.png', ''].join('\0'));
+
+    expect(report.counts['private-design']).toBe(1);
+    expect(report.counts['public-candidate']).toBe(0);
+    expect(report.byClass['private-design']).toEqual([' M assets/references/master-cozy-warm-farm-v1.png']);
   });
 
   it('同时审查 rename/copy 记录的新旧路径', () => {

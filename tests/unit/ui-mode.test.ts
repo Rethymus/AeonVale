@@ -19,7 +19,6 @@ describe('UI mode derivation', () => {
     expect(deriveUiMode({ flow: flow('title') })).toBe('title');
     expect(deriveUiMode({ flow: flow('prologue') })).toBe('prologue');
     expect(deriveUiMode({ flow: world })).toBe('world');
-    expect(deriveUiMode({ flow: flow('alchemy') })).toBe('alchemy');
     expect(deriveUiMode({ flow: flow('tribulation') })).toBe('tribulation');
     expect(deriveUiMode({ flow: flow('aftermath') })).toBe('aftermath');
     expect(deriveUiMode({ flow: flow('ending') })).toBe('ending');
@@ -54,7 +53,7 @@ describe('UI mode derivation', () => {
   });
 
   it('exposes at most one main attention layer for every mode', () => {
-    const modes = ['loading', 'boot-error', 'title', 'prologue', 'world', 'dialogue', 'panel', 'location', 'pause', 'alchemy', 'tribulation', 'aftermath', 'ending', 'portrait-blocked'] as const;
+    const modes = ['loading', 'boot-error', 'title', 'prologue', 'world', 'dialogue', 'panel', 'location', 'pause', 'tribulation', 'aftermath', 'ending', 'portrait-blocked'] as const;
 
     for (const mode of modes) {
       const visible = visibleUiLayers(mode);

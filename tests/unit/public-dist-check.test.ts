@@ -72,6 +72,22 @@ describe('公开构建产物检查', () => {
     expect(() => runDistCheck(dir)).toThrow(/private design docs/);
   });
 
+  it('拒绝误打进 dist 的本地规划资料', () => {
+    const dir = makeCase();
+    mkdirSync(join(dir, 'dist/.planning/patches'), { recursive: true });
+    writeFileSync(join(dir, 'dist/.planning/patches/01bf653-pixel-ambient.patch'), 'private patch');
+    expect(() => runDistCheck(dir)).toThrow(/private planning docs/);
+  });
+
+  it('拒绝误打进 dist 的本地状态和临时审计产物', () => {
+    const dir = makeCase();
+    mkdirSync(join(dir, 'dist/.superpowers'), { recursive: true });
+    mkdirSync(join(dir, 'dist/tmp/visual-audit'), { recursive: true });
+    writeFileSync(join(dir, 'dist/.superpowers/session.json'), '{}');
+    writeFileSync(join(dir, 'dist/tmp/visual-audit/report.json'), '{}');
+    expect(() => runDistCheck(dir)).toThrow(/local Agent state|temporary audit output/);
+  });
+
   it('拒绝 index.html 引用不存在的本地资源', () => {
     const dir = makeCase();
     writeFileSync(join(dir, 'dist/index.html'), '<!doctype html><title>Aeon Vale</title><link rel="icon" href="./logo/missing.png"><script type="module" src="./assets/index.js"></script>');

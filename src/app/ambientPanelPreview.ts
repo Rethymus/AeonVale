@@ -57,6 +57,10 @@ function normalizeInventoryPreview(preview: InventoryPreviewSelection | null): A
   };
 }
 
+function isShippingInventoryPreview(preview: InventoryPreviewSelection | null): boolean {
+  return preview?.details.startsWith('出货箱\n') === true;
+}
+
 function formatLocationPreviewDetails(location: LocationStatus, service: LocationServiceOption | null, encounterNames: readonly string[], signalLine: string, focusReason?: string, actionLine?: string): string {
   const serviceLine = service ? `去处：${service.label} -> ${service.commandLabel}` : '去处：今日先回这里整顿农务与行程';
   const encounterLine = locationEncounterLine(location, encounterNames);
@@ -161,7 +165,8 @@ function locationFallbackPreview(state: GameState): AmbientPanelPreview | null {
 
 export function ambientPanelPreview(state: GameState, content: ContentRegistry, inventoryVisible: boolean): AmbientPanelPreview | null {
   const front = normalizeFrontPreview(frontTilePreview(state, content));
-  const inventory = normalizeInventoryPreview(inventoryPreviewSelection(state, content));
+  const inventorySelection = inventoryPreviewSelection(state, content);
+  const inventory = normalizeInventoryPreview(!inventoryVisible && isShippingInventoryPreview(inventorySelection) ? null : inventorySelection);
   const location = locationFallbackPreview(state);
 
   if (!inventoryVisible) return front ?? inventory ?? location;

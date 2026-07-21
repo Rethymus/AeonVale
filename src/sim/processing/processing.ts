@@ -7,7 +7,7 @@ import type { GameState } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import { emit } from '@sim/world/state';
 import { MILLI } from '@sim/world/types';
-import { itemCount, mutateItem, mutateQualityItem, qualityItemCount } from '@sim/world/player';
+import { inventoryCanFitRewards, itemCount, mutateItem, mutateQualityItem, qualityItemCount } from '@sim/world/player';
 
 export interface ProcessingResult {
   ok: boolean;
@@ -49,6 +49,9 @@ export function dryHerb(state: GameState, herbItemId: string, ctx: SimContext, q
     return { ok: false, inputItemId: herbItemId, outputItemId: DRIED_HERB_ID, inputCount: 1, outputCount: 0, quality, reason: '材料不足' };
   }
   const outputCount = 1 + qualityYieldBonus(quality);
+  if (!inventoryCanFitRewards(state.player, [{ itemId: DRIED_HERB_ID, count: outputCount }], ctx.content)) {
+    return { ok: false, inputItemId: herbItemId, outputItemId: DRIED_HERB_ID, inputCount: 1, outputCount, quality, reason: '储物戒已满' };
+  }
   if (!mutateItem(state.player, DRIED_HERB_ID, outputCount)) {
     return { ok: false, inputItemId: herbItemId, outputItemId: DRIED_HERB_ID, inputCount: 1, outputCount, quality, reason: '储物戒已满' };
   }
@@ -59,12 +62,15 @@ export function dryHerb(state: GameState, herbItemId: string, ctx: SimContext, q
 }
 
 /** 将晾晒灵草与灵壤肥封藏为高价工匠品，作为早期稳定生产链。 */
-export function sealHerb(state: GameState): ProcessingResult {
+export function sealHerb(state: GameState, ctx?: SimContext): ProcessingResult {
   if (itemCount(state.player, DRIED_HERB_ID) < 2) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SEALED_HERB_ID, inputCount: 2, outputCount: 0, reason: '晾晒灵草不足' };
   }
   if (itemCount(state.player, SPIRIT_COMPOST_ID) < 1) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SEALED_HERB_ID, inputCount: 2, outputCount: 0, reason: '灵壤肥不足' };
+  }
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: SEALED_HERB_ID, count: 1 }], ctx.content)) {
+    return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SEALED_HERB_ID, inputCount: 2, outputCount: 1, reason: '储物戒已满' };
   }
   if (!mutateItem(state.player, SEALED_HERB_ID, 1)) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SEALED_HERB_ID, inputCount: 2, outputCount: 1, reason: '储物戒已满' };
@@ -83,6 +89,9 @@ export function compostHerb(state: GameState, herbItemId: string, ctx: SimContex
   if (itemCount(state.player, herbItemId) < COMPOST_INPUT_COUNT) {
     return { ok: false, inputItemId: herbItemId, outputItemId: SPIRIT_COMPOST_ID, inputCount: COMPOST_INPUT_COUNT, outputCount: 0, reason: '灵草不足' };
   }
+  if (!inventoryCanFitRewards(state.player, [{ itemId: SPIRIT_COMPOST_ID, count: 1 }], ctx.content)) {
+    return { ok: false, inputItemId: herbItemId, outputItemId: SPIRIT_COMPOST_ID, inputCount: COMPOST_INPUT_COUNT, outputCount: 1, reason: '储物戒已满' };
+  }
   if (!mutateItem(state.player, SPIRIT_COMPOST_ID, 1)) {
     return { ok: false, inputItemId: herbItemId, outputItemId: SPIRIT_COMPOST_ID, inputCount: COMPOST_INPUT_COUNT, outputCount: 1, reason: '储物戒已满' };
   }
@@ -92,12 +101,15 @@ export function compostHerb(state: GameState, herbItemId: string, ctx: SimContex
 }
 
 /** 将晾晒灵草与一枚灵石酿为灵草药酒，作为体修特有工匠品与更高价出货出口。 */
-export function brewHerbalWine(state: GameState): ProcessingResult {
+export function brewHerbalWine(state: GameState, ctx?: SimContext): ProcessingResult {
   if (itemCount(state.player, DRIED_HERB_ID) < 2) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: HERBAL_WINE_ID, inputCount: 2, outputCount: 0, reason: '晾晒灵草不足' };
   }
   if (itemCount(state.player, 'item.spirit-stone') < 1) {
     return { ok: false, inputItemId: 'item.spirit-stone', outputItemId: HERBAL_WINE_ID, inputCount: 1, outputCount: 0, reason: '灵石不足' };
+  }
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: HERBAL_WINE_ID, count: 1 }], ctx.content)) {
+    return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: HERBAL_WINE_ID, inputCount: 2, outputCount: 1, reason: '储物戒已满' };
   }
   if (!mutateItem(state.player, HERBAL_WINE_ID, 1)) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: HERBAL_WINE_ID, inputCount: 2, outputCount: 1, reason: '储物戒已满' };
@@ -109,12 +121,15 @@ export function brewHerbalWine(state: GameState): ProcessingResult {
 }
 
 /** 将破损法宝熔炼为阵核，为阵法农庄化补上自产阵材入口。 */
-export function refineArrayCore(state: GameState): ProcessingResult {
+export function refineArrayCore(state: GameState, ctx?: SimContext): ProcessingResult {
   if (itemCount(state.player, 'item.broken-talisman') < 2) {
     return { ok: false, inputItemId: 'item.broken-talisman', outputItemId: ARRAY_CORE_ID, inputCount: 2, outputCount: 0, reason: '破损法宝不足' };
   }
   if (itemCount(state.player, 'item.spirit-stone') < 1) {
     return { ok: false, inputItemId: 'item.spirit-stone', outputItemId: ARRAY_CORE_ID, inputCount: 1, outputCount: 0, reason: '灵石不足' };
+  }
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: ARRAY_CORE_ID, count: 1 }], ctx.content)) {
+    return { ok: false, inputItemId: 'item.broken-talisman', outputItemId: ARRAY_CORE_ID, inputCount: 2, outputCount: 1, reason: '储物戒已满' };
   }
   if (!mutateItem(state.player, ARRAY_CORE_ID, 1)) {
     return { ok: false, inputItemId: 'item.broken-talisman', outputItemId: ARRAY_CORE_ID, inputCount: 2, outputCount: 1, reason: '储物戒已满' };
@@ -168,12 +183,15 @@ export function offerRefinedTea(state: GameState, ctx: SimContext): ConsumeHerba
 }
 
 /** 以灵壤肥为底、浓缩晾晒灵草熬成灵药膏（外敷膏剂）。 */
-export function makePoultice(state: GameState): ProcessingResult {
+export function makePoultice(state: GameState, ctx?: SimContext): ProcessingResult {
   if (itemCount(state.player, DRIED_HERB_ID) < 1) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SPIRIT_POULTICE_ID, inputCount: 1, outputCount: 0, reason: '晾晒灵草不足' };
   }
   if (itemCount(state.player, SPIRIT_COMPOST_ID) < 2) {
     return { ok: false, inputItemId: SPIRIT_COMPOST_ID, outputItemId: SPIRIT_POULTICE_ID, inputCount: 2, outputCount: 0, reason: '灵壤肥不足' };
+  }
+  if (ctx && !inventoryCanFitRewards(state.player, [{ itemId: SPIRIT_POULTICE_ID, count: 1 }], ctx.content)) {
+    return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SPIRIT_POULTICE_ID, inputCount: 1, outputCount: 1, reason: '储物戒已满' };
   }
   if (!mutateItem(state.player, SPIRIT_POULTICE_ID, 1)) {
     return { ok: false, inputItemId: DRIED_HERB_ID, outputItemId: SPIRIT_POULTICE_ID, inputCount: 1, outputCount: 1, reason: '储物戒已满' };

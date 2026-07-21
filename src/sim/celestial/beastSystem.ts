@@ -18,6 +18,7 @@ import type { GameState, BeastSurge } from '@sim/world/state';
 import { emit, nextEntityId } from '@sim/world/state';
 import type { SimContext } from '@sim/world/context';
 import { itemCount, mutateItem } from '@sim/world/player';
+import { storeItemInStorage, storeQualityItemInStorage } from '@sim/storage/storage';
 import { activeArrayCount, activeArraysCoveringTile, hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { MILLI } from '@sim/world/types';
 
@@ -143,7 +144,7 @@ export function arrayWardenInsulationClimateBoost(state: GameState): { careGainB
   return { careGainBonus, neglectBuffer };
 }
 
-/** 是否存在「阵守巡守兽在活跃阵法覆盖内巡逻」的布防。 */
+/** 是否存在「阵守巡守兽在活跃阵法覆盖内巡逻」的巡阵。 */
 export function arrayWardenPatrolActive(state: GameState): boolean {
   for (const assignment of state.guardBeastPatrols) {
     const beast = state.guardBeasts.find(entry => entry.id === assignment.beastId);
@@ -319,6 +320,37 @@ export function preferredGuardBeastForPatrol(state: GameState): GameState['guard
     if (!best || beast.bond > best.bond || (beast.bond === best.bond && beast.id < best.id)) best = beast;
   }
   return best;
+}
+
+/**
+ * R3-B2 守田兽自主代理：courier 专长兽日终自动拾取地面掉落物归仓（ACS 傀儡范式，docs/20 D-28）。
+ * 阀：每搬一项扣 vigor（护田优先、搬运末位），vigor 共享池护田用完后 no-op；仓满即停（不丢物）。
+ * 确定性：兽按 id 序、物按 state.groundItems 数组序遍历，零 RNG。
+ * 不碰 bodyFoundation/cultivation（守 docs/00 C5，阀 A）——只动 storage/vigor/groundItems。
+ */
+export function courierHaulGroundItems(state: GameState, ctx: SimContext): void {
+  if (state.groundItems.length === 0) return;
+  const couriers = state.guardBeasts
+    .filter(b => b.specialty === 'courier' && b.vigor >= 1)
+    .sort((a, b) => a.id - b.id);
+  if (couriers.length === 0) return;
+  let giIdx = 0;
+  for (const beast of couriers) {
+    if (giIdx >= state.groundItems.length) break;
+    const cost = guardVigorCost(beast, ctx);
+    while (giIdx < state.groundItems.length && beast.vigor >= cost) {
+      const gi = state.groundItems[giIdx]!;
+      const stored = gi.quality
+        ? storeQualityItemInStorage(state.storage, gi.itemId, gi.quality, gi.count, ctx.content)
+        : storeItemInStorage(state.storage, gi.itemId, gi.count, ctx.content);
+      if (!stored) return; // 仓满，停止整体搬运（避免乱序/丢物）
+      beast.vigor -= cost;
+      applyGuardBeastIncidentAssistBond(state, ctx, beast.id);
+      applyGuardBeastSpecialtyProgress(state, beast.id, 'courier');
+      emit(state, 'guard-beast-courier-haul', { id: beast.id, vigor: beast.vigor, itemId: gi.itemId, count: gi.count });
+      state.groundItems.splice(giIdx, 1);
+    }
+  }
 }
 
 /**

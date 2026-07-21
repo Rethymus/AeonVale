@@ -16,7 +16,7 @@ function setup(seed = 1) {
 }
 
 describe('高阶灵草获取路径', () => {
-  // 注：突破不发种（会灌满 16 格背包挤掉避雷丹/飞升丹发放）；种子经 游方散仙 + 猎妖掉落（rate-limited）获取。
+  // 注：突破不发种（会灌满 16 格背包挤掉承雷丹/飞升丹发放）；种子经 游方散仙 + 猎妖掉落（rate-limited）获取。
   it('游方散仙 seed-by-stage 按 player.stage 选种（tier ≤ stage）', () => {
     const { state, ctx, reg } = setup();
     state.player.stage = 3;

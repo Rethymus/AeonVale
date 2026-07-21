@@ -9,14 +9,14 @@ describe('onboarding objective helper', () => {
 
   it('provides a route line for the first-loop objectives', () => {
     expect(onboardingObjectiveRouteLine('first-second-sow')).toBe('动线：回到农庄，把新买到的种子立刻播回田里。');
-    expect(onboardingObjectiveRouteLine('first-loop-complete')).toBe('动线：农务闭环已成，回农庄按 Shift+M 进入加工或阵法入口，把余货转成炉料与防线。');
+    expect(onboardingObjectiveRouteLine('first-loop-complete')).toBe('动线：农务闭环已成，回农庄点“农务”进入加工或阵法入口，把余货转成炉料与承雷准备。');
   });
 
   it('provides a direct action hint for each onboarding step', () => {
-    expect(onboardingObjectiveActionLine('first-till')).toBe('操作：站到空地前，按 空格 / E 翻地。');
-    expect(onboardingObjectiveActionLine('first-sow')).toContain('按 Z 直接播种');
-    expect(onboardingObjectiveActionLine('first-sow')).toContain('Space / Q 切换热栏');
-    expect(onboardingObjectiveActionLine('first-market-restock')).toContain('Shift+Tab 打开地点目录');
+    expect(onboardingObjectiveActionLine('first-till')).toBe('操作：点击空地，角色会走到旁边并翻地。');
+    expect(onboardingObjectiveActionLine('first-sow')).toContain('点击已翻灵田播种');
+    expect(onboardingObjectiveActionLine('first-sow')).toContain('需要指定种子时先在行囊里选择');
+    expect(onboardingObjectiveActionLine('first-market-restock')).toContain('点下方“地点”打开山河图');
   });
 
   it('summarizes first-session progress as a compact task-log line', () => {
@@ -28,13 +28,13 @@ describe('onboarding objective helper', () => {
 
   it('explains why the first farm loop matters for the cultivation fantasy', () => {
     expect(onboardingObjectivePurposeLine('first-till')).toContain('炼丹、布阵和引劫');
-    expect(onboardingObjectivePurposeLine('first-loop-complete')).toContain('丹药、阵法与抗劫底气');
+    expect(onboardingObjectivePurposeLine('first-loop-complete')).toContain('丹药、阵法与承雷底气');
     expect(onboardingObjectivePayoffLine('first-harvest')).toContain('出货换灵石');
     expect(onboardingObjectivePayoffLine('first-loop-complete')).toContain('炼丹、设施和引劫准备');
   });
 
   it('builds combined help text for the HUD hint area', () => {
-    expect(onboardingHelpText('first-sleep')).toBe(['当前目标：按 Enter 过夜，等次日结算换回灵石。', '意义：过夜结算会证明农务不是装饰，而是资源循环。', '回报：结算后的灵石会直接支持补种，把一次收获变成循环。', '操作：确认今日农务已收尾，直接按 Enter 过夜。', '动线：把今日农务收尾，直接过夜等次日结算。'].join('\n'));
+    expect(onboardingHelpText('first-sleep')).toBe(['当前目标：点击居所或“歇息”过夜，等次日结算换回灵石。', '意义：过夜结算会证明农务不是装饰，而是资源循环。', '回报：结算后的灵石会直接支持补种，把一次收获变成循环。', '操作：确认今日农务已收尾，点击居所或“歇息”过夜。', '动线：把今日农务收尾，直接过夜等次日结算。'].join('\n'));
   });
 
   it('handles empty state and raw string cleanup safely', () => {
@@ -45,7 +45,7 @@ describe('onboarding objective helper', () => {
 
   it('normalizes multi-line guidance text down to one usable next-step line', () => {
     expect(normalizeGuidanceLine(onboardingHelpText('first-market-restock'))).toBe('下一步：去山谷集市补几颗种子，把第二轮药材接上。');
-    expect(normalizeGuidanceLine('下一步：按 Enter 过夜，等次日出货结算。\n动线：先收尾今日农务。')).toBe('下一步：按 Enter 过夜，等次日出货结算。');
+    expect(normalizeGuidanceLine('下一步：点击居所或“歇息”过夜，等次日出货结算。\n动线：先收尾今日农务。')).toBe('下一步：点击居所或“歇息”过夜，等次日出货结算。');
   });
 
   it('can infer the onboarding objective id back from the current headline text', () => {
@@ -55,11 +55,11 @@ describe('onboarding objective helper', () => {
   });
 
   it('builds concise next-step toasts for onboarding objective transitions', () => {
-    expect(onboardingObjectiveAdvanceToast('first-market-restock')).toBe('下一步：去山谷集市补几颗种子，把第二轮药材接上。｜按 Shift+Tab 打开地点目录，选集市服务后确认补种。');
+    expect(onboardingObjectiveAdvanceToast('first-market-restock')).toBe('下一步：去山谷集市补几颗种子，把第二轮药材接上。｜点下方“地点”打开山河图，选集市服务后补种；快捷键 M 可用。');
     expect(onboardingObjectiveAdvanceToast('first-second-water')).toContain('下一步：给刚补种的新苗浇上第一轮水');
     expect(onboardingObjectiveAdvanceToast(null)).toBeNull;
     expect(onboardingObjectiveAdvanceToastPresentation('first-market-restock')).toEqual({
-      message: '下一步：去山谷集市补几颗种子，把第二轮药材接上。｜按 Shift+Tab 打开地点目录，选集市服务后确认补种。',
+      message: '下一步：去山谷集市补几颗种子，把第二轮药材接上。｜点下方“地点”打开山河图，选集市服务后补种；快捷键 M 可用。',
       assetId: 'loc.valley-market'
     });
   });
@@ -82,7 +82,7 @@ describe('onboarding objective helper', () => {
     });
 
     expect(onboardingSecondWaterCompletionToastPresentation()).toEqual({
-      message: '第二轮药材已接上：稳住农务；有余货时按 Shift+M 转去炼丹、阵法与备劫。',
+      message: '第二轮药材已接上：稳住农务；有余货时点“农务”转去炼丹、阵法与备劫。',
       assetId: 'loc.herb-plot'
     });
 
@@ -124,27 +124,27 @@ describe('onboarding objective helper', () => {
 
   it('maps shipping and restock onboarding steps to more specific follow-up assets', () => {
     expect(onboardingObjectiveAdvanceToastPresentation('first-till')).toEqual({
-      message: '下一步：先翻出一块地。｜站到空地前，按 空格 / E 翻地。',
+      message: '下一步：先翻出一块地。｜点击空地，角色会走到旁边并翻地。',
       assetId: 'loc.herb-plot'
     });
 
     expect(onboardingObjectiveAdvanceToastPresentation('first-sow')).toEqual({
-      message: '下一步：播下第一颗青苔种或露根草种。｜保持站在已翻土地前，按 Z 直接播种；若要手动换种子，可按 Space / Q 切换热栏，或按 1-0 直选。',
+      message: '下一步：播下第一颗青苔种或露根草种。｜点击已翻灵田播种；需要指定种子时先在行囊里选择。',
       assetId: 'icon.seed.mossling'
     });
 
     expect(onboardingObjectiveAdvanceToastPresentation('first-water')).toEqual({
-      message: '下一步：给刚种下的幼苗浇一次水。｜面向刚播下的幼苗，按 X 浇第一轮水。',
+      message: '下一步：给刚种下的幼苗浇一次水。｜点击刚播下的幼苗浇第一轮水。',
       assetId: 'icon.item.water-pail'
     });
 
     expect(onboardingObjectiveAdvanceToastPresentation('first-ship')).toEqual({
-      message: '下一步：把第一株灵草投进出货箱。｜靠近出货箱，打开出货面板后按 Enter 投货。',
+      message: '下一步：把第一株灵草投进出货箱。｜靠近出货箱或点击出货箱，打开出货面板后确认投货。',
       assetId: 'loc.farmstead'
     });
 
     expect(onboardingObjectiveAdvanceToastPresentation('first-sleep')).toEqual({
-      message: '下一步：按 Enter 过夜，等次日结算换回灵石。｜确认今日农务已收尾，直接按 Enter 过夜。',
+      message: '下一步：点击居所或“歇息”过夜，等次日结算换回灵石。｜确认今日农务已收尾，点击居所或“歇息”过夜。',
       assetId: 'loc.farmstead'
     });
 

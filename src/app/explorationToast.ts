@@ -104,7 +104,7 @@ export function tribulationBlockedToastPresentation(kind: 'purple-omen' | 'body-
   if (kind === 'purple-omen') {
     const days = options?.daysLeft ?? 7;
     return {
-      message: `紫雷前兆未散，还需 ${days} 日｜先补避雷丹、阵法与药田库存`,
+      message: `紫雷前兆未散，还需 ${days} 日｜先补承雷丹、阵法与药田库存`,
       assetId: 'loc.array-shed'
     };
   }

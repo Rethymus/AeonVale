@@ -33,7 +33,7 @@ const sections = [
   },
   {
     title: '7. Go / No-Go 证据',
-    items: ['Go：pnpm portfolio:mvp-preflight -- --keep-public-tree 全绿，且 4 张 test-results/portfolio/*.png 截图为本次生成', 'Go：test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成，记录首轮闭环、修仙差异化和远端操作授权边界；该文件仍是生成物，不进入公开树', 'Go：人工复核 portfolio-mvp-evidence.json 的 runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10，证明访客首屏能理解下一步和修仙差异化', 'Go：人工复核 portfolio-mvp-evidence.json 的 screenshotEvidence：3 张桌面 CSS 渲染截图为 960x542，1 张横屏小视口 keyboard-first 截图为 736x414，paintedRatio 达到阈值，colors 达到阈值，thresholds 与本次截图一致', 'Go：公开树内 pnpm test:browser:public-tree、PUBLIC_BUILD=true VITE_BASE_PATH=/AeonVale/ pnpm --dir .public-tree build、pnpm --dir .public-tree governance:dist 均已通过', 'No-Go：未获得维护者当次明确授权时，不得转为 Public、重新推送公开树、修改 Pages 设置、创建 tag 或 Release', 'No-Go：每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成']
+    items: ['Go：pnpm portfolio:mvp-preflight -- --keep-public-tree 全绿，且 4 张 test-results/portfolio/*.png 截图为本次生成', 'Go：test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成，记录首轮闭环、修仙差异化和远端操作授权边界；该文件仍是生成物，不进入公开树', 'Go：人工复核 portfolio-mvp-evidence.json 的 runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10，证明访客首屏能理解下一步和修仙差异化', 'Go：人工复核 portfolio-mvp-evidence.json 的 screenshotEvidence：01/03 桌面 CSS 渲染截图为 1440x810，02 叠层背景截图为 1440x825，1 张横屏小视口 keyboard-first 截图为 736x414，paintedRatio 达到阈值，colors 达到阈值，thresholds 与本次截图一致', 'Go：公开树内 pnpm test:browser:public-tree、PUBLIC_BUILD=true VITE_BASE_PATH=/AeonVale/ pnpm --dir .public-tree build、pnpm --dir .public-tree governance:dist 均已通过', 'No-Go：未获得维护者当次明确授权时，不得转为 Public、重新推送公开树、修改 Pages 设置、创建 tag 或 Release', 'No-Go：每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成']
   },
   {
     title: '8. 对标范围与优先级复核',
@@ -62,7 +62,7 @@ const requiredEvidence = [
     priority: 'P0-A',
     path: 'test-results/portfolio/*.png',
     generatedBy: 'pnpm portfolio:capture',
-    requiredSignals: ['screenshotEvidence records three 960x542 desktop CSS-rendered screenshots and one 736x414 small-viewport landscape keyboard-first screenshot', 'screenshotEvidence paintedRatio and colors meet thresholds', 'desktop captures remain readable; the small-viewport landscape capture remains fully framed for keyboard-first review without claiming touch playability'],
+    requiredSignals: ['screenshotEvidence records 01/03 desktop CSS-rendered screenshots at 1440x810, 02 backdrop screenshot at 1440x825, and one 736x414 small-viewport landscape keyboard-first screenshot', 'screenshotEvidence paintedRatio and colors meet thresholds', 'desktop captures remain readable; the small-viewport landscape capture remains fully framed for keyboard-first review without claiming touch playability'],
     publicTreePolicy: 'generated review evidence only; do not publish screenshots directly from test-results'
   },
   {

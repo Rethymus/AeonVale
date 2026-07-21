@@ -69,6 +69,20 @@ describe('散仙交易', () => {
     expect(state.player.inventory['item.spirit-stone']).toBeUndefined;
   });
 
+  it('获得物满栈时拒绝交易并保留给出物', () => {
+    const { state, ctx } = setup(1);
+    mutateItem(state.player, 'item.beast-core', 1);
+    mutateItem(state.player, 'item.spirit-stone', 49);
+
+    const r = executeTrade(state, 'trade.beastcore-stone', ctx);
+
+    expect(r.ok).toBe(false);
+    expect(r.reason).toBe('储物戒已满');
+    expect(itemCount(state.player, 'item.beast-core')).toBe(1);
+    expect(itemCount(state.player, 'item.spirit-stone')).toBe(49);
+    expect(state.events.some(e => e.type === 'trade')).toBe(false);
+  });
+
   it('未知交易 id：拒绝', () => {
     const { state } = setup(1);
     expect(executeTrade(state, 'trade.nope').ok).toBe(false);

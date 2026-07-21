@@ -1,6 +1,6 @@
 import type { AppFlowState, AppScreen } from './appFlowMachine';
 
-export const UI_MODES = ['loading', 'boot-error', 'title', 'prologue', 'world', 'dialogue', 'panel', 'location', 'pause', 'alchemy', 'tribulation', 'aftermath', 'ending', 'portrait-blocked'] as const;
+export const UI_MODES = ['loading', 'boot-error', 'title', 'prologue', 'world', 'dialogue', 'panel', 'location', 'pause', 'tribulation', 'aftermath', 'ending', 'narration', 'portrait-blocked'] as const;
 
 export type UiMode = (typeof UI_MODES)[number];
 
@@ -24,12 +24,12 @@ function modeForScreen(screen: Exclude<AppScreen, 'world' | 'ending'>): UiMode {
       return 'title';
     case 'prologue':
       return 'prologue';
-    case 'alchemy':
-      return 'alchemy';
     case 'tribulation':
       return 'tribulation';
     case 'aftermath':
       return 'aftermath';
+    case 'narration':
+      return 'narration';
   }
 }
 

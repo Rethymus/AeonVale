@@ -135,19 +135,19 @@ describe('sfxr renderer (bfxr/jsfxr-style)', () => {
     expect(sfxrSynth).toHaveBeenCalledWith(SFX_PRESETS['cultivate'], 2);
   });
 
-  it('registers all four new preset-driven SFX ids', () => {
-    expect(Object.keys(SFX_PRESETS).sort()).toStrictEqual(['array-place', 'coin', 'cultivate', 'spirit-stone']);
+  it('registers all preset-driven SFX ids', () => {
+    expect(Object.keys(SFX_PRESETS).sort()).toStrictEqual(['array-place', 'codex-page', 'codex-unlock', 'coin', 'cultivate', 'spirit-stone', 'ui-chapter', 'ui-confirm', 'ui-fontsize']);
   });
 
   it('validates a preset satisfies the SfxrParams contract', () => {
     const checked: SfxrParams[] = Object.values(SFX_PRESETS) as SfxrParams[];
-    expect(checked.length).toBe(4);
+    expect(checked.length).toBe(Object.keys(SFX_PRESETS).length);
     for (const p of checked) {
       expect(p.duration).toBeGreaterThan(0);
       expect(p.gain).toBeGreaterThan(0);
       expect(p.gain).toBeLessThanOrEqual(1);
       expect(p.startFreq).toBeGreaterThan(0);
-      expect(['square', 'sawtooth', 'sine', 'noise']).toContain(p.wave);
+      expect(['square', 'sawtooth', 'sine', 'triangle', 'noise']).toContain(p.wave);
     }
   });
 });

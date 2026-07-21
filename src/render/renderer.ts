@@ -3,7 +3,7 @@
  * 只读 sim 状态绘制；不修改 sim。中文 HUD（C8），CJK 字体走系统回退（首版；正式版内置 霞鹜文楷）。
  */
 import { Application, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
-import type { GameState } from '@sim/world/state';
+import type { GameState, GroundItem } from '@sim/world/state';
 import type { ContentRegistry } from '@content/defs';
 import { MILLI } from '@sim/world/types';
 import type { Season } from '@sim/world/types';
@@ -11,28 +11,31 @@ import { stageQiCap } from '@sim/progression/progression';
 import { DEFAULT_BALANCE } from '@sim/params';
 import { t, tList } from '@content/i18n';
 import type { CropQuality } from '@sim/farm/quality';
+import type { CropInstance } from '@sim/farm/crop';
 import type { Tile } from '@sim/farm/tile';
 import { storageUsed } from '@sim/storage/storage';
 import { shippingLines } from '@sim/economy/shipping';
 import { marketDemandForItem } from '@sim/economy/market';
-import { getPrimaryStayingWorldGoal, renderStayingWorldGoals } from '@sim/progression/stayingWorldGoals';
+import { renderStayingWorldGoals } from '@sim/progression/stayingWorldGoals';
 import type { SimContext } from '@sim/world/context';
 import { bodyFoundationCap, readyToInvokeTribulation, type FacilityKind, type LocationId } from '@sim';
 import { guardBeastPreviewAssetId, guardBeastPreviewPlacements } from './guardBeastPreview';
-import { farmsteadPropPlacements, locationWorldPreviewPlacements, npcWorldPreviewPlacements } from './npcWorldPreview';
+import { farmsteadPropPlacements, locationWorldPreviewPlacementAt, locationWorldPreviewPlacements, npcWorldPreviewPlacementAt, npcWorldPreviewPlacements } from './npcWorldPreview';
 import { arrayWorldPreviewPlacements } from './arrayPreview';
 import { cropGrowthFeedbackState, harvestLiftRadiusBonus, qiFlowVisualState, seedFallbackRadius, tileReadinessState, tileSelectionVisualState, tileSurfaceGrainSample, tileSurfaceVisualState, tileVisualState, TILLED_SOIL_BORDER, TILLED_SOIL_FILL, WATER_SHEEN_COLOR, type QiFlowVisualState } from './tileVisuals';
 import { inventoryIconStripEntries } from './inventoryIconStrip';
 import { tileAssetId } from './tileAsset';
 import { hasActiveArrayCoverage } from '@sim/tribulation/arrays';
 import { itemIconAssetId } from '@app/itemIcons';
+import { farmsteadSceneLayout, farmsteadSceneObjectAt, farmsteadSceneTileKind, isFarmsteadFarmPlotTile, type FarmsteadSceneObject, type FarmsteadSceneZoneKind } from '@app/farmsteadScene';
 import { bodyLeakPresentation } from '@app/bodyLeakPresentation';
-import { computeViewportLayout } from './viewportLayout';
+import { computeViewportLayout, type ViewportProfile } from './viewportLayout';
 import { generateLightningBolt, strokeLightningBolt, type LightningBoltGeometry } from './lightningBolt';
 import { tutorialWarningPulse, tutorialWarningZoneTiles } from './tutorialWarningZone';
-import { facingIndicatorOffset, facingScaleX, footShadowSpec, playerPresenceOverlay, qiSparklePhase, shouldDrawQiSparkles, type Facing4 } from './characterPresence';
+import { characterWalkCycle, facingIndicatorOffset, facingScaleX, footShadowSpec, npcWorldFallbackPresentation, npcWorldMapSpriteAssetId, playerPresenceOverlay, playerWorldMapSpriteAssetId, qiSparklePhase, shouldDrawQiSparkles, worldCharacterReadabilityHaloSpec, worldCharacterSpriteMetrics, type CharacterWalkCycle, type Facing4 } from './characterPresence';
 import { paintWorldDecor, worldDecorPlacements } from './worldDecor';
 import { ColorPalette } from './ColorPalette';
+import type { GridPoint, PlayerMovementVisual } from '@app/worldMovement';
 
 /** CJK 字体栈（首版用系统 CJK 回退；正式版应 FontFace 预加载 霞鹜文楷） */
 export const CJK_FONT = "'LXGW WenKai','Noto Sans CJK SC','Microsoft YaHei','PingFang SC',sans-serif";
@@ -54,18 +57,40 @@ export function setTextIfChanged(target: { text: string }, nextText: string): bo
 export const TILE = 42;
 const SCREEN_W = 960; // 对齐 main.ts app.init 尺寸
 const SCREEN_H = 540;
+export const FARMSTEAD_PAINTED_BACKDROP_ALPHA = 0.8;
+export const FARMSTEAD_PASSIVE_FARM_PLOT_ALPHA = 0.12;
+export const FARMSTEAD_PASSIVE_TILE_TEXTURE_ALPHA = 0.11;
+export const FARMSTEAD_PASSIVE_AMBIENT_ALPHA = 0.1;
+export const PLAYER_MAP_SPRITE_ALPHA = 0.94;
+export const TOAST_BOTTOM_UI_TOP = SCREEN_H - 90;
 const logicalViewportLayout = computeViewportLayout({ width: SCREEN_W, height: SCREEN_H, touchCapable: false });
 if (!logicalViewportLayout.regions) {
   throw new Error('The logical 960×540 renderer viewport must produce landscape regions.');
 }
 export const LOGICAL_RENDER_REGIONS = {
   content: { ...logicalViewportLayout.regions.content },
+  playfield: {
+    x: logicalViewportLayout.regions.content.x,
+    y: logicalViewportLayout.regions.world.y,
+    width: logicalViewportLayout.regions.content.width,
+    height: logicalViewportLayout.regions.world.height
+  },
   world: { ...logicalViewportLayout.regions.world },
   objectiveRail: { ...logicalViewportLayout.regions.objectiveRail }
 } as const;
 const DEFAULT_WORLD_COLUMNS = 14;
-const OX = Math.round(LOGICAL_RENDER_REGIONS.world.x + (LOGICAL_RENDER_REGIONS.world.width - DEFAULT_WORLD_COLUMNS * TILE) / 2);
-const OY = Math.round(LOGICAL_RENDER_REGIONS.world.y);
+const OX = Math.round(LOGICAL_RENDER_REGIONS.playfield.x + (LOGICAL_RENDER_REGIONS.playfield.width - DEFAULT_WORLD_COLUMNS * TILE) / 2);
+const OY = Math.round(LOGICAL_RENDER_REGIONS.playfield.y);
+const EMPTY_QI_FLOW: QiFlowVisualState = {
+  lineCount: 0,
+  concentration: 0,
+  alpha: 0,
+  lineWidth: 0,
+  speed: 0,
+  amplitude: 0,
+  phase: 0,
+  glowAlpha: 0
+};
 const BRIEFING_BOX = {
   x: Math.round(LOGICAL_RENDER_REGIONS.objectiveRail.x),
   y: Math.round(LOGICAL_RENDER_REGIONS.objectiveRail.y),
@@ -74,8 +99,9 @@ const BRIEFING_BOX = {
   radius: 7,
   paddingY: 8
 } as const;
-const PANEL_PREVIEW_BOX = { x: 688, y: 286, width: 248, minHeight: 112, radius: 8, paddingY: 18 } as const;
-const LOCATION_PREVIEW_BOX = { x: 648, y: 70, width: 288, minHeight: 206, maxHeight: 370, radius: 8, paddingY: 16 } as const;
+export const PANEL_PREVIEW_BOX = { x: 688, y: 286, width: 248, minHeight: 112, radius: 8, paddingY: 18 } as const;
+export const LOCATION_PREVIEW_BOX = { x: 648, y: 70, width: 288, minHeight: 206, maxHeight: 370, radius: 8, paddingY: 16 } as const;
+export const LOCATION_PREVIEW_TEXT_LINE_HEIGHT = 15;
 export const DIALOGUE_LAYOUT_LIMITS = {
   x: 40,
   width: 600,
@@ -148,6 +174,7 @@ export interface RenderLayers {
   qiFlow: Graphics;
   entities: Graphics;
   sceneSprites: Container;
+  characterOverlay: Graphics;
   npcMarkers: Container;
   hotbarIconBg: Graphics;
   hotbarIcon: Sprite;
@@ -208,7 +235,26 @@ export interface RuntimeRenderAssets {
   hotbarIcons: Partial<Record<string, Texture>>;
   itemIcons: Partial<Record<string, Texture>>;
   npcs: Partial<Record<string, Texture>>;
+  portraits?: Partial<Record<string, Texture>>;
+  mapSprites?: Partial<Record<string, Texture>>;
+  maps?: Partial<Record<string, Texture>>;
+  inventoryIcons?: Partial<Record<string, Texture>>;
   tiles: Partial<Record<string, Texture>>;
+}
+
+export interface DrawWorldOptions {
+  pointerTile?: { x: number; y: number } | null;
+  playerMovement?: PlayerMovementVisual | null;
+  pendingWorld?: PendingWorldVisual | null;
+}
+
+export type ToastLayoutProfile = Exclude<ViewportProfile, 'portrait-blocked'>;
+
+export interface PendingWorldVisual {
+  readonly target: GridPoint;
+  readonly destination: GridPoint | null;
+  readonly path: readonly GridPoint[];
+  readonly description: string;
 }
 
 /** 程序化粒子（T9）。渲染层自管的瞬态视觉效果，不进 sim、不影响确定性。 */
@@ -234,6 +280,38 @@ export interface FloatText {
   color: number;
 }
 
+function estimateWrappedLineCount(text: string, wordWrapWidth: number, averageGlyphWidth = 12): number {
+  const charsPerLine = Math.max(8, Math.floor(wordWrapWidth / averageGlyphWidth));
+  return text.split('\n').reduce((total, line) => total + Math.max(1, Math.ceil(Array.from(line).length / charsPerLine)), 0);
+}
+
+export function toastBoxHeight(text: string, wordWrapWidth: number): number {
+  return Math.max(36, estimateWrappedLineCount(text, wordWrapWidth) * 17 + 16);
+}
+
+export interface ToastLayoutMetrics {
+  readonly textX: number;
+  readonly textY: number;
+  readonly textWidth: number;
+  readonly bgX: number;
+  readonly bgY: number;
+  readonly bgWidth: number;
+  readonly bgHeight: number;
+}
+
+export function toastLayoutForText(msg: string, hasTexture: boolean, profile: ToastLayoutProfile = 'desktop'): ToastLayoutMetrics {
+  const baseY = profile === 'compact-landscape' ? SCREEN_H - 252 : SCREEN_H - 124;
+  const textX = hasTexture ? 46 : 16;
+  const textWidth = profile === 'compact-landscape' ? 248 : 410;
+  const bgX = 10;
+  const bgHeight = toastBoxHeight(msg, textWidth);
+  const bottomReserveTop = profile === 'desktop' ? TOAST_BOTTOM_UI_TOP : SCREEN_H - 104;
+  const textY = Math.min(baseY, bottomReserveTop - bgHeight + 8);
+  const bgY = textY - 8;
+  const bgWidth = textX + textWidth + 12 - bgX;
+  return { textX, textY, textWidth, bgX, bgY, bgWidth, bgHeight };
+}
+
 function panelBoxHeight(textHeight: number, minHeight: number, paddingY: number): number {
   return Math.max(minHeight, Math.ceil(textHeight) + paddingY * 2);
 }
@@ -248,6 +326,91 @@ export function itemPreviewBoxHeight(textHeight: number): number {
 
 export function locationPreviewBoxHeight(textHeight: number): number {
   return Math.min(LOCATION_PREVIEW_BOX.maxHeight, panelBoxHeight(textHeight, LOCATION_PREVIEW_BOX.minHeight, LOCATION_PREVIEW_BOX.paddingY));
+}
+
+export function locationPreviewMaxTextHeight(): number {
+  return LOCATION_PREVIEW_BOX.maxHeight - LOCATION_PREVIEW_BOX.paddingY * 2;
+}
+
+export function locationPreviewMaxTextLines(lineHeight = LOCATION_PREVIEW_TEXT_LINE_HEIGHT): number {
+  return Math.max(1, Math.floor(locationPreviewMaxTextHeight() / lineHeight));
+}
+
+export function locationPreviewEstimatedTextHeight(text: string, wordWrapWidth: number): number {
+  return Math.min(locationPreviewMaxTextHeight(), estimateLocationPreviewLineCount(text, wordWrapWidth) * LOCATION_PREVIEW_TEXT_LINE_HEIGHT);
+}
+
+function textWrapUnits(char: string): number {
+  if (/[\u0009\u0020]/.test(char)) return 0.35;
+  if (/[\u0021-\u007e]/.test(char)) return 0.58;
+  return 1;
+}
+
+export function estimateLocationPreviewLineCount(text: string, wordWrapWidth: number, fontSize = 11): number {
+  const maxUnits = Math.max(1, Math.floor(wordWrapWidth / fontSize));
+  let lineCount = 1;
+  let lineUnits = 0;
+  for (const char of text.replace(/\r\n?/g, '\n')) {
+    if (char === '\n') {
+      lineCount += 1;
+      lineUnits = 0;
+      continue;
+    }
+    const units = textWrapUnits(char);
+    if (lineUnits > 0 && lineUnits + units > maxUnits) {
+      lineCount += 1;
+      lineUnits = units;
+      continue;
+    }
+    lineUnits += units;
+  }
+  return lineCount;
+}
+
+function clampTextToEstimatedLines(text: string, maxLines: number, wordWrapWidth: number): string {
+  const source = text.trim();
+  if (estimateLocationPreviewLineCount(source, wordWrapWidth) <= maxLines) return source;
+  let clamped = '';
+  for (const char of source) {
+    const next = `${clamped}${char}`;
+    if (estimateLocationPreviewLineCount(`${next.trimEnd()}…`, wordWrapWidth) > maxLines) break;
+    clamped = next;
+  }
+  return `${clamped.trimEnd()}…`;
+}
+
+export function locationPreviewTextContent(title: string, details: string, wordWrapWidth: number, maxLines = locationPreviewMaxTextLines()): string {
+  const safeTitle = clampTextToEstimatedLines(title, Math.max(1, maxLines - 2), wordWrapWidth);
+  const detailBudget = Math.max(1, maxLines - estimateLocationPreviewLineCount(safeTitle, wordWrapWidth) - 1);
+  const safeDetails = clampTextToEstimatedLines(details, detailBudget, wordWrapWidth);
+  return `${safeTitle}\n\n${safeDetails}`;
+}
+
+function fitMeasuredLocationPreviewText(target: Text, nextText: string): number {
+  setTextIfChanged(target, nextText);
+  if (target.height <= locationPreviewMaxTextHeight()) return target.height;
+
+  const chars = Array.from(nextText);
+  let low = 0;
+  let high = chars.length;
+  let bestText = '…';
+  let bestHeight = LOCATION_PREVIEW_TEXT_LINE_HEIGHT;
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const candidate = `${chars.slice(0, mid).join('').trimEnd()}…`;
+    setTextIfChanged(target, candidate);
+    const candidateHeight = target.height;
+    if (candidateHeight <= locationPreviewMaxTextHeight()) {
+      bestText = candidate;
+      bestHeight = candidateHeight;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  setTextIfChanged(target, bestText);
+  return bestHeight;
 }
 
 export interface DialogueBoxLayout {
@@ -325,6 +488,8 @@ export function createLayers(app: Application): RenderLayers {
   worldRoot.addChild(entities);
   const sceneSprites = new Container();
   worldRoot.addChild(sceneSprites);
+  const characterOverlay = new Graphics();
+  worldRoot.addChild(characterOverlay);
   const npcMarkers = new Container();
   worldRoot.addChild(npcMarkers);
   const hotbarIconBg = new Graphics();
@@ -484,6 +649,7 @@ export function createLayers(app: Application): RenderLayers {
     qiFlow,
     entities,
     sceneSprites,
+    characterOverlay,
     npcMarkers,
     hotbarIconBg,
     hotbarIcon,
@@ -549,6 +715,7 @@ function drawQiFlowLines(target: Graphics, tile: Pick<Tile, 'id' | 'x' | 'y'>, x
     const baseY = y + 8 + ((lineIndex + 1) / (flow.lineCount + 1)) * (TILE - 16) + (anchor.oy - 0.5) * 3;
     const drift = Math.sin(flow.phase * Math.PI * 2) * 2.5 * direction;
 
+    const points: { x: number; y: number }[] = [];
     for (let segment = 0; segment <= segmentCount; segment++) {
       const progress = segment / segmentCount;
       const rawX = x + 7 + progress * (TILE - 14) + drift;
@@ -556,11 +723,19 @@ function drawQiFlowLines(target: Graphics, tile: Pick<Tile, 'id' | 'x' | 'y'>, x
       const wave = Math.sin((progress * 1.35 + flow.phase + lineIndex * 0.23) * Math.PI * 2);
       const slope = direction * (progress - 0.5) * 2.2;
       const pointY = baseY + wave * flow.amplitude + slope;
-      if (segment === 0) target.moveTo(pointX, pointY);
-      else target.lineTo(pointX, pointY);
+      points.push({ x: pointX, y: pointY });
     }
-    const color = lineIndex % 2 === 0 ? ColorPalette.qiFlow : ColorPalette.moonWhite;
-    const alpha = lineIndex % 2 === 0 ? flow.alpha : flow.alpha * 0.72;
+    const tracePath = (): void => {
+      for (const [index, point] of points.entries()) {
+        if (index === 0) target.moveTo(point.x, point.y);
+        else target.lineTo(point.x, point.y);
+      }
+    };
+    const color = lineIndex % 2 === 0 ? ColorPalette.qiBright : ColorPalette.moonWhite;
+    const alpha = lineIndex % 2 === 0 ? flow.alpha : flow.alpha * 0.78;
+    tracePath();
+    target.stroke({ width: flow.lineWidth + 1.4, color: ColorPalette.qiBright, alpha: 0.12 + flow.concentration * 0.08, cap: 'round', join: 'round' });
+    tracePath();
     target.stroke({ width: flow.lineWidth, color, alpha, cap: 'round', join: 'round' });
   }
 }
@@ -570,6 +745,358 @@ export function screenPointForTile(x: number, y: number): { x: number; y: number
     x: OX + x * TILE + TILE / 2,
     y: OY + y * TILE + TILE / 2
   };
+}
+
+export function tileCoordinatesFromScreenPoint(state: Pick<GameState, 'width' | 'height'>, point: { x: number; y: number }): { x: number; y: number } | null {
+  const x = Math.floor((point.x - OX) / TILE);
+  const y = Math.floor((point.y - OY) / TILE);
+  if (x < 0 || y < 0 || x >= state.width || y >= state.height) return null;
+  return { x, y };
+}
+
+function farmsteadZoneTone(zone: FarmsteadSceneZoneKind): { color: number; alpha: number } | null {
+  switch (zone) {
+    case 'legacy-field':
+    case 'herb-plot':
+      return null;
+    case 'homestead':
+      return { color: ColorPalette.woodDark, alpha: 0.17 };
+    case 'workyard':
+      return { color: ColorPalette.mountain, alpha: 0.18 };
+    case 'gate':
+      return { color: ColorPalette.frostGray, alpha: 0.18 };
+    case 'wild':
+      return { color: ColorPalette.moss, alpha: 0.13 };
+    case 'courtyard':
+      return { color: ColorPalette.soilHighlight, alpha: 0.12 };
+  }
+}
+
+export interface FarmsteadValleyCueState {
+  readonly hasValleyCue: boolean;
+  readonly stoneAlpha: number;
+  readonly pathBandAlpha: number;
+  readonly grassAlpha: number;
+  readonly mistAlpha: number;
+  readonly workyardSparkAlpha: number;
+  readonly homesteadFloorAlpha: number;
+}
+
+export function farmsteadValleyCueState(zone: FarmsteadSceneZoneKind, tile: Pick<Tile, 'id' | 'x' | 'y'>): FarmsteadValleyCueState {
+  const variation = 0.86 + (tile.id % 5) * 0.035;
+  switch (zone) {
+    case 'wild':
+      return { hasValleyCue: true, stoneAlpha: 0, pathBandAlpha: 0, grassAlpha: 0.36 * variation, mistAlpha: tile.y <= 2 ? 0.2 : 0.08, workyardSparkAlpha: 0, homesteadFloorAlpha: 0 };
+    case 'courtyard':
+      return { hasValleyCue: true, stoneAlpha: 0.3 * variation, pathBandAlpha: 0.18, grassAlpha: 0.06, mistAlpha: 0, workyardSparkAlpha: 0, homesteadFloorAlpha: 0 };
+    case 'gate':
+      return { hasValleyCue: true, stoneAlpha: 0.34 * variation, pathBandAlpha: 0.22, grassAlpha: 0.1, mistAlpha: 0.1, workyardSparkAlpha: 0, homesteadFloorAlpha: 0 };
+    case 'workyard':
+      return { hasValleyCue: true, stoneAlpha: 0.26 * variation, pathBandAlpha: 0.11, grassAlpha: 0, mistAlpha: 0.06, workyardSparkAlpha: 0.3 * variation, homesteadFloorAlpha: 0 };
+    case 'homestead':
+      return { hasValleyCue: true, stoneAlpha: 0.2 * variation, pathBandAlpha: 0.08, grassAlpha: 0.03, mistAlpha: 0, workyardSparkAlpha: 0, homesteadFloorAlpha: 0.2 };
+    case 'legacy-field':
+    case 'herb-plot':
+      return { hasValleyCue: false, stoneAlpha: 0, pathBandAlpha: 0, grassAlpha: 0, mistAlpha: 0, workyardSparkAlpha: 0, homesteadFloorAlpha: 0 };
+  }
+}
+
+function shouldDrawCultivationSurface(state: GameState, tile: Tile, crop?: CropInstance | null): boolean {
+  const layout = farmsteadSceneLayout(state);
+  if (!layout.enabled) return true;
+  return isFarmsteadFarmPlotTile(state, tile.x, tile.y) || crop != null || tile.tilled || tile.arrayId != null || tile.soilType === 'scorched';
+}
+
+function isInvestedCultivationTile(tile: Tile, crop?: CropInstance | null): boolean {
+  return crop != null || tile.tilled || tile.arrayId != null || tile.soilType === 'scorched' || tile.wateredToday || tile.channeledToday;
+}
+
+function hasDirectWorldCue(tile: Pick<Tile, 'x' | 'y'>, options?: DrawWorldOptions, selectionTile?: Pick<Tile, 'id' | 'x' | 'y'>): boolean {
+  return sameTilePoint(selectionTile, tile) || sameTilePoint(options?.pointerTile, tile) || sameTilePoint(options?.pendingWorld?.target, tile) || sameTilePoint(options?.pendingWorld?.destination, tile) || pendingPathIndex(options?.pendingWorld?.path, tile) >= 0;
+}
+
+export function cultivationSurfaceAlphaScale(state: GameState, tile: Tile, crop: CropInstance | null | undefined, options?: DrawWorldOptions, selectionTile?: Pick<Tile, 'id' | 'x' | 'y'>): number {
+  const layout = farmsteadSceneLayout(state);
+  if (!layout.enabled) return 1;
+  if (!isFarmsteadFarmPlotTile(state, tile.x, tile.y)) return 1;
+  if (isInvestedCultivationTile(tile, crop)) return 1;
+  if (hasDirectWorldCue(tile, options, selectionTile)) return 1;
+  return FARMSTEAD_PASSIVE_FARM_PLOT_ALPHA;
+}
+
+function farmsteadAmbientTileColor(state: GameState, tile: Tile): number {
+  if (!farmsteadSceneLayout(state).enabled) return SOIL_COLOR[tile.soilType] ?? ColorPalette.soil;
+  if (tile.soilType === 'water') return ColorPalette.water;
+  if (tile.soilType === 'rock' || tile.soilType === 'metal-ore') return ColorPalette.mountain;
+  if (tile.soilType === 'scorched') return ColorPalette.scorchedSoil;
+
+  switch (farmsteadSceneTileKind(state, tile.x, tile.y)) {
+    case 'homestead':
+      return ColorPalette.woodDark;
+    case 'workyard':
+      return ColorPalette.mountain;
+    case 'gate':
+      return ColorPalette.frostGray;
+    case 'wild':
+      return ColorPalette.moss;
+    case 'courtyard':
+      return ColorPalette.soilFertile;
+    case 'legacy-field':
+    case 'herb-plot':
+      return SOIL_COLOR[tile.soilType] ?? ColorPalette.soil;
+  }
+}
+
+function drawFarmsteadPaintedBackdrop(layers: RenderLayers, retainedSprites: RetainedWorldSpriteCache, state: GameState, assets?: RuntimeRenderAssets): boolean {
+  const texture = assets?.maps?.['map.farmstead-courtyard-v1'];
+  if (!texture || !farmsteadSceneLayout(state).enabled) return false;
+
+  const boardW = state.width * TILE;
+  const boardH = state.height * TILE;
+  const sprite = retainTileSprite(layers, retainedSprites, 'world:farmstead-painted-backdrop');
+  sprite.texture = texture;
+  sprite.anchor.set(0.5);
+  sprite.x = OX + boardW / 2;
+  sprite.y = OY + boardH / 2 + 2;
+  const imageRatio = 1680 / 900;
+  const widthFromHeight = (boardH + 34) * imageRatio;
+  const targetWidth = Math.min(LOGICAL_RENDER_REGIONS.playfield.width + 48, Math.max(boardW + 88, widthFromHeight));
+  sprite.width = targetWidth;
+  sprite.height = targetWidth / imageRatio;
+  sprite.alpha = FARMSTEAD_PAINTED_BACKDROP_ALPHA;
+  sprite.tint = ColorPalette.trueWhite;
+  sprite.visible = true;
+  return true;
+}
+
+function drawFarmsteadGroundCue(terrain: Graphics, state: GameState, tile: Tile, x: number, y: number): void {
+  const layout = farmsteadSceneLayout(state);
+  if (!layout.enabled) return;
+
+  const zone = farmsteadSceneTileKind(state, tile.x, tile.y);
+  const tone = farmsteadZoneTone(zone);
+  const cue = farmsteadValleyCueState(zone, tile);
+  if (tone) {
+    terrain.rect(x + 2, y + 2, TILE - 5, TILE - 5).fill({ color: tone.color, alpha: tone.alpha });
+  }
+
+  if (cue.homesteadFloorAlpha > 0) {
+    terrain.rect(x + 4, y + TILE - 15, TILE - 8, 8).fill({ color: ColorPalette.paperMuted, alpha: cue.homesteadFloorAlpha });
+    terrain.rect(x + 5, y + TILE - 13, TILE - 10, 1).fill({ color: ColorPalette.soilShadow, alpha: cue.homesteadFloorAlpha * 0.7 });
+  }
+
+  if (zone === 'courtyard' || zone === 'gate' || zone === 'workyard') {
+    const pebbleColor = zone === 'workyard' ? ColorPalette.mountainMuted : ColorPalette.paperMuted;
+    const offset = (tile.id % 3) * 3;
+    terrain.ellipse(x + TILE / 2, y + TILE / 2 + 4, TILE * 0.38, 5).fill({ color: ColorPalette.paperMuted, alpha: cue.pathBandAlpha });
+    terrain.ellipse(x + 11 + offset, y + 26, 4.8, 2.4).fill({ color: pebbleColor, alpha: cue.stoneAlpha });
+    terrain.ellipse(x + 28 - offset, y + 15, 3.8, 2).fill({ color: pebbleColor, alpha: cue.stoneAlpha * 0.8 });
+    terrain.rect(x + 7, y + TILE / 2 - 2, TILE - 14, 4).fill({ color: ColorPalette.paperMuted, alpha: cue.pathBandAlpha * 0.72 });
+  }
+
+  if (cue.mistAlpha > 0) {
+    const offset = tile.id % 7;
+    terrain
+      .moveTo(x + 4, y + 10 + offset)
+      .lineTo(x + TILE - 5, y + 7 + offset)
+      .stroke({ width: 1.1, color: ColorPalette.frost, alpha: cue.mistAlpha });
+    terrain
+      .moveTo(x + 12, y + 18 + (offset % 3))
+      .lineTo(x + TILE - 9, y + 17 + (offset % 3))
+      .stroke({ width: 0.9, color: ColorPalette.moonWhite, alpha: cue.mistAlpha * 0.48 });
+  }
+
+  if (zone === 'wild') {
+    const bladeOffset = tile.id % 5;
+    terrain
+      .moveTo(x + 9 + bladeOffset, y + 28)
+      .lineTo(x + 12 + bladeOffset, y + 19)
+      .stroke({ width: 1.5, color: ColorPalette.mossBright, alpha: cue.grassAlpha });
+    terrain
+      .moveTo(x + 27 - bladeOffset, y + 31)
+      .lineTo(x + 24 - bladeOffset, y + 22)
+      .stroke({ width: 1.3, color: ColorPalette.leafDark, alpha: cue.grassAlpha * 0.8 });
+    terrain.circle(x + 24 + (bladeOffset % 3), y + 27, 2.4).fill({ color: ColorPalette.mossBright, alpha: cue.grassAlpha * 0.54 });
+  }
+
+  if (cue.workyardSparkAlpha > 0) {
+    const sparkX = x + 12 + (tile.id % 17);
+    const sparkY = y + 13 + (tile.id % 11);
+    terrain.circle(sparkX, sparkY, 1.8).fill({ color: ColorPalette.emberBright, alpha: cue.workyardSparkAlpha });
+    terrain.rect(x + 10, y + TILE - 12, TILE - 20, 3).fill({ color: ColorPalette.mountainMuted, alpha: cue.stoneAlpha * 0.72 });
+  }
+
+  if (isFarmsteadFarmPlotTile(state, tile.x, tile.y)) {
+    terrain.rect(x + 2, y + 2, TILE - 5, TILE - 5).stroke({ width: 1, color: ColorPalette.moss, alpha: 0.06 });
+  }
+}
+
+function drawFarmsteadPlotFrame(terrain: Graphics, state: GameState): void {
+  const layout = farmsteadSceneLayout(state);
+  if (!layout.enabled) return;
+  const r = layout.herbPlot;
+  const x = OX + r.x * TILE;
+  const y = OY + r.y * TILE;
+  const w = r.width * TILE;
+  const h = r.height * TILE;
+  terrain.rect(x + 2, y + 2, w - 5, h - 5).stroke({ width: 2, color: ColorPalette.mossBright, alpha: 0.2 });
+  terrain.rect(x + 5, y + 5, w - 11, h - 11).stroke({ width: 1, color: ColorPalette.soilHighlight, alpha: 0.12 });
+
+  for (let px = r.x; px < r.x + r.width; px += 1) {
+    const sx = OX + px * TILE;
+    terrain.rect(sx + 5, y - 1, 8, 5).fill({ color: ColorPalette.woodDark, alpha: 0.24 });
+    terrain.rect(sx + 28, y + h - 5, 8, 5).fill({ color: ColorPalette.woodDark, alpha: 0.22 });
+  }
+  for (let py = r.y; py < r.y + r.height; py += 1) {
+    const sy = OY + py * TILE;
+    terrain.rect(x - 1, sy + 7, 5, 8).fill({ color: ColorPalette.woodDark, alpha: 0.22 });
+    terrain.rect(x + w - 5, sy + 25, 5, 8).fill({ color: ColorPalette.woodDark, alpha: 0.22 });
+  }
+}
+
+function drawFarmsteadObjectBase(e: Graphics, object: FarmsteadSceneObject, x: number, y: number): void {
+  const accent = object.kind === 'furnace' ? ColorPalette.cinnabarOrange : object.kind === 'array-shed' ? ColorPalette.qiFlow : object.kind === 'map-gate' ? ColorPalette.gilt : ColorPalette.soilHighlight;
+  e.ellipse(x + TILE / 2, y + TILE - 8, 16, 4).fill({ color: ColorPalette.inkShadow, alpha: 0.26 });
+  e.roundRect(x + 5, y + TILE - 17, TILE - 10, 10, 4).fill({ color: ColorPalette.soilShadow, alpha: 0.28 });
+  e.roundRect(x + 7, y + TILE - 18, TILE - 14, 8, 4).stroke({ width: 1, color: accent, alpha: 0.38 });
+}
+
+function farmsteadObjectTexture(object: FarmsteadSceneObject, assets?: RuntimeRenderAssets): Texture | undefined {
+  if (object.assetId.startsWith('facility.')) {
+    return assets?.facilities[object.assetId.slice('facility.'.length)];
+  }
+  if (object.assetId.startsWith('loc.')) {
+    return assets?.locations[object.assetId.slice('loc.'.length) as LocationId];
+  }
+  if (object.assetId.startsWith('map-sprite.')) {
+    return assets?.mapSprites?.[object.assetId];
+  }
+  return undefined;
+}
+
+function drawFarmsteadHouse(e: Graphics, object: FarmsteadSceneObject): void {
+  const footprint = object.footprint ?? { x: object.x, y: object.y, width: 1, height: 1 };
+  const x = OX + footprint.x * TILE;
+  const y = OY + footprint.y * TILE;
+  const w = footprint.width * TILE;
+  const h = footprint.height * TILE;
+  e.ellipse(x + w / 2, y + h - 4, w * 0.36, 7).fill({ color: ColorPalette.inkShadow, alpha: 0.26 });
+  e.roundRect(x + 12, y + h - 17, w - 24, 10, 4).fill({ color: ColorPalette.soilShadow, alpha: 0.25 });
+  e.poly([x + 4, y + 19, x + w / 2, y + 3, x + w - 4, y + 19]).fill({ color: ColorPalette.cinnabarOrange, alpha: 0.92 });
+  e.poly([x + 4, y + 19, x + w / 2, y + 3, x + w - 4, y + 19]).stroke({ width: 1.4, color: ColorPalette.soilShadow, alpha: 0.9 });
+  e.roundRect(x + 10, y + 19, w - 20, h - 24, 4).fill({ color: ColorPalette.wood, alpha: 0.94 });
+  e.roundRect(x + 10, y + 19, w - 20, h - 24, 4).stroke({ width: 1.4, color: ColorPalette.soilShadow, alpha: 0.9 });
+  e.rect(x + w / 2 - 6, y + h - 23, 12, 19).fill({ color: ColorPalette.inkUi, alpha: 0.88 });
+  e.rect(x + 18, y + 29, 11, 9).fill({ color: ColorPalette.paperMuted, alpha: 0.45 });
+  e.rect(x + w / 2 - 8, y + h - 5, 16, 3).fill({ color: ColorPalette.paperMuted, alpha: 0.42 });
+}
+
+function drawFarmsteadFallbackObject(e: Graphics, object: FarmsteadSceneObject, x: number, y: number, ambientTimeMs: number, reducedMotion: boolean): void {
+  const pulse = reducedMotion ? 0.65 : 0.55 + Math.sin((ambientTimeMs / 1400 + object.x * 0.13 + object.y * 0.07) * Math.PI * 2) * 0.1;
+  if (object.kind === 'furnace') {
+    e.circle(x + TILE / 2, y + TILE / 2 + 1, 12).fill({ color: ColorPalette.cinnabarOrange, alpha: 0.92 });
+    e.circle(x + TILE / 2, y + TILE / 2 + 1, 12).stroke({ width: 1.8, color: ColorPalette.soilShadow, alpha: 0.94 });
+    e.circle(x + TILE / 2, y + TILE / 2, 6).fill({ color: ColorPalette.emberBright, alpha: pulse });
+    e.rect(x + 13, y + TILE - 13, TILE - 26, 4).fill({ color: ColorPalette.soilShadow, alpha: 0.9 });
+    return;
+  }
+
+  if (object.kind === 'array-shed') {
+    e.roundRect(x + 10, y + 10, TILE - 20, TILE - 16, 4).fill({ color: ColorPalette.mountain, alpha: 0.88 });
+    e.roundRect(x + 10, y + 10, TILE - 20, TILE - 16, 4).stroke({ width: 1.4, color: ColorPalette.qiFlow, alpha: 0.72 });
+    e.moveTo(x + TILE / 2, y + 13)
+      .lineTo(x + TILE / 2, y + TILE - 12)
+      .stroke({ width: 2, color: ColorPalette.qiBright, alpha: 0.82 });
+    e.poly([x + TILE / 2, y + 12, x + TILE / 2 + 10, y + 17, x + TILE / 2, y + 22]).fill({ color: ColorPalette.giltBright, alpha: 0.82 });
+    return;
+  }
+
+  if (object.kind === 'map-gate') {
+    e.rect(x + 8, y + 8, 5, TILE - 14).fill({ color: ColorPalette.woodDark, alpha: 0.92 });
+    e.rect(x + TILE - 13, y + 8, 5, TILE - 14).fill({ color: ColorPalette.woodDark, alpha: 0.92 });
+    e.rect(x + 7, y + 9, TILE - 14, 5).fill({ color: ColorPalette.cinnabarOrange, alpha: 0.88 });
+    e.moveTo(x + 12, y + TILE - 8)
+      .lineTo(x + TILE - 12, y + TILE - 8)
+      .stroke({ width: 2, color: ColorPalette.frostGray, alpha: 0.6 });
+  }
+}
+
+function drawFarmsteadSceneObjects(layers: RenderLayers, retainedSprites: RetainedWorldSpriteCache, state: GameState, assets?: RuntimeRenderAssets): void {
+  const layout = farmsteadSceneLayout(state);
+  if (!layout.enabled) return;
+  const e = layers.entities;
+  for (const object of layout.objects) {
+    if (object.kind === 'storage' || object.kind === 'shipping') continue;
+    if (object.kind === 'house') {
+      drawFarmsteadHouse(e, object);
+      continue;
+    }
+
+    const x = OX + object.x * TILE;
+    const y = OY + object.y * TILE;
+    drawFarmsteadObjectBase(e, object, x, y);
+    const texture = farmsteadObjectTexture(object, assets);
+    if (texture) {
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:farmstead-scene:${object.kind}`);
+      const size = object.kind === 'map-gate' ? TILE - 4 : TILE - 2;
+      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(layers.ambientTimeMs, object.x * 17 + object.y * 29, 0.8, 4200), size);
+      sprite.alpha = object.kind === 'map-gate' ? 0.82 : 0.92;
+      continue;
+    }
+
+    drawFarmsteadFallbackObject(e, object, x, y, layers.ambientTimeMs, layers.reducedMotion);
+  }
+}
+
+function sameTilePoint(point: GridPoint | null | undefined, tile: Pick<Tile, 'x' | 'y'>): boolean {
+  return point != null && point.x === tile.x && point.y === tile.y;
+}
+
+function pendingPathIndex(path: readonly GridPoint[] | undefined, tile: Pick<Tile, 'x' | 'y'>): number {
+  return path?.findIndex(point => point.x === tile.x && point.y === tile.y) ?? -1;
+}
+
+function drawPointerTileCue(terrain: Graphics, state: GameState, tile: Tile, x: number, y: number, options?: DrawWorldOptions): void {
+  const pointerActive = sameTilePoint(options?.pointerTile, tile);
+  const pending = options?.pendingWorld ?? null;
+  const pendingTarget = sameTilePoint(pending?.target, tile);
+  const pendingDestination = sameTilePoint(pending?.destination, tile);
+  const pathIndex = pendingPathIndex(pending?.path, tile);
+  if (!pointerActive && !pendingTarget && !pendingDestination && pathIndex < 0) return;
+
+  const object = farmsteadSceneObjectAt(state, tile.x, tile.y);
+  const hasGroundItem = state.groundItems.some(item => item.pos.x === tile.x && item.pos.y === tile.y);
+  const hasBuiltFacility = [...state.facilities.values()].some(facility => facility.tileId === tile.id);
+  const npcPreview = npcWorldPreviewPlacementAt(state, tile.x, tile.y);
+  const locationPreview = locationWorldPreviewPlacementAt(state, tile.x, tile.y);
+  const farmPlot = isFarmsteadFarmPlotTile(state, tile.x, tile.y);
+  const actionable = object != null || hasGroundItem || hasBuiltFacility || npcPreview != null || locationPreview != null || farmPlot || tile.cropId != null;
+  const color = object || hasGroundItem || hasBuiltFacility || npcPreview || locationPreview ? ColorPalette.giltBright : farmPlot || tile.cropId != null ? ColorPalette.qiBright : ColorPalette.mountainMuted;
+
+  if (pathIndex >= 0) {
+    const pathLength = Math.max(1, pending?.path.length ?? 1);
+    const alpha = Math.max(0.22, 0.52 - pathIndex / pathLength / 3);
+    terrain.circle(x + TILE / 2, y + TILE - 8, pendingDestination ? 5.5 : 3.2).fill({ color: ColorPalette.giltBright, alpha });
+    terrain.circle(x + TILE / 2, y + TILE - 8, pendingDestination ? 5.5 : 3.2).stroke({ width: 1, color: ColorPalette.inkPanelDeep, alpha: 0.62 });
+  }
+
+  if (pendingDestination && !pendingTarget) {
+    terrain.ellipse(x + TILE / 2 - 5, y + TILE - 10, 5, 2.5).fill({ color: ColorPalette.paperText, alpha: 0.32 });
+    terrain.ellipse(x + TILE / 2 + 6, y + TILE - 8, 5, 2.5).fill({ color: ColorPalette.paperText, alpha: 0.32 });
+    terrain.rect(x + 4, y + 4, TILE - 9, TILE - 9).stroke({ width: 1.4, color: ColorPalette.giltBright, alpha: 0.64 });
+  }
+
+  if (pendingTarget) {
+    const targetColor = actionable ? color : ColorPalette.giltBright;
+    terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).fill({ color: ColorPalette.giltBright, alpha: actionable ? 0.12 : 0.08 });
+    terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).stroke({ width: 3, color: targetColor, alpha: 0.94 });
+    terrain.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.2, color: ColorPalette.trueWhite, alpha: 0.7 });
+  }
+
+  if (!pointerActive) return;
+  terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).fill({ color: ColorPalette.trueWhite, alpha: pendingTarget ? 0.05 : actionable ? 0.1 : 0.045 });
+  terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).stroke({ width: actionable ? 2.4 : 1.5, color, alpha: actionable ? 0.86 : 0.52 });
+  terrain.rect(x + 5, y + 5, TILE - 11, TILE - 11).stroke({ width: 1, color: ColorPalette.moonWhite, alpha: actionable ? 0.58 : 0.28 });
 }
 
 function applyWorldSprite(sprite: Sprite, texture: Texture, x: number, y: number, size = TILE): void {
@@ -582,6 +1109,180 @@ function applyWorldSprite(sprite: Sprite, texture: Texture, x: number, y: number
   sprite.alpha = 1;
   sprite.tint = ColorPalette.trueWhite;
   sprite.visible = true;
+}
+
+function applyWorldCharacterSprite(sprite: Sprite, texture: Texture, x: number, y: number, width: number, height: number): void {
+  sprite.texture = texture;
+  sprite.anchor.set(0.5);
+  sprite.x = x;
+  sprite.y = y;
+  sprite.width = width;
+  sprite.height = height;
+  sprite.alpha = 1;
+  sprite.tint = ColorPalette.trueWhite;
+  sprite.visible = true;
+}
+
+function drawWorldCharacterPedestal(e: Graphics, cx: number, cy: number, accent: number, kind: 'player' | 'npc', walkCycle?: CharacterWalkCycle): void {
+  const shadow = footShadowSpec(kind);
+  const shadowScaleX = walkCycle?.shadowScaleX ?? 1;
+  const shadowScaleY = walkCycle?.shadowScaleY ?? 1;
+  e.ellipse(cx, cy + shadow.yOffset, (shadow.width / 2) * shadowScaleX, (shadow.height / 2) * shadowScaleY).fill({
+    color: ColorPalette.inkShadow,
+    alpha: shadow.alpha
+  });
+  const radius = kind === 'player' ? 22 : 19;
+  e.circle(cx, cy - 5, radius).fill({ color: ColorPalette.inkPanel, alpha: kind === 'player' ? 0.18 : 0.14 });
+  e.circle(cx, cy - 5, radius).stroke({ width: kind === 'player' ? 1.8 : 1.2, color: accent, alpha: kind === 'player' ? 0.48 : 0.34 });
+  e.ellipse(cx, cy + 12, radius * 0.72, 4.5).stroke({ width: 1.2, color: accent, alpha: kind === 'player' ? 0.44 : 0.28 });
+}
+
+function drawWorldCharacterReadabilityHalo(e: Graphics, cx: number, cy: number, accent: number, kind: 'player' | 'npc', walkCycle?: CharacterWalkCycle): void {
+  const spec = worldCharacterReadabilityHaloSpec(kind);
+  const width = spec.width * (walkCycle?.bodyScaleX ?? 1);
+  const height = spec.height * (walkCycle?.bodyScaleY ?? 1);
+  const centerY = cy + spec.yOffset;
+  e.ellipse(cx + 1.5, centerY + 2, width * 0.52, height * 0.52).fill({ color: ColorPalette.inkShadow, alpha: spec.strokeAlpha * 0.38 });
+  e.ellipse(cx, centerY, width * 0.5, height * 0.5).fill({ color: ColorPalette.paperWarm, alpha: spec.fillAlpha });
+  e.ellipse(cx, centerY, width * 0.5, height * 0.5).stroke({ width: kind === 'player' ? 1.4 : 1.1, color: ColorPalette.inkShadow, alpha: spec.strokeAlpha });
+  e.ellipse(cx, centerY, width * 0.43, height * 0.43).stroke({
+    width: 1,
+    color: accent,
+    alpha: kind === 'player' ? 0.18 : 0.14
+  });
+}
+
+function drawPlayerWalkFootfalls(e: Graphics, cx: number, cy: number, walkCycle: CharacterWalkCycle, moving: boolean): void {
+  if (!moving) return;
+  for (const foot of [walkCycle.leftFoot, walkCycle.rightFoot]) {
+    e.ellipse(cx + foot.x, cy + foot.y, 5.6, 2.4).fill({ color: ColorPalette.paperText, alpha: foot.alpha * 0.4 });
+    e.ellipse(cx + foot.x, cy + foot.y, 5.6, 2.4).stroke({ width: 0.8, color: ColorPalette.giltBright, alpha: foot.alpha });
+  }
+}
+
+function drawNpcWorldFallback(e: Graphics, cx: number, cy: number, assetId: string): void {
+  const p = npcWorldFallbackPresentation(assetId);
+  drawWorldCharacterPedestal(e, cx, cy, p.trimColor, 'npc');
+
+  e.ellipse(cx, cy + 6, 11, 15).fill({ color: p.robeColor, alpha: 0.94 });
+  e.ellipse(cx, cy + 6, 11, 15).stroke({ width: 1.5, color: ColorPalette.soilShadow, alpha: 0.9 });
+  e.circle(cx, cy - 13, 8).fill({ color: ColorPalette.paperWarm, alpha: 0.98 });
+  e.circle(cx, cy - 13, 8).stroke({ width: 1.4, color: ColorPalette.soilShadow, alpha: 0.9 });
+  e.arc(cx, cy - 15, 8, Math.PI, 0).stroke({ width: 2.2, color: p.role === 'elder' ? ColorPalette.frost : ColorPalette.inkPanelDeep, alpha: 0.95 });
+  e.rect(cx - 7, cy + 6, 14, 3).fill({ color: p.trimColor, alpha: 0.92 });
+  e.circle(cx - 3, cy - 13, 1.2).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.92 });
+  e.circle(cx + 3, cy - 13, 1.2).fill({ color: ColorPalette.inkPanelDeep, alpha: 0.92 });
+
+  switch (p.role) {
+    case 'merchant':
+      e.roundRect(cx - 20, cy - 3, 10, 18, 4).fill({ color: ColorPalette.soilDeep, alpha: 0.9 });
+      e.circle(cx - 15, cy + 6, 3.5).fill({ color: p.propColor, alpha: 0.9 });
+      break;
+    case 'elder':
+      e.rect(cx - 18, cy - 20, 3, 34).fill({ color: ColorPalette.soilShadow, alpha: 0.9 });
+      e.circle(cx - 16.5, cy - 22, 4).fill({ color: p.propColor, alpha: 0.64 });
+      break;
+    case 'artisan':
+      e.roundRect(cx - 19, cy + 5, 18, 7, 3).fill({ color: ColorPalette.soilHighlight, alpha: 0.9 });
+      e.circle(cx - 12, cy + 4, 2.5).fill({ color: p.propColor, alpha: 0.95 });
+      break;
+    case 'guard':
+      e.rect(cx + 15, cy - 24, 3, 41).fill({ color: ColorPalette.soilShadow, alpha: 0.92 });
+      e.poly([cx + 16.5, cy - 32, cx + 22, cy - 21, cx + 11, cy - 21]).fill({ color: p.propColor, alpha: 0.92 });
+      break;
+    case 'smith':
+      e.circle(cx + 16, cy + 1, 6).stroke({ width: 2, color: p.propColor, alpha: 0.9 });
+      e.poly([cx + 16, cy - 7, cx + 20, cy + 1, cx + 16, cy + 9, cx + 12, cy + 1]).fill({ color: ColorPalette.danger, alpha: 0.78 });
+      break;
+    case 'gatherer':
+      e.roundRect(cx - 21, cy + 1, 12, 11, 5).fill({ color: ColorPalette.soil, alpha: 0.9 });
+      e.circle(cx - 17, cy - 3, 3).fill({ color: ColorPalette.success, alpha: 0.94 });
+      e.circle(cx - 12, cy - 2, 3).fill({ color: ColorPalette.leaf, alpha: 0.9 });
+      break;
+    default:
+      e.circle(cx + 15, cy - 3, 4).stroke({ width: 1.8, color: p.propColor, alpha: 0.84 });
+      break;
+  }
+}
+
+function groundItemQualityColor(quality: CropQuality | undefined): number {
+  switch (quality) {
+    case 'treasure':
+      return ColorPalette.giltBright;
+    case 'spirit':
+      return ColorPalette.qiBright;
+    case 'mortal':
+      return ColorPalette.soilWarm;
+    default:
+      return ColorPalette.mountainMuted;
+  }
+}
+
+function drawGroundItemBadge(e: Graphics, x: number, y: number, item: GroundItem): void {
+  if (item.quality) {
+    e.poly([x + TILE - 13, y + 7, x + TILE - 8, y + 12, x + TILE - 13, y + 17, x + TILE - 18, y + 12]).fill({
+      color: groundItemQualityColor(item.quality),
+      alpha: 0.96
+    });
+    e.poly([x + TILE - 13, y + 7, x + TILE - 8, y + 12, x + TILE - 13, y + 17, x + TILE - 18, y + 12]).stroke({
+      width: 1,
+      color: ColorPalette.inkPanelDeep,
+      alpha: 0.88
+    });
+  }
+  if (item.count > 1) {
+    e.roundRect(x + TILE - 18, y + TILE - 16, 14, 9, 3).fill({ color: ColorPalette.inkPanel, alpha: 0.92 });
+    e.roundRect(x + TILE - 18, y + TILE - 16, 14, 9, 3).stroke({ width: 1, color: ColorPalette.paperGold, alpha: 0.82 });
+    const dots = Math.min(3, item.count);
+    for (let i = 0; i < dots; i += 1) {
+      e.circle(x + TILE - 14 + i * 4, y + TILE - 11.5, 1.15).fill({ color: ColorPalette.paperText, alpha: 0.95 });
+    }
+  }
+}
+
+function drawGroundItemFallback(e: Graphics, x: number, y: number, item: GroundItem): void {
+  const cx = x + TILE / 2;
+  const cy = y + TILE / 2;
+  const accent = groundItemQualityColor(item.quality);
+  e.roundRect(cx - 10, cy - 9, 20, 17, 5).fill({ color: ColorPalette.paperWarm, alpha: 0.94 });
+  e.roundRect(cx - 10, cy - 9, 20, 17, 5).stroke({ width: 1.4, color: accent, alpha: 0.86 });
+  e.rect(cx - 6, cy - 2, 12, 3).fill({ color: ColorPalette.mountainMuted, alpha: 0.7 });
+  if (item.itemId.startsWith('seed.')) {
+    e.circle(cx, cy, 3.5).fill({ color: ColorPalette.mossBright, alpha: 0.94 });
+  } else if (item.itemId.startsWith('pill.')) {
+    e.circle(cx, cy, 4).fill({ color: ColorPalette.cinnabarOrange, alpha: 0.94 });
+  } else if (item.itemId.startsWith('herb.')) {
+    e.moveTo(cx, cy + 5)
+      .lineTo(cx, cy - 5)
+      .stroke({ width: 1.5, color: ColorPalette.leafDark, alpha: 0.9 });
+    e.circle(cx - 3, cy - 3, 3).fill({ color: ColorPalette.leaf, alpha: 0.9 });
+    e.circle(cx + 3, cy - 1, 3).fill({ color: ColorPalette.mossBright, alpha: 0.9 });
+  } else {
+    e.circle(cx, cy, 4).fill({ color: ColorPalette.giltBright, alpha: 0.9 });
+  }
+}
+
+function drawGroundItems(layers: RenderLayers, retainedSprites: RetainedWorldSpriteCache, state: GameState, content: ContentRegistry, assets?: RuntimeRenderAssets): void {
+  const e = layers.entities;
+  for (const item of state.groundItems) {
+    const x = OX + item.pos.x * TILE;
+    const y = OY + item.pos.y * TILE;
+    const cx = x + TILE / 2;
+    const cy = y + TILE / 2;
+    const bob = ambientBobOffset(layers.ambientTimeMs, item.id * 19, 1.1, 2600);
+    e.ellipse(cx, cy + 10, 10, 4).fill({ color: ColorPalette.inkShadow, alpha: 0.34 });
+    const texture = assets?.itemIcons[itemIconAssetId(item.itemId, content) ?? ''];
+    if (texture) {
+      e.circle(cx, cy + bob, 13).fill({ color: ColorPalette.paperWarm, alpha: 0.58 });
+      e.circle(cx, cy + bob, 13).stroke({ width: 1.2, color: groundItemQualityColor(item.quality), alpha: 0.72 });
+      const sprite = retainSceneSprite(layers, retainedSprites, `world:ground-item:${item.id}`);
+      applyWorldSprite(sprite, texture, cx, cy + bob, 26);
+      sprite.alpha = 0.95;
+    } else {
+      drawGroundItemFallback(e, x, y + bob, item);
+    }
+    drawGroundItemBadge(e, x, y, item);
+  }
 }
 
 function cropWorldSpriteSpec(stage: string): { size: number; yOffset: number } {
@@ -609,7 +1310,7 @@ function applyPanelSprite(sprite: Sprite, texture: Texture, x: number, y: number
 
 export function isBriefingHeroAsset(assetId?: string): boolean {
   if (!assetId) return false;
-  return assetId.startsWith('loc.') || assetId.startsWith('sprite.npc.') || assetId.startsWith('facility.') || assetId === 'tile.scorched' || assetId === 'logo.full' || assetId === 'logo.emblem';
+  return assetId.startsWith('loc.') || assetId.startsWith('sprite.npc.') || assetId.startsWith('map-sprite.') || assetId.startsWith('facility.') || assetId === 'tile.scorched' || assetId === 'logo.full' || assetId === 'logo.emblem';
 }
 
 export function facilityWorldBadgeAssetId(outputItemId?: string): string | undefined {
@@ -649,7 +1350,7 @@ export function locationTaskWorldBadgeAssetId(taskAssetId?: string): string | un
 }
 
 export function locationServiceWorldBadgeAssetId(serviceAssetId?: string): string | undefined {
-  return serviceAssetId?.startsWith('icon.') || serviceAssetId?.startsWith('sprite.npc.') ? serviceAssetId : undefined;
+  return serviceAssetId?.startsWith('icon.') || serviceAssetId?.startsWith('sprite.npc.') || serviceAssetId?.startsWith('map-sprite.') ? serviceAssetId : undefined;
 }
 
 export interface LocationWorldBadgeLayout {
@@ -1158,63 +1859,78 @@ export function renderCultivationOverview(state: GameState, ctx: SimContext): st
     : progressingLayer
       ? `肉身（漏勺）：封堵 ${leak.sealedCount}/7｜${progressingLayer.name}压实 ${Math.round(progressingLayer.progress * 100)}%｜${7 - leak.sealedCount - 1} 层仍漏`
       : `肉身（漏勺）：封堵 ${leak.sealedCount}/7｜${7 - leak.sealedCount} 层仍漏`;
-  return ['—— 功法 / 修炼 ——', '《偷天换劫诀》', `阶段：${stageName}`, `体魄根基：${foundationText}`, bodyLeakLine, `耐力：${Math.round(p.endurance / 1000)}｜意志：${Math.round(p.willpower / 1000)}`, `寿元：${p.lifespanRemainingDays}日`, `命数：${fateState}`, `劫势：${tribulationState}`, ...(victoryText ? [victoryText] : []), '', 'C / Esc 关闭', 'T 主动引劫，Shift+1/2/3/0 苦练'].join('\n');
+  return ['—— 功法 / 修炼 ——', '《偷天换劫诀》', `阶段：${stageName}`, `体魄根基：${foundationText}`, bodyLeakLine, `耐力：${Math.round(p.endurance / 1000)}｜意志：${Math.round(p.willpower / 1000)}`, `寿元：${p.lifespanRemainingDays}日`, `命数：${fateState}`, `劫势：${tribulationState}`, ...(victoryText ? [victoryText] : []), '', 'Esc 关闭；默认请从修行页确认备劫与行动。'].join('\n');
 }
 
-export function drawWorld(layers: RenderLayers, state: GameState, content: ContentRegistry, ctx?: SimContext, assets?: RuntimeRenderAssets): void {
+export function drawWorld(layers: RenderLayers, state: GameState, content: ContentRegistry, ctx?: SimContext, assets?: RuntimeRenderAssets, options?: DrawWorldOptions): void {
   // —— 瓦片 + 作物 ——
   const g = layers.tiles;
   const terrain = layers.terrainSemanticOverlay;
   const qiFlowLayer = layers.qiFlow;
   const e = layers.entities;
+  const character = layers.characterOverlay;
   const retainedSprites = beginRetainedWorldFrame(layers);
   const ambientTimeMs = layers.ambientTimeMs;
+  const showFrontSelection = options?.playerMovement?.moving !== true;
   const selectionDx = state.player.facing === 'left' ? -1 : state.player.facing === 'right' ? 1 : 0;
   const selectionDy = state.player.facing === 'up' ? -1 : state.player.facing === 'down' ? 1 : 0;
   const selectionX = state.player.position.x + selectionDx;
   const selectionY = state.player.position.y + selectionDy;
-  const selectionTile = selectionX >= 0 && selectionY >= 0 && selectionX < state.width && selectionY < state.height ? state.tiles[selectionY * state.width + selectionX] : undefined;
+  const selectionTile = showFrontSelection && selectionX >= 0 && selectionY >= 0 && selectionX < state.width && selectionY < state.height ? state.tiles[selectionY * state.width + selectionX] : undefined;
   const selectionCrop = selectionTile?.cropId != null ? state.crops.get(selectionTile.id) : undefined;
   const selectionReadiness = selectionTile ? tileReadinessState(selectionTile, selectionCrop) : null;
   g.clear();
   terrain.clear();
   qiFlowLayer.clear();
   e.clear();
+  character.clear();
+  const hasPaintedFarmsteadBackdrop = drawFarmsteadPaintedBackdrop(layers, retainedSprites, state, assets);
   for (const t of state.tiles) {
     const x = OX + t.x * TILE;
     const y = OY + t.y * TILE;
     const crop = t.cropId != null ? state.crops.get(t.id) : undefined;
     const readiness = tileReadinessState(t, crop);
+    const drawCultivationSurface = shouldDrawCultivationSurface(state, t, crop);
+    const surfaceAlphaScale = cultivationSurfaceAlphaScale(state, t, crop, options, selectionTile);
     const insulationCovered = hasActiveArrayCoverage(state, t.id, 'array.insulation');
     const tileTexture = assets?.tiles[tileAssetId(t, { insulationCovered })];
-    if (tileTexture) {
+    if (drawCultivationSurface && tileTexture) {
       const sprite = retainTileSprite(layers, retainedSprites, `world:tile:${t.id}`);
       applyWorldSprite(sprite, tileTexture, x + TILE / 2, y + TILE / 2, TILE - 1);
-      sprite.alpha = 0.92;
-      g.rect(x, y, TILE - 1, TILE - 1).fill({ color: ColorPalette.tileShade, alpha: 0.18 });
+      sprite.alpha = surfaceAlphaScale >= 1 ? 0.9 : FARMSTEAD_PASSIVE_TILE_TEXTURE_ALPHA;
+      g.rect(x, y, TILE - 1, TILE - 1).fill({ color: ColorPalette.tileShade, alpha: 0.14 * surfaceAlphaScale });
+    } else if (drawCultivationSurface) {
+      if (surfaceAlphaScale >= 1) {
+        g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? ColorPalette.soil);
+      } else {
+        g.rect(x, y, TILE, TILE).fill({ color: farmsteadAmbientTileColor(state, t), alpha: hasPaintedFarmsteadBackdrop ? 0.08 : 0.32 });
+      }
     } else {
-      g.rect(x, y, TILE - 1, TILE - 1).fill(SOIL_COLOR[t.soilType] ?? ColorPalette.soil);
+      g.rect(x, y, TILE, TILE).fill({ color: farmsteadAmbientTileColor(state, t), alpha: hasPaintedFarmsteadBackdrop ? FARMSTEAD_PASSIVE_AMBIENT_ALPHA : 0.9 });
     }
     // P0-2：地表语义层位于地砖精灵之上、作物与实体之下。
     const tileState = tileVisualState(t, crop);
     const surfaceState = tileSurfaceVisualState(t, crop);
-    terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).fill({
-      color: ColorPalette[surfaceState.baseTone],
-      alpha: surfaceState.baseToneAlpha
-    });
-    for (let grainIndex = 0; grainIndex < surfaceState.grainDensity; grainIndex++) {
-      const grain = tileSurfaceGrainSample(t, surfaceState.grainKind, grainIndex);
-      const grainX = x + Math.round(grain.ox * (TILE - 1));
-      const grainY = y + Math.round(grain.oy * (TILE - 1));
-      const grainAlpha = surfaceState.grainAlpha * grain.alphaScale;
-      if (surfaceState.grainKind === 'coarse' && grainIndex % 2 === 0) {
-        terrain.rect(grainX - 1, grainY, grain.size + 2, 1).fill({ color: ColorPalette[surfaceState.grainTone], alpha: grainAlpha });
-      } else {
-        terrain.rect(grainX, grainY, grain.size, grain.size).fill({ color: ColorPalette[surfaceState.grainTone], alpha: grainAlpha });
+    if (drawCultivationSurface) {
+      terrain.rect(x + 1, y + 1, TILE - 3, TILE - 3).fill({
+        color: ColorPalette[surfaceState.baseTone],
+        alpha: surfaceState.baseToneAlpha * surfaceAlphaScale
+      });
+      for (let grainIndex = 0; grainIndex < surfaceState.grainDensity; grainIndex++) {
+        const grain = tileSurfaceGrainSample(t, surfaceState.grainKind, grainIndex);
+        const grainX = x + Math.round(grain.ox * (TILE - 1));
+        const grainY = y + Math.round(grain.oy * (TILE - 1));
+        const grainAlpha = surfaceState.grainAlpha * grain.alphaScale * surfaceAlphaScale;
+        if (surfaceState.grainKind === 'coarse' && grainIndex % 2 === 0) {
+          terrain.rect(grainX - 1, grainY, grain.size + 2, 1).fill({ color: ColorPalette[surfaceState.grainTone], alpha: grainAlpha });
+        } else {
+          terrain.rect(grainX, grainY, grain.size, grain.size).fill({ color: ColorPalette[surfaceState.grainTone], alpha: grainAlpha });
+        }
       }
     }
+    drawFarmsteadGroundCue(terrain, state, t, x, y);
     // 空/翻/播/浇 四态差分 —— 翻地对比、水洼、种子、成熟上扬
-    if (t.tilled) {
+    if (drawCultivationSurface && t.tilled) {
       // 翻地基色 + 对比暗层（浇水后更深），保留底图纹理而不整块盖死。
       terrain.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: TILLED_SOIL_FILL, alpha: 0.28 + tileState.tilledContrastAlpha * 0.18 });
       if (tileState.tilledContrastAlpha > 0) {
@@ -1228,25 +1944,25 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         });
       }
     }
-    if (tileState.dampAlpha > 0) {
+    if (drawCultivationSurface && tileState.dampAlpha > 0) {
       terrain.rect(x + 3, y + 3, TILE - 7, TILE - 7).fill({ color: ColorPalette.waterDamp, alpha: tileState.dampAlpha });
     }
-    if (surfaceState.furrowAlpha > 0) {
+    if (drawCultivationSurface && surfaceState.furrowAlpha > 0) {
       for (let row = 0; row < 3; row++) {
         const inset = 8 + ((t.id + row) % 3);
         const furrowY = y + 12 + row * 9;
         terrain
           .moveTo(x + inset, furrowY + 1)
           .lineTo(x + TILE - inset, furrowY + 1)
-          .stroke({ width: 2, color: ColorPalette.soilShadow, alpha: surfaceState.furrowAlpha * 0.62 });
+          .stroke({ width: 2, color: ColorPalette.soilShadow, alpha: surfaceState.furrowAlpha * 0.62 * surfaceAlphaScale });
         terrain
           .moveTo(x + inset, furrowY)
           .lineTo(x + TILE - inset, furrowY)
-          .stroke({ width: 1, color: ColorPalette.soilHighlight, alpha: surfaceState.furrowAlpha });
+          .stroke({ width: 1, color: ColorPalette.soilHighlight, alpha: surfaceState.furrowAlpha * surfaceAlphaScale });
       }
     }
     // 浇水水洼高光层（比 damp 更易扫读）
-    if (tileState.waterSheenAlpha > 0) {
+    if (drawCultivationSurface && tileState.waterSheenAlpha > 0) {
       terrain.ellipse(x + TILE / 2, y + TILE - 12, TILE * 0.28, 4).fill({
         color: WATER_SHEEN_COLOR,
         alpha: tileState.waterSheenAlpha
@@ -1256,11 +1972,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         alpha: tileState.waterSheenAlpha * 0.75
       });
     }
-    if (tileState.qiGlowAlpha > 0) {
+    if (drawCultivationSurface && tileState.qiGlowAlpha > 0) {
       terrain.rect(x + 6, y + 6, TILE - 13, TILE - 13).stroke({ width: 1.5, color: ColorPalette.qiBright, alpha: tileState.qiGlowAlpha });
     }
     // T2：高灵气地块轻量上浮微粒（纯 render 呼吸，不改 sim）
-    if (shouldDrawQiSparkles(t.qiDensity, t.tilled)) {
+    if (drawCultivationSurface && shouldDrawQiSparkles(t.qiDensity, t.tilled)) {
       const sparkleTimeMs = layers.reducedMotion ? 0 : ambientTimeMs;
       const phase = qiSparklePhase(sparkleTimeMs, t.id);
       const sparkX = x + TILE / 2 + Math.sin(phase * Math.PI * 2 + t.id) * 7;
@@ -1272,20 +1988,21 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         alpha: 0.22 + (1 - phase2) * 0.35
       });
     }
-    if (tileState.showWaterMark) {
+    if (drawCultivationSurface && tileState.showWaterMark) {
       terrain.circle(x + 11, y + TILE - 11, 3.4).fill({ color: ColorPalette.waterBlue, alpha: 0.95 });
       terrain.circle(x + 18, y + TILE - 14, 2.4).fill({ color: ColorPalette.waterHighlight, alpha: 0.88 });
       terrain.circle(x + 14, y + TILE - 9, 1.6).fill({ color: ColorPalette.waterPaper, alpha: 0.7 });
     }
-    if (tileState.showChannelMark) {
+    if (drawCultivationSurface && tileState.showChannelMark) {
       terrain.poly([x + TILE - 12, y + 9, x + TILE - 8, y + 15, x + TILE - 12, y + 21, x + TILE - 16, y + 15]).fill({ color: ColorPalette.qiBright, alpha: 0.88 });
       terrain.poly([x + TILE - 12, y + 11, x + TILE - 10, y + 15, x + TILE - 12, y + 19, x + TILE - 14, y + 15]).fill({ color: ColorPalette.qiPaper, alpha: 0.7 });
     }
 
     if (selectionTile?.id === t.id) {
+      const object = farmsteadSceneObjectAt(state, t.x, t.y);
       const selectionState = tileSelectionVisualState({
         selected: true,
-        actionable: selectionReadiness?.actionable ?? false,
+        actionable: object != null || drawCultivationSurface ? (selectionReadiness?.actionable ?? false) : false,
         ambientTimeMs,
         reducedMotion: layers.reducedMotion
       });
@@ -1302,8 +2019,12 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
         alpha: selectionState.selectionEdgeAlpha * 0.62
       });
     }
+    drawPointerTileCue(terrain, state, t, x, y, options);
 
-    const flowState = qiFlowVisualState(t, ambientTimeMs, layers.reducedMotion);
+    const flowState = drawCultivationSurface && surfaceAlphaScale >= 1 ? qiFlowVisualState(t, ambientTimeMs, layers.reducedMotion) : EMPTY_QI_FLOW;
+    if (flowState.glowAlpha > 0) {
+      qiFlowLayer.rect(x + 2, y + 2, TILE - 5, TILE - 5).fill({ color: ColorPalette.qiFlow, alpha: flowState.glowAlpha });
+    }
     drawQiFlowLines(qiFlowLayer, t, x, y, flowState);
 
     if (crop) {
@@ -1386,12 +2107,16 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     }
   }
 
+  drawFarmsteadPlotFrame(terrain, state);
+
   // —— 场所感装饰（V1-T3）：路径石 / 草丛 / 卵石 / 远雾 / 篱笆；叠在地砖之上、设施与实体之下 ——
   for (const decor of worldDecorPlacements(state.width, state.height, state.tiles, {
     hasFacilities: state.facilities.size > 0
   })) {
     paintWorldDecor(terrain, decor, OX + decor.x * TILE, OY + decor.y * TILE, TILE, ambientTimeMs);
   }
+
+  drawFarmsteadSceneObjects(layers, retainedSprites, state, assets);
 
   // —— 农庄设施：加工链从菜单入口落到具体地块 ——
   for (const placement of guardBeastPreviewPlacements(state)) {
@@ -1447,9 +2172,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const x = OX + prop.x * TILE;
     const y = OY + prop.y * TILE;
     const texture = assets?.facilities[prop.assetId.slice('facility.'.length)];
+    e.ellipse(x + TILE / 2, y + TILE - 8, 14, 4).fill({ color: ColorPalette.inkShadow, alpha: 0.24 });
+    e.roundRect(x + 6, y + TILE - 17, TILE - 12, 9, 4).stroke({ width: 1, color: ColorPalette.gilt, alpha: 0.28 });
     if (texture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:farmstead-prop:${prop.assetId}`);
-      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, prop.assetId.length * 11, 1.1, 3600), TILE - 8);
+      applyWorldSprite(sprite, texture, x + TILE / 2, y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, prop.assetId.length * 11, 0.7, 3600), TILE - 4);
       sprite.alpha = 0.9;
     } else {
       const color = prop.assetId === 'facility.storage-chest' ? ColorPalette.wood : ColorPalette.woodBrown;
@@ -1479,9 +2206,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const y = OY + tile.y * TILE;
     const color = FACILITY_COLOR[facility.kind] ?? ColorPalette.neutralGray;
     const facilityTexture = assets?.facilities[facility.kind];
+    e.ellipse(x + TILE / 2, y + TILE - 8, 15, 4).fill({ color: ColorPalette.inkShadow, alpha: 0.24 });
+    e.roundRect(x + 5, y + TILE - 17, TILE - 10, 9, 4).stroke({ width: 1, color: ColorPalette.qiFlow, alpha: 0.26 });
     if (facilityTexture) {
       const sprite = retainSceneSprite(layers, retainedSprites, `world:facility:${facility.id}`);
-      applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, facility.id, 1, 4000));
+      applyWorldSprite(sprite, facilityTexture, x + TILE / 2, y + TILE / 2 + ambientBobOffset(ambientTimeMs, facility.id, 0.7, 4000), TILE - 2);
     } else {
       e.rect(x + 7, y + 9, TILE - 15, TILE - 14).fill({ color, alpha: 0.92 });
       e.rect(x + 7, y + 9, TILE - 15, TILE - 14).stroke({ width: 1.5, color: ColorPalette.soilShadow });
@@ -1563,7 +2292,11 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       const color = placement.serviceReady ? ColorPalette.success : ColorPalette.mountainMuted;
       const alpha = placement.serviceReady ? 0.96 : 0.9;
       const serviceBadgeAssetId = locationServiceWorldBadgeAssetId(placement.serviceAssetId);
-      const serviceBadgeTexture = serviceBadgeAssetId?.startsWith('sprite.npc.') ? assets?.npcs[serviceBadgeAssetId] : assets?.itemIcons[serviceBadgeAssetId ?? ''];
+      const serviceBadgeTexture = serviceBadgeAssetId?.startsWith('sprite.npc.')
+        ? assets?.npcs[serviceBadgeAssetId]
+        : serviceBadgeAssetId?.startsWith('map-sprite.')
+          ? assets?.mapSprites?.[serviceBadgeAssetId]
+          : assets?.itemIcons[serviceBadgeAssetId ?? ''];
       if (serviceBadgeTexture) {
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).fill({ color: ColorPalette.inkPanel, alpha: 0.9 });
         e.circle(x + badgeLayout.service.x, y + badgeLayout.service.y, 7).stroke({ width: 1.2, color, alpha: 0.94 });
@@ -1594,21 +2327,18 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     const y = OY + placement.y * TILE;
     const ncx = x + TILE / 2;
     const ncy = y + TILE / 2 + 1 + ambientBobOffset(ambientTimeMs, placement.placementKey.length * 17, 1.6, 3400);
-    const npcShadow = footShadowSpec('npc');
-    e.ellipse(ncx, ncy + npcShadow.yOffset - 1, npcShadow.width / 2, npcShadow.height / 2).fill({
-      color: ColorPalette.inkShadow,
-      alpha: npcShadow.alpha
-    });
-    const npcTexture = assets?.npcs[placement.assetId];
+    const mapSpriteId = npcWorldMapSpriteAssetId(placement.assetId);
+    const npcTexture = mapSpriteId ? assets?.mapSprites?.[mapSpriteId] : undefined;
     if (npcTexture) {
+      const metrics = worldCharacterSpriteMetrics('npc');
+      const accent = placement.questReady ? ColorPalette.giltBright : placement.hasQuest ? ColorPalette.qiBright : ColorPalette.mountainMuted;
+      drawWorldCharacterReadabilityHalo(e, ncx, ncy, accent, 'npc');
+      drawWorldCharacterPedestal(e, ncx, ncy, accent, 'npc');
       const sprite = retainSceneSprite(layers, retainedSprites, `world:npc:${placement.placementKey}`);
-      applyWorldSprite(sprite, npcTexture, ncx, ncy, TILE - 8);
-      sprite.alpha = 0.92;
+      applyWorldCharacterSprite(sprite, npcTexture, ncx, ncy + metrics.yOffset, metrics.width, metrics.height);
+      sprite.alpha = 0.97;
     } else {
-      // 回退剪影：头 + 袍，避免「无名圆点」
-      e.circle(ncx, ncy - 4, 6).fill({ color: ColorPalette.paperWarm, alpha: 0.92 });
-      e.ellipse(ncx, ncy + 6, 8, 9).fill({ color: ColorPalette.grayGreen, alpha: 0.9 });
-      e.circle(ncx, ncy - 4, 6).stroke({ width: 1.2, color: ColorPalette.markerDark, alpha: 0.9 });
+      drawNpcWorldFallback(e, ncx, ncy, placement.assetId);
     }
 
     if (placement.birthday || placement.hasQuest) {
@@ -1628,13 +2358,15 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     }
   }
 
+  drawGroundItems(layers, retainedSprites, state, content, assets);
+
   // —— 玩家 + 阵眼 + 面前格光标 ——
   // 阵法覆盖区 + 阵眼
   for (const arr of arrayWorldPreviewPlacements(state)) {
     const isRod = arr.assetId === 'facility.array-eye';
     const active = arr.status === 'active';
     const color = isRod ? ColorPalette.giltBright : ColorPalette.qiBright;
-    // 覆盖圈半透明填色，让"种田即布防"的防护范围可见
+    // 覆盖圈半透明填色，让"种田即布阵"的阵法范围可见
     for (const tid of arr.coverageTileIds) {
       const ct = state.tiles[tid];
       if (!ct) continue;
@@ -1688,46 +2420,87 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
       }
     }
   }
-  const px = OX + p.position.x * TILE + TILE / 2;
-  const py = OY + p.position.y * TILE + TILE / 2 + ambientBobOffset(ambientTimeMs, 1, 1, 2400);
+  const playerMovement = options?.playerMovement ?? null;
+  const moving = Boolean(playerMovement?.moving) && !layers.reducedMotion;
+  const playerGridX = playerMovement?.x ?? p.position.x;
+  const playerGridY = playerMovement?.y ?? p.position.y;
+  const walkLift = moving ? -Math.sin((playerMovement?.progress ?? 1) * Math.PI) * 4.2 : 0;
+  const walkSway = moving ? Math.sin((playerMovement?.progress ?? 1) * Math.PI * 2) * 1.4 : 0;
+  const lateralSway = p.facing === 'up' || p.facing === 'down' ? walkSway : 0;
+  const verticalSway = p.facing === 'left' || p.facing === 'right' ? walkSway * 0.35 : 0;
+  const px = OX + playerGridX * TILE + TILE / 2 + lateralSway;
+  const py = OY + playerGridY * TILE + TILE / 2 + ambientBobOffset(ambientTimeMs, 1, moving ? 0.35 : 1, 2400) + walkLift + verticalSway;
   const facing = p.facing as Facing4;
-  const playerShadow = footShadowSpec('player');
-  e.ellipse(px, py + playerShadow.yOffset, playerShadow.width / 2, playerShadow.height / 2).fill({
-    color: ColorPalette.inkShadow,
-    alpha: playerShadow.alpha
-  });
-  // V1-T5：暖袍/肤色条带 + 可读 tint，避免 assets.player 纯黑剪影（ISSUE-001）
-  const presence = playerPresenceOverlay(facing);
-  for (const band of presence.bands) {
-    if (band.layer !== 'under') continue;
-    e.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha });
+  const walkCycle = characterWalkCycle(facing, playerMovement?.progress ?? 1, moving, layers.reducedMotion);
+  if (moving && playerMovement?.from && playerMovement.to) {
+    const fromX = OX + playerMovement.from.x * TILE + TILE / 2;
+    const fromY = OY + playerMovement.from.y * TILE + TILE / 2;
+    const toX = OX + playerMovement.to.x * TILE + TILE / 2;
+    const toY = OY + playerMovement.to.y * TILE + TILE / 2;
+    e.moveTo(fromX, fromY + 15).lineTo(toX, toY + 15).stroke({ width: 2.4, color: ColorPalette.giltBright, alpha: 0.14 });
   }
-  if (assets?.player) {
+  const playerWorldTexture = assets?.mapSprites?.[playerWorldMapSpriteAssetId()];
+  if (playerWorldTexture) {
+    const metrics = worldCharacterSpriteMetrics('player');
+    const presence = playerPresenceOverlay(facing);
+    drawWorldCharacterReadabilityHalo(e, px, py, ColorPalette.giltBright, 'player', walkCycle);
+    drawWorldCharacterPedestal(e, px, py, ColorPalette.giltBright, 'player', walkCycle);
+    for (const band of presence.bands) {
+      if (band.layer !== 'under') continue;
+      e.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha * 0.46 });
+    }
+    drawPlayerWalkFootfalls(character, px, py, walkCycle, moving);
     const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
-    applyWorldSprite(sprite, assets.player, px, py, TILE);
+    applyWorldCharacterSprite(sprite, playerWorldTexture, px, py + metrics.yOffset, metrics.width, metrics.height);
     // 左右朝向镜像；上下保留原图 + 箭头指示
     const sx = Math.abs(sprite.scale.x) || 1;
-    sprite.scale.x = sx * facingScaleX(facing);
-    sprite.tint = presence.tint;
-    // 半透明墨线叠在暖底下，让服色透出（纯黑像素无法靠 tint 变色）
-    sprite.alpha = presence.spriteAlpha;
+    const sy = Math.abs(sprite.scale.y) || 1;
+    sprite.scale.x = sx * facingScaleX(facing) * walkCycle.bodyScaleX;
+    sprite.scale.y = sy * walkCycle.bodyScaleY;
+    sprite.rotation = walkCycle.bodyTilt;
+    sprite.alpha = PLAYER_MAP_SPRITE_ALPHA;
+    for (const band of presence.bands) {
+      if (band.layer !== 'over') continue;
+      character.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha * 0.72 });
+    }
+    character.circle(px, py - 11, 12).stroke({ width: 1.2, color: ColorPalette.playerGilt, alpha: 0.54 });
   } else {
-    // 回退：under 条带已是头+袍；补描边增强轮廓
-    e.circle(px, py - 5, 7).stroke({ width: 1.2, color: ColorPalette.playerOutline, alpha: 0.85 });
-  }
-  for (const band of presence.bands) {
-    if (band.layer !== 'over') continue;
-    e.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha });
+    drawWorldCharacterPedestal(e, px, py, ColorPalette.giltBright, 'player', walkCycle);
+    drawPlayerWalkFootfalls(character, px, py, walkCycle, moving);
+    // V1-T5：旧贴图加载失败时才使用色带兜底，避免回退为纯黑剪影。
+    const presence = playerPresenceOverlay(facing);
+    for (const band of presence.bands) {
+      if (band.layer !== 'under') continue;
+      e.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha });
+    }
+    if (assets?.player) {
+      const sprite = retainSceneSprite(layers, retainedSprites, 'world:player');
+      applyWorldSprite(sprite, assets.player, px, py, TILE);
+      const sx = Math.abs(sprite.scale.x) || 1;
+      const sy = Math.abs(sprite.scale.y) || 1;
+      sprite.scale.x = sx * facingScaleX(facing) * walkCycle.bodyScaleX;
+      sprite.scale.y = sy * walkCycle.bodyScaleY;
+      sprite.rotation = walkCycle.bodyTilt;
+      sprite.tint = presence.tint;
+      sprite.alpha = presence.spriteAlpha;
+    } else {
+      // 回退：under 条带已是头+袍；补描边增强轮廓
+      e.circle(px, py - 5, 7).stroke({ width: 1.2, color: ColorPalette.playerOutline, alpha: 0.85 });
+    }
+    for (const band of presence.bands) {
+      if (band.layer !== 'over') continue;
+      character.ellipse(px + band.ox, py + band.oy, band.rx, band.ry).fill({ color: band.color, alpha: band.alpha });
+    }
   }
   // 朝向指示（尖头，比白点更易扫读）
-  const tip = facingIndicatorOffset(facing, 13);
-  const base = facingIndicatorOffset(facing, 5);
+  const tip = facingIndicatorOffset(facing, TILE * 0.95);
+  const base = facingIndicatorOffset(facing, TILE * 0.72);
   if (facing === 'left' || facing === 'right') {
-    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).fill({ color: ColorPalette.giltBright, alpha: 0.95 });
-    e.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).stroke({ width: 1, color: ColorPalette.seedDark, alpha: 0.75 });
+    character.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).fill({ color: ColorPalette.giltBright, alpha: 0.95 });
+    character.poly([px + tip.x, py + tip.y, px + base.x, py - 4, px + base.x, py + 4]).stroke({ width: 1, color: ColorPalette.seedDark, alpha: 0.75 });
   } else {
-    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).fill({ color: ColorPalette.giltBright, alpha: 0.95 });
-    e.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).stroke({ width: 1, color: ColorPalette.seedDark, alpha: 0.75 });
+    character.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).fill({ color: ColorPalette.giltBright, alpha: 0.95 });
+    character.poly([px + tip.x, py + tip.y, px - 4, py + base.y, px + 4, py + base.y]).stroke({ width: 1, color: ColorPalette.seedDark, alpha: 0.75 });
   }
   finishRetainedWorldFrame(layers, retainedSprites);
 
@@ -1767,12 +2540,10 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   setTextIfChanged(layers.barLabels[1]!, `丹毒 ${pp}`);
   setTextIfChanged(layers.barLabels[2]!, `体魄 ${Math.round(cultPct * 100)}%`);
   setTextIfChanged(layers.barLabels[3]!, `体力 ${Math.round(staPct * 100)}%`);
-  const ev = state.activeEvent ? `　【天象·${state.activeEvent.displayName} ${state.activeEvent.daysLeft}日】` : '';
-  const surge = state.beastSurge ? `　⚠妖兽潮 ${state.beastSurge.daysLeft}日` : '';
-  const stayingGoal = getPrimaryStayingWorldGoal(state);
-  const victory = state.postAscension.mode === 'stayed-in-world' && state.postAscension.victoryRecorded ? '　|　胜后留世存档' : '';
-  const stayingText = stayingGoal ? `　|　留世目标：${stayingGoal.title}（${stayingGoal.progressLabel}）` : '';
-  setTextIfChanged(layers.hud, `第 ${state.day} 日 · ${t('ui.hud.season.' + state.season)} · 第 ${state.year} 年　|　` + `阶段：${stageNames[state.player.stage] ?? state.player.stage}　寿元：${p.lifespanRemainingDays ?? '?'}日　炉温：${layers.furnaceHeat}${ev}${surge}${victory}${stayingText}`);
+  const eventChip = state.activeEvent ? `　天象 ${state.activeEvent.displayName} ${state.activeEvent.daysLeft}日` : '';
+  const surgeChip = state.beastSurge ? `　妖兽潮 ${state.beastSurge.daysLeft}日` : '';
+  const stayedChip = state.postAscension.mode === 'stayed-in-world' ? '　留世' : '';
+  setTextIfChanged(layers.hud, `第 ${state.day} 日 · ${t('ui.hud.season.' + state.season)} · ${stageNames[state.player.stage] ?? state.player.stage} · 寿元 ${p.lifespanRemainingDays ?? '?'}日${eventChip}${surgeChip}${stayedChip}`);
 
   // —— 结局遮罩 ——
   if (state.gameOver) {
@@ -1780,6 +2551,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     layers.tiles.visible = false;
     layers.entities.visible = false;
     layers.sceneSprites.visible = false;
+    layers.characterOverlay.visible = false;
     layers.npcMarkers.visible = false;
     layers.bars.visible = false;
     for (const lbl of layers.barLabels) lbl.visible = false;
@@ -1793,6 +2565,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.sceneSprites.visible = true;
+    layers.characterOverlay.visible = true;
     layers.npcMarkers.visible = true;
     layers.bars.visible = true;
     for (const lbl of layers.barLabels) lbl.visible = true;
@@ -1807,6 +2580,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
     layers.tiles.visible = true;
     layers.entities.visible = true;
     layers.sceneSprites.visible = true;
+    layers.characterOverlay.visible = true;
     layers.npcMarkers.visible = true;
     layers.bars.visible = true;
     for (const lbl of layers.barLabels) lbl.visible = true;
@@ -1844,21 +2618,23 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   advanceWorldShake(layers);
 }
 
-export function setToast(layers: RenderLayers, msg: string, texture?: Texture): void {
-  setTextIfChanged(layers.toast, msg);
+export function setToast(layers: RenderLayers, msg: string, texture?: Texture, profile: ToastLayoutProfile = 'desktop'): void {
   layers.toastIconBg.clear();
+  const layout = toastLayoutForText(msg, Boolean(texture), profile);
+  layers.toast.x = layout.textX;
+  layers.toast.y = layout.textY;
+  layers.toast.style.wordWrapWidth = layout.textWidth;
+  setTextIfChanged(layers.toast, msg);
+  layers.toastIconBg.roundRect(layout.bgX, layout.bgY, layout.bgWidth, layout.bgHeight, 7).fill({ color: ColorPalette.inkNearBlack, alpha: 0.78 });
+  layers.toastIconBg.roundRect(layout.bgX, layout.bgY, layout.bgWidth, layout.bgHeight, 7).stroke({ width: 1, color: ColorPalette.badgeGold, alpha: 0.7 });
   if (!texture) {
-    layers.toast.x = 10;
-    layers.toast.style.wordWrapWidth = SCREEN_W - 20;
     layers.toastIcon.visible = false;
     return;
   }
 
-  layers.toast.x = 46;
-  layers.toast.style.wordWrapWidth = SCREEN_W - 56;
-  layers.toastIconBg.roundRect(10, SCREEN_H - 90, 28, 28, 6).fill({ color: ColorPalette.inkPanel, alpha: 0.96 });
-  layers.toastIconBg.roundRect(10, SCREEN_H - 90, 28, 28, 6).stroke({ width: 1.4, color: ColorPalette.badgeGold, alpha: 0.94 });
-  applyPanelSprite(layers.toastIcon, texture, 14, SCREEN_H - 86, 20);
+  layers.toastIconBg.roundRect(14, layout.textY - 2, 28, 28, 6).fill({ color: ColorPalette.inkPanel, alpha: 0.96 });
+  layers.toastIconBg.roundRect(14, layout.textY - 2, 28, 28, 6).stroke({ width: 1.4, color: ColorPalette.badgeGold, alpha: 0.94 });
+  applyPanelSprite(layers.toastIcon, texture, 14, layout.textY + 2, 20);
   layers.toastIcon.visible = true;
 }
 
@@ -1955,11 +2731,15 @@ export function drawLocationPreview(layers: RenderLayers, title: string, details
   const bg = layers.locationPreviewBg;
   bg.clear();
   const imageOffset = texture ? 112 : 0;
+  const textWidth = texture ? 144 : 256;
   layers.locationPreviewText.x = 664 + imageOffset;
   layers.locationPreviewText.y = 86;
-  layers.locationPreviewText.style.wordWrapWidth = texture ? 144 : 256;
-  setTextIfChanged(layers.locationPreviewText, `${title}\n\n${details}`);
-  const height = locationPreviewBoxHeight(layers.locationPreviewText.height);
+  layers.locationPreviewText.style.wordWrapWidth = textWidth;
+  let previewText = locationPreviewTextContent(title, details, textWidth);
+  setTextIfChanged(layers.locationPreviewText, previewText);
+  let textHeight = locationPreviewEstimatedTextHeight(previewText, textWidth);
+  if (typeof document !== 'undefined') textHeight = fitMeasuredLocationPreviewText(layers.locationPreviewText, previewText);
+  const height = locationPreviewBoxHeight(textHeight);
   bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).fill({ color: ColorPalette.inkPanel, alpha: 0.94 });
   bg.roundRect(LOCATION_PREVIEW_BOX.x, LOCATION_PREVIEW_BOX.y, LOCATION_PREVIEW_BOX.width, height, LOCATION_PREVIEW_BOX.radius).stroke({ width: 1.5, color: ColorPalette.mountainHighlight });
   bg.roundRect(664, 194, 88, 66, 6).fill({ color: ColorPalette.badgeDark, alpha: 0.9 });
@@ -2045,6 +2825,6 @@ export function drawPauseOverlay(layers: RenderLayers): void {
   layers.dialogue.x = DIALOGUE_LAYOUT_LIMITS.x + DIALOGUE_LAYOUT_LIMITS.paddingX;
   layers.dialogue.y = pauseY + DIALOGUE_LAYOUT_LIMITS.paddingY;
   layers.dialogue.style.wordWrapWidth = 560;
-  setTextIfChanged(layers.dialogue, '已暂停\n\nEsc / P 继续\nTab 背包，Shift+M 农庄操作，Shift+Tab 地点目录');
+  setTextIfChanged(layers.dialogue, '已暂停\n\nEsc / P 继续\n下方按钮打开各系统，B 打开行囊');
   layers.dialogue.visible = true;
 }

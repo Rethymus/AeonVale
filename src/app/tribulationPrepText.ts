@@ -18,7 +18,7 @@ export function tribulationPrepStatusLine(state: GameState): string {
   const pillReady = hasWardPillReady(state);
   const arrayReady = activeArrays >= 2;
   const prepPercent = Math.round(computePrepScore(state) * 100);
-  const pillStatus = pillReady ? '丹药已备' : '缺避雷丹';
+  const pillStatus = pillReady ? '丹药已备' : '缺承雷丹';
   const arrayStatus = arrayReady ? `阵法已成(${activeArrays}/2)` : `阵法未成(${activeArrays}/2)`;
 
   if (pillReady && arrayReady) {
@@ -28,9 +28,9 @@ export function tribulationPrepStatusLine(state: GameState): string {
     return `备劫：${pillStatus}｜${arrayStatus}｜准备度${prepPercent}%｜先补引雷/绝缘阵再引劫。`;
   }
   if (arrayReady) {
-    return `备劫：${pillStatus}｜${arrayStatus}｜准备度${prepPercent}%｜先炼或服避雷丹再引劫。`;
+    return `备劫：${pillStatus}｜${arrayStatus}｜准备度${prepPercent}%｜先炼或服承雷丹再引劫。`;
   }
-  return `备劫：${pillStatus}｜${arrayStatus}｜准备度${prepPercent}%｜先补避雷丹与两座阵法。`;
+  return `备劫：${pillStatus}｜${arrayStatus}｜准备度${prepPercent}%｜先补承雷丹与两座阵法。`;
 }
 
 export function tribulationPrepFocusReason(state: GameState): string {

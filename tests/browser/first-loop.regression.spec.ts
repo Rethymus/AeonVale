@@ -1,7 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
-import { clearIntroDialogue, gameDebugSnapshot, openGame, type AeonDebugSnapshot } from './openGame';
+import { clearIntroDialogue, gameDebugSnapshot, openGame as openProductGame, type AeonDebugSnapshot } from './openGame';
 
 type DebugPredicate = (debug: AeonDebugSnapshot) => boolean;
+
+async function openGame(page: Page): Promise<void> {
+  await openProductGame(page, { legacyShortcuts: true });
+}
 
 async function focusGame(page: Page): Promise<void> {
   await page.evaluate(() => {

@@ -93,7 +93,7 @@ describe('exploration toast', () => {
 
   it('keeps tribulation blocked failures on the relevant thread art', () => {
     expect(tribulationBlockedToastPresentation('purple-omen')).toEqual({
-      message: '紫雷前兆未散，还需 7 日｜先补避雷丹、阵法与药田库存',
+      message: '紫雷前兆未散，还需 7 日｜先补承雷丹、阵法与药田库存',
       assetId: 'loc.array-shed'
     });
     expect(tribulationBlockedToastPresentation('body-not-ready')).toEqual({
@@ -104,7 +104,7 @@ describe('exploration toast', () => {
 
   it('adds concrete next steps to tribulation blocked feedback when runtime state is available', () => {
     expect(tribulationBlockedToastPresentation('purple-omen', { daysLeft: 3 })).toEqual({
-      message: '紫雷前兆未散，还需 3 日｜先补避雷丹、阵法与药田库存',
+      message: '紫雷前兆未散，还需 3 日｜先补承雷丹、阵法与药田库存',
       assetId: 'loc.array-shed'
     });
 

@@ -32,6 +32,21 @@ const STYLE = 'Authentic traditional Chinese sumi-e ink wash painting (水墨画
 /** 与代码 ending 对齐：src 中 'ascension' / 'lifespan-death' / 'poison-death'。 */
 const CGS = [
   {
+    id: 'cg.act1.duel-v1',
+    prompt:
+      `Two distant cultivators fighting above a humble mountain-valley farm, lightning and sword-light tearing the sky while an ordinary young farmer stands tiny and powerless in the field below, the first shock that breaks his mortal life. ${STYLE}`
+  },
+  {
+    id: 'cg.act1.relic-v1',
+    prompt:
+      `After an immortal duel, an ordinary young farmer kneels in a ruined field and discovers a blackened storage ring and broken jade token among grey tribulation ash, grief turning into dangerous hope. ${STYLE}`
+  },
+  {
+    id: 'cg.act1.scroll-v1',
+    prompt:
+      `Inside a half-ruined mountain hut at night, an ordinary young farmer holds a blackened cultivation scroll glowing with contained lightning, fear becoming resolve as he chooses to draw thunder into his body to repair the empty spirit root that cannot retain qi. ${STYLE}`
+  },
+  {
     id: 'cg.ending-ascension',
     prompt: `A lone cultivator in flowing white robes ascending upward through swirling celestial clouds, beams of warm golden light breaking through, transcendent and serene. ${STYLE}`
   },
@@ -51,7 +66,7 @@ async function genOne(prompt) {
   const body = JSON.stringify({ model: MODEL, prompt });
   for (let attempt = 1; attempt <= 4; attempt++) {
     const ctrl = new AbortController();
-    const to = setTimeout(() => ctrl.abort, 180000);
+    const to = setTimeout(() => ctrl.abort(), 180000);
     try {
       const r = await fetch(`${BASE}/images/generations`, {
         method: 'POST',
@@ -59,7 +74,7 @@ async function genOne(prompt) {
         body,
         signal: ctrl.signal
       });
-      const j = await r.json.catch(() => ({}));
+      const j = await r.json().catch(() => ({}));
       clearTimeout(to);
       if (!r.ok) {
         console.error(` 尝试 ${attempt} HTTP ${r.status}: ${(j?.error?.message ?? JSON.stringify(j)).slice(0, 140)}`);

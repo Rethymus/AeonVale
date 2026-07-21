@@ -58,7 +58,7 @@ describe('dialogue preview helper', () => {
       )
     ).toMatchObject({
       id: 'encounter-tea-shed-npc.tea-shed-elder-3',
-      assetId: 'sprite.npc.tea-shed-elder'
+      assetId: 'map-sprite.tea-shed-elder-v1'
     });
   });
 
@@ -79,7 +79,7 @@ describe('dialogue preview helper', () => {
     ).toMatchObject({
       id: 'herb-gatherer-160',
       lines: ['采药女·药性护骨', '她开始教你辨别哪些灵草适合天劫前温骨。', '现在可做：去露根药圃补露根草和雾蕨，再把体魄练到 1200。'],
-      assetId: 'sprite.npc.herb-gatherer'
+      assetId: 'portrait.avatar.herb-gatherer-v1'
     });
   });
 
@@ -96,7 +96,7 @@ describe('dialogue preview helper', () => {
         },
         npcNameToId
       ).assetId
-    ).toBe('sprite.npc.array-smith');
+    ).toBe('portrait.avatar.array-smith-lu-v1');
   });
 
   it('degrades cleanly when neither npc id nor name mapping is available', () => {
@@ -132,6 +132,6 @@ describe('dialogue preview helper', () => {
         },
         npcNameToId
       ).assetId
-    ).toBe('sprite.npc.tea-shed-elder');
+    ).toBe('map-sprite.tea-shed-elder-v1');
   });
 });

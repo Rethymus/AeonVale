@@ -24,12 +24,12 @@ export interface NpcPanelToastPresentation {
 }
 
 const NPC_QUEST_OBJECTIVE_ASSET_IDS: Readonly<Record<string, string>> = {
-  'npc-quest.herb-gatherer-bone-guard': 'sprite.npc.herb-gatherer',
-  'npc-quest.herb-gatherer-thunder-brew': 'sprite.npc.herb-gatherer',
-  'npc-quest.array-smith-circle-step': 'sprite.npc.array-smith',
-  'npc-quest.array-smith-ruin-proof': 'sprite.npc.array-smith',
-  'npc-quest.wandering-cultivator-market-path': 'sprite.npc.wandering-cultivator',
-  'npc-quest.wandering-cultivator-field-watch': 'sprite.npc.wandering-cultivator'
+  'npc-quest.herb-gatherer-bone-guard': 'portrait.avatar.herb-gatherer-v1',
+  'npc-quest.herb-gatherer-thunder-brew': 'portrait.avatar.herb-gatherer-v1',
+  'npc-quest.array-smith-circle-step': 'portrait.avatar.array-smith-lu-v1',
+  'npc-quest.array-smith-ruin-proof': 'portrait.avatar.array-smith-lu-v1',
+  'npc-quest.wandering-cultivator-market-path': 'portrait.avatar.liaochen-v1',
+  'npc-quest.wandering-cultivator-field-watch': 'portrait.avatar.liaochen-v1'
 };
 
 function carriedInventorySlots(state: GameState): number {
@@ -106,8 +106,8 @@ export function farmActionMenuPreview(kind: FarmActionKind, state: GameState, ct
   switch (kind) {
     case 'build':
       return {
-        title: '建造',
-        details: `农庄建设\n当前扩建 ${farmExpansionTier(state)} 阶\n铺开炼丹、布阵与备劫设施位`,
+        title: '建造/布阵',
+        details: `农庄建设\n当前扩建 ${farmExpansionTier(state)} 阶\n建造加工设施，或点地图目标格布设引雷阵、绝缘阵`,
         assetId: farmsteadRootContextAssetId(state)
       };
     case 'facility-collect': {
@@ -190,10 +190,9 @@ export function farmActionMenuPreview(kind: FarmActionKind, state: GameState, ct
 
 export function farmActionMenuToastPresentation(kind: FarmActionKind, indexLabel: string, confirmHint: string, state: GameState, ctx: SimContext): ActionMenuToastPresentation {
   const preview = farmActionMenuPreview(kind, state, ctx);
-  // 首行固定含「数字1-0 / Esc」，即便 confirmHint 省略返回提示也能自洽（player audit P2）
   const escHint = /Esc/.test(confirmHint) ? confirmHint : `${confirmHint}·Esc返回`;
   return {
-    message: `农庄操作${indexLabel}：${preview.title}｜数字1-0直达·Tab切换·${escHint}`,
+    message: `农庄操作${indexLabel}：${preview.title}｜点选项目进入·${escHint}`,
     assetId: preview.assetId
   };
 }
@@ -206,19 +205,19 @@ export function npcActionMenuPreview(mode: 'browse' | 'gift' | 'quest', currentN
       return {
         title: '人物浏览',
         details: '人物社交\n查看今日行程、好感与委托线索\n为拜访、赠礼与委托做准备',
-        assetId: currentNpcPortrait ?? 'sprite.npc.wandering-cultivator'
+        assetId: currentNpcPortrait ?? 'portrait.avatar.liaochen-v1'
       };
     case 'gift':
       return {
         title: '赠礼',
         details: '人物社交\n按偏好送出背包礼物\n提高好感并推进后续事件',
-        assetId: currentNpcPortrait ?? 'sprite.npc.herb-gatherer'
+        assetId: currentNpcPortrait ?? 'portrait.avatar.herb-gatherer-v1'
       };
     case 'quest':
       return {
         title: '人物委托',
         details: '人物社交\n核对个人委托进度与奖励\n完成后可推进角色支线',
-        assetId: currentNpcPortrait ?? 'sprite.npc.array-smith'
+        assetId: currentNpcPortrait ?? 'portrait.avatar.array-smith-lu-v1'
       };
   }
 }
@@ -226,7 +225,7 @@ export function npcActionMenuPreview(mode: 'browse' | 'gift' | 'quest', currentN
 export function npcActionMenuToastPresentation(mode: 'browse' | 'gift' | 'quest', indexLabel: string, confirmHint: string, currentNpcId?: string | null): ActionMenuToastPresentation {
   const preview = npcActionMenuPreview(mode, currentNpcId);
   return {
-    message: `人物操作${indexLabel}：${preview.title}｜数字1-3直达·Tab切换·${confirmHint}`,
+    message: `人物操作${indexLabel}：${preview.title}｜点选互动·${confirmHint}`,
     assetId: preview.assetId
   };
 }
@@ -247,7 +246,7 @@ export function npcBrowsePanelPreview(npc: { id: string; displayName: string; ro
 export function npcBrowseToastPresentation(npc: { id: string; displayName: string; role: string } & RelationshipState, schedule: NpcDailySchedule | null, quest: NpcQuestStatus | null, indexLabel: string, giftName: string | null = null): NpcPanelToastPresentation {
   const preview = npcBrowsePanelPreview(npc, schedule, quest, giftName);
   return {
-    message: `人物${indexLabel}：${preview.title}｜Tab切换人物·Esc返回`,
+    message: `人物${indexLabel}：${preview.title}｜点选人物查看·Esc返回`,
     assetId: preview.assetId
   };
 }
@@ -255,7 +254,7 @@ export function npcBrowseToastPresentation(npc: { id: string; displayName: strin
 export function npcUnavailableToastPresentation(): NpcPanelToastPresentation {
   return {
     message: '今日暂无可访人物｜先按农庄与地点动线推进',
-    assetId: 'sprite.npc.wandering-cultivator'
+    assetId: 'portrait.avatar.liaochen-v1'
   };
 }
 
@@ -272,7 +271,7 @@ export function npcGiftPanelPreview(npc: { id: string; displayName: string }, gi
 export function npcGiftToastPresentation(npc: { id: string; displayName: string }, giftName: string | null, birthday: boolean, indexLabel: string, confirmHint: string, giftItemId?: string | null, content?: ContentRegistry): NpcPanelToastPresentation {
   const preview = npcGiftPanelPreview(npc, giftName, birthday, giftItemId);
   return {
-    message: `赠礼${indexLabel}：${npc.displayName}｜${giftName ?? '暂无合适礼物'}｜Tab切换人物·${confirmHint}`,
+    message: `赠礼${indexLabel}：${npc.displayName}｜${giftName ?? '暂无合适礼物'}｜点选人物·${confirmHint}`,
     assetId: preview.assetId
   };
 }
@@ -306,7 +305,7 @@ export function npcQuestPanelPreview(npc: { displayName: string }, quest: NpcQue
 export function npcQuestToastPresentation(npc: { displayName: string }, quest: NpcQuestStatus | null, indexLabel: string, confirmHint: string, content?: ContentRegistry): NpcPanelToastPresentation {
   const preview = npcQuestPanelPreview(npc, quest, content);
   return {
-    message: `人物委托${indexLabel}：${npc.displayName}｜${quest ? `${preview.title}${quest.completed ? '｜可领取' : '｜未完成'}` : '暂无人物委托'}｜Tab切换人物·${confirmHint}`,
+    message: `人物委托${indexLabel}：${npc.displayName}｜${quest ? `${preview.title}${quest.completed ? '｜可领取' : '｜未完成'}` : '暂无人物委托'}｜点选人物·${confirmHint}`,
     assetId: preview.assetId
   };
 }

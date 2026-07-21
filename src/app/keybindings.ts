@@ -42,13 +42,14 @@ export type PageDownShortcutAction = 'claim-mainline-quest' | 'confirm-commissio
 
 export type CommandShortcutAction = 'toggle-pause' | 'legacy-confirm' | 'open-upgrade-panel' | 'open-npc-browse' | 'open-npc-gift' | 'open-npc-quest' | 'open-festival-panel' | 'show-calendar-summary';
 
-export type WorldActionShortcutAction = 'seed-from-hotbar' | 'water-front-tile' | 'fertilize-front-tile' | 'toggle-cultivation-panel' | 'harvest-front-tile' | 'tribulation' | 'hunt-beast' | 'feed-guard-beast' | 'train-push-up' | 'train-sit-up' | 'train-squat' | 'train-long-run' | 'brew-selected-recipe' | 'brew-bone-pill' | 'brew-detox-pill' | 'eat-ward-pill' | 'eat-bone-pill' | 'eat-detox-pill' | 'place-lightning-rod-array' | 'place-insulation-array' | 'toggle-inventory' | 'toggle-furnace' | 'cycle-recipe' | 'decrease-furnace-heat' | 'increase-furnace-heat';
+export type WorldActionShortcutAction = 'seed-from-hotbar' | 'water-front-tile' | 'fertilize-front-tile' | 'toggle-cultivation-panel' | 'harvest-front-tile' | 'tribulation' | 'hunt-beast' | 'feed-guard-beast' | 'train-push-up' | 'train-sit-up' | 'train-squat' | 'train-long-run' | 'brew-bone-pill' | 'brew-detox-pill' | 'eat-ward-pill' | 'eat-bone-pill' | 'eat-detox-pill' | 'place-lightning-rod-array' | 'place-insulation-array' | 'toggle-inventory' | 'toggle-furnace' | 'cycle-recipe' | 'decrease-furnace-heat' | 'increase-furnace-heat';
 
 export type LegacyBuildShortcutAction = 'open-furnace-build-menu' | 'preselect-build';
 
-export function shouldPreserveInteractionPanelForKey(options: { key: string; isModifierOnly: boolean; farmActionDigitActive: boolean; npcActionDigitActive: boolean; primaryInteractionShortcut: PrimaryInteractionShortcutAction | null; enterShortcut: EnterShortcutAction | null; escapeShortcut: EscapeShortcutAction | null; tabShortcut: TabShortcutAction | null; pageDownShortcut: PageDownShortcutAction | null; commandShortcut: CommandShortcutAction | null; farmMenuShortcut?: FarmMenuShortcutAction | null }): boolean {
+export function shouldPreserveInteractionPanelForKey(options: { key: string; isModifierOnly: boolean; farmActionDigitActive: boolean; npcActionDigitActive: boolean; primaryInteractionShortcut: PrimaryInteractionShortcutAction | null; enterShortcut: EnterShortcutAction | null; escapeShortcut: EscapeShortcutAction | null; tabShortcut: TabShortcutAction | null; pageDownShortcut: PageDownShortcutAction | null; commandShortcut: CommandShortcutAction | null; farmMenuShortcut?: FarmMenuShortcutAction | null; quickLocationShortcut?: QuickLocationShortcut | null }): boolean {
   if (options.isModifierOnly) return true;
   if (options.tabShortcut != null) return true;
+  if (options.quickLocationShortcut != null) return true;
   if (options.enterShortcut === 'confirm-interaction-panel') return true;
   if (options.escapeShortcut === 'clear-interaction-panel') return true;
   if (options.primaryInteractionShortcut === 'default-confirm') return true;
@@ -59,9 +60,10 @@ export function shouldPreserveInteractionPanelForKey(options: { key: string; isM
   return false;
 }
 
-export function shouldPreserveLocationSelectionForKey(options: { key: string; isModifierOnly: boolean; locationDigitActive: boolean; locationServiceDigitActive: boolean; primaryInteractionShortcut: PrimaryInteractionShortcutAction | null; enterShortcut: EnterShortcutAction | null; escapeShortcut: EscapeShortcutAction | null; tabShortcut: TabShortcutAction | null; commandShortcut: CommandShortcutAction | null }): boolean {
+export function shouldPreserveLocationSelectionForKey(options: { key: string; isModifierOnly: boolean; locationDigitActive: boolean; locationServiceDigitActive: boolean; primaryInteractionShortcut: PrimaryInteractionShortcutAction | null; enterShortcut: EnterShortcutAction | null; escapeShortcut: EscapeShortcutAction | null; tabShortcut: TabShortcutAction | null; commandShortcut: CommandShortcutAction | null; quickLocationShortcut?: QuickLocationShortcut | null }): boolean {
   if (options.isModifierOnly) return true;
   if (options.tabShortcut != null) return true;
+  if (options.quickLocationShortcut != null) return true;
   if (options.enterShortcut === 'confirm-location-service') return true;
   if (options.escapeShortcut === 'clear-location-selection') return true;
   if (options.primaryInteractionShortcut === 'default-confirm') return true;
@@ -264,7 +266,7 @@ export function resolveWorldActionShortcut(key: string, shiftKey: boolean): Worl
   if (key === '@') return 'train-sit-up';
   if (key === '#') return 'train-squat';
   if (key === ')') return 'train-long-run';
-  if (key === 'b') return 'brew-selected-recipe';
+  if (key === 'b' || key === 'B') return 'toggle-inventory';
   if (key === 'n') return 'brew-bone-pill';
   if (key === 'm') return 'brew-detox-pill';
   if (key === 'h') return 'eat-ward-pill';

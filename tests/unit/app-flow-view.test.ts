@@ -34,7 +34,7 @@ class FakeElement implements AppFlowViewElement {
   }
 
   querySelectorAll(selector: string): ArrayLike<AppFlowViewElement> {
-    if (selector === '[data-flow-focusable]') return this.children.filter(child => !child.disabled && child.getAttribute('data-flow-focusable') === 'true');
+    if (selector.includes('[data-flow-focusable]') || selector.includes('button')) return this.children.filter(child => !child.disabled && child.getAttribute('data-flow-focusable') === 'true');
     return [];
   }
 
@@ -147,7 +147,7 @@ class FakeRoot implements AppFlowViewRoot, AppFlowViewEventTarget {
   }
 }
 
-const SURFACES = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'alchemy', 'tribulation', 'aftermath', 'ending', 'portrait-blocked'] as const;
+const SURFACES = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'portrait-blocked'] as const;
 
 function createFixture() {
   const root = new FakeRoot();
@@ -169,11 +169,9 @@ function createFixture() {
     settingsClose: root.addButton('settings', 'flow-settings-close', 'close-overlay'),
     pauseClose: root.addButton('pause', 'flow-pause-resume', 'close-overlay'),
     inventoryClose: root.addButton('inventory', 'flow-inventory-close', 'close-overlay'),
+    inventoryFallback: root.addFocusable('inventory', 'flow-inventory-panel'),
     mapClose: root.addButton('map', 'flow-map-close', 'close-overlay'),
     cultivationClose: root.addButton('cultivation', 'flow-cultivation-close', 'close-overlay'),
-    alchemyHeat: root.addFocusable('alchemy', 'flow-alchemy-heat'),
-    alchemyPrimary: root.addFocusable('alchemy', 'flow-alchemy-primary'),
-    alchemyClose: root.addButton('alchemy', 'flow-alchemy-return', 'close-alchemy'),
     tribulationPrimary: root.addFocusable('tribulation', 'flow-tribulation-primary'),
     tribulationPause: root.addButton('tribulation', 'flow-tribulation-pause', 'open-pause'),
     aftermathContinue: root.addButton('aftermath', 'flow-aftermath-continue', 'continue-aftermath'),
@@ -199,7 +197,6 @@ describe('app flow DOM presentation', () => {
       [runFlow([{ type: 'boot-ready' }]), 'title'],
       [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }]), 'prologue'],
       [runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]), 'world'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'open-alchemy' }]), 'alchemy'],
       [runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }]), 'tribulation'],
       [runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }, { type: 'finish-tribulation' }]), 'aftermath'],
       [runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'show-ending' }]), 'ending'],
@@ -280,6 +277,23 @@ describe('app flow DOM presentation', () => {
     controller.destroy();
   });
 
+  it('keeps the world rendered as an inert backdrop behind inventory', () => {
+    const { root, buttons } = createFixture();
+    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
+
+    controller.dispatch({ type: 'boot-ready' });
+    buttons.continueGame.emit('click');
+    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+
+    expect(visibleSurfaces(root)).toEqual(['world', 'inventory']);
+    expect(root.surfaces.get('world')?.inert).toBe(true);
+    expect(root.surfaces.get('world')?.getAttribute('aria-hidden')).toBe('true');
+    expect(root.surfaces.get('world')?.getAttribute('data-flow-backdrop')).toBe('true');
+    expect(root.surfaces.get('inventory')?.inert).toBe(false);
+    expect(root.surfaces.get('inventory')?.getAttribute('aria-hidden')).toBe('false');
+    controller.destroy();
+  });
+
   it('binds native actions, keeps continue hidden until a save exists, and reports accepted transitions', () => {
     const { root, buttons, buildLabel } = createFixture();
     const transitions: AppFlowEvent[] = [];
@@ -309,7 +323,7 @@ describe('app flow DOM presentation', () => {
     controller.destroy();
   });
 
-  it('uses Escape to pause and resume World and Tribulation, and to leave Alchemy', () => {
+  it('uses Escape to pause and resume World and Tribulation', () => {
     const { root, buttons, canvas } = createFixture();
     const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
     controller.dispatch({ type: 'boot-ready' });
@@ -337,13 +351,6 @@ describe('app flow DOM presentation', () => {
     expect(controller.getState()).toMatchObject({ screen: 'tribulation', overlay: null });
     expect(root.activeElement).toBe(buttons.tribulationPrimary);
 
-    controller.dispatch({ type: 'finish-tribulation' });
-    buttons.aftermathContinue.emit('click');
-    controller.dispatch({ type: 'open-alchemy' });
-    const leaveAlchemy = root.emit('keydown', { key: 'Escape' });
-    expect(leaveAlchemy.defaultPrevented).toBe(true);
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
-    expect(root.activeElement).toBe(canvas);
     controller.destroy();
   });
 
@@ -365,17 +372,51 @@ describe('app flow DOM presentation', () => {
     controller.destroy();
   });
 
-  it('routes the reserved alchemy, tribulation, aftermath, and ending page actions', () => {
+  it('closes the inventory overlay with B and restores world focus', () => {
+    const { root, buttons, canvas } = createFixture();
+    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
+    controller.dispatch({ type: 'boot-ready' });
+    buttons.continueGame.emit('click');
+    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: 'inventory' });
+
+    const close = root.emit('keydown', { key: 'b' });
+    expect(close.defaultPrevented).toBe(true);
+    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
+    expect(root.activeElement).toBe(canvas);
+    controller.destroy();
+  });
+
+  it('activates flow buttons from touch pointerdown without double-firing the following click', () => {
+    const { root, buttons, canvas } = createFixture();
+    const transitions: AppFlowEvent[] = [];
+    const controller = createAppFlowViewController({
+      root,
+      keyboardTarget: root,
+      continueAvailable: true,
+      onStateChange: (_next, _previous, event) => transitions.push(event)
+    });
+    controller.dispatch({ type: 'boot-ready' });
+    buttons.continueGame.emit('click');
+    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+    transitions.length = 0;
+
+    const pointer = buttons.inventoryClose.emit('pointerdown', { button: 0, pointerType: 'touch' });
+    const click = buttons.inventoryClose.emit('click', { detail: 1 });
+
+    expect(pointer.defaultPrevented).toBe(true);
+    expect(click.defaultPrevented).toBe(true);
+    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
+    expect(root.activeElement).toBe(canvas);
+    expect(transitions.map(event => event.type)).toEqual(['close-overlay']);
+    controller.destroy();
+  });
+
+  it('routes the reserved tribulation, aftermath, and ending page actions', () => {
     const { root, buttons } = createFixture();
     const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
     controller.dispatch({ type: 'boot-ready' });
     buttons.continueGame.emit('click');
-
-    controller.dispatch({ type: 'open-alchemy' });
-    expect(visibleSurfaces(root)).toEqual(['alchemy']);
-    expect(root.activeElement).toBe(buttons.alchemyPrimary);
-    buttons.alchemyClose.emit('click');
-    expect(controller.getState().screen).toBe('world');
 
     controller.dispatch({ type: 'start-tribulation' });
     expect(root.activeElement).toBe(buttons.tribulationPrimary);
@@ -401,20 +442,20 @@ describe('app flow DOM presentation', () => {
     const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
     controller.dispatch({ type: 'boot-ready' });
     buttons.continueGame.emit('click');
-    buttons.alchemyPrimary.disabled = true;
+    buttons.inventoryClose.disabled = true;
 
-    controller.dispatch({ type: 'open-alchemy' });
+    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
 
-    expect(root.activeElement).toBe(buttons.alchemyHeat);
-    buttons.alchemyPrimary.disabled = false;
+    expect(root.activeElement).toBe(buttons.inventoryFallback);
+    buttons.inventoryClose.disabled = false;
     controller.refocusCurrentSurface();
-    expect(root.activeElement).toBe(buttons.alchemyPrimary);
+    expect(root.activeElement).toBe(buttons.inventoryClose);
 
-    buttons.alchemyPrimary.hidden = true;
+    buttons.inventoryClose.hidden = true;
     controller.refocusCurrentSurface();
-    expect(root.activeElement).toBe(buttons.alchemyHeat);
+    expect(root.activeElement).toBe(buttons.inventoryFallback);
 
-    controller.dispatch({ type: 'close-alchemy' });
+    controller.dispatch({ type: 'close-overlay' });
     controller.refocusCurrentSurface();
     expect(root.activeElement).toBe(canvas);
     controller.destroy();

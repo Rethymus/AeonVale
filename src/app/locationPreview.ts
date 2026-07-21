@@ -133,46 +133,53 @@ export function describeLocationSelectionSummary(location: LocationStatus | null
 
 export const LOCATION_PREVIEW_LOCATION_IDS = LOCATION_CATALOG.map(location => location.id);
 export const NPC_PREVIEW_IDS = NPC_CATALOG.map(npc => npc.id);
-export const EXTRA_NPC_PREVIEW_ASSET_IDS = ['sprite.npc.market-merchant', 'sprite.npc.tea-shed-elder', 'sprite.npc.processing-artisan', 'sprite.npc.patrol-guard'] as const;
+export const EXTRA_NPC_PREVIEW_ASSET_IDS = ['map-sprite.market-merchant-v1', 'map-sprite.tea-shed-elder-v1', 'map-sprite.processing-artisan-v1', 'map-sprite.patrol-guard-v1'] as const;
+
+const NPC_PORTRAIT_ASSET_ID_BY_NPC_ID: Readonly<Record<string, string>> = {
+  'npc.herb-gatherer': 'portrait.avatar.herb-gatherer-v1',
+  'npc.array-smith': 'portrait.avatar.array-smith-lu-v1'
+};
 
 const EXTRA_NPC_PREVIEW_ASSET_ID_BY_NPC_ID: Readonly<Record<string, string>> = {
-  'npc.market-merchant': 'sprite.npc.market-merchant',
-  'npc.tea-shed-elder': 'sprite.npc.tea-shed-elder',
-  'npc.processing-artisan': 'sprite.npc.processing-artisan',
-  'npc.patrol-guard': 'sprite.npc.patrol-guard'
+  'npc.market-merchant': 'map-sprite.market-merchant-v1',
+  'npc.tea-shed-elder': 'map-sprite.tea-shed-elder-v1',
+  'npc.processing-artisan': 'map-sprite.processing-artisan-v1',
+  'npc.patrol-guard': 'map-sprite.patrol-guard-v1'
 };
 
 const EXTRA_NPC_PREVIEW_ASSET_ID_BY_NAME: Readonly<Record<string, string>> = {
-  集市商贩: 'sprite.npc.market-merchant',
-  茶棚老人: 'sprite.npc.tea-shed-elder',
-  晒坊匠人: 'sprite.npc.processing-artisan',
-  巡谷守卫: 'sprite.npc.patrol-guard'
+  采药女: 'portrait.avatar.herb-gatherer-v1',
+  阵匠老陆: 'portrait.avatar.array-smith-lu-v1',
+  集市商贩: 'map-sprite.market-merchant-v1',
+  茶棚老人: 'map-sprite.tea-shed-elder-v1',
+  晒坊匠人: 'map-sprite.processing-artisan-v1',
+  巡谷守卫: 'map-sprite.patrol-guard-v1'
 };
 
 const LOCATION_FALLBACK_NPC_ASSET_IDS: Readonly<Record<LocationId, readonly string[]>> = {
-  farmstead: ['sprite.npc.processing-artisan'],
-  'valley-market': ['sprite.npc.market-merchant', 'sprite.npc.patrol-guard'],
-  'festival-ground': ['sprite.npc.market-merchant'],
-  'valley-outskirts': ['sprite.npc.patrol-guard'],
-  'ruin-gate': ['sprite.npc.patrol-guard'],
-  'spirit-vein': ['sprite.npc.patrol-guard'],
-  'tea-shed': ['sprite.npc.tea-shed-elder'],
-  'herb-plot': ['sprite.npc.herb-gatherer'],
-  'creek-field': ['sprite.npc.herb-gatherer'],
-  'drying-yard': ['sprite.npc.processing-artisan'],
-  greenhouse: ['sprite.npc.herb-gatherer'],
-  'array-shed': ['sprite.npc.array-smith'],
-  'ore-slope': ['sprite.npc.patrol-guard']
+  farmstead: ['map-sprite.processing-artisan-v1'],
+  'valley-market': ['map-sprite.market-merchant-v1', 'map-sprite.patrol-guard-v1'],
+  'festival-ground': ['map-sprite.market-merchant-v1'],
+  'valley-outskirts': ['map-sprite.patrol-guard-v1'],
+  'ruin-gate': ['map-sprite.patrol-guard-v1'],
+  'spirit-vein': ['map-sprite.patrol-guard-v1'],
+  'tea-shed': ['map-sprite.tea-shed-elder-v1'],
+  'herb-plot': ['portrait.avatar.herb-gatherer-v1'],
+  'creek-field': ['portrait.avatar.herb-gatherer-v1'],
+  'drying-yard': ['map-sprite.processing-artisan-v1'],
+  greenhouse: ['portrait.avatar.herb-gatherer-v1'],
+  'array-shed': ['portrait.avatar.array-smith-lu-v1'],
+  'ore-slope': ['map-sprite.patrol-guard-v1']
 };
 
 const LOCATION_SERVICE_TOAST_ASSET_IDS: Readonly<Partial<Record<LocationServiceCommand, string>>> = {
-  'browse-shop': 'sprite.npc.market-merchant',
-  'browse-trade': 'sprite.npc.market-merchant',
+  'browse-shop': 'map-sprite.market-merchant-v1',
+  'browse-trade': 'map-sprite.market-merchant-v1',
   'show-farm-work': 'loc.farmstead',
-  'show-tea-shed': 'sprite.npc.tea-shed-elder',
-  'show-greenhouse': 'sprite.npc.herb-gatherer',
+  'show-tea-shed': 'map-sprite.tea-shed-elder-v1',
+  'show-greenhouse': 'portrait.avatar.herb-gatherer-v1',
   'show-festival': 'loc.festival-ground',
-  'browse-festival-stall': 'sprite.npc.market-merchant',
+  'browse-festival-stall': 'map-sprite.market-merchant-v1',
   'show-archive': 'loc.ruin-gate',
   'explore-ruin': 'loc.ruin-gate',
   'delve-ruin': 'loc.ruin-gate',
@@ -185,11 +192,11 @@ export function locationServiceActorAssetId(command: LocationServiceCommand): st
     case 'browse-shop':
     case 'browse-trade':
     case 'browse-festival-stall':
-      return 'sprite.npc.market-merchant';
+      return 'map-sprite.market-merchant-v1';
     case 'show-tea-shed':
-      return 'sprite.npc.tea-shed-elder';
+      return 'map-sprite.tea-shed-elder-v1';
     case 'show-greenhouse':
-      return 'sprite.npc.herb-gatherer';
+      return 'portrait.avatar.herb-gatherer-v1';
     default:
       return undefined;
   }
@@ -345,7 +352,7 @@ export function legacyConfirmUnavailableToastPresentation(assetIdOverride?: stri
 }
 
 export function npcPortraitAssetId(npcId: string): string | undefined {
-  return NPC_PREVIEW_IDS.includes(npcId) ? `sprite.${npcId}` : undefined;
+  return NPC_PORTRAIT_ASSET_ID_BY_NPC_ID[npcId] ?? (NPC_PREVIEW_IDS.includes(npcId) ? `sprite.${npcId}` : undefined);
 }
 
 export function previewNpcPortraitAssetId(npcId: string): string | undefined {
@@ -397,5 +404,5 @@ function encounterTip(encounters: readonly LocationEncounter[]): string {
 export function buildLocationPreviewSummary(input: LocationPreviewSummaryInput): string {
   const { location, services, selectedService, encounters, npcSignals, actionSignalLine, focusReason } = input;
   const currentLine = selectedService ? `当前：${selectedService.label} -> ${selectedService.commandLabel}` : encounters.length > 0 ? '当前：先看行踪' : '当前：先回农庄收口';
-  return [location.description, currentLine, focusReason ? `现在来：${focusReason}` : '', formatLocationNpcSignalLine(npcSignals), actionSignalLine ?? '', `可选：${serviceListText(services, encounters)}`, encounterHeadline(encounters), encounterTip(encounters), 'Shift+数字选地点｜数字选服务｜空格/E/回车确认'].filter(line => line.length > 0).join('\n');
+  return [location.description, currentLine, focusReason ? `现在来：${focusReason}` : '', formatLocationNpcSignalLine(npcSignals), actionSignalLine ?? '', `可选：${serviceListText(services, encounters)}`, encounterHeadline(encounters), encounterTip(encounters), '点选地点与服务进入，Esc 返回农庄'].filter(line => line.length > 0).join('\n');
 }

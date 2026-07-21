@@ -4,6 +4,7 @@ import { MILLI } from '@sim/world/types';
 import { canPlantOffSeasonInGreenhouse, isOffSeasonSeed } from '@sim/social/greenhouse';
 import { getFertilizer } from '@sim/farm/quality';
 import { normalizeFarmsteadRootAssetId } from './farmsteadFocus';
+import { canUseFarmActionOnFarmsteadTile } from './farmsteadScene';
 import { itemIconAssetId } from './itemIcons';
 import { normalizeGuidanceLine } from './onboardingObjective';
 import { toolActionAssetId } from './toolAsset';
@@ -72,7 +73,7 @@ export type FarmActionSuccessKind = 'till' | 'water' | 'harvest' | 'channel-qi';
 
 export type ArrayPlacementKind = 'lightning-rod' | 'insulation';
 
-export type FarmActionBlockedReason = 'out-of-bounds' | 'blocked-soil' | 'untilled' | 'occupied' | 'no-crop' | 'no-seed' | 'off-season' | 'already-watered' | 'already-channeled' | 'not-mature' | 'inventory-full' | 'invalid-fertilizer' | 'no-fertilizer' | 'not-enough-stamina';
+export type FarmActionBlockedReason = 'out-of-bounds' | 'outside-farm-plot' | 'blocked-soil' | 'untilled' | 'occupied' | 'no-crop' | 'no-seed' | 'off-season' | 'already-watered' | 'already-channeled' | 'not-mature' | 'inventory-full' | 'invalid-fertilizer' | 'no-fertilizer' | 'not-enough-stamina';
 
 export function snapshotFarmTiles(state: GameState): FarmTileSnapshot[] {
   return state.tiles.map(tile => ({
@@ -109,6 +110,7 @@ export function deriveFarmActionOutcome(kind: FarmActionFeedbackKind, before: re
 export function farmActionBlockedReason(state: GameState, ctx: SimContext, kind: FarmActionFeedbackKind, at: { x: number; y: number }, options?: FarmActionFeedbackOptions): FarmActionBlockedReason | null {
   const tile = state.tiles.find(entry => entry.x === at.x && entry.y === at.y);
   if (!tile) return 'out-of-bounds';
+  if (!canUseFarmActionOnFarmsteadTile(kind, state, at.x, at.y)) return 'outside-farm-plot';
 
   switch (kind) {
     case 'till': {
@@ -188,6 +190,8 @@ export function farmActionBlockedToast(kind: FarmActionFeedbackKind, reason: Far
   switch (kind) {
     case 'till':
       switch (reason) {
+        case 'outside-farm-plot':
+          return '这里不是药田，先到围好的灵田里处理';
         case 'occupied':
           return '此地已有灵草，占着无法翻耕';
         case 'not-enough-stamina':
@@ -197,6 +201,8 @@ export function farmActionBlockedToast(kind: FarmActionFeedbackKind, reason: Far
       }
     case 'sow':
       switch (reason) {
+        case 'outside-farm-plot':
+          return '这里不是药田，不能在院道上播种';
         case 'untilled':
           return '这块地还没翻，先整好再播种';
         case 'occupied':
@@ -212,6 +218,8 @@ export function farmActionBlockedToast(kind: FarmActionFeedbackKind, reason: Far
       }
     case 'water':
       switch (reason) {
+        case 'outside-farm-plot':
+          return '这里不是药田，面前也没有可照料的灵草';
         case 'already-watered':
           return '这片灵草今天已经浇过了';
         case 'not-enough-stamina':
@@ -221,6 +229,8 @@ export function farmActionBlockedToast(kind: FarmActionFeedbackKind, reason: Far
       }
     case 'harvest':
       switch (reason) {
+        case 'outside-farm-plot':
+          return '这里不是药田，面前没有可收的灵草';
         case 'not-mature':
           return '灵草还没熟，再等一等';
         case 'inventory-full':
@@ -232,6 +242,8 @@ export function farmActionBlockedToast(kind: FarmActionFeedbackKind, reason: Far
       }
     case 'channel-qi':
       switch (reason) {
+        case 'outside-farm-plot':
+          return '这里不是药田，没必要在院道上供灵';
         case 'already-channeled':
           return '这株灵草今天已经供过灵了';
         case 'not-enough-stamina':
@@ -241,6 +253,8 @@ export function farmActionBlockedToast(kind: FarmActionFeedbackKind, reason: Far
       }
     case 'fertilize':
       switch (reason) {
+        case 'outside-farm-plot':
+          return '这里不是药田，灵壤肥留给围好的灵田';
         case 'untilled':
           return '这块地还没翻，先整好再施肥';
         case 'no-fertilizer':
@@ -445,5 +459,5 @@ function canFitPotentialHarvestRewards(state: GameState, ctx: SimContext, tileId
     rewards.push({ itemId: yieldDef.itemId, count: yieldDef.count });
   }
 
-  return inventoryCanFitRewards(state.player, rewards);
+  return inventoryCanFitRewards(state.player, rewards, ctx.content);
 }

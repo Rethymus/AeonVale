@@ -1,7 +1,17 @@
-export type InteractionPanelState = { kind: 'none' } | { kind: 'farm-action' } | { kind: 'npc-action' } | { kind: 'build' } | { kind: 'upgrade' } | { kind: 'npc'; mode: 'browse' | 'gift' | 'quest' } | { kind: 'festival' } | { kind: 'shop'; festival: boolean } | { kind: 'trade' } | { kind: 'commission' } | { kind: 'tea-shed' } | { kind: 'greenhouse' } | { kind: 'storage'; mode: 'deposit' | 'withdraw' } | { kind: 'shipping'; mode: 'normal' | 'quality' } | { kind: 'processing'; mode: 'drying' | 'sealing' | 'furnace' } | { kind: 'facility-collect' };
+import type { LocationId, LocationServiceCommand } from '@sim';
+
+export type LocationActionPanelCommand = Extract<LocationServiceCommand, 'explore-valley' | 'explore-ruin' | 'delve-ruin' | 'show-archive' | 'explore-spirit-vein'>;
+
+const LOCATION_ACTION_PANEL_COMMANDS: readonly LocationActionPanelCommand[] = ['explore-valley', 'explore-ruin', 'delve-ruin', 'show-archive', 'explore-spirit-vein'];
+
+export type InteractionPanelState = { kind: 'none' } | { kind: 'farm-action' } | { kind: 'npc-action' } | { kind: 'build' } | { kind: 'upgrade' } | { kind: 'npc'; mode: 'browse' | 'gift' | 'quest' } | { kind: 'festival' } | { kind: 'shop'; festival: boolean } | { kind: 'trade' } | { kind: 'commission' } | { kind: 'tea-shed' } | { kind: 'greenhouse' } | { kind: 'location-action'; locationId: LocationId; command: LocationActionPanelCommand } | { kind: 'storage'; mode: 'deposit' | 'withdraw' } | { kind: 'shipping'; mode: 'normal' | 'quality' } | { kind: 'processing'; mode: 'drying' | 'sealing' | 'furnace' } | { kind: 'facility-collect' };
 
 export function interactionPanelActive(panel: InteractionPanelState): boolean {
   return panel.kind !== 'none';
+}
+
+export function isLocationActionPanelCommand(command: LocationServiceCommand): command is LocationActionPanelCommand {
+  return LOCATION_ACTION_PANEL_COMMANDS.includes(command as LocationActionPanelCommand);
 }
 
 export function cycleSelection(current: number, length: number, reverse = false): number {
@@ -37,7 +47,7 @@ export function npcActionIndexFromDigitKey(key: string): number | null {
 export function farmActionLabel(kind: FarmActionKind): string {
   switch (kind) {
     case 'build':
-      return '建造';
+      return '建造/布阵';
     case 'facility-collect':
       return '设施收取';
     case 'storage-deposit':

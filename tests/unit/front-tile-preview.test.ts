@@ -49,6 +49,32 @@ describe('front tile preview', () => {
     expect(frontTilePreview(state, reg)?.assetId).toBe('tile.dry-sand');
   });
 
+  it('describes fixed farmstead objects before falling back to tile soil', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 20260710, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    state.player.position = { x: 3, y: 3 };
+    state.player.facing = 'up';
+
+    expect(frontTilePreview(state, reg)).toEqual({
+      title: '仓储木箱',
+      details: '面前仓储\n整理随身物品、材料和品质药材\n空格/E：整理仓储',
+      assetId: 'facility.storage-chest'
+    });
+  });
+
+  it('marks non-plot farmstead courtyard tiles as non-farming space', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 20260710, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    state.player.position = { x: 0, y: 2 };
+    state.player.facing = 'up';
+
+    expect(frontTilePreview(state, reg)).toEqual({
+      title: '屋前空地',
+      details: '面前院道\n这里不是药田\n靠近设施或回到围好的灵田再操作',
+      assetId: 'loc.farmstead'
+    });
+  });
+
   it('keeps insulation-covered raw soil on the insulated ground asset', () => {
     const reg = buildRegistry();
     const state = createWorld({ seed: 45, width: 5, height: 5, content: reg, params: DEFAULT_BALANCE });
@@ -411,7 +437,7 @@ describe('front tile preview', () => {
 
     expect(frontTilePreview(state, reg)).toEqual({
       title: '引雷阵',
-      details: '面前阵法\n阵势运转中｜覆盖 23 格｜半径 2\n以金属性灵草为阵眼，外围可作引兽避雷田',
+      details: '面前阵法\n阵势运转中｜覆盖 23 格｜半径 2\n以金属性灵草为阵眼，外围可作引兽导雷田',
       assetId: 'facility.array-eye'
     });
   });
@@ -432,7 +458,7 @@ describe('front tile preview', () => {
 
     expect(frontTilePreview(state, reg)).toEqual({
       title: '绝缘阵',
-      details: '面前阵法\n阵势运转中｜覆盖 9 格｜半径 1\n护住核心药草区，减少雷击与失养风险',
+      details: '面前阵法\n阵势运转中｜覆盖 9 格｜半径 1\n稳住核心药草区，分流雷击与失养风险',
       assetId: 'facility.array-flag'
     });
   });

@@ -14,6 +14,7 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(ciWorkflow).toContain("      - run: pnpm --dir .public-tree build\n        env:\n          PUBLIC_BUILD: 'true'\n          VITE_BASE_PATH: /AeonVale/\n          VITE_BUILD_REVISION: ${{ github.sha }}");
     expect(ciWorkflow).toContain('      - run: pnpm test:browser:public-tree\n        env:\n          PLAYWRIGHT_APP_DIR: .public-tree');
     expect(ciWorkflow).toContain('      - run: pnpm test:browser:public-tree:keypoint\n        env:\n          PLAYWRIGHT_APP_DIR: .public-tree');
+    expect(ciWorkflow).toContain('      - run: pnpm test:browser:public-tree:r1-input\n        env:\n          PLAYWRIGHT_APP_DIR: .public-tree');
 
     expect(pagesWorkflow).toContain('on:\n  workflow_run:\n    workflows: [CI]\n    types: [completed]\n    branches: [main]\n  workflow_dispatch:');
     expect(pagesWorkflow).toContain('permissions:\n  contents: read\n  actions: read\n  pages: write\n  id-token: write');
@@ -58,6 +59,7 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(ciWorkflow).toContain('VITE_BASE_PATH: /AeonVale/');
     expect(ciWorkflow).toContain('VITE_BUILD_REVISION: ${{ github.sha }}');
     expect(ciWorkflow).toContain('pnpm test:browser:public-tree:keypoint');
+    expect(ciWorkflow).toContain('pnpm test:browser:public-tree:r1-input');
   });
 
   it('only deploys Pages from trusted CI runs or an explicit manual dispatch', () => {

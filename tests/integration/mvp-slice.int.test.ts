@@ -124,8 +124,8 @@ describe('MVP 垂直切片', () => {
     expect(itemCount(state.player, 'herb.mossling')).toBe(0); // 材料消耗
     expect(itemCount(state.player, 'pill.cold-mud')).toBeGreaterThan(0);
 
-    // ── 阶段 3: 丹药+阵法布防（prepScore） ──
-    // 给避雷丹（避雷丹方需要特殊材料，直接给成品）
+    // ── 阶段 3: 丹药+阵法备劫（prepScore） ──
+    // 给承雷丹（承雷丹方需要特殊材料，直接给成品）
     mutateItem(state.player, 'pill.ward-basic', 1);
     applyPill(state, 'pill.ward-basic', ctx);
     expect(state.player.wardMitigation).toBeCloseTo(0.4);
@@ -134,7 +134,7 @@ describe('MVP 垂直切片', () => {
     state.arrays.set(1, { id: 1, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 0, coverageTileIds: [], power: 100, active: true });
     state.arrays.set(2, { id: 2, defId: 'array.lightning-rod', modifier: 4.0, coreTileId: 1, coverageTileIds: [], power: 100, active: true });
     const prepScore = computePrepScore(state);
-    expect(prepScore).toBeCloseTo(1.0); // 满准备（2阵+避雷丹）
+    expect(prepScore).toBeCloseTo(1.0); // 满准备（2阵+承雷丹）
 
     // ── 阶段 4: 引劫（修为设到xCap，触发天劫） ──
     state.player.cultivation = stageQiCap(1, DEFAULT_BALANCE) + 1000;

@@ -232,7 +232,7 @@ describe('确定性教学天劫', () => {
     const targetTileId = state.tutorialTribulation.warnedTileId;
     const target = state.tiles.find(tile => tile.id === targetTileId)!;
     const safeTile = state.tiles.find(tile => tile.blockType === 'none' && chebyshev(tile, target) > 1)!;
-    applyAction(state, { kind: 'move', to: { x: safeTile.x, y: safeTile.y } }, ctx);
+    state.player.position = { x: safeTile.x, y: safeTile.y };
     applyAction(state, { kind: 'resolve-tutorial-bolt', perfectBlock: true }, ctx);
     const resolved = [...state.events].reverse().find(event => event.type === 'tutorial-tribulation-bolt-resolved');
     expect(resolved).toMatchObject({
@@ -251,7 +251,7 @@ describe('确定性教学天劫', () => {
     const targetTileId = state.tutorialTribulation.warnedTileId;
     const target = state.tiles.find(tile => tile.id === targetTileId)!;
     const safeTile = state.tiles.find(tile => tile.blockType === 'none' && chebyshev(tile, target) > 1)!;
-    applyAction(state, { kind: 'move', to: { x: safeTile.x, y: safeTile.y } }, ctx);
+    state.player.position = { x: safeTile.x, y: safeTile.y };
     target.tilled = true;
     target.cropId = target.id;
     state.crops.set(target.id, {
@@ -284,7 +284,7 @@ describe('确定性教学天劫', () => {
     const target = state.tiles.find(tile => tile.id === targetTileId)!;
     const safeTile = state.tiles.find(tile => tile.blockType === 'none' && chebyshev(tile, target) > 1)!;
 
-    applyAction(state, { kind: 'move', to: { x: safeTile.x, y: safeTile.y } }, ctx);
+    state.player.position = { x: safeTile.x, y: safeTile.y };
     applyAction(state, { kind: 'resolve-tutorial-bolt' }, ctx);
 
     expect(state.tutorialTribulation.hits).toMatchObject({ miss: 1, direct: 0, rod: 0, blocked: 0 });

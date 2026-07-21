@@ -17,7 +17,7 @@ describe('public demo panel view models', () => {
     applyAction(state, { kind: 'prepare-tutorial-alchemy-kit' }, ctx);
 
     const cold = buildPublicDemoAlchemyView(state, ctx, 0);
-    expect(cold.recipeName).toBe('避雷丹方');
+    expect(cold.recipeName).toBe('承雷丹方');
     expect(cold.materials).toEqual([
       { name: '雷击木', quantity: 1 },
       { name: '寒潭莲', quantity: 1 }
@@ -32,7 +32,7 @@ describe('public demo panel view models', () => {
     expect(cold.pairingLabel).toContain('相使');
     expect(cold.pairingLabel).toMatch(/雷击木|寒潭莲/);
     expect(cold.previewLabel).toContain('药渣');
-    expect(cold.primaryLabel).toBe('炼制备劫丹');
+    expect(cold.primaryLabel).toBe('炼制承雷丹');
     expect(cold.primaryDisabled).toBe(false);
 
     applyAction(state, { kind: 'brew-tutorial-pill', avgHeatMilli: 0 }, ctx);
@@ -49,7 +49,7 @@ describe('public demo panel view models', () => {
 
     expect(buildPublicDemoTribulationView(state)).toMatchObject({
       phase: 'idle',
-      pillLabel: '避雷丹 ×1',
+      pillLabel: '承雷丹 ×1',
       takePillDisabled: false,
       movementDisabled: true,
       primaryLabel: '开始三雷教学'

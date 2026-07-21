@@ -28,6 +28,7 @@ function expectNoWorldJourney(state: ReturnType<typeof deriveSemanticGameState>)
   expect(state.objective).not.toContain(worldJourney.currentAction);
   expect(state.actions).not.toContain(worldJourney.cta);
   expect(state.actions).not.toContain('方向移动');
+  expect(state.actions).not.toContain('点击目标');
 }
 
 describe('页面语义镜像', () => {
@@ -52,11 +53,11 @@ describe('页面语义镜像', () => {
     const state = deriveSemanticGameState(input('world', 'world'));
 
     expect(state).toMatchObject({
-      instructions: '使用方向键或 WASD 移动，空格或 E 执行当前操作，Escape 返回。',
+      instructions: '点击目标移动或互动；行囊常驻，丹炉、山河图与修行收在更多中；键盘仅需 B、Enter、Escape。',
       surface: '当前页面：农庄世界。',
       status: '当前状态：第 1 日，春季第 1 日。气血 100，体力 100。',
       objective: `当前目标：${worldJourney.progressLabel}。${worldJourney.currentAction}。${worldJourney.motivation}。`,
-      actions: `当前可用动作：${worldJourney.cta}；方向移动；主要操作；切换；菜单。`,
+      actions: `当前可用动作：${worldJourney.cta}；点击目标移动或互动；行囊；丹炉；山河图；修行。`,
       panel: '当前没有打开面板。',
       announcement: '翻地成功'
     });
@@ -87,7 +88,7 @@ describe('页面语义镜像', () => {
     expect(pause).toMatchObject({
       surface: '当前页面：暂停。',
       objective: '当前目标：选择系统页面，或继续游戏。',
-      actions: '当前可用动作：农务；背包；地点；修行；丹炉；设置；继续游戏。',
+      actions: '当前可用动作：农务；行囊；地点；修行；丹炉；设置；继续游戏。',
       panel: '已打开面板：暂停菜单。'
     });
     expectNoWorldJourney(pause);
@@ -99,7 +100,7 @@ describe('页面语义镜像', () => {
     expect(settings).toMatchObject({ objective: '当前目标：查看系统与可访问性设置。', actions: '当前可用动作：调整主音量；切换减少动态效果；返回。', panel: '已打开面板：设置。' });
 
     const overlays = [
-      ['inventory', '背包', '查看随身物品', '返回农庄'],
+      ['inventory', '物品管理', '整理随身行囊、农庄仓库与出货箱', '切换行囊/仓库/出货箱/丹炉；拖拽换位或转移；拆分/使用/丢弃；返回农庄'],
       ['map', '地点', '查看山谷地点', '返回农庄'],
       ['cultivation', '修行', '查看体魄与备劫状态', '返回农庄']
     ] as const;
@@ -113,26 +114,19 @@ describe('页面语义镜像', () => {
     }
   });
 
-  it('Alchemy 复用当前炼丹视图的主动作和禁用状态', () => {
-    const unavailable = deriveSemanticGameState(
-      input('alchemy', 'alchemy', {
-        alchemy: { resultLabel: '先在灵田收获第一批灵草。', primaryLabel: '炼制备劫丹', primaryDisabled: true }
+  it('丹炉聚焦模式通过 inventory overlay 发布独立语义', () => {
+    const furnace = deriveSemanticGameState(
+      input('inventory', 'panel', {
+        inventory: { viewMode: 'furnace-focus' }
       })
     );
-    expect(unavailable).toMatchObject({
-      surface: '当前页面：炼丹。',
-      objective: '当前目标：先在灵田收获第一批灵草。',
-      actions: '当前可用动作：调整炉火；返回农庄。',
-      panel: '已打开面板：炼丹。'
+    expect(furnace).toMatchObject({
+      surface: '当前页面：丹炉。',
+      objective: '当前目标：按丹方投影填入九宫药盘并开炉炼制。',
+      actions: '当前可用动作：自动入药；调整炉火；开炉炼制；返回农庄。',
+      panel: '已打开面板：丹炉。'
     });
-    expectNoWorldJourney(unavailable);
-
-    const ready = deriveSemanticGameState(
-      input('alchemy', 'alchemy', {
-        alchemy: { resultLabel: '教学药包已经备好。', primaryLabel: '炼制备劫丹', primaryDisabled: false }
-      })
-    );
-    expect(ready.actions).toBe('当前可用动作：调整炉火；炼制备劫丹；返回农庄。');
+    expectNoWorldJourney(furnace);
   });
 
   it('Tribulation 只发布当前可用的服丹、走位、确认和暂停动作', () => {
@@ -149,7 +143,7 @@ describe('页面语义镜像', () => {
     );
     expect(idle).toMatchObject({
       objective: '当前目标：服丹后开始教学。',
-      actions: '当前可用动作：服用避雷丹；开始三雷教学；暂停。',
+      actions: '当前可用动作：服用承雷丹；开始三雷教学；暂停。',
       panel: '已打开面板：教学天劫。'
     });
     expectNoWorldJourney(idle);

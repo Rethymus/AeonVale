@@ -35,6 +35,7 @@ function hasMatureCrop(state: GameState): boolean {
 }
 
 export function getOnboardingObjectiveId(state: GameState): OnboardingObjectiveId | null {
+  if (state.postAscension.mode !== 'none') return null;
   if (state.player.flags.has(FIRST_SECOND_WATER_FLAG)) return 'first-loop-complete';
   if (state.player.flags.has(FIRST_SECOND_SOW_FLAG)) return 'first-second-water';
   if (state.player.flags.has(FIRST_MARKET_RESTOCK_FLAG)) return 'first-second-sow';

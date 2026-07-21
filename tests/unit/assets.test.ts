@@ -17,6 +17,7 @@ function entry(over: Partial<AssetEntry> = {}): AssetEntry {
     checksum: GOOD_CHECKSUM,
     license: 'OFL-1.1',
     source: 'https://example.invalid/test',
+    status: 'published',
     ...over
   };
 }
@@ -54,6 +55,37 @@ describe('资产 manifest 校验', () => {
     for (const license of ['CC0-1.0', 'CC-BY-4.0', 'CC-BY-NC-4.0', 'MIT', 'Apache-2.0', 'AI-Generated'] as const) {
       expect(validateManifest(manifest([entry({ id: `x.${license}`, license })])).fonts[0]?.license).toBe(license);
     }
+  });
+
+  it('允许私有 provenance 扩展字段用于 AI 资产复现留痕', () => {
+    const m = validateManifest(
+      manifest([], {
+        sprites: [
+          entry({
+            id: 'reference.master.test',
+            path: 'references/master-test.png',
+            type: 'png',
+            license: 'AI-Generated',
+            source: 'gpt-image-2 via relay; private master reference draft',
+            src: {
+              model: 'gpt-image-2',
+              endpoint: 'https://fast.qianxing.us.ci/v1',
+              prompt: 'cozy warm ink wash herb farm master reference',
+              seed: null,
+              master_ref: [],
+              ref_imgs: [],
+              generated_at: '2026-07-17T00:00:00.000Z'
+            },
+            human_edits: [],
+            ai_disclosed: true
+          })
+        ]
+      })
+    );
+
+    expect(m.sprites[0]?.src?.prompt).toContain('cozy warm ink wash');
+    expect(m.sprites[0]?.human_edits).toEqual([]);
+    expect(m.sprites[0]?.ai_disclosed).toBe(true);
   });
 });
 

@@ -35,21 +35,25 @@ describe('i18n 层', () => {
 
   it('renderer 稳定词表键齐全（帮助/背包组/季节）', () => {
     expect(t('ui.help.default').length).toBeGreaterThan(20);
-    expect(t('ui.help.default')).toContain('1-0/滚轮/Q切热栏');
-    expect(t('ui.help.default')).toContain('空格/E互动');
-    expect(t('ui.help.default')).toContain('Enter过夜');
-    expect(t('ui.help.default')).toContain('Shift+M农庄操作');
-    expect(t('ui.help.default')).toContain('Shift+Tab地点目录');
-    expect(t('ui.help.inventory')).toContain('Tab/Esc关闭');
+    expect(t('ui.help.default')).toContain('点击目标移动/互动');
+    expect(t('ui.help.default')).toContain('行囊常驻');
+    expect(t('ui.help.default')).toContain('丹炉/山河图/修行在更多中');
+    expect(t('ui.help.default')).toContain('B 行囊');
+    expect(t('ui.help.default')).toContain('Esc 暂停/返回');
+    expect(t('ui.help.default')).not.toContain('WASD');
+    expect(t('ui.help.default')).not.toContain('M/C');
+    expect(t('ui.help.default')).not.toContain('空格/E互动');
+    expect(t('ui.help.default')).not.toContain('滚轮');
+    expect(t('ui.help.default')).not.toContain('Q切热栏');
+    expect(t('ui.help.inventory')).toContain('B/Esc关闭');
     expect(t('ui.help.pause')).toContain('Esc恢复行动');
-    expect(t('ui.help.dialogue')).toContain('空格/E/Enter继续');
-    expect(t('ui.help.location')).toContain('Shift+数字选地点');
-    expect(t('ui.help.location')).toContain('数字选服务');
-    expect(t('ui.help.farmAction')).toContain('数字预选项目');
+    expect(t('ui.help.dialogue')).toContain('点击继续');
+    expect(t('ui.help.location')).toContain('点选地点与服务');
+    expect(t('ui.help.farmAction')).toContain('点选');
     expect(t('ui.help.storage')).toContain('当前不会过夜');
     expect(t('ui.help.ascensionChoice')).toContain('仅 1/2 可选结局');
     expect(t('ui.objective.first-till')).toContain('先翻出一块地');
-    expect(t('ui.objective.first-sleep')).toContain('按 Enter 过夜');
+    expect(t('ui.objective.first-sleep')).toContain('点击居所或“歇息”过夜');
     expect(t('ui.objective.first-market-restock')).toContain('去山谷集市补几颗种子');
     expect(t('ui.objective.first-second-sow')).toContain('把刚补到的种子播回田里');
     expect(t('ui.objective.first-loop-complete')).toContain('第二轮药材动线已成立');

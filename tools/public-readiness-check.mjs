@@ -84,6 +84,7 @@ requireIncludes('tools/portfolio-status.mjs', 'screenshotEvidence paintedRatio a
 requireIncludes('tools/portfolio-status.mjs', 'PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL', 'Portfolio status must carry deployed Pages smoke evidence requirements');
 requireIncludes('tools/portfolio-status.mjs', 'pnpm portfolio:pages-diagnose', 'Portfolio status must route live Pages failures through the non-deploying diagnosis command');
 requireIncludes('tools/portfolio-status.mjs', 'pages-redeploy-required', 'Portfolio status must record that live Pages requires deployment and re-verification');
+requireIncludes('tools/portfolio-status.mjs', '--include-live-pages', 'Portfolio status must expose the combined local and live Pages preflight mode');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', '不提交、不推送、不部署、不修改远端设置', 'Pages diagnosis must be explicitly non-deploying');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'local-head-differs-from-origin-main', 'Pages diagnosis must detect local branch drift from origin/main');
 requireIncludes('tools/portfolio-pages-diagnose.mjs', 'AbortController', 'Pages diagnosis must bound live Pages fetches with a timeout');
@@ -105,9 +106,12 @@ requireIncludes('tools/portfolio-pages-watch.mjs', 'deployed-bundle-uses-body-ap
 requireIncludes('tools/portfolio-pages-watch.mjs', 'local-head-differs-from-origin-main', 'Pages watch must detect local branch drift from origin/main');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'pages-run-behind-ci', 'Pages watch must detect Pages Action lag behind CI');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'deployment-behind-origin-main', 'Pages watch must detect deployments behind origin/main');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'pages-config-fetch-failed', 'Pages watch must flag GitHub Pages source API failures instead of treating live HTML as enough');
+requireIncludes('tools/portfolio-pages-watch.mjs', 'deployment-fetch-failed', 'Pages watch must flag deployment API failures instead of treating live HTML as enough');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'gh run watch', 'Pages watch must point short waits to gh run watch without triggering workflows');
 requireIncludes('tools/portfolio-pages-watch.mjs', 'remote-pages-chain-current', 'Pages watch must report a settled happy path');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-secret-risk'", 'Public demo preflight must fail on secret-risk worktree paths');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', "process.argv.includes('--include-live-pages')", 'Public demo preflight must expose optional live Pages verification');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'--fail-on-high-risk'", 'Public demo preflight must fail on high-risk public content findings');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'portfolio:capture'", 'Public demo preflight must run screenshot capture');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', "'verify:public-tree'", 'Public demo preflight must verify the public tree');
@@ -128,7 +132,8 @@ requireIncludes('tools/portfolio-mvp-preflight.mjs', 'paintedRatio', 'Public dem
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'minPaintedRatio: 0.55', 'Public demo preflight must preserve the nonblank screenshot paint threshold');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'readUInt32BE(16)', 'Public demo preflight must parse PNG screenshot width');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'readUInt32BE(20)', 'Public demo preflight must parse PNG screenshot height');
-requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 960, height: 542', 'Public demo preflight must verify generated desktop CSS-rendered canvas screenshot dimensions');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 1440, height: 810', 'Public demo preflight must verify generated desktop CSS-rendered canvas screenshot dimensions');
+requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 1440, height: 825', 'Public demo preflight must verify generated backdrop CSS-rendered canvas screenshot dimensions');
 requireIncludes('tools/portfolio-mvp-preflight.mjs', 'width: 736, height: 414', 'Public demo preflight must verify generated small-viewport landscape canvas screenshot dimensions');
 requireIncludes('tests/browser/openGame.ts', "scale: 'css'", 'Portfolio screenshot helper must capture the CSS-rendered canvas instead of its internal bitmap');
 requireIncludes('tests/browser/portfolio-capture.spec.ts', 'renderedCanvasPngSnapshot', 'Portfolio screenshot capture must use the CSS-rendered canvas helper');
@@ -165,7 +170,7 @@ requireIncludes('tools/portfolio-release-checklist.mjs', 'Go / No-Go 证据', 'P
 requireIncludes('tools/portfolio-release-checklist.mjs', '4 张 test-results/portfolio/*.png 截图为本次生成', 'Portfolio release checklist must require fresh portfolio screenshot evidence');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'test-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成', 'Portfolio release checklist must require fresh public demo evidence JSON');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10', 'Portfolio release checklist must require maintainers to inspect today briefing proof evidence');
-requireIncludes('tools/portfolio-release-checklist.mjs', '3 张桌面 CSS 渲染截图为 960x542，1 张横屏小视口 keyboard-first 截图为 736x414', 'Portfolio release checklist must require maintainers to inspect honest CSS-rendered screenshot dimensions');
+requireIncludes('tools/portfolio-release-checklist.mjs', '01/03 桌面 CSS 渲染截图为 1440x810，02 叠层背景截图为 1440x825，1 张横屏小视口 keyboard-first 截图为 736x414', 'Portfolio release checklist must require maintainers to inspect honest CSS-rendered screenshot dimensions');
 requireIncludes('tools/portfolio-release-checklist.mjs', 'paintedRatio 达到阈值，colors 达到阈值', 'Portfolio release checklist must require maintainers to inspect screenshot paint stats');
 requireIncludes('tools/portfolio-release-checklist.mjs', '该文件仍是生成物，不进入公开树', 'Portfolio release checklist must keep public demo evidence JSON out of the public tree');
 requireIncludes('tools/portfolio-release-checklist.mjs', '每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成', 'Portfolio release checklist must keep live Pages verification as the GitHub Pages completion gate');

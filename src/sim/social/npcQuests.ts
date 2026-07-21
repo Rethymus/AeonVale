@@ -4,7 +4,8 @@ import { archiveDonationCount } from '@sim/collection/archive';
 import { specialOrderCompleteFlag } from '@sim/social/commissions';
 import { getRelationship, NPC_CATALOG } from '@sim/social/relationships';
 import { hasRelationshipPerk } from '@sim/social/relationshipEvents';
-import { itemCount, mutateItem } from '@sim/world/player';
+import type { SimContext } from '@sim/world/context';
+import { inventoryCanFitRewards, itemCount, mutateItem } from '@sim/world/player';
 
 export interface NpcQuestReward {
   itemId?: string;
@@ -188,12 +189,18 @@ export function getCurrentNpcQuest(state: GameState, npcId?: string): NpcQuestSt
   return null;
 }
 
-export function claimNpcQuest(state: GameState, questId: string): NpcQuestResult {
+function canFitReward(state: GameState, reward: NpcQuestReward, ctx?: SimContext): boolean {
+  if (!ctx || !reward.itemId || !reward.count) return true;
+  return inventoryCanFitRewards(state.player, [{ itemId: reward.itemId, count: reward.count }], ctx.content);
+}
+
+export function claimNpcQuest(state: GameState, questId: string, ctx?: SimContext): NpcQuestResult {
   const quest = NPC_QUEST_CATALOG.find(entry => entry.id === questId) ?? null;
   if (!quest) return { ok: false, quest: null, reason: '无此人物委托' };
   if (!quest.isAvailable(state)) return { ok: false, quest, reason: '人物委托未解锁' };
   if (isNpcQuestClaimed(state, quest.id)) return { ok: false, quest, reason: '已领取' };
   if (!quest.isComplete(state)) return { ok: false, quest, reason: '进度未成' };
+  if (!canFitReward(state, quest.reward, ctx)) return { ok: false, quest, reason: '储物戒已满' };
   if (!grantReward(state, quest.reward)) return { ok: false, quest, reason: '储物戒已满' };
 
   state.flags.add(npcQuestFlag(quest.id));

@@ -171,6 +171,20 @@ function buildDiagnosis(report) {
     actions.push(`最新 github-pages deployment status 是 ${latestStatus.state}；先打开 deployment log。`);
   }
 
+  if (report.pagesConfig?.error) {
+    findings.push('pages-config-fetch-failed');
+    actions.push(
+      'GitHub Pages source 配置读取失败；这通常是 GitHub API/网络问题。不要把 live HTML 200 单独当作完整部署链证明，先复跑 pnpm portfolio:pages-watch -- --wait --json 或 pnpm portfolio:pages-diagnose -- --json。'
+    );
+  }
+
+  if (report.deployment?.error || !report.deployment) {
+    findings.push('deployment-fetch-failed');
+    actions.push(
+      'github-pages deployment 读取失败；需要复核 GitHub API、deployment status 或 Actions job log，避免把部署链缺证误判为已闭环。'
+    );
+  }
+
   if (report.pagesConfig?.build_type && report.pagesConfig.build_type !== 'workflow') {
     findings.push('pages-source-not-actions-workflow');
     actions.push('Pages Source 不是 GitHub Actions；需要维护者在 Settings -> Pages 复核 source。');

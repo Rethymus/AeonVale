@@ -6,11 +6,15 @@
  * - stateHash：用于 Golden Replay 回归比对。
  * - saveGame / loadSave()：原子存档包装（含版本号 / schemaHash）。
  */
-import type { GameState } from './world/state';
+import type { GameState, InventoryContainerId, InventoryLayoutState, InventoryPanelId, InventorySortKey, InventoryViewState } from './world/state';
 import { MILLI } from './world/types';
 import { DEFAULT_BALANCE } from './params';
 import { normalizeBodyCultivation } from './progression/bodyCultivation';
-import { createDefaultPostAscensionState, createDefaultStayingWorldState, createDefaultTutorialTribulationState } from './world/state';
+import { createDefaultInventoryLayoutState, createDefaultInventoryViewState, createDefaultPostAscensionState, createDefaultStayingWorldState, createDefaultTutorialTribulationState, inventorySlotsForContainer, resolveInventoryOrder } from './world/state';
+
+const INVENTORY_CONTAINERS: readonly InventoryContainerId[] = ['player', 'storage', 'shipping'];
+const INVENTORY_PANELS: readonly InventoryPanelId[] = ['player', 'storage', 'shipping', 'furnace'];
+const INVENTORY_SORT_KEYS: readonly InventorySortKey[] = ['layout', 'category', 'name', 'count'];
 
 function shouldSerializeStayingWorld(state: GameState): boolean {
   if (state.postAscension.mode === 'stayed-in-world') return true;
@@ -51,6 +55,32 @@ function isInventoryRecord(value: unknown): value is Record<string, { itemId: st
   });
 }
 
+function isInventoryLayoutRecord(value: unknown): value is InventoryLayoutState {
+  if (!isRecord(value)) return false;
+  const orders = value.orders;
+  if (orders !== undefined) {
+    if (!isRecord(orders)) return false;
+    if (!Object.entries(orders).every(([key, order]) => INVENTORY_CONTAINERS.includes(key as InventoryContainerId) && isStringArray(order))) return false;
+  }
+  const view = value.view;
+  if (view === undefined) return true;
+  if (!isRecord(view)) return false;
+  if (view.activeTab !== undefined && !INVENTORY_PANELS.includes(view.activeTab as InventoryPanelId)) return false;
+  if (view.searchTerm !== undefined && typeof view.searchTerm !== 'string') return false;
+  if (view.sortKey !== undefined && !INVENTORY_SORT_KEYS.includes(view.sortKey as InventorySortKey)) return false;
+  if (view.pageByContainer !== undefined) {
+    if (!isRecord(view.pageByContainer)) return false;
+    if (
+      !Object.entries(view.pageByContainer).every(
+        ([key, page]) => INVENTORY_CONTAINERS.includes(key as InventoryContainerId) && typeof page === 'number' && Number.isFinite(page)
+      )
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function isSerializedEntryList(value: unknown): value is [string | number, unknown][] {
   return (
     Array.isArray(value) &&
@@ -81,6 +111,7 @@ function assertSerializedStateShape(raw: unknown): asserts raw is Record<string,
   if (!isRecord(player.position) || !hasFiniteNumbers(player.position, ['x', 'y'])) throw new TypeError('Invalid saved player position');
   if (!['up', 'down', 'left', 'right'].includes(String(player.facing))) throw new TypeError('Invalid saved player facing');
   if (!isInventoryRecord(player.inventory) || !isStringArray(player.flags)) throw new TypeError('Invalid saved player inventory');
+  if (raw.inventoryLayout !== undefined && !isInventoryLayoutRecord(raw.inventoryLayout)) throw new TypeError('Invalid saved inventory layout');
   if (!isStringArray(raw.flags) || !isRecord(raw.rngSnapshot) || !Object.values(raw.rngSnapshot).every(value => typeof value === 'number' && Number.isFinite(value))) {
     throw new TypeError('Invalid saved state metadata');
   }
@@ -116,6 +147,57 @@ function cmp(a: unknown, b: unknown): number {
   return sa < sb ? -1 : sa > sb ? 1 : 0;
 }
 
+function inventoryLayoutSnapshot(state: GameState): InventoryLayoutState {
+  const orders: InventoryLayoutState['orders'] = {};
+  for (const container of INVENTORY_CONTAINERS) {
+    const baseOrder = state.inventoryLayout?.orders?.[container];
+    if (!baseOrder || baseOrder.length === 0) continue;
+    const keys = inventorySlotsForContainer(state, container).map(slot => slot.key);
+    const order = resolveInventoryOrder(baseOrder, keys);
+    if (order.length > 0) orders[container] = order;
+  }
+  return { orders, view: inventoryViewSnapshot(state.inventoryLayout?.view) };
+}
+
+function inventoryViewSnapshot(view: InventoryViewState | undefined): InventoryViewState {
+  const defaults = createDefaultInventoryViewState();
+  const pageByContainer: InventoryViewState['pageByContainer'] = {};
+  for (const container of INVENTORY_CONTAINERS) {
+    const page = view?.pageByContainer?.[container];
+    if (typeof page === 'number' && Number.isFinite(page) && page > 0) pageByContainer[container] = Math.floor(page);
+  }
+  const activeTab = view?.activeTab && INVENTORY_PANELS.includes(view.activeTab) ? view.activeTab : defaults.activeTab;
+  const sortKey = view?.sortKey && INVENTORY_SORT_KEYS.includes(view.sortKey) ? view.sortKey : defaults.sortKey;
+  const searchTerm = typeof view?.searchTerm === 'string' ? view.searchTerm.slice(0, 80) : defaults.searchTerm;
+  return { activeTab, pageByContainer, searchTerm, sortKey };
+}
+
+function shouldSerializeInventoryView(view: InventoryViewState): boolean {
+  const defaults = createDefaultInventoryViewState();
+  return (
+    view.activeTab !== defaults.activeTab ||
+    view.sortKey !== defaults.sortKey ||
+    view.searchTerm.trim().length > 0 ||
+    Object.values(view.pageByContainer).some(page => typeof page === 'number' && Number.isFinite(page) && page > 0)
+  );
+}
+
+function shouldSerializeInventoryLayout(layout: InventoryLayoutState): boolean {
+  return Object.values(layout.orders).some(order => Array.isArray(order) && order.length > 0) || shouldSerializeInventoryView(layout.view);
+}
+
+function deserializeInventoryLayout(raw: unknown): InventoryLayoutState {
+  const fallback = createDefaultInventoryLayoutState();
+  if (!isInventoryLayoutRecord(raw)) return fallback;
+  const ordersRaw = isRecord(raw.orders) ? raw.orders : {};
+  const orders: InventoryLayoutState['orders'] = {};
+  for (const container of INVENTORY_CONTAINERS) {
+    const order = ordersRaw[container];
+    if (isStringArray(order) && order.length > 0) orders[container] = [...order];
+  }
+  return { orders, view: inventoryViewSnapshot(isRecord(raw.view) ? (raw.view as Partial<InventoryViewState> as InventoryViewState) : undefined) };
+}
+
 /** FNV-1a 哈希字符串 → hex（非加密，仅用于等价比较）。 */
 export function stateHash(state: GameState): string {
   const s = canonicalSerialize(serializeState(state));
@@ -130,6 +212,7 @@ export function stateHash(state: GameState): string {
 /** 把 GameState 转为纯 JSON 结构（Map→entries，Set→array）。 */
 export function serializeState(state: GameState): unknown {
   const p = state.player;
+  const inventoryLayout = inventoryLayoutSnapshot(state);
   const postAscension = state.postAscension.victoryRecorded
     ? state.postAscension
     : {
@@ -170,6 +253,9 @@ export function serializeState(state: GameState): unknown {
     // 丢弃 events（每步瞬态）
   };
   if (state.guardBeastPatrols.length > 0) serialized.guardBeastPatrols = state.guardBeastPatrols;
+  // 仅在非空时序列化：保持空世界的 stateHash 与旧档逐字节一致（golden replay 稳定）
+  if (state.groundItems.length > 0) serialized.groundItems = state.groundItems;
+  if (shouldSerializeInventoryLayout(inventoryLayout)) serialized.inventoryLayout = inventoryLayout;
   if (shouldSerializeStayingWorld(state)) serialized.stayingWorld = state.stayingWorld;
   if (shouldSerializeTutorialTribulation(state)) serialized.tutorialTribulation = state.tutorialTribulation;
   if (Object.keys(state.social ?? {}).length > 0) serialized.social = state.social;
@@ -257,6 +343,8 @@ export function deserializeState(raw: unknown): GameState {
       specialty: beast.specialty ?? null
     })),
     guardBeastPatrols: [...((o.guardBeastPatrols as GameState['guardBeastPatrols'] | undefined) ?? [])],
+    groundItems: [...((o.groundItems as GameState['groundItems'] | undefined) ?? [])],
+    inventoryLayout: deserializeInventoryLayout(o.inventoryLayout),
     storage: {
       inventory: { ...((o.storage as GameState['storage'] | undefined)?.inventory ?? {}) },
       qualityInventory: { ...((o.storage as GameState['storage'] | undefined)?.qualityInventory ?? {}) },

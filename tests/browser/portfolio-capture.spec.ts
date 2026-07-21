@@ -12,7 +12,9 @@ import { paintStatsFromDataUrl, gameDebugSnapshot, openGame, renderedCanvasPngSn
 const SAVE_KEY = 'aeonvale-save-v1';
 const PORTFOLIO_EVIDENCE_PATH = 'test-results/portfolio/portfolio-mvp-evidence.json';
 const PORTFOLIO_PAINT_THRESHOLDS = { minSampled: 500, minPaintedRatio: 0.55, minColors: 32 } as const;
-const TODAY_BRIEFING_PROOF = ['农庄', '炼丹', '引劫', '首轮进度：10/10'] as const;
+const TODAY_BRIEFING_PROOF = ['前往丹炉', '承雷丹', '引雷入体'] as const;
+const DESKTOP_PORTFOLIO_SCREENSHOT = { width: 1440, height: 810 } as const;
+const DESKTOP_BACKDROP_PORTFOLIO_SCREENSHOT = { width: 1440, height: 825 } as const;
 
 interface PortfolioScreenshotEvidence {
   path: string;
@@ -51,7 +53,7 @@ function buildShowcaseSave(): string {
 
   // showcase 处于 stage=3 + temperingStack>0 的发展态；stage-3 与 first-tribulation 节拍会因此触发，
   // 但展示存档应代表玩家已阅过它们，预标 seen 以免截图时弹出对白（本夹具是截图用，非叙事流测试）。
-  for (const beat of ['awaken', 'spirit-test', 'intro', 'first-till', 'first-tribulation', 'stage-3']) {
+  for (const beat of ['awaken', 'spirit-test', 'intro', 'first-till', 'first-tribulation', 'stage-3', 'shennong-art-truth']) {
     state.player.flags.add(`narr-${beat}`);
   }
   state.player.flags.add('onboarding-first-second-water');
@@ -133,7 +135,7 @@ async function installShowcaseSave(page: Page): Promise<void> {
 }
 
 async function dismissIntroIfPresent(page: Page): Promise<void> {
-  for (let i = 0; i < 4; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const beatId = await page.evaluate(() => {
       const debug = (window as typeof window & { __AEON_DEBUG__?: { dialogueBeatId?: string | null } }).__AEON_DEBUG__;
       return debug?.dialogueBeatId ?? null;
@@ -142,12 +144,10 @@ async function dismissIntroIfPresent(page: Page): Promise<void> {
     await page.keyboard.press('Enter');
     await page.waitForTimeout(80);
   }
-}
-
-async function pressShiftTab(page: Page): Promise<void> {
-  await page.keyboard.down('Shift');
-  await page.keyboard.press('Tab');
-  await page.keyboard.up('Shift');
+  await page.waitForFunction(() => {
+    const debug = (window as typeof window & { __AEON_DEBUG__?: { dialogueBeatId?: string | null } }).__AEON_DEBUG__;
+    return debug?.dialogueBeatId == null;
+  });
 }
 
 async function waitForDebugState(page: Page, expected: Record<string, unknown>): Promise<void> {
@@ -167,21 +167,25 @@ async function waitForDebugState(page: Page, expected: Record<string, unknown>):
 }
 
 async function openFarmActionPanelForCapture(page: Page): Promise<void> {
-  await page.keyboard.press('Shift+M');
+  await page.locator('#world-command-bar [data-game-command="farm"]').click();
   await waitForDebugState(page, { interactionPanelKind: 'farm-action' });
 }
 
 async function capturePortfolioScreenshot(page: Page, path: string, expectedSize: { width: number; height: number }): Promise<void> {
   const snapshot = await renderedCanvasPngSnapshot(page);
-  expect(snapshot).not.toBeNull();
-  expect({ width: snapshot!.width, height: snapshot!.height }).toEqual(expectedSize);
+  if (!snapshot) throw new Error('Missing CSS-rendered canvas screenshot');
+  const screenshot = Buffer.from(snapshot.dataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
+  expect(screenshot.length).toBeGreaterThan(24);
+  expect(screenshot.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
+  expect(screenshot.subarray(12, 16).toString('ascii')).toBe('IHDR');
+  expect({ width: snapshot.width, height: snapshot.height }).toEqual(expectedSize);
   await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, Buffer.from(snapshot!.dataUrl.split(',')[1] ?? '', 'base64'));
-  const stats = await paintStatsFromDataUrl(page, snapshot!.dataUrl);
+  await writeFile(path, screenshot);
+  const stats = await paintStatsFromDataUrl(page, snapshot.dataUrl);
   expect(stats.sampled).toBeGreaterThan(PORTFOLIO_PAINT_THRESHOLDS.minSampled);
   expect(stats.painted / stats.sampled).toBeGreaterThan(PORTFOLIO_PAINT_THRESHOLDS.minPaintedRatio);
   expect(stats.colors).toBeGreaterThan(PORTFOLIO_PAINT_THRESHOLDS.minColors);
-  await appendPortfolioScreenshotEvidence(path, snapshot!.width, snapshot!.height, stats);
+  await appendPortfolioScreenshotEvidence(path, snapshot.width, snapshot.height, stats);
 }
 
 async function readPortfolioEvidence(): Promise<Partial<PortfolioMvpEvidence> | null> {
@@ -221,7 +225,7 @@ function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence:
   return {
     generatedBy: 'portfolio:capture',
     priority: 'P0-A',
-    localStatus: '本地可试玩 Demo 验收证据：首轮灵草日循环、出货补种、今日简报和截图均由浏览器自动化生成。',
+    localStatus: '本地可试玩 Demo 验收证据：首轮灵草日循环、出货补种、右上目标栏和截图均由浏览器自动化生成。',
     stardewComparison: ['P0 对标《星露谷物语》的低门槛日循环：翻地、播种、浇水、过夜、收获、出货、补种。', 'P0 不追求成熟生活模拟体量，只证明数分钟内能看懂并重复第一轮农务经济闭环。'],
     xianxiaCore: ['炼丹', '阵法', '淬体', '主动引劫', '种田即备战'],
     runtimeSignals: {
@@ -252,7 +256,7 @@ async function expectPortfolioFarmLoopState(page: Page): Promise<void> {
   const debug = await gameDebugSnapshot(page);
   expect(debug.dialogueBeatId).toBeNull();
   expect(debug.dialogueBackdropVisible).toBe(false);
-  expect(debug.todayBriefingVisible).toBe(true);
+  expect(debug.todayBriefingVisible).toBe(false);
   expect(debug.panelPreviewVisible).toBe(false);
   expect(debug.locationPreviewVisible).toBe(false);
   expect(debug.paused).toBe(false);
@@ -261,10 +265,15 @@ async function expectPortfolioFarmLoopState(page: Page): Promise<void> {
   expect(debug.helpText).toEqual(expect.stringContaining('目标'));
   expect(debug.helpText).toEqual(expect.stringContaining('炼丹'));
   expect(debug.helpText).toEqual(expect.stringContaining('引劫'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('方向移动'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('点击目标移动/互动'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('行囊常驻'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('丹炉/山河图/修行在更多中'));
+  expect(debug.renderedHelpText).toEqual(expect.stringContaining('B 行囊'));
+  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('Q切换'));
+  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('U 丹炉'));
   expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('\n'));
   expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('function'));
-  expect(debug.todayBriefingTitle).toBe('今日简报');
+  expect(debug.todayBriefingTitle).toBe('2/4 · 炼制丹药');
   for (const text of TODAY_BRIEFING_PROOF) {
     expect(debug.todayBriefingBody).toEqual(expect.stringContaining(text));
   }
@@ -297,26 +306,28 @@ test('captures deterministic review screenshots for public demo validation', asy
   await dismissIntroIfPresent(page);
   await expect(page.locator('canvas')).toBeVisible();
   await expectPortfolioFarmLoopState(page);
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/01-farm-loop.png', { width: 960, height: 542 });
+  await capturePortfolioScreenshot(page, 'test-results/portfolio/01-farm-loop.png', DESKTOP_PORTFOLIO_SCREENSHOT);
 
-  await pressShiftTab(page);
+  await page.locator('#world-command-more > summary').click();
+  await page.locator('#world-command-more [data-game-command="map"]').click();
   await waitForDebugState(page, {
-    locationSelectionActive: true,
+    flowOverlay: 'map',
+    appSurface: 'map',
     todayBriefingVisible: false,
     panelPreviewVisible: false,
-    locationPreviewVisible: true
+    locationPreviewVisible: false
   });
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/02-location-routing.png', { width: 960, height: 542 });
+  await capturePortfolioScreenshot(page, 'test-results/portfolio/02-location-routing.png', DESKTOP_BACKDROP_PORTFOLIO_SCREENSHOT);
 
   await page.keyboard.press('Escape');
-  await waitForDebugState(page, { locationSelectionActive: false });
+  await waitForDebugState(page, { flowOverlay: null, appSurface: 'world' });
   await openFarmActionPanelForCapture(page);
   await waitForDebugState(page, {
     todayBriefingVisible: false,
     panelPreviewVisible: true,
     locationPreviewVisible: false
   });
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/03-farm-actions.png', { width: 960, height: 542 });
+  await capturePortfolioScreenshot(page, 'test-results/portfolio/03-farm-actions.png', DESKTOP_PORTFOLIO_SCREENSHOT);
 });
 
 test('captures a small-viewport landscape keyboard-first screen for GitHub Pages demo review', async ({ page }) => {

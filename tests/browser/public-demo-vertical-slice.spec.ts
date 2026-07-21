@@ -67,19 +67,22 @@ test('fresh desktop player completes the four-stage public demo without test hoo
   await clearWorldDialogue(page);
   await expect(journey).toHaveText('开始炼丹');
   await journey.click();
-  await expect(page.locator('[data-app-surface="alchemy"]')).toBeVisible();
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-alchemy-primary');
-  await expect(page.locator('#flow-alchemy-materials')).toContainText('雷击木');
-  await expect(page.locator('#flow-alchemy-materials')).toContainText('寒潭莲');
-  await expect(page.locator('#flow-alchemy-pairing')).toContainText('七情');
-  await expect(page.locator('#flow-alchemy-pairing')).toContainText('相使');
-  await expect(page.locator('#flow-alchemy-ideal')).toContainText('40–55%');
-  await page.locator('#flow-alchemy-primary').click();
-  await expect(page.locator('#flow-alchemy-result')).toContainText('首枚避雷丹已经出炉');
-  await expect(page.locator('#flow-alchemy-primary')).toHaveText('携丹返回农庄');
+  const inventorySurface = page.locator('[data-app-surface="inventory"]');
+  await expect(inventorySurface).toBeVisible();
+  await expect(inventorySurface.locator('[data-inventory-tab="furnace"]')).toHaveAttribute('aria-selected', 'true');
+  await expect(inventorySurface.locator('[data-app-slot="inventory"]')).toHaveAttribute('data-inventory-view-mode', 'furnace-focus');
+  await expect(inventorySurface.locator('[data-inventory-tab="player"]')).toHaveCount(0);
+  await expect(inventorySurface.locator('[data-craft-cell="0"]')).toContainText('雷击木');
+  await expect(inventorySurface.locator('[data-craft-cell="1"]')).toContainText('寒潭莲');
+  await expect(inventorySurface.locator('[data-furnace-preview="true"]')).toContainText('40-55%');
+  await inventorySurface.locator('[data-craft-autofill="true"]').click();
+  await expect(inventorySurface.locator('[data-craft-cell="0"] .inv-virtual')).toContainText('药包');
+  await expect(inventorySurface.locator('[data-furnace-start="true"]')).toBeEnabled();
+  await inventorySurface.locator('[data-furnace-start="true"]').click();
+  await expect(inventorySurface.getByText('首枚承雷丹已经出炉。')).toBeVisible();
   expect((await debugSnapshot(page)).tutorialPillCount).toBe(1);
-  await page.locator('#flow-alchemy-primary').click();
-  await expect(page.locator('canvas')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(inventorySurface).toBeHidden();
   await clearWorldDialogue(page);
 
   await waitForObjective(page, 'journey-tribulation');
@@ -115,6 +118,10 @@ test('fresh desktop player completes the four-stage public demo without test hoo
       else if (py < ty) await page.locator('[data-demo-action="move-down"]').click();
       else if (py > ty) await page.locator('[data-demo-action="move-up"]').click();
       else return true;
+      await page.waitForFunction(() => {
+        const debug = (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__;
+        return debug?.tutorialPerfectBlockAvailable === true || debug?.playerMovementActive === false;
+      }, undefined, { timeout: 1_500 });
     }
     return (await debugSnapshot(page)).tutorialPerfectBlockAvailable === true;
   }

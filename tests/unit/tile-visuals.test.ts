@@ -264,8 +264,8 @@ describe('tile selection semantic helper', () => {
 });
 
 describe('qi flow visual helper', () => {
-  it('keeps sub-threshold or blocked ground visually quiet', () => {
-    expect(qiFlowVisualState(makeTile({ qiDensity: 20_000 }), 1000, false).lineCount).toBe(0);
+  it('keeps dead earth (qi≈0) and blocked ground visually quiet', () => {
+    expect(qiFlowVisualState(makeTile({ qiDensity: 0 }), 1000, false).lineCount).toBe(0);
     expect(qiFlowVisualState(makeTile({ qiDensity: 100_000, soilType: 'rock' }), 1000, false)).toMatchObject({
       lineCount: 0,
       alpha: 0,
@@ -273,9 +273,11 @@ describe('qi flow visual helper', () => {
     });
   });
 
-  it('keeps untouched baseline fields quiet while prepared soil breathes', () => {
-    expect(qiFlowVisualState(makeTile({ qiDensity: 30_000, tilled: false }), 1000, false).lineCount).toBe(0);
-    expect(qiFlowVisualState(makeTile({ qiDensity: 30_000, tilled: true }), 1000, false).lineCount).toBe(1);
+  it('shows visible qi flow on ordinary farmland (default qi 30k) with a static glow', () => {
+    const farm = qiFlowVisualState(makeTile({ qiDensity: 30_000 }), 1000, false);
+    expect(farm.lineCount).toBeGreaterThanOrEqual(1);
+    expect(farm.alpha).toBeGreaterThan(0);
+    expect(farm.glowAlpha).toBeGreaterThan(0);
   });
 
   it('maps rising concentration monotonically to denser and deeper flow', () => {

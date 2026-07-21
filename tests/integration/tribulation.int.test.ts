@@ -64,20 +64,20 @@ describe('INT-03: 天劫端到端', () => {
     expect(state.player.hp).toBe(0);
   });
 
-  it('避雷丹护体：wardMitigation=0.4 → 伤害减少 → 最终 HP 更高', () => {
+  it('承雷丹稳脉：wardMitigation=0.4 → 伤害减少 → 最终 HP 更高', () => {
     // 同种子两组，控制变量只有 wardMitigation
     const { state: s1, ctx: c1 } = setup(3, 1);
     const { state: s2, ctx: c2 } = setup(3, 1);
 
-    // s2 直接设置护体（不走 applyPill 避免丹毒差异）
+    // s2 直接设置承雷稳脉（不走 applyPill 避免丹毒差异）
     s2.player.wardMitigation = 0.4;
 
     const r1 = runTribulation(s1, { stage: 1, boltCount: 3, policy: { blockChance: 0 }, blastRadius: FULL_BLAST }, c1);
     const r2 = runTribulation(s2, { stage: 1, boltCount: 3, policy: { blockChance: 0 }, blastRadius: FULL_BLAST }, c2);
 
-    // 护体后 HP 更高
+    // 承雷控伤后 HP 更高
     expect(r2.finalHpMilli).toBeGreaterThan(r1.finalHpMilli);
-    // 护体渡劫后消耗
+    // 稳脉效果渡劫后消耗
     expect(s2.player.wardMitigation).toBe(0);
   });
 

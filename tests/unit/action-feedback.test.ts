@@ -318,7 +318,7 @@ describe('farm action feedback helper', () => {
       sowSuccessToastPresentation({
         seedId: 'seed.sunblossom',
         seedName: '朝阳菇',
-        nextStep: '当前目标：先给刚播下的幼苗补上第一桶水。\n操作：面向新苗按 X。\n动线：留在农庄。'
+        nextStep: '当前目标：先给刚播下的幼苗补上第一桶水。\n操作：点击新苗浇第一轮水。\n动线：留在农庄。'
       })
     ).toEqual({
       message: '播种 朝阳菇：第二轮药材已接上｜下一步：先给刚播下的幼苗补上第一桶水。',
@@ -459,5 +459,16 @@ describe('farm action feedback helper', () => {
 
     state.player.inventory['item.spirit-compost'] = { itemId: 'item.spirit-compost', count: 1 };
     expect(farmActionBlockedReason(state, ctx, 'fertilize', at, { itemId: 'item.spirit-compost' })).toBe(null);
+  });
+
+  it('blocks farm work outside the formal herb plot in the farmstead scene', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 20260710, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    const ctx = createSimContext(20260710, reg, DEFAULT_BALANCE);
+    state.player.stamina = 1_000_000;
+
+    const at = { x: 0, y: 1 };
+    expect(farmActionBlockedReason(state, ctx, 'till', at)).toBe('outside-farm-plot');
+    expect(farmActionBlockedToast('till', 'outside-farm-plot')).toBe('这里不是药田，先到围好的灵田里处理');
   });
 });

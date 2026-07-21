@@ -44,7 +44,7 @@ export function tradePanelPreview(offer: TradeOffer, content: ContentRegistry): 
 export function tradeToastPresentation(offer: TradeOffer, indexLabel: string, confirmHint: string, content: ContentRegistry): CommerceToastPresentation {
   const preview = tradePanelPreview(offer, content);
   return {
-    message: `交易${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
+    message: `交易${indexLabel}：${preview.title}｜点选条目·${confirmHint}`,
     assetId: preview.panelAssetId ?? preview.assetId
   };
 }
@@ -70,7 +70,7 @@ export function shopPanelPreview(kind: 'shop' | 'festival-stall', item: ShopItem
 export function shopToastPresentation(kind: 'shop' | 'festival-stall', item: ShopItem | FestivalStallItem, indexLabel: string, confirmHint: string, content: ContentRegistry): CommerceToastPresentation {
   const preview = shopPanelPreview(kind, item, content);
   return {
-    message: `${kind === 'festival-stall' ? '节日摊位' : '坊市'}${indexLabel}：${preview.title}｜Tab切换·${confirmHint}`,
+    message: `${kind === 'festival-stall' ? '节日摊位' : '坊市'}${indexLabel}：${preview.title}｜点选商品·${confirmHint}`,
     assetId: preview.panelAssetId ?? preview.assetId
   };
 }

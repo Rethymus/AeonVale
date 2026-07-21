@@ -195,6 +195,22 @@ describe('天象奇遇引擎 ', () => {
     expect(itemCount(state.player, 'item.spirit-compost')).toBe(0);
   });
 
+  it('节日奖励目标满栈时拒绝参与且不写入参与标记', () => {
+    const { state, ctx } = setup();
+    state.season = 'spring';
+    state.seasonDay = 14;
+    state.player.inventory['seed.dewroot'] = { itemId: 'seed.dewroot', count: 30 };
+    tickCelestial(state, ctx);
+
+    const result = participateFestival(state, ctx);
+
+    expect(result).toMatchObject({ ok: false, reason: '背包已满', eventId: 'event.spring-festival' });
+    expect(itemCount(state.player, 'seed.dewroot')).toBe(30);
+    expect(itemCount(state.player, 'item.spirit-compost')).toBe(0);
+    expect(state.events).not.toContainEqual(expect.objectContaining({ type: 'festival-participate' }));
+    expect(participateFestival(state, ctx).reason).not.toBe('本次节日已参与');
+  });
+
   it('节日摊位仅在当前节日开放，并按节日切换商品', () => {
     const { state, ctx } = setup();
     expect(getFestivalStallItems(state)).toEqual([]);

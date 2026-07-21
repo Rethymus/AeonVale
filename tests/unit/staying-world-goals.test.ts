@@ -180,7 +180,7 @@ describe('留世持续目标', () => {
     expect(mastery!.progressLabel).toBe('已精通：array-warden');
   });
 
-  it('阵守布防目标在阵守巡守兽于阵法覆盖内巡逻时完成', () => {
+  it('阵守巡阵目标在阵守巡守兽于阵法覆盖内巡逻时完成', () => {
     const state = setup();
     state.postAscension.mode = 'stayed-in-world';
     state.postAscension.ascensionDay = state.day;

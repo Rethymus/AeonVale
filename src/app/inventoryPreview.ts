@@ -28,6 +28,9 @@ function objectivePanelAssetId(itemId: string, objectiveId: OnboardingObjectiveI
 
 function sectionPanelAssetId(section: InventorySection): string | undefined {
   switch (section) {
+    case 'shipping-quality':
+    case 'shipping-normal':
+      return 'facility.shipping-bin';
     case 'storage-quality':
     case 'storage-normal':
       return 'loc.farmstead';
@@ -45,7 +48,7 @@ const QUALITY_LABEL: Record<CropQuality, string> = {
 const QUALITY_ORDER: readonly CropQuality[] = ['treasure', 'spirit', 'mortal'];
 const ITEM_GROUP_ORDER = ['seed.', 'herb.', 'pill.', 'item.'] as const;
 
-type InventorySection = 'player-quality' | 'player-normal' | 'storage-quality' | 'storage-normal';
+type InventorySection = 'player-quality' | 'player-normal' | 'storage-quality' | 'storage-normal' | 'shipping-quality' | 'shipping-normal';
 
 interface PreviewCandidate {
   section: InventorySection;
@@ -73,6 +76,10 @@ function sectionBaseRank(section: InventorySection): number {
       return 200;
     case 'storage-normal':
       return 100;
+    case 'shipping-quality':
+      return 80;
+    case 'shipping-normal':
+      return 40;
   }
 }
 
@@ -152,6 +159,17 @@ function collectCandidates(state: GameState): PreviewCandidate[] {
     pushCandidate(candidates, 'storage-normal', itemId, state.storage.inventory[itemId]?.count ?? 0);
   }
 
+  for (const quality of QUALITY_ORDER) {
+    const batch = state.qualityShippingBin?.[quality] ?? {};
+    for (const itemId of sortedItemIds(Object.keys(batch).filter(id => (batch[id] ?? 0) > 0))) {
+      pushCandidate(candidates, 'shipping-quality', itemId, batch[itemId] ?? 0, quality);
+    }
+  }
+
+  for (const itemId of sortedItemIds(Object.keys(state.shippingBin).filter(id => (state.shippingBin[id] ?? 0) > 0))) {
+    pushCandidate(candidates, 'shipping-normal', itemId, state.shippingBin[itemId] ?? 0);
+  }
+
   return candidates;
 }
 
@@ -161,7 +179,7 @@ export function inventoryPreviewSelection(state: GameState, content: ContentRegi
   if (!candidate) return null;
 
   const title = content.items.get(candidate.itemId)?.displayName ?? candidate.itemId;
-  const where = candidate.section.startsWith('player') ? '随身背包' : '农庄仓库';
+  const where = candidate.section.startsWith('player') ? '随身背包' : candidate.section.startsWith('storage') ? '农庄仓库' : '出货箱';
   const quantityLine = candidate.quality ? `${QUALITY_LABEL[candidate.quality]} × ${candidate.count}` : `数量 × ${candidate.count}`;
   const hintLine = objectiveHintLine(candidate.itemId, objectiveId);
 

@@ -1,4 +1,4 @@
-import { mutateItem } from '@sim/world/player';
+import { inventoryCanFitRewards, mutateItem } from '@sim/world/player';
 import type { SimContext } from '@sim/world/context';
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
@@ -260,7 +260,7 @@ export function getGreenhouseSeedGrant(state: GameState): { itemId: string; coun
   return { itemId, count };
 }
 
-export function tendGreenhouse(state: GameState, _ctx: SimContext): TendGreenhouseResult {
+export function tendGreenhouse(state: GameState, ctx: SimContext): TendGreenhouseResult {
   const rumor = getGreenhouseRumor(state);
   const seedGrant = getGreenhouseSeedGrant(state);
   const nurseryTier = greenhouseNurseryTier(state);
@@ -330,6 +330,24 @@ export function tendGreenhouse(state: GameState, _ctx: SimContext): TendGreenhou
     };
   }
 
+  if (!inventoryCanFitRewards(state.player, [{ itemId: seedGrant.itemId, count: seedGrant.count }], ctx.content)) {
+    return {
+      ok: false,
+      reason: '背包已满',
+      rumor,
+      grantedSeedId: seedGrant.itemId,
+      grantedSeedCount: 0,
+      revivedTiles: 0,
+      fertilityGainPerTile,
+      qiGainPerTile,
+      staminaCost,
+      nurseryTier,
+      nurseryCapacity,
+      nurserySlotsRemaining: greenhouseNurserySlotsRemaining(state),
+      greenhouseClimate: climate,
+      greenhouseCareStreak: careStreak
+    };
+  }
   const granted = mutateItem(state.player, seedGrant.itemId, seedGrant.count);
   if (!granted) {
     return {

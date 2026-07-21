@@ -46,7 +46,7 @@ describe('processing panel preview', () => {
 
     expect(preview).toEqual({
       title: '阵核',
-      details: '熔炼阵核\n耗时 1 日\n材料：破损法宝 × 1、灵石 × 2\n用途：布阵与抗劫防线',
+      details: '熔炼阵核\n耗时 1 日\n材料：破损法宝 × 1、灵石 × 2\n用途：布阵与导雷控伤',
       iconId: 'icon.item.array-core',
       panelAssetId: 'facility.talisman-furnace'
     });
@@ -54,24 +54,24 @@ describe('processing panel preview', () => {
 
   it('defaults processing toast presentation to facility art for each mode', () => {
     expect(processingToastPresentation('drying', '露根草 × 2', '（1/3）', '空格/E/回车开始·Esc返回')).toEqual({
-      message: '加工-晾晒（1/3）：露根草 × 2｜Tab切换·空格/E/回车开始·Esc返回',
+      message: '加工-晾晒（1/3）：露根草 × 2｜点选候选·空格/E/回车开始·Esc返回',
       assetId: 'facility.drying-rack'
     });
 
     expect(processingToastPresentation('sealing', '封藏灵草', null, '空格/E/回车开始·Esc返回')).toEqual({
-      message: '加工-封藏：封藏灵草｜Tab切换·空格/E/回车开始·Esc返回',
+      message: '加工-封藏：封藏灵草｜点选候选·空格/E/回车开始·Esc返回',
       assetId: 'facility.sealing-cabinet'
     });
 
     expect(processingToastPresentation('furnace', '阵核', null, '空格/E/回车开始·Esc返回')).toEqual({
-      message: '加工-熔炼：阵核｜Tab切换·空格/E/回车开始·Esc返回',
+      message: '加工-熔炼：阵核｜点选候选·空格/E/回车开始·Esc返回',
       assetId: 'facility.talisman-furnace'
     });
   });
 
   it('still accepts an explicit asset override for processing toasts when needed', () => {
     expect(processingToastPresentation('furnace', '阵核', null, '空格/E/回车开始·Esc返回', 'icon.item.array-core')).toEqual({
-      message: '加工-熔炼：阵核｜Tab切换·空格/E/回车开始·Esc返回',
+      message: '加工-熔炼：阵核｜点选候选·空格/E/回车开始·Esc返回',
       assetId: 'icon.item.array-core'
     });
   });
@@ -108,22 +108,22 @@ describe('processing panel preview', () => {
   });
 
   it('anchors brew results to the furnace thread', () => {
-    expect(brewResultToastPresentation('pill', { name: '避雷丹', furnaceHeat: 50 })).toEqual({
-      message: '炼成 避雷丹（炉温50）｜可服用备劫或稳住修行',
+    expect(brewResultToastPresentation('pill', { name: '承雷丹', furnaceHeat: 50 })).toEqual({
+      message: '炼成 承雷丹（炉温50）｜可服用备劫或稳住修行',
       assetId: 'facility.talisman-furnace'
     });
 
-    expect(brewResultToastPresentation('exploded', { name: '避雷丹', furnaceHeat: 90 })).toEqual({
+    expect(brewResultToastPresentation('exploded', { name: '承雷丹', furnaceHeat: 90 })).toEqual({
       message: '炉崩丹毁｜药性相冲、寒热失御——丹炉轰然炸裂，毒火反噬入体。（炉温90）｜撤去相冲之料，或调火候压住寒热再试。',
       assetId: 'facility.talisman-furnace'
     });
 
-    expect(brewResultToastPresentation('flawed', { name: '避雷丹', furnaceHeat: 20 })).toEqual({
+    expect(brewResultToastPresentation('flawed', { name: '承雷丹', furnaceHeat: 20 })).toEqual({
       message: '残丹尚可｜火候略偏，丹成而质劣——勉强能用，却不如重炼。（炉温20）｜炉温再贴近丹方理想区间，可得正丹、上丹。',
       assetId: 'facility.talisman-furnace'
     });
 
-    expect(brewResultToastPresentation('waste', { name: '避雷丹', furnaceHeat: 0 })).toEqual({
+    expect(brewResultToastPresentation('waste', { name: '承雷丹', furnaceHeat: 0 })).toEqual({
       message: '废丹一枚｜火候不当、药性离散——出炉只得一枚无用的废丹。（炉温0）｜核对此料对应的丹方，并把炉温挪进理想区间。',
       assetId: 'facility.talisman-furnace'
     });
@@ -143,7 +143,7 @@ describe('processing panel preview', () => {
 
   it('anchors furnace open-close state toasts to the furnace thread', () => {
     expect(furnaceVisibilityToastPresentation(true)).toEqual({
-      message: '打开丹炉（Y 切丹方·[/] 调火候·B 炼制）',
+      message: '打开丹炉：在行囊丹炉页点选丹方、调火候并炼制',
       assetId: 'facility.talisman-furnace'
     });
 

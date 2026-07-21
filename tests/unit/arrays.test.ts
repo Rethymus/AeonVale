@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createWorld, createSimContext, DEFAULT_BALANCE, tileAt, placeArray } from '@sim';
+import { advanceDay, createWorld, createSimContext, DEFAULT_BALANCE, tileAt, placeArray } from '@sim';
 import { tileWeight } from '@sim/tribulation/targeting';
 import { activeArrayCount, activeArraysCoveringTile, arrayModifierFor, coveringRodArray, hasActiveArrayCoverage, insulationClimateControlBonus } from '@sim/tribulation/arrays';
 import { runTribulation } from '@sim/tribulation/tribulationSystem';
@@ -62,7 +62,7 @@ describe('阵法系统 ', () => {
     expect(arrayModifierFor(state, t.id)).toBe(4.0);
   });
 
-  it('绝缘阵降低覆盖圈权重（保护核心）', () => {
+  it('绝缘阵降低覆盖圈权重（分流稳住核心）', () => {
     const { state, ctx } = setup();
     const t = tileAt(state, 3, 3)!;
     const wBefore = tileWeight(state, ctx, t, 0.5);
@@ -137,5 +137,62 @@ describe('阵法系统 ', () => {
     runTribulation(state, { stage: 3, boltCount: 40, policy: { blockChance: 0 } }, ctx);
     // 40 雷中应有部分被阵法代接 → power 下降或已失效
     expect(arr.power < powerBefore || !arr.active).toBe(true);
+  });
+});
+
+describe('R3-B1 引水阵（自动化浇水）', () => {
+  it('stage 门控：引水阵 stage 4/5/6 分级，不前移到序章（守 docs/02:88）', () => {
+    const { state, ctx } = setup();
+    // stage 0（默认凡骨）→ 拒绝
+    let r = placeArray(state, 'array.water-channel-1', 3, 3, ctx, { free: true });
+    expect(r.placed).toBe(false);
+    expect(r.reason).toContain('4');
+    // stage 3 仍拒绝（stageMin 4）
+    state.player.stage = 3;
+    expect(placeArray(state, 'array.water-channel-1', 3, 3, ctx, { free: true }).placed).toBe(false);
+    // stage 4 放 1 级成功；2 级（stageMin 5）仍拒
+    state.player.stage = 4;
+    expect(placeArray(state, 'array.water-channel-1', 3, 3, ctx, { free: true }).placed).toBe(true);
+    expect(placeArray(state, 'array.water-channel-2', 3, 3, ctx, { free: true }).placed).toBe(false);
+    // stage 5 放 2 级；stage 6 放 3 级
+    state.player.stage = 5;
+    expect(placeArray(state, 'array.water-channel-2', 3, 3, ctx, { free: true }).placed).toBe(true);
+    state.player.stage = 6;
+    expect(placeArray(state, 'array.water-channel-3', 3, 3, ctx, { free: true }).placed).toBe(true);
+  });
+
+  it('清晨自动浇灌覆盖圈灵田，非覆盖格不浇（对标星露谷洒水器；纯确定性）', () => {
+    const { state, ctx } = setup();
+    state.player.stage = 4;
+    const center = tileAt(state, 3, 3)!;
+    const off = tileAt(state, 6, 6)!;
+    placeArray(state, 'array.water-channel-1', 3, 3, ctx, { free: true });
+    advanceDay(state, ctx);
+    expect(center.wateredToday).toBe(true);
+    expect(center.moisture).toBeGreaterThan(0);
+    expect(off.wateredToday).toBe(false);
+  });
+
+  it('moisture 封顶 100*MILLI，守 docs/00 C5 不让自动化掏空浇水劳动', () => {
+    const { state, ctx } = setup();
+    state.player.stage = 4;
+    const center = tileAt(state, 3, 3)!;
+    center.moisture = 95 * MILLI;
+    placeArray(state, 'array.water-channel-1', 3, 3, ctx, { free: true });
+    advanceDay(state, ctx);
+    expect(center.moisture).toBeLessThanOrEqual(100 * MILLI);
+    expect(center.wateredToday).toBe(true);
+  });
+
+  it('默认消耗阵核+灵石+灵壤肥，材料不足失败', () => {
+    const { state, ctx } = setup();
+    state.player.stage = 4;
+    expect(placeArray(state, 'array.water-channel-1', 3, 3, ctx).placed).toBe(false);
+    mutateItem(state.player, 'item.array-core', 1);
+    mutateItem(state.player, 'item.spirit-stone', 2);
+    mutateItem(state.player, 'item.spirit-compost', 1);
+    const r = placeArray(state, 'array.water-channel-1', 3, 3, ctx);
+    expect(r.placed).toBe(true);
+    expect(itemCount(state.player, 'item.spirit-compost')).toBe(0);
   });
 });

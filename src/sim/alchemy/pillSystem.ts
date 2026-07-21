@@ -1,7 +1,7 @@
 /**
  * 丹药服用。
- * applyPill：消耗丹药 → 应用效果（回血/清毒/避雷护体/强骨）+ 累积丹毒负荷。
- * wardMitigation 在下次天劫中减伤，渡劫后消耗。
+ * applyPill：消耗丹药 → 应用效果（回血/清毒/承雷稳脉/强骨）+ 累积丹毒负荷。
+ * wardMitigation 表示承雷丹临时稳住经络与空灵根裂隙，让雷气可入体淬炼但不至于立刻崩碎。
  */
 import type { GameState } from '@sim/world/state';
 import { emit } from '@sim/world/state';
@@ -39,7 +39,7 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
         break;
       case 'lightningWard':
         p.wardMitigation = Math.max(p.wardMitigation, eff.power);
-        effects.push(`避雷护体${Math.round(eff.power * 100)}%`);
+        effects.push(`承雷稳脉${Math.round(eff.power * 100)}%`);
         break;
       case 'maxHpUp':
         p.maxHp += eff.power;
@@ -66,7 +66,7 @@ export function applyPill(state: GameState, pillId: string, ctx: SimContext): Pi
         effects.push(`淬体×${eff.power}`);
         break;
       case 'ironBone':
-        // 铁骨丹：整场天劫减伤 power（与避雷护体叠加，取最强）
+        // 铁骨丹：整场天劫减伤 power（与承雷稳脉叠加，取最强）
         p.ironBoneMitigation = Math.max(p.ironBoneMitigation, eff.power);
         effects.push(`铁骨减伤${Math.round(eff.power * 100)}%`);
         break;

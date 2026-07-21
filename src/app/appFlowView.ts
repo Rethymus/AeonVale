@@ -1,7 +1,7 @@
 import { APP_FLOW_FOCUS_TARGETS, createAppFlowState, transitionAppFlow, type AppFlowEvent, type AppFlowState, type AppFocusSelector } from './appFlowMachine';
 import { deriveUiMode, type UiMode, type UiModeInput } from './uiMode';
 
-export const APP_SURFACE_IDS = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'alchemy', 'tribulation', 'aftermath', 'ending', 'portrait-blocked'] as const;
+export const APP_SURFACE_IDS = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'narration', 'codex', 'portrait-blocked'] as const;
 
 export type AppSurfaceId = (typeof APP_SURFACE_IDS)[number];
 
@@ -13,17 +13,19 @@ export const APP_SURFACE_LABELS: Readonly<Record<AppSurfaceId, string>> = {
   prologue: '序章',
   settings: '设置',
   pause: '暂停',
-  inventory: '背包',
+  inventory: '物品管理',
   map: '地点',
   cultivation: '修行',
-  alchemy: '炼丹',
   tribulation: '教学天劫',
   aftermath: '战后结算',
   ending: '结局',
+  narration: '灵韵叙录',
+  codex: '叙录',
   'portrait-blocked': '请横置设备'
 };
 
 export const DEFAULT_BUILD_LABEL = '版本 0.1.0 · 试玩构建';
+const FOCUSABLE_SELECTOR = '[data-flow-focusable], button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
 
 export type AppFlowPresentationInput = UiModeInput & { readonly continueAvailable?: boolean };
 export type AppWorldAttention = Pick<UiModeInput, 'dialogueActive' | 'panelActive' | 'locationActive'>;
@@ -36,8 +38,8 @@ export interface AppFlowPresentation {
 }
 
 export interface AppFlowViewEventTarget {
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions): void;
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions): void;
 }
 
 export interface AppFlowViewElement extends AppFlowViewEventTarget {
@@ -83,12 +85,13 @@ export interface AppFlowViewController {
   destroy(): void;
 }
 
-type AppFlowAction = 'reload-page' | 'start-new-game' | 'continue-game' | 'open-settings' | 'finish-prologue' | 'skip-prologue' | 'close-overlay' | 'close-alchemy' | 'open-pause' | 'continue-aftermath' | 'return-title';
+type AppFlowAction = 'reload-page' | 'start-new-game' | 'continue-game' | 'open-settings' | 'finish-prologue' | 'skip-prologue' | 'close-overlay' | 'open-pause' | 'continue-aftermath' | 'return-title';
 
 interface ListenerBinding {
   readonly target: AppFlowViewEventTarget;
   readonly type: string;
   readonly listener: EventListener;
+  readonly options?: boolean | EventListenerOptions;
 }
 
 function defaultRoot(): AppFlowViewRoot | null {
@@ -133,7 +136,6 @@ function isFlowAction(value: string | null): value is AppFlowAction {
     case 'finish-prologue':
     case 'skip-prologue':
     case 'close-overlay':
-    case 'close-alchemy':
     case 'open-pause':
     case 'continue-aftermath':
     case 'return-title':
@@ -161,8 +163,6 @@ function eventForAction(action: Exclude<AppFlowAction, 'reload-page'>, trigger: 
       return { type: 'skip-prologue' };
     case 'close-overlay':
       return { type: 'close-overlay' };
-    case 'close-alchemy':
-      return { type: 'close-alchemy' };
     case 'open-pause':
       return { type: 'open-overlay', overlay: 'pause', returnFocus: focusSelectorFor(trigger, state.focus.initial) };
     case 'continue-aftermath':
@@ -186,8 +186,22 @@ function commandModifierPressed(event: Event): boolean {
   return keyboard.altKey === true || keyboard.ctrlKey === true || keyboard.metaKey === true;
 }
 
+function pointerButton(event: Event): number | null {
+  const button = (event as Event & { readonly button?: unknown }).button;
+  return typeof button === 'number' ? button : null;
+}
+
+function pointerType(event: Event): string | null {
+  const type = (event as Event & { readonly pointerType?: unknown }).pointerType;
+  return typeof type === 'string' ? type : null;
+}
+
 function surfaceSelector(surface: AppSurfaceId): string {
   return `[data-app-surface="${surface}"]`;
+}
+
+function shouldRenderWorldBackdrop(flow: AppFlowState, surface: AppSurfaceId): boolean {
+  return flow.screen === 'world' && (surface === 'inventory' || surface === 'map' || surface === 'cultivation' || surface === 'pause' || surface === 'settings');
 }
 
 export function createAppFlowViewController(options: AppFlowViewControllerOptions = {}): AppFlowViewController {
@@ -204,9 +218,14 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   let renderedSurface: AppSurfaceId | null = null;
   let renderedFocusTarget: AppFocusSelector | null = null;
   let destroyed = false;
+  const pointerDispatched = new WeakSet<object>();
 
   function activeSurface(): AppFlowViewElement | null {
     return root?.querySelector(surfaceSelector(presentation.surface)) ?? null;
+  }
+
+  function focusableElements(surface: AppFlowViewElement): AppFlowViewElement[] {
+    return Array.from(surface.querySelectorAll(FOCUSABLE_SELECTOR)).filter(candidate => candidate.disabled !== true && candidate.hidden !== true && candidate.inert !== true && candidate.getAttribute('aria-hidden') !== 'true');
   }
 
   function focusPresentationTarget(): void {
@@ -215,7 +234,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
     if (!surface) return;
     const requested = root.querySelector(presentation.focusTarget);
     const canFocus = (candidate: AppFlowViewElement | null): candidate is AppFlowViewElement => candidate != null && surface.contains(candidate) && candidate.disabled !== true && candidate.hidden !== true && candidate.inert !== true;
-    const fallback = Array.from(surface.querySelectorAll('[data-flow-focusable]')).find(candidate => canFocus(candidate));
+    const fallback = focusableElements(surface).find(candidate => canFocus(candidate));
     const target = canFocus(requested) ? requested : (fallback ?? (canFocus(surface) ? surface : null));
     target?.focus({ preventScroll: true });
   }
@@ -224,10 +243,14 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
     if (destroyed) return;
     presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable, ...worldAttention });
     for (const surface of surfaces) {
-      const active = surface.getAttribute('data-app-surface') === presentation.surface;
-      surface.hidden = !active;
+      const surfaceId = surface.getAttribute('data-app-surface');
+      const active = surfaceId === presentation.surface;
+      const backdrop = shouldRenderWorldBackdrop(state, presentation.surface) && surfaceId === 'world';
+      surface.hidden = !(active || backdrop);
       surface.inert = !active;
       surface.setAttribute('aria-hidden', String(!active));
+      if (backdrop) surface.setAttribute('data-flow-backdrop', 'true');
+      else surface.removeAttribute('data-flow-backdrop');
     }
 
     if (renderedSurface !== presentation.surface || renderedFocusTarget !== presentation.focusTarget) {
@@ -271,7 +294,6 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
 
   function escapeEventForCurrentState(): AppFlowEvent | null {
     if (state.overlay != null) return { type: 'close-overlay' };
-    if (state.screen === 'alchemy') return { type: 'close-alchemy' };
     if (state.screen === 'world') return presentation.mode === 'world' ? { type: 'open-overlay', overlay: 'pause' } : null;
     if (state.screen === 'tribulation') return { type: 'open-overlay', overlay: 'pause' };
     return null;
@@ -280,7 +302,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   function trapFocus(event: Event): void {
     const surface = activeSurface();
     if (!surface || presentation.surface === 'world' || presentation.surface === 'loading') return;
-    const focusable = Array.from(surface.querySelectorAll('[data-flow-focusable]')).filter(candidate => candidate.disabled !== true);
+    const focusable = focusableElements(surface);
     if (focusable.length === 0) return;
     const current = root?.activeElement ?? null;
     const first = focusable[0]!;
@@ -302,6 +324,12 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
       return;
     }
     const key = keyValue(event);
+    if ((key === 'b' || key === 'B') && state.overlay === 'inventory' && !commandModifierPressed(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      dispatch({ type: 'close-overlay' });
+      return;
+    }
     if (key === 'Escape') {
       const escapeEvent = escapeEventForCurrentState();
       if (!escapeEvent) return;
@@ -314,14 +342,15 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   };
 
   if (keyboardTarget) {
-    keyboardTarget.addEventListener('keydown', onKeyDown);
-    bindings.push({ target: keyboardTarget, type: 'keydown', listener: onKeyDown });
+    const options = { capture: true };
+    keyboardTarget.addEventListener('keydown', onKeyDown, options);
+    bindings.push({ target: keyboardTarget, type: 'keydown', listener: onKeyDown, options });
   }
 
   for (const button of Array.from(root?.querySelectorAll('button[data-flow-action]') ?? [])) {
     const action = button.getAttribute('data-flow-action');
     if (!isFlowAction(action)) continue;
-    const onClick: EventListener = event => {
+    const dispatchButtonAction = (event: Event): void => {
       if (destroyed) return;
       if (portraitBlocked || button.disabled === true) {
         event.preventDefault();
@@ -336,7 +365,23 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
       }
       dispatch(eventForAction(action, button, state));
     };
+    const onPointerDown: EventListener = event => {
+      const type = pointerType(event);
+      if (type === 'mouse' || (pointerButton(event) ?? 0) !== 0) return;
+      pointerDispatched.add(button);
+      dispatchButtonAction(event);
+    };
+    const onClick: EventListener = event => {
+      if (pointerDispatched.delete(button)) {
+        event.preventDefault();
+        event.stopPropagation();
+        return;
+      }
+      dispatchButtonAction(event);
+    };
+    button.addEventListener('pointerdown', onPointerDown);
     button.addEventListener('click', onClick);
+    bindings.push({ target: button, type: 'pointerdown', listener: onPointerDown });
     bindings.push({ target: button, type: 'click', listener: onClick });
   }
 
@@ -386,7 +431,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
     destroy(): void {
       if (destroyed) return;
       destroyed = true;
-      for (const binding of bindings) binding.target.removeEventListener(binding.type, binding.listener);
+      for (const binding of bindings) binding.target.removeEventListener(binding.type, binding.listener, binding.options);
       bindings.length = 0;
     }
   };

@@ -57,7 +57,7 @@ export function storagePanelPreview(mode: 'deposit' | 'withdraw', choice: Storag
 
 export function storageToastPresentation(mode: 'deposit' | 'withdraw', choice: StoragePreviewChoice, indexLabel: string, confirmHint: string, content: ContentRegistry): LogisticsToastPresentation {
   return {
-    message: `${mode === 'deposit' ? '仓储-存入' : '仓储-取出'}${indexLabel}：${itemName(choice.itemId, content)}${choice.quality ? `·${QUALITY_LABEL[choice.quality]}` : ''}×${choice.count}｜Tab切换·${confirmHint}`,
+    message: `${mode === 'deposit' ? '仓储-存入' : '仓储-取出'}${indexLabel}：${itemName(choice.itemId, content)}${choice.quality ? `·${QUALITY_LABEL[choice.quality]}` : ''}×${choice.count}｜点选物品·${confirmHint}`,
     assetId: logisticsAssetId('storage')
   };
 }
@@ -82,7 +82,7 @@ export function shippingPanelPreview(mode: 'normal' | 'quality', choice: Shippin
 
 export function shippingToastPresentation(mode: 'normal' | 'quality', choice: ShippingPreviewChoice, indexLabel: string, confirmHint: string, content: ContentRegistry): LogisticsToastPresentation {
   return {
-    message: `${mode === 'normal' ? '出货' : '品质出货'}${indexLabel}：${itemName(choice.itemId, content)}${mode === 'quality' ? `·${QUALITY_LABEL[choice.quality ?? 'mortal']}` : ''}×${choice.count}｜Tab切换·${confirmHint}`,
+    message: `${mode === 'normal' ? '出货' : '品质出货'}${indexLabel}：${itemName(choice.itemId, content)}${mode === 'quality' ? `·${QUALITY_LABEL[choice.quality ?? 'mortal']}` : ''}×${choice.count}｜点选物品·${confirmHint}`,
     assetId: logisticsAssetId('shipping')
   };
 }

@@ -14,6 +14,7 @@ function isAllowedGithubTemplate(file) {
 for (const file of tracked) {
   if (file === 'README.md') continue;
   if (file.startsWith('docs/')) failures.push(`forbidden design document in public tree: ${file}`);
+  if (file.startsWith('.planning/')) failures.push(`forbidden planning document in public tree: ${file}`);
   if (file === 'assets/ART-ASSETS-STATUS.md') failures.push(`forbidden design/status document in public tree: ${file}`);
   if (file.endsWith('.md') && !allowedMarkdown.has(file) && !isAllowedGithubTemplate(file)) {
     failures.push(`forbidden markdown document in public tree: ${file}`);
@@ -25,7 +26,7 @@ for (const file of tracked) {
 
 if (tracked.includes('README.md')) {
   const readme = readFileSync('README.md', 'utf8');
-  const forbiddenReadmePatterns = [/\bdocs\//, /\bAGENTS\.md\b/, /\bCLAUDE\.md\b/];
+  const forbiddenReadmePatterns = [/\bdocs\//, /\.planning\//, /\bAGENTS\.md\b/, /\bCLAUDE\.md\b/];
   for (const pattern of forbiddenReadmePatterns) {
     if (pattern.test(readme)) failures.push(`README.md references private or unpublished document pattern: ${pattern}`);
   }

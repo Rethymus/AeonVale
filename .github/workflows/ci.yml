@@ -113,3 +113,8 @@ jobs:
           PLAYWRIGHT_APP_DIR: .public-tree
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
           PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
+      - run: pnpm test:browser:public-tree:r1-input
+        env:
+          PLAYWRIGHT_APP_DIR: .public-tree
+          PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
+          PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/

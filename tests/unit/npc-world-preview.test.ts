@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildRegistry } from '@content/registry';
 import { createSimContext, createWorld, DEFAULT_BALANCE, FIRST_SECOND_WATER_FLAG, greenhouseVisitFlag, participateFestival, teaShedVisitFlag } from '@sim';
-import { farmsteadPropPlacements, locationWorldPreviewPlacements, npcWorldPreviewPlacements } from '@render/npcWorldPreview';
+import { farmsteadPropPlacements, locationWorldPreviewPlacementAt, locationWorldPreviewPlacements, npcWorldPreviewPlacementAt, npcWorldPreviewPlacements } from '@render/npcWorldPreview';
 import { locationServiceActorAssetId } from '@app/locationPreview';
 import { mutateItem } from '@sim/world/player';
 import { stageQiCap } from '@sim/progression/progression';
@@ -49,7 +49,7 @@ describe('npc world preview placements', () => {
         npcName: '采药女',
         assetId: 'sprite.npc.herb-gatherer',
         locationId: 'herb-plot',
-        x: 3,
+        x: 4,
         y: 2,
         birthday: false,
         hasQuest: false,
@@ -73,7 +73,7 @@ describe('npc world preview placements', () => {
         npcName: '巡谷守卫',
         assetId: 'sprite.npc.patrol-guard',
         locationId: 'spirit-vein',
-        x: 12,
+        x: 13,
         y: 7,
         birthday: false,
         hasQuest: false,
@@ -227,6 +227,41 @@ describe('npc world preview placements', () => {
     expect(placements.filter(entry => entry.locationId === 'array-shed' && entry.assetId === 'sprite.npc.array-smith')).toHaveLength(1);
   });
 
+  it('resolves npc and location preview placements by tile', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 31, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    state.player.flags.add(FIRST_SECOND_WATER_FLAG);
+    state.season = 'spring';
+    state.seasonDay = 6;
+
+    const npc = npcWorldPreviewPlacements(state).find(entry => entry.npcId === 'npc.herb-gatherer');
+    const location = locationWorldPreviewPlacements(state).find(entry => entry.locationId === 'herb-plot');
+    expect(npc).not.toBeUndefined();
+    expect(location).not.toBeUndefined();
+    expect(npcWorldPreviewPlacementAt(state, npc!.x, npc!.y)).toEqual(npc);
+    expect(locationWorldPreviewPlacementAt(state, location!.x, location!.y)).toEqual(location);
+
+    const occupied = new Set([...npcWorldPreviewPlacements(state), ...locationWorldPreviewPlacements(state)].map(entry => `${entry.x},${entry.y}`));
+    const empty = state.tiles.find(tile => !occupied.has(`${tile.x},${tile.y}`));
+    expect(empty).not.toBeUndefined();
+    expect(npcWorldPreviewPlacementAt(state, empty!.x, empty!.y)).toBeNull();
+    expect(locationWorldPreviewPlacementAt(state, empty!.x, empty!.y)).toBeNull();
+  });
+
+  it('keeps npc previews off semantic farmstead object tiles when anchors collide', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 31, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
+    state.player.flags.add(FIRST_SECOND_WATER_FLAG);
+    state.season = 'spring';
+    state.seasonDay = 6;
+
+    const herbGatherer = npcWorldPreviewPlacements(state).find(entry => entry.npcId === 'npc.herb-gatherer');
+    const propTiles = farmsteadPropPlacements(state).map(prop => `${prop.x},${prop.y}`);
+
+    expect(herbGatherer).toMatchObject({ x: 4, y: 2 });
+    expect(propTiles).not.toContain(`${herbGatherer?.x},${herbGatherer?.y}`);
+  });
+
   it('projects active schedule locations into lightweight world landmark placements', () => {
     const reg = buildRegistry();
     const state = createWorld({ seed: 34, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
@@ -323,7 +358,7 @@ describe('npc world preview placements', () => {
         locationId: 'festival-ground',
         assetId: 'loc.festival-ground',
         taskAssetId: undefined,
-        serviceAssetId: 'sprite.npc.market-merchant',
+        serviceAssetId: 'map-sprite.market-merchant-v1',
         x: 11,
         y: 4,
         npcCount: 3,
@@ -419,6 +454,13 @@ describe('npc world preview placements', () => {
         status: 'ready'
       }
     ]);
+  });
+
+  it('does not draw logistics props when the semantic farmstead scene is disabled', () => {
+    const reg = buildRegistry();
+    const state = createWorld({ seed: 39, width: 4, height: 4, content: reg, params: DEFAULT_BALANCE });
+
+    expect(farmsteadPropPlacements(state)).toEqual([]);
   });
 
   it('keeps the ambient farmstead artisan off the retained logistics props', () => {
