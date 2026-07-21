@@ -22,6 +22,11 @@ content/saves/*.json
 .env.*
 !.env.example
 
+# Local-only design documents
+docs/
+assets/ART-ASSETS-STATUS.md
+assets/CREDITS.md
+
 # AI agent / local orchestration state (never publish)
 .claude/
 .omc/
