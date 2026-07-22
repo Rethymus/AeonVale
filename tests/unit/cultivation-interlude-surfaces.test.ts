@@ -208,7 +208,7 @@ describe('D27-f · 一世过场玩家面', () => {
 
     expect(root.querySelector('.cr-interlude__art')?.getAttribute('data-asset-id')).toBe('cg.first-person.scene.farm-autumn-v2');
     expect(root.querySelectorAll<HTMLButtonElement>('.cr-interlude__button')).toHaveLength(2);
-    const anotherLife = Array.from(root.querySelectorAll<HTMLButtonElement>('.cr-interlude__button')).find(button => button.textContent === '再开一世')!;
+    const anotherLife = Array.from(root.querySelectorAll<HTMLButtonElement>('.cr-interlude__button')).find(button => button.textContent === '让后来人接续')!;
     surface.focusInitial();
     expect(document.activeElement).toBe(root.querySelector('h2'));
     anotherLife.click();

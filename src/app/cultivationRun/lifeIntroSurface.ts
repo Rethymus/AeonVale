@@ -25,35 +25,34 @@ export function createCultivationLifeIntroSurface(options: CultivationLifeIntroS
     root,
     hostClass: 'cr-life-intro-host',
     sectionClass: 'cr-life-intro',
-    phaseMark: '世',
-    phaseLabel: '新世启卷',
-    kicker: `第 ${view.generation} 世 · 凡骨入局`,
+    phaseMark: '身',
+    phaseLabel: view.generation === 1 ? '凡骨初卷' : '余灰续卷',
+    kicker: view.generation === 1 ? '雨夜拾生 · 尚未入境' : `第 ${view.generation - 1} 位承火者 · 凡骨入局`,
     title: view.identityName,
     lede: view.premise,
     artwork: options.artwork ?? {
       assetId: CULTIVATION_LIFE_INTRO_ART_ASSET_ID,
-      alt: `${view.identityName}在破屋中醒来，准备翻开这一世的日课`,
+      alt: `${view.identityName}在破屋中醒来，准备面对第一道劫兆`,
       caption: '凡骨仍轻，旧愿已经压在手中'
     }
   });
 
   appendCultivationFacts(frame.copy, [
     { label: '当前境阶', value: view.stageLabel },
-    { label: '此世余寿', value: `${view.lifespanRemainingDays} 日`, tone: 'warning' }
+    { label: '此身余寿', value: `${view.lifespanRemainingDays} 日`, tone: 'warning' }
   ]);
   appendCultivationList(
     frame.copy,
     (view.inheritedMarks ?? []).map(mark => `${mark.label}：${mark.value}`),
-    '这一世没有旧物护身，只能从第一格日课开始。'
-  ).setAttribute('aria-label', '此世继承');
+    '此身没有旧物护持，只能从第一段修途开始。'
+  ).setAttribute('aria-label', '此身所得');
 
-  const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, '继续后先读取本阶段劫兆，再安排六格日课。');
-  const continueButton = appendCultivationAction(frame.actions, '翻开今世日课', status.id);
+  const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, '继续后先读取本境劫兆，再安排六段修途。');
+  const continueButton = appendCultivationAction(frame.actions, '查看第一道劫兆', status.id);
   const unbindContinue = bindSingleUseAction(continueButton, onContinue);
 
   return {
     focusInitial(): void {
-      frame.section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       frame.heading.focus({ preventScroll: true });
     },
     destroy(): void {

@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { gameEntryPath } from './openGame';
 
-const ACTIVITY_LABELS = ['苦练', '灵田', '炼丹', '谋生', '参悟', '歇息'] as const;
+const ACTIVITY_LABELS = ['苦练', '灵田', '谋生', '歇息'] as const;
 
 async function dismissOrientationIfPresent(page: Page): Promise<void> {
   const override = page.locator('#orientation-override');
@@ -10,7 +10,7 @@ async function dismissOrientationIfPresent(page: Page): Promise<void> {
 
 async function finishFirstLifeOpening(page: Page): Promise<void> {
   await expect(page.locator('.cr-opening')).toBeVisible();
-  for (let beat = 0; beat < 4; beat += 1) {
+  for (let beat = 0; beat < 5; beat += 1) {
     await page.locator('.cr-opening__button[data-primary="true"]').click();
   }
 }
@@ -33,20 +33,18 @@ async function enterCultivationSchedule(page: Page): Promise<void> {
   await dismissOrientationIfPresent(page);
   await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible({ timeout: 8_000 });
   await finishFirstLifeOpening(page);
-  await page.getByRole('button', { name: '翻开今世日课' }).click();
-  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
   await expect(page.locator('.rp-planning')).toBeVisible();
 }
 
 async function expectFocusable(locator: Locator): Promise<void> {
-  await locator.scrollIntoViewIfNeeded();
   await expect(locator).toBeEnabled();
   await locator.focus();
   await expect(locator).toBeFocused();
 }
 
 async function expectScrollReachable(locator: Locator, page: Page): Promise<void> {
-  await locator.scrollIntoViewIfNeeded();
   await expect(locator).toBeVisible();
   const box = await locator.boundingBox();
   const viewport = page.viewportSize();
@@ -57,19 +55,21 @@ async function expectScrollReachable(locator: Locator, page: Page): Promise<void
 }
 
 async function expectMinimumTouchTarget(locator: Locator, minimum = 44): Promise<void> {
-  await locator.scrollIntoViewIfNeeded();
   const box = await locator.boundingBox();
   expect(box).not.toBeNull();
   expect(box!.width).toBeGreaterThanOrEqual(minimum);
   expect(box!.height).toBeGreaterThanOrEqual(minimum);
 }
 
-async function expectNoHorizontalOverflow(page: Page): Promise<void> {
+async function expectFixedViewport(page: Page): Promise<void> {
   const dimensions = await page.evaluate(() => ({
     clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth
+    scrollWidth: document.documentElement.scrollWidth,
+    clientHeight: document.documentElement.clientHeight,
+    scrollHeight: document.documentElement.scrollHeight
   }));
   expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+  expect(dimensions.scrollHeight).toBeLessThanOrEqual(dimensions.clientHeight + 1);
 }
 
 async function fillAgendaWithFarming(page: Page): Promise<void> {
@@ -86,14 +86,14 @@ async function finishRoundWithAccessiblePhases(page: Page, destination: 'plannin
   await expect(resolution).toBeVisible();
   const resolutionSlots = resolution.locator('.cr-resolution__slot');
   await expect(resolutionSlots).toHaveCount(6);
-  await expect(resolution.locator('.cr-resolution__slots')).toHaveAttribute('aria-label', '六格日课逐项结算');
+  await expect(resolution.locator('.cr-resolution__slots')).toHaveAttribute('aria-label', '六段修途逐项结算');
   const continueToEvent = resolution.getByRole('button', {
     name: '收起竹简，处理本轮事件'
   });
   await expectFocusable(continueToEvent);
   await expectMinimumTouchTarget(continueToEvent);
   await expectScrollReachable(continueToEvent, page);
-  await expectNoHorizontalOverflow(page);
+  await expectFixedViewport(page);
   await continueToEvent.click();
 
   const event = page.locator('.cr-event');
@@ -108,7 +108,7 @@ async function finishRoundWithAccessiblePhases(page: Page, destination: 'plannin
   const affordableChoice = event.locator('.cr-event__button[data-affordable="true"]').first();
   await expect(affordableChoice).toBeVisible();
   await expectScrollReachable(affordableChoice, page);
-  await expectNoHorizontalOverflow(page);
+  await expectFixedViewport(page);
   await affordableChoice.click();
 
   const insight = page.locator('.cr-insight');
@@ -125,7 +125,7 @@ async function finishRoundWithAccessiblePhases(page: Page, destination: 'plannin
   await expectFocusable(continueFromInsight);
   await expectMinimumTouchTarget(continueFromInsight);
   await expectScrollReachable(continueFromInsight, page);
-  await expectNoHorizontalOverflow(page);
+  await expectFixedViewport(page);
   await continueFromInsight.click();
 
   const timing = page.locator('.cr-tribulation-choice');
@@ -134,7 +134,7 @@ async function finishRoundWithAccessiblePhases(page: Page, destination: 'plannin
   await expectFocusable(timingChoice);
   await expectMinimumTouchTarget(timingChoice);
   await expectScrollReachable(timingChoice, page);
-  await expectNoHorizontalOverflow(page);
+  await expectFixedViewport(page);
   await timingChoice.click();
 }
 
@@ -165,8 +165,8 @@ test.describe('修仙日程 · 无障碍与触控门禁', () => {
     expect(desktopGeometry.planningScrollHeight).toBeLessThanOrEqual(desktopGeometry.planningClientHeight + 1);
     expect(desktopGeometry.confirmBottom).toBeLessThanOrEqual(desktopGeometry.viewportHeight);
 
-    const notes = page.locator('.rp-activity-note');
-    await expect(notes).toHaveCount(6);
+    const notes = page.locator('.rp-activity-note:visible');
+    await expect(notes).toHaveCount(4);
     const noteMetrics = await notes.evaluateAll(elements => elements.map(element => {
       const style = getComputedStyle(element);
       return {
@@ -186,10 +186,10 @@ test.describe('修仙日程 · 无障碍与触控门禁', () => {
     for (let index = 0; index < await planningButtons.count(); index += 1) {
       await expectMinimumTouchTarget(planningButtons.nth(index));
     }
-    await expectNoHorizontalOverflow(page);
+    await expectFixedViewport(page);
 
     await fillAgendaWithFarming(page);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
     await page.getByRole('button', { name: '收起竹简，处理本轮事件' }).click();
     await page.locator('.cr-event__button[data-affordable="true"]').first().click();
 
@@ -219,27 +219,30 @@ test.describe('修仙日程 · 无障碍与触控门禁', () => {
         expect(overlapWidth > 1 && overlapHeight > 1).toBe(false);
       }
     }
-    await expectNoHorizontalOverflow(page);
+    await expectFixedViewport(page);
   });
 
   test('键盘可排日程，触控可引劫，移动端控件与语义均可达', async ({ page }) => {
     await enterCultivationSchedule(page);
 
     const slots = page.locator('.rp-agenda-slot');
-    const activities = page.locator('.rp-activity-btn');
+    const activities = page.locator('.rp-activity-btn:visible');
     await expect(slots).toHaveCount(6);
-    await expect(activities).toHaveCount(6);
+    await expect(activities).toHaveCount(4);
     for (let index = 0; index < 6; index += 1) {
       await expectFocusable(slots.nth(index));
-      await expectFocusable(activities.nth(index));
       await expectMinimumTouchTarget(slots.nth(index));
+    }
+    for (let index = 0; index < 4; index += 1) {
+      await expectFocusable(activities.nth(index));
       await expectMinimumTouchTarget(activities.nth(index));
     }
 
     await slots.first().focus();
-    for (let index = 0; index < 6; index += 1) {
-      await page.keyboard.press(String(index + 1));
-      await expect(slots.nth(index)).toHaveAttribute('aria-label', new RegExp(ACTIVITY_LABELS[index]!));
+    const shortcutSequence = [1, 2, 3, 4, 1, 2] as const;
+    for (const [index, shortcut] of shortcutSequence.entries()) {
+      await page.keyboard.press(String(shortcut));
+      await expect(slots.nth(index)).toHaveAttribute('aria-label', new RegExp(ACTIVITY_LABELS[shortcut - 1]!));
     }
 
     await page.keyboard.press('ArrowLeft');
@@ -252,8 +255,8 @@ test.describe('修仙日程 · 无障碍与触控门禁', () => {
 
     await expectScrollReachable(page.getByRole('button', { name: /^灵田，/ }), page);
     await fillAgendaWithFarming(page);
-    await expectNoHorizontalOverflow(page);
-    const settleFirstRound = page.getByRole('button', { name: '结清本轮日课' });
+    await expectFixedViewport(page);
+    const settleFirstRound = page.getByRole('button', { name: '结清本轮修途' });
     await expectScrollReachable(settleFirstRound, page);
     await settleFirstRound.click();
     await finishRoundWithAccessiblePhases(page, 'planning');
@@ -290,7 +293,7 @@ test.describe('修仙日程 · 无障碍与触控门禁', () => {
     }
 
     await expectScrollReachable(dpad, page);
-    await expectNoHorizontalOverflow(page);
+    await expectFixedViewport(page);
     let moves = parseMoves(await hud.innerText());
     let moved = false;
     for (const direction of directions) {

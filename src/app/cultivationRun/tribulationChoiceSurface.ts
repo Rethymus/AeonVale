@@ -36,7 +36,7 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
     phaseLabel: '引劫之问',
     kicker: '劫兆已近 · 准备就此作数',
     title: '现在引劫，还是再借一轮人间？',
-    lede: '早引劫能少耗余寿，却要接受当前准备；继续日课可以补足短板，但天道不会无限等待。',
+    lede: '早引劫能少耗余寿，却要接受当前准备；再走一轮修途可以补足短板，但天道不会无限等待。',
     artwork: options.artwork ?? {
       assetId: CULTIVATION_TRIBULATION_CHOICE_ART_ASSET_ID,
       alt: '紫色天劫在灵田上空聚拢，等待玩家决定何时引落',
@@ -85,7 +85,7 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
     return button;
   }
 
-  const prepareButton = choiceButton('prepare', '再备一轮', '回到六格日课，继续补资源、降心压或参悟残卷。');
+  const prepareButton = choiceButton('prepare', '再备一轮', '回到六段修途，继续补资源、降心压或参悟残卷。');
   const invokeButton = choiceButton('invoke', '现在引劫', '以此刻的身体、护持和阵地进入天劫。');
   const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, '');
   prepareButton.setAttribute('aria-describedby', status.id);
@@ -96,7 +96,7 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
     dispatching = true;
     const result = dispatch({ type: 'choose-tribulation-timing', choice });
     state = result.state;
-    feedback = result.ok ? (choice === 'prepare' ? '已把引劫压后一轮，返回日课。' : '准备封卷，天劫将至。') : machineErrorMessage(result.error);
+    feedback = result.ok ? (choice === 'prepare' ? '已把引劫压后一轮，返回修途。' : '准备封卷，天劫将至。') : machineErrorMessage(result.error);
     dispatching = false;
     render();
   }
@@ -116,7 +116,7 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
 
     factsHost.replaceChildren();
     appendCultivationFacts(factsHost, [
-      { label: '已备日课', value: `${state.settledAgendaCount}/${state.tribulationAgendaTarget} 轮`, tone: remaining === 0 ? 'danger' : 'warning' },
+      { label: '已备修途', value: `${state.settledAgendaCount}/${state.tribulationAgendaTarget} 轮`, tone: remaining === 0 ? 'danger' : 'warning' },
       { label: '承雷根底', value: `体魄 ${state.runState.bodyFoundation} · 耐力 ${state.runState.endurance} · 意志 ${state.runState.willpower}` },
       { label: '护持资源', value: `丹药 ${state.runState.pills} · 灵草 ${state.runState.herbs}`, tone: state.runState.pills > 0 ? 'good' : 'neutral' },
       { label: '天道压力', value: `天债 ${state.runState.heavenDebt} · 注视 ${state.runState.daoAttention}`, tone: 'warning' }
@@ -129,7 +129,7 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
     if (feedback) status.textContent = feedback;
     else if (!active) status.textContent = '引劫时机已经选定。';
     else if (!canPrepare) status.textContent = '天道催讨已至，不能再拖延；只能以当前准备引劫。';
-    else if (!canInvoke) status.textContent = `至少还需完成 ${earliestInvocationAgenda - state.settledAgendaCount} 轮日课，才能主动引劫。`;
+    else if (!canInvoke) status.textContent = `至少还需完成 ${earliestInvocationAgenda - state.settledAgendaCount} 轮修途，才能主动引劫。`;
     else status.textContent = `还可再准备 ${remaining} 轮；现在引劫也已开放。`;
   }
 
@@ -143,7 +143,6 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
       render();
     },
     focusInitial(): void {
-      frame.section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       frame.heading.focus({ preventScroll: true });
     },
     destroy(): void {

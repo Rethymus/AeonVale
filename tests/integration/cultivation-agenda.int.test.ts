@@ -4,7 +4,7 @@ import { createCultivationRunState, resolveCultivationAgenda } from '@sim';
 
 describe('cultivation agenda · 两轮闭环', () => {
   test('生产资源→消费资源→苦练→歇息可连续推进两轮', () => {
-    const initial = createCultivationRunState({ seed: 27 });
+    const initial = createCultivationRunState({ seed: 27, overrides: { stage: 2 } });
     const first = resolveCultivationAgenda(initial, {
       slots: ['farming', 'alchemy', 'livelihood', 'insight', 'training', 'rest']
     });

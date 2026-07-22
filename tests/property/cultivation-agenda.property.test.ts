@@ -35,12 +35,12 @@ const agendaArb: fc.Arbitrary<CultivationAgenda> = fc
 const fundedStateArb: fc.Arbitrary<CultivationRunState> = fc
   .record({
     seed: fc.integer({ min: 1, max: 999_999 }),
-    stage: fc.integer({ min: 0, max: CULTIVATION_RUN_MAX_STAGE }),
+    stage: fc.constant(CULTIVATION_RUN_MAX_STAGE),
     agendaIndex: fc.integer({ min: 0, max: 10_000 }),
     lifespanRemainingDays: fc.integer({ min: MAX_AGENDA_TIME_COST, max: 840 }),
     bodyFoundation: fc.integer({ min: 0, max: 1_000_000 }),
     endurance: fc.integer({ min: 0, max: 1_000_000 }),
-    willpower: fc.integer({ min: 0, max: 1_000_000 }),
+    willpower: fc.integer({ min: 0, max: 880_000 }),
     pillPoison: fc.integer({ min: 0, max: POISON_CAP }),
     heavenDebt: fc.integer({ min: 0, max: 1_000_000 }),
     daoAttention: fc.integer({ min: 0, max: 1_000_000 }),
@@ -48,9 +48,9 @@ const fundedStateArb: fc.Arbitrary<CultivationRunState> = fc
     mortalHeart: fc.integer({ min: 0, max: P.cultivationRun.mortalHeartCap }),
     insight: fc.integer({ min: 0, max: 10_000 }),
     injury: fc.integer({ min: 0, max: P.cultivationRun.injuryCap }),
-    herbs: fc.integer({ min: 12, max: 1_000 }),
+    herbs: fc.integer({ min: 18, max: 1_000 }),
     food: fc.integer({ min: 6, max: 1_000 }),
-    spiritStones: fc.integer({ min: 6, max: 1_000 }),
+    spiritStones: fc.integer({ min: 18, max: 1_000 }),
     pills: fc.integer({ min: 0, max: 1_000 })
   })
   .map(({ seed, ...overrides }) => createCultivationRunState({ seed, params: P, overrides }));

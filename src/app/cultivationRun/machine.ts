@@ -77,14 +77,7 @@ function insightBudget(agendaIndex: number, unlockedThisAgenda = 0): Cultivation
 }
 
 function emptyActivityCounts(): CultivationActivityCounts {
-  return {
-    training: 0,
-    farming: 0,
-    alchemy: 0,
-    livelihood: 0,
-    insight: 0,
-    rest: 0
-  };
+  return Object.fromEntries(CULTIVATION_ACTIVITY_IDS.map(activity => [activity, 0])) as unknown as CultivationActivityCounts;
 }
 
 function addAgendaActivityCounts(counts: CultivationActivityCounts, slots: readonly CultivationActivityResolution[]): CultivationActivityCounts {

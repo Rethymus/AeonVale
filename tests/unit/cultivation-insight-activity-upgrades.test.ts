@@ -15,7 +15,7 @@ const AGENDA: CultivationAgenda = {
 
 function resolveWith(tags: readonly CultivationInsightEffectTag[]) {
   const state = createCultivationRunState({
-    overrides: { food: 8, herbs: 8, spiritStones: 2, pressure: 20, mortalHeart: 50 }
+    overrides: { stage: 2, food: 8, herbs: 8, spiritStones: 2, pressure: 20, mortalHeart: 50 }
   });
   const result = resolveCultivationAgenda(state, AGENDA, DEFAULT_BALANCE, { insightEffectTags: tags });
   expect(result.ok).toBe(true);

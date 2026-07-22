@@ -731,9 +731,55 @@ button {
   width: min(100%, 760px);
 }
 
-/* D27 主模式：桌面端是一张固定修行工作台，移动端才退回纵向卷页。 */
+/* D27 主模式：所有视口都是固定修行工作台；只有明确的选项容器可以滚动。 */
+.roguelite-proto-surface {
+  height: 100dvh;
+  min-height: 0;
+  max-height: 100dvh;
+  padding: clamp(4px, 1vw, 12px);
+  overflow: hidden;
+}
+
 .roguelite-proto-surface .roguelite-frame {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
   width: min(100%, 1500px);
+  height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - clamp(8px, 2vw, 24px));
+  max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - clamp(8px, 2vw, 24px));
+  padding: clamp(4px, 1vw, 16px);
+  overflow: hidden;
+}
+
+.roguelite-proto-surface > .roguelite-frame > .flow-kicker,
+.roguelite-proto-surface > .roguelite-frame > .flow-lede {
+  display: none;
+}
+
+.roguelite-proto-surface #flow-roguelite-proto-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.roguelite-proto-surface #roguelite-proto-root,
+.roguelite-proto-surface #roguelite-proto-root > .rp-wrap {
+  grid-row: 1;
+  min-height: 0;
+  height: 100%;
+}
+
+.roguelite-proto-surface #roguelite-proto-root > .rp-wrap > .rp-planning,
+.roguelite-proto-surface #roguelite-proto-root > .rp-wrap > .rp-phase-host,
+.roguelite-proto-surface #roguelite-proto-root > .rp-wrap > .rp-tribulation {
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 @media (min-width: 1000px) and (min-height: 700px) {
@@ -781,7 +827,7 @@ button {
   .roguelite-proto-surface #roguelite-proto-root > .rp-wrap > .rp-tribulation {
     min-height: 0;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
   }
 }
 

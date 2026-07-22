@@ -6,6 +6,7 @@
  */
 import type { CultivationLifeConclusion } from './legacy';
 import { CULTIVATION_RUN_MAX_STAGE } from './types';
+import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@sim/params';
 
 export const CULTIVATION_PRE_REALM_STAGE = 0 as const;
 export const CULTIVATION_FINAL_STAGE = CULTIVATION_RUN_MAX_STAGE;
@@ -18,15 +19,65 @@ export interface CultivationRealmDefinition {
   readonly name: string;
 }
 
-/** D27/22 已有六重淬体正典；不复用旧七阶制的境界名。 */
+/** 与传统修仙阅读经验对齐，但每一境仍由雷劫淬体而来。 */
 export const CULTIVATION_REALMS = [
-  { stage: 1, name: '察漏' },
-  { stage: 2, name: '引路' },
-  { stage: 3, name: '借势' },
-  { stage: 4, name: '淬骨' },
-  { stage: 5, name: '守我' },
+  { stage: 1, name: '练气' },
+  { stage: 2, name: '筑基' },
+  { stage: 3, name: '结丹' },
+  { stage: 4, name: '元婴' },
+  { stage: 5, name: '化神' },
   { stage: 6, name: '归一' }
 ] as const satisfies readonly CultivationRealmDefinition[];
+
+const CULTIVATION_STAGE_EPITHETS = [
+  '万气不留',
+  '百缕存一',
+  '经窍成渠',
+  '雷髓凝核',
+  '劫力化胎',
+  '神念驭雷',
+  '窃天为我'
+] as const;
+
+const CULTIVATION_RETENTION_PER_TEN_THOUSAND = [1, 100, 800, 2500, 4800, 7200, 10000] as const;
+
+export interface CultivationStageCaps {
+  readonly bodyFoundation: number;
+  readonly endurance: number;
+  readonly willpower: number;
+}
+
+export interface CultivationStageProfile {
+  readonly stage: CultivationProgressionStage;
+  readonly realmName: string;
+  readonly epithet: string;
+  readonly retentionPerTenThousand: number;
+  readonly caps: CultivationStageCaps;
+}
+
+export function cultivationStageCaps(stage: number, params: BalanceParams = DEFAULT_BALANCE): CultivationStageCaps {
+  const resolved = withDefaultBalanceParams(params);
+  const safeStage = Math.max(0, Math.min(CULTIVATION_FINAL_STAGE, Number.isFinite(stage) ? Math.trunc(stage) : 0));
+  const bodyFoundation = resolved.bodyCultivation.foundationCap[safeStage]
+    ?? resolved.bodyCultivation.foundationCap.at(-1)
+    ?? 0;
+  return {
+    bodyFoundation,
+    endurance: Math.floor(bodyFoundation * 0.55),
+    willpower: Math.floor(bodyFoundation * 0.4)
+  };
+}
+
+export function cultivationStageProfile(stage: number, params: BalanceParams = DEFAULT_BALANCE): CultivationStageProfile {
+  const safeStage = Math.max(0, Math.min(CULTIVATION_FINAL_STAGE, Number.isFinite(stage) ? Math.trunc(stage) : 0)) as CultivationProgressionStage;
+  return {
+    stage: safeStage,
+    realmName: safeStage === 0 ? '凡骨' : cultivationRealmAt(safeStage)?.name ?? '凡骨',
+    epithet: CULTIVATION_STAGE_EPITHETS[safeStage],
+    retentionPerTenThousand: CULTIVATION_RETENTION_PER_TEN_THOUSAND[safeStage],
+    caps: cultivationStageCaps(safeStage, params)
+  };
+}
 
 export function isCultivationProgressionStage(stage: number): stage is CultivationProgressionStage {
   return Number.isInteger(stage) && stage >= CULTIVATION_PRE_REALM_STAGE && stage <= CULTIVATION_FINAL_STAGE;

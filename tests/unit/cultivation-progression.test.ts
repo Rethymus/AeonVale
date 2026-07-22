@@ -2,17 +2,17 @@ import { describe, expect, test } from 'vitest';
 import { CULTIVATION_FINAL_STAGE, CULTIVATION_REALMS, cultivationRealmAt, createCultivationAshEpitaph, isCultivationProgressionStage, isFinalCultivationStage, nextCultivationStage, resolveCultivationProgression } from '@sim/cultivation-run';
 
 describe('D27-f · 六境进程与终局', () => {
-  test('六境目录固定为察漏至归一，并与凡骨 stage 0 分离', () => {
+  test('六境目录固定为练气至归一，并与凡骨 stage 0 分离', () => {
     expect(CULTIVATION_REALMS).toEqual([
-      { stage: 1, name: '察漏' },
-      { stage: 2, name: '引路' },
-      { stage: 3, name: '借势' },
-      { stage: 4, name: '淬骨' },
-      { stage: 5, name: '守我' },
+      { stage: 1, name: '练气' },
+      { stage: 2, name: '筑基' },
+      { stage: 3, name: '结丹' },
+      { stage: 4, name: '元婴' },
+      { stage: 5, name: '化神' },
       { stage: 6, name: '归一' }
     ]);
     expect(cultivationRealmAt(0)).toBeNull();
-    expect(cultivationRealmAt(4)).toEqual({ stage: 4, name: '淬骨' });
+    expect(cultivationRealmAt(4)).toEqual({ stage: 4, name: '元婴' });
     expect(cultivationRealmAt(7)).toBeNull();
   });
 

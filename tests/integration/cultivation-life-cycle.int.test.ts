@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import {
+  CULTIVATION_ACTIVITY_IDS,
   applyCultivationTribulationOutcome,
   createCultivationAshEpitaph,
   createCultivationRunState,
@@ -41,14 +42,7 @@ const INVENTORY_FIELDS = ['herbs', 'food', 'spiritStones', 'pills'] as const;
 type SuccessfulEventResolution = Extract<ResolveCultivationEventChoiceResult, { readonly ok: true }>;
 
 function activityCounts(slots: readonly CultivationActivityId[]): CultivationActivityCounts {
-  const counts: Record<CultivationActivityId, number> = {
-    training: 0,
-    farming: 0,
-    alchemy: 0,
-    livelihood: 0,
-    insight: 0,
-    rest: 0
-  };
+  const counts = Object.fromEntries(CULTIVATION_ACTIVITY_IDS.map(activity => [activity, 0])) as Record<CultivationActivityId, number>;
   for (const activity of slots) counts[activity] += 1;
   return counts;
 }
@@ -68,6 +62,7 @@ function buildLifeUntilTribulation(seed: number) {
   const initial = createCultivationRunState({
     seed,
     overrides: {
+      stage: 2,
       lifespanRemainingDays: 720,
       bodyFoundation: 2_000,
       endurance: 1_400,

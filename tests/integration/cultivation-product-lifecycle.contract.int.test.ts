@@ -24,8 +24,8 @@ const MIXED_AGENDA = [
   'training',
   'rest',
   'livelihood',
-  'insight',
-  'alchemy'
+  'farming',
+  'training'
 ] as const satisfies readonly CultivationActivityId[];
 
 function step(

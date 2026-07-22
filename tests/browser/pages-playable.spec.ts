@@ -10,9 +10,9 @@ test('public build supports real journey input and exact continue restore', asyn
   await waitForInitialSurface(page);
   await page.locator('#flow-title-new-game').click();
   await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible();
-  for (let beat = 0; beat < 4; beat += 1) await page.locator('.cr-opening__button[data-primary="true"]').click();
-  await page.getByRole('button', { name: '翻开今世日课' }).click();
-  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+  for (let beat = 0; beat < 5; beat += 1) await page.locator('.cr-opening__button[data-primary="true"]').click();
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
 
   const firstSlot = page.locator('.rp-agenda-slot').first();
   await firstSlot.click();

@@ -101,6 +101,46 @@ export interface CultivationRunBalanceParams {
       injuryRelief: number;
       poisonRelief: number;
     };
+    meridian: {
+      timeCostDays: number;
+      foodCost: number;
+      bodyFoundationGain: number;
+      enduranceGain: number;
+      willpowerGain: number;
+      pressureGain: number;
+      injuryGain: number;
+    };
+    arrayStudy: {
+      timeCostDays: number;
+      spiritStoneCost: number;
+      insightGain: number;
+      willpowerGain: number;
+      pressureGain: number;
+      mortalHeartGain: number;
+    };
+    lightningBath: {
+      timeCostDays: number;
+      herbCost: number;
+      bodyFoundationGain: number;
+      enduranceGain: number;
+      willpowerGain: number;
+      poisonGain: number;
+      pressureGain: number;
+      injuryGain: number;
+      heavenDebtGain: number;
+      daoAttentionGain: number;
+    };
+    heavenTheft: {
+      timeCostDays: number;
+      spiritStoneCost: number;
+      bodyFoundationGain: number;
+      willpowerGain: number;
+      insightGain: number;
+      pressureGain: number;
+      injuryGain: number;
+      heavenDebtGain: number;
+      daoAttentionGain: number;
+    };
   };
 }
 
@@ -421,6 +461,46 @@ export const DEFAULT_BALANCE: BalanceParams = {
         mortalHeartGain: 8,
         injuryRelief: 12,
         poisonRelief: 2000
+      },
+      meridian: {
+        timeCostDays: 12,
+        foodCost: 1,
+        bodyFoundationGain: 3200,
+        enduranceGain: 1400,
+        willpowerGain: 900,
+        pressureGain: 16,
+        injuryGain: 8
+      },
+      arrayStudy: {
+        timeCostDays: 10,
+        spiritStoneCost: 2,
+        insightGain: 7,
+        willpowerGain: 1000,
+        pressureGain: 12,
+        mortalHeartGain: 2
+      },
+      lightningBath: {
+        timeCostDays: 9,
+        herbCost: 3,
+        bodyFoundationGain: 5000,
+        enduranceGain: 1800,
+        willpowerGain: 1200,
+        poisonGain: 2000,
+        pressureGain: 16,
+        injuryGain: 10,
+        heavenDebtGain: 500,
+        daoAttentionGain: 800
+      },
+      heavenTheft: {
+        timeCostDays: 8,
+        spiritStoneCost: 3,
+        bodyFoundationGain: 7000,
+        willpowerGain: 1800,
+        insightGain: 10,
+        pressureGain: 20,
+        injuryGain: 6,
+        heavenDebtGain: 1200,
+        daoAttentionGain: 1800
       }
     }
   },
@@ -570,7 +650,11 @@ export function withDefaultBalanceParams(params: BalanceParams): BalanceParams {
         alchemy: { ...DEFAULT_BALANCE.cultivationRun.activities.alchemy, ...params.cultivationRun?.activities?.alchemy },
         livelihood: { ...DEFAULT_BALANCE.cultivationRun.activities.livelihood, ...params.cultivationRun?.activities?.livelihood },
         insight: { ...DEFAULT_BALANCE.cultivationRun.activities.insight, ...params.cultivationRun?.activities?.insight },
-        rest: { ...DEFAULT_BALANCE.cultivationRun.activities.rest, ...params.cultivationRun?.activities?.rest }
+        rest: { ...DEFAULT_BALANCE.cultivationRun.activities.rest, ...params.cultivationRun?.activities?.rest },
+        meridian: { ...DEFAULT_BALANCE.cultivationRun.activities.meridian, ...params.cultivationRun?.activities?.meridian },
+        arrayStudy: { ...DEFAULT_BALANCE.cultivationRun.activities.arrayStudy, ...params.cultivationRun?.activities?.arrayStudy },
+        lightningBath: { ...DEFAULT_BALANCE.cultivationRun.activities.lightningBath, ...params.cultivationRun?.activities?.lightningBath },
+        heavenTheft: { ...DEFAULT_BALANCE.cultivationRun.activities.heavenTheft, ...params.cultivationRun?.activities?.heavenTheft }
       }
     },
     tools: { ...DEFAULT_BALANCE.tools, ...params.tools },

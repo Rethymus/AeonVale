@@ -78,14 +78,9 @@ function nonNegativeInteger(value: number): number {
 function normalizedActivityCounts(
   counts: Readonly<Partial<Record<CultivationActivityId, number>>> | undefined
 ): CultivationActivityCounts {
-  return {
-    training: nonNegativeInteger(counts?.training ?? 0),
-    farming: nonNegativeInteger(counts?.farming ?? 0),
-    alchemy: nonNegativeInteger(counts?.alchemy ?? 0),
-    livelihood: nonNegativeInteger(counts?.livelihood ?? 0),
-    insight: nonNegativeInteger(counts?.insight ?? 0),
-    rest: nonNegativeInteger(counts?.rest ?? 0)
-  };
+  return Object.fromEntries(
+    CULTIVATION_ACTIVITY_IDS.map(activity => [activity, nonNegativeInteger(counts?.[activity] ?? 0)])
+  ) as unknown as CultivationActivityCounts;
 }
 
 function deriveVocationTendency(

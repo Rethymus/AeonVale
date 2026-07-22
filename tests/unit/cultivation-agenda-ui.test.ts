@@ -5,6 +5,7 @@ import {
   assignCultivationActivity,
   clearSelectedCultivationActivity,
   createCultivationAgendaDraft,
+  cultivationAvailableActivityPresentations,
   cultivationActivityPresentations,
   cultivationAgendaErrorMessage,
   cultivationAgendaEstimatedDays,
@@ -14,20 +15,26 @@ import {
   toCultivationAgenda
 } from '@app/cultivationRun/presenter';
 
-describe('修仙日程 presenter', () => {
-  it('提供六类活动的中文标签、快捷键、耗时与收益摘要', () => {
+describe('修仙修途 presenter', () => {
+  it('提供十类递进修途的中文标签、快捷键、境界门槛、耗时与收益摘要', () => {
     const activities = cultivationActivityPresentations();
 
     expect(activities.map(activity => activity.id)).toEqual([
       'training',
       'farming',
-      'alchemy',
       'livelihood',
+      'rest',
+      'alchemy',
       'insight',
-      'rest'
+      'meridian',
+      'arrayStudy',
+      'lightningBath',
+      'heavenTheft'
     ]);
-    expect(activities.map(activity => activity.label)).toEqual(['苦练', '灵田', '炼丹', '谋生', '参悟', '歇息']);
-    expect(activities.map(activity => activity.shortcut)).toEqual(['1', '2', '3', '4', '5', '6']);
+    expect(activities.map(activity => activity.label)).toEqual(['苦练', '灵田', '谋生', '歇息', '炼丹', '参悟', '通脉', '演阵', '纳雷', '截天']);
+    expect(activities.map(activity => activity.shortcut)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']);
+    expect(activities.map(activity => activity.unlockStage)).toEqual([0, 0, 0, 0, 1, 2, 3, 4, 5, 6]);
+    expect(Array.from({ length: 7 }, (_, stage) => cultivationAvailableActivityPresentations(stage).length)).toEqual([4, 5, 6, 7, 8, 9, 10]);
     expect(activities.every(activity => activity.timeCostDays > 0 && activity.summary.length > 0)).toBe(true);
   });
 
@@ -94,7 +101,8 @@ describe('修仙日程 presenter', () => {
 
     expect(filledCultivationAgendaSlots(draft)).toBe(6);
     expect(cultivationAgendaEstimatedDays(draft)).toBe(
-      Object.values(DEFAULT_BALANCE.cultivationRun.activities).reduce((days, activity) => days + activity.timeCostDays, 0)
+      (['farming', 'alchemy', 'livelihood', 'insight', 'training', 'rest'] as const)
+        .reduce((days, activity) => days + DEFAULT_BALANCE.cultivationRun.activities[activity].timeCostDays, 0)
     );
     expect(toCultivationAgenda(draft)?.slots).toEqual(['farming', 'alchemy', 'livelihood', 'insight', 'training', 'rest']);
     expect(toCultivationAgenda(createCultivationAgendaDraft())).toBeNull();
