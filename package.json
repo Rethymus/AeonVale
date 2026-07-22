@@ -1,7 +1,7 @@
 {
   "name": "aeon-vale-song-of-the-dao",
   "version": "0.1.0",
-  "description": "永恒山谷：大道之歌 — 纯代码修仙种田 + 炼丹 + 天劫承雷生存游戏（全程中文，MIT 开源）",
+  "description": "永恒山谷：大道之歌 — 纯代码修仙 roguelite《偷天换劫》+ 第一人称叙事《灵韵叙录》（全程中文，MIT 开源）",
   "type": "module",
   "license": "MIT",
   "author": "AeonVale",
@@ -13,9 +13,12 @@
   "keywords": [
     "game",
     "xianxia",
-    "farming-sim",
+    "roguelite",
+    "cultivation",
+    "sokoban",
+    "visual-novel",
+    "narrative",
     "alchemy",
-    "tribulation-survival",
     "typescript",
     "pixijs"
   ],
@@ -66,6 +69,9 @@
     "test:browser:pages": "PLAYWRIGHT_BASE_URL=https://Rethymus.github.io PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ PLAYWRIGHT_SKIP_WEBSERVER=true pnpm test:browser:smoke",
     "test:browser:pages-playable": "PLAYWRIGHT_BASE_URL=https://Rethymus.github.io PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ PLAYWRIGHT_SKIP_WEBSERVER=true pnpm test:browser tests/browser/pages-playable.spec.ts",
     "portfolio:capture": "node node_modules/@playwright/test/cli.js test tests/browser/portfolio-capture.spec.ts --reporter=line",
+    "readme:capture": "README_CAPTURE=1 node node_modules/@playwright/test/cli.js test tests/browser/readme-capture.spec.ts --reporter=line",
+    "readme:gif": "node tools/readme-gif.mjs",
+    "readme:media": "pnpm readme:capture && pnpm readme:gif",
     "prepare": "node node_modules/simple-git-hooks/cli.js"
   },
   "simple-git-hooks": {
