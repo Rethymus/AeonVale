@@ -5,7 +5,18 @@
  * 所有字段均为可序列化数据；无 DOM、IO、时钟或隐式随机。
  */
 
-export const CULTIVATION_ACTIVITY_IDS = ['training', 'farming', 'alchemy', 'livelihood', 'insight', 'rest'] as const;
+export const CULTIVATION_ACTIVITY_IDS = [
+  'training',
+  'farming',
+  'livelihood',
+  'rest',
+  'alchemy',
+  'insight',
+  'meridian',
+  'arrayStudy',
+  'lightningBath',
+  'heavenTheft'
+] as const;
 export const CULTIVATION_RUN_MAX_STAGE = 6 as const;
 
 export type CultivationActivityId = (typeof CULTIVATION_ACTIVITY_IDS)[number];
@@ -15,11 +26,36 @@ export type CultivationActivityCounts = Readonly<Record<CultivationActivityId, n
 export const CULTIVATION_ACTIVITY_LABELS: Readonly<Record<CultivationActivityId, string>> = {
   training: '苦练',
   farming: '灵田',
-  alchemy: '炼丹',
   livelihood: '谋生',
+  rest: '歇息',
+  alchemy: '炼丹',
   insight: '参悟',
-  rest: '歇息'
+  meridian: '通脉',
+  arrayStudy: '演阵',
+  lightningBath: '纳雷',
+  heavenTheft: '截天'
 };
+
+export const CULTIVATION_ACTIVITY_UNLOCK_STAGE: Readonly<Record<CultivationActivityId, number>> = {
+  training: 0,
+  farming: 0,
+  livelihood: 0,
+  rest: 0,
+  alchemy: 1,
+  insight: 2,
+  meridian: 3,
+  arrayStudy: 4,
+  lightningBath: 5,
+  heavenTheft: 6
+};
+
+export function cultivationActivityUnlockStage(activity: CultivationActivityId): number {
+  return CULTIVATION_ACTIVITY_UNLOCK_STAGE[activity];
+}
+
+export function cultivationActivityIsUnlocked(activity: CultivationActivityId, stage: number): boolean {
+  return Number.isInteger(stage) && stage >= cultivationActivityUnlockStage(activity);
+}
 
 export type CultivationRunStatus = 'active' | 'lifespan-ended' | 'tribulation-ended' | 'ascended';
 
@@ -84,6 +120,7 @@ export type CultivationAgendaErrorCode =
   | 'invalid-state'
   | 'invalid-slot-count'
   | 'run-ended'
+  | 'activity-locked'
   | 'insufficient-lifespan'
   | 'insufficient-food'
   | 'insufficient-herbs'

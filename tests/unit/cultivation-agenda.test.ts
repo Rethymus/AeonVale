@@ -60,7 +60,7 @@ describe('D27-b 修仙日程 · 状态与六格契约', () => {
 
 describe('D27-b 修仙日程 · 顺序依赖与原子性', () => {
   it('灵田在前可供本轮炼丹使用，炼丹在前则因无灵草而失败', () => {
-    const initial = createCultivationRunState();
+    const initial = createCultivationRunState({ overrides: { stage: 2 } });
     const farmingFirst = resolve(initial, 'farming', 'alchemy', 'farming', 'farming', 'farming', 'farming');
     const alchemyFirst = resolve(initial, 'alchemy', 'farming', 'farming', 'farming', 'farming', 'farming');
 
@@ -79,7 +79,7 @@ describe('D27-b 修仙日程 · 顺序依赖与原子性', () => {
   });
 
   it('谋生在前可支付本轮参悟，参悟在前则因无灵石而失败', () => {
-    const initial = createCultivationRunState();
+    const initial = createCultivationRunState({ overrides: { stage: 2 } });
     const livelihoodFirst = resolve(initial, 'livelihood', 'insight', 'farming', 'farming', 'farming', 'farming');
     const insightFirst = resolve(initial, 'insight', 'livelihood', 'farming', 'farming', 'farming', 'farming');
 
@@ -100,7 +100,7 @@ describe('D27-b 修仙日程 · 顺序依赖与原子性', () => {
   });
 
   it('后续格失败时回滚此前已结算的收益且不改写输入状态', () => {
-    const initial = createCultivationRunState();
+    const initial = createCultivationRunState({ overrides: { stage: 2 } });
     const snapshot = structuredClone(initial);
     const result = resolve(initial, 'farming', 'alchemy', 'alchemy', 'farming', 'farming', 'farming');
 
@@ -112,6 +112,25 @@ describe('D27-b 修仙日程 · 顺序依赖与原子性', () => {
     });
     expect(result.state).not.toBe(initial);
     expect(initial).toEqual(snapshot);
+  });
+});
+
+describe('D27-b 修仙修途 · 境界解锁', () => {
+  it('低境尝试高阶修途时原子拒绝，并在对应境界开放', () => {
+    const lowStage = createCultivationRunState();
+    const locked = resolve(lowStage, 'alchemy', 'farming', 'farming', 'farming', 'farming', 'farming');
+    expect(locked).toMatchObject({
+      ok: false,
+      state: lowStage,
+      slots: [],
+      error: { code: 'activity-locked', slotIndex: 0, activity: 'alchemy' }
+    });
+
+    const unlocked = resolve(
+      createCultivationRunState({ overrides: { stage: 1, herbs: 10 } }),
+      'alchemy', 'farming', 'farming', 'farming', 'farming', 'farming'
+    );
+    expect(unlocked.ok).toBe(true);
   });
 });
 

@@ -68,11 +68,11 @@ export function machineErrorMessage(error: CultivationRunMachineError): string {
       }
     }
     case 'tribulation-not-ready':
-      return '劫前日课还没有完成，请再安排一轮。';
+      return '劫前修途还没有完成，请再安排一轮。';
     case 'preparation-window-closed':
       return '天道催讨已至，不能再拖延这一劫。';
     case 'lifespan-still-sufficient':
-      return '余寿尚能排满一轮日课，不必现在封卷。';
+      return '余寿尚能排满一轮修途，不必现在封卷。';
     case 'unknown-activity':
     case 'agenda-resolution-failed':
     case 'event-sampling-failed':

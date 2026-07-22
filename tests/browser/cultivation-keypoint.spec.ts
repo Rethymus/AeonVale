@@ -18,7 +18,7 @@ interface CultivationKeypointSnapshot {
 
 async function finishFirstLifeOpening(page: Page): Promise<void> {
   await expect(page.locator('.cr-opening')).toBeVisible();
-  for (let beat = 0; beat < 4; beat += 1) {
+  for (let beat = 0; beat < 5; beat += 1) {
     await page.locator('.cr-opening__button[data-primary="true"]').click();
   }
 }
@@ -30,15 +30,15 @@ async function enterCultivation(page: Page): Promise<void> {
   if (await orientationOverride.isVisible().catch(() => false)) await orientationOverride.click();
   await page.locator('#flow-title-new-game').click();
   await finishFirstLifeOpening(page);
-  await page.getByRole('button', { name: '翻开今世日课' }).click();
-  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
   await expect(page.locator('.rp-planning')).toBeVisible();
 }
 
 async function continueFromLifeIntroAndOmen(page: Page): Promise<void> {
-  await expect(page.getByRole('button', { name: '翻开今世日课' })).toBeVisible();
-  await page.getByRole('button', { name: '翻开今世日课' }).click();
-  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+  await expect(page.getByRole('button', { name: '查看第一道劫兆' })).toBeVisible();
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
   await expect(page.locator('.rp-planning')).toBeVisible();
 }
 
@@ -116,12 +116,12 @@ test.describe('D27 CDP 关键态门禁', () => {
     await enterCultivation(page);
     await configurePlanningKeypoint(page, 'default');
     await fillAgenda(page, ['炼丹', '灵田', '灵田', '灵田', '灵田', '灵田']);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
     await expect(page.locator('#rp-plan-feedback')).toContainText('第 1 格「炼丹」缺少灵草');
 
     await configurePlanningKeypoint(page, 'default');
     await fillAgenda(page, ['灵田', '炼丹', '灵田', '灵田', '灵田', '灵田']);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
     let slots = page.locator('.cr-resolution__slot');
     await expect(slots.nth(0)).toContainText(/灵草 \+\d/);
     await expect(slots.nth(1)).toContainText(/灵草 -2/);
@@ -129,12 +129,12 @@ test.describe('D27 CDP 关键态门禁', () => {
 
     await configurePlanningKeypoint(page, 'default');
     await fillAgenda(page, ['参悟', '谋生', '灵田', '灵田', '灵田', '灵田']);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
     await expect(page.locator('#rp-plan-feedback')).toContainText('第 1 格「参悟」缺少灵石');
 
     await configurePlanningKeypoint(page, 'default');
     await fillAgenda(page, ['谋生', '参悟', '灵田', '灵田', '灵田', '灵田']);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
     slots = page.locator('.cr-resolution__slot');
     await expect(slots.nth(0)).toContainText(/灵石 \+\d/);
     await expect(slots.nth(1)).toContainText(/灵石 -1/);
@@ -145,7 +145,7 @@ test.describe('D27 CDP 关键态门禁', () => {
     await enterCultivation(page);
     await configurePlanningKeypoint(page, 'pressure');
     await fillAgenda(page, ['谋生', '灵田', '歇息', '灵田', '灵田', '灵田']);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
 
     const slots = page.locator('.cr-resolution__slot');
     await expect(slots.nth(0)).toContainText('效率 100%');
@@ -215,7 +215,7 @@ test.describe('D27 CDP 关键态门禁', () => {
     await page.getByRole('button', { name: '护脉保命·补修一轮' }).click();
     await expect(page.locator('.cr-aftermath')).toBeVisible();
     await page.getByRole('button', { name: '带着结果补修一轮' }).click();
-    await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+    await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
     await expect(page.locator('.rp-planning')).toBeVisible();
     await expect(page.locator('.rp-round-seal')).toContainText('第 1 轮');
   });
@@ -247,7 +247,7 @@ test.describe('D27 CDP 关键态门禁', () => {
     await choices.nth(0).check();
     await choices.nth(1).check();
     await page.getByRole('button', { name: '立碑，交给后来人' }).click();
-    await expect(page.getByRole('button', { name: '翻开今世日课' })).toBeVisible();
+    await expect(page.getByRole('button', { name: '查看第一道劫兆' })).toBeVisible();
     expect(await cultivationSnapshot(page)).toMatchObject({
       phase: 'life-intro',
       runStatus: 'active',
@@ -257,7 +257,7 @@ test.describe('D27 CDP 关键态门禁', () => {
     });
   });
 
-  test('第六境终劫原子收束为劫后与飞升终局，不创建第七境日课', async ({ page }) => {
+  test('第六境终劫原子收束为劫后与飞升终局，不创建第七境修途', async ({ page }) => {
     await enterCultivation(page);
     expect(await configureAscensionKeypoint(page)).toMatchObject({
       phase: 'tribulation',
@@ -282,7 +282,7 @@ test.describe('D27 CDP 关键态门禁', () => {
     await page.getByRole('button', { name: '越过天门，见证终局' }).click();
 
     await expect(page.locator('.cr-cultivation-ending')).toBeVisible();
-    await expect(page.getByRole('heading', { name: '一世日课，终于留下了没有化灰的身体' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '六境修途，终于留下了没有化灰的身体' })).toBeVisible();
     await expect(page.locator('.cr-interlude__art-image')).toHaveAttribute('src', /ending-ascension-v2/);
     await expect(page.locator('.rp-planning')).toBeHidden();
     expect(await cultivationSnapshot(page)).toMatchObject({

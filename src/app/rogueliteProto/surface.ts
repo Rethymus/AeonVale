@@ -1,5 +1,5 @@
 /**
- * D27-b 一世日课 → R4′ 布阵导流天劫的隔离原型 surface。
+ * D27-b 六段修途 → R4′ 布阵导流天劫的隔离原型 surface。
  *
  * 隔离：自有 2D canvas，回合解谜（redraw-on-move），驱动 @sim/sokoban 切片；不读不写 sim/GameState。
  * juice：音效（突破/死亡，经 audio.playSfx）+ ctx 粒子/震屏（自有 rAF，仅效果期间跑，reduced-motion 降级）+ 背景 BGM context。
@@ -16,6 +16,7 @@ import {
   createCultivationAshEpitaph,
   createCultivationRunState,
   cultivationRealmAt,
+  cultivationStageProfile,
   deriveCultivationLegacyCandidates,
   deriveTribulationPreparation,
   interpretCultivationTribulationTags,
@@ -30,7 +31,7 @@ import type {
   TribulationPreparation
 } from '@sim/cultivation-run';
 import { ROGUELITE_PROTO_PALETTE } from '@render/ColorPalette';
-import { assignCultivationActivity, clearSelectedCultivationActivity, createCultivationAgendaDraft, CULTIVATION_AGENDAS_BEFORE_TRIBULATION, cultivationActivityPresentations, cultivationAgendaErrorMessage, cultivationAgendaEstimatedDays, cultivationAgendaSuccessMessage, cultivationRunStats, filledCultivationAgendaSlots, selectCultivationAgendaSlot, toCultivationAgenda, type CultivationAgendaDraft } from '../cultivationRun/presenter';
+import { assignCultivationActivity, clearSelectedCultivationActivity, createCultivationAgendaDraft, CULTIVATION_AGENDAS_BEFORE_TRIBULATION, cultivationActivityPresentations, cultivationAgendaErrorMessage, cultivationAgendaEstimatedDays, cultivationAgendaSuccessMessage, cultivationAvailableActivityPresentations, cultivationRunStats, filledCultivationAgendaSlots, selectCultivationAgendaSlot, toCultivationAgenda, type CultivationAgendaDraft } from '../cultivationRun/presenter';
 import { createCultivationRunMachineState, transitionCultivationRunMachine, type CultivationRunMachineAction, type CultivationRunMachineState, type CultivationRunMachineTransition } from '../cultivationRun/machine';
 import { createCultivationEventSurface } from '../cultivationRun/eventSurface';
 import { createCultivationInsightSurface } from '../cultivationRun/insightSurface';
@@ -69,6 +70,15 @@ export interface RogueliteProtoSurface {
 
 const TILE = 56;
 const P = ROGUELITE_PROTO_PALETTE;
+const CULTIVATION_STAGE_BACKDROP_IDS = [
+  'cg.prologue.awakening-v1',
+  'cg.prologue.return-valley-v1',
+  'cg.first-person.scene.spirit-farm-v2',
+  'cg.first-person.ambience.void-root-v2',
+  'cg.first-person.ambience.defiance-v2',
+  'cg.first-person.tribulation.purple-v2',
+  'cg.first-person.ending.ascension-v2'
+] as const;
 type RogueliteProtoPhase =
   | 'opening'
   | 'life-intro'
@@ -196,69 +206,86 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   root.innerHTML = '';
   const style = document.createElement('style');
   style.textContent = [
-    `.rp-wrap{width:100%;max-width:1440px;margin:0 auto;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:clamp(8px,1.2vw,16px);font-family:"LXGW WenKai","Noto Sans CJK SC",system-ui,sans-serif;color:${P.text};}`,
+    `.rp-wrap{width:100%;max-width:1500px;height:100%;min-height:0;margin:0 auto;display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:clamp(6px,1vw,12px);overflow:hidden;font-family:"LXGW WenKai","Noto Sans CJK SC",system-ui,sans-serif;color:${P.text};}`,
     '.rp-wrap,.rp-wrap *{box-sizing:border-box;}',
     '.rp-planning,.rp-phase-host,.rp-tribulation{width:100%;}',
     '.rp-planning[hidden],.rp-phase-host[hidden],.rp-tribulation[hidden]{display:none!important;}',
-    `.rp-phase-host{min-height:360px;background:${P.boardBg};border:1px solid ${P.boardBorder};}`,
-    `.rp-planning{display:grid;grid-template-rows:auto minmax(0,1fr);gap:16px;padding:clamp(14px,2vw,24px);background:${P.boardBg};border:1px solid ${P.boardBorder};}`,
+    `.rp-phase-host{height:100%;min-height:0;overflow:hidden;background:${P.boardBg};border:1px solid ${P.boardBorder};}`,
+    `.rp-planning{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;padding:clamp(10px,1.4vw,18px);overflow:hidden;background:${P.boardBg};border:1px solid ${P.boardBorder};}`,
     '.rp-plan-head{min-width:0;display:flex;align-items:end;justify-content:space-between;gap:18px;}',
     '.rp-plan-head>div:first-child{min-width:0;}',
-    '.rp-plan-title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:clamp(22px,4vw,34px);font-weight:600;letter-spacing:.12em;}',
-    `.rp-plan-lede{max-width:50rem;margin:4px 0 0;color:${P.helpText};font-size:14px;line-height:1.65;}`,
+    '.rp-plan-title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:clamp(22px,3vw,32px);font-weight:600;letter-spacing:.1em;}',
+    `.rp-plan-lede{max-width:58rem;margin:2px 0 0;color:${P.helpText};font-size:13px;line-height:1.45;}`,
     `.rp-round-seal{justify-self:start;max-width:100%;border:1px solid ${P.primaryBorder};background:${P.primaryBg};color:${P.accent};padding:8px 12px;font-size:13px;letter-spacing:.08em;}`,
-    `.rp-planning-body{min-width:0;display:grid;grid-template-columns:minmax(210px,.72fr) minmax(520px,2fr) minmax(270px,.92fr);gap:14px;align-items:stretch;}`,
+    `.rp-planning-body{min-width:0;min-height:0;display:grid;grid-template-columns:minmax(220px,.78fr) minmax(470px,1.65fr) minmax(250px,.82fr);gap:10px;align-items:stretch;overflow:hidden;}`,
     `.rp-status-panel,.rp-schedule-panel,.rp-causal-panel{min-width:0;border:1px solid ${P.boardBorder};background:${P.floor};}`,
-    '.rp-status-panel,.rp-causal-panel{display:flex;flex-direction:column;padding:16px;}',
-    '.rp-schedule-panel{display:grid;grid-template-rows:auto auto auto 1fr;gap:12px;padding:14px 16px;}',
+    '.rp-status-panel,.rp-causal-panel{min-height:0;display:flex;flex-direction:column;padding:12px;overflow:hidden;}',
+    '.rp-schedule-panel{min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:8px;padding:10px 12px;overflow:hidden;}',
     `.rp-panel-kicker{margin:0 0 6px;color:${P.accent};font-size:12px;letter-spacing:.16em;}`,
-    '.rp-identity-name,.rp-causal-title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:22px;font-weight:600;letter-spacing:.08em;}',
-    `.rp-identity-stage{margin:5px 0 16px;color:${P.helpText};font-size:13px;}`,
+    '.rp-identity-name,.rp-causal-title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:21px;font-weight:600;letter-spacing:.06em;}',
+    `.rp-identity-stage{margin:3px 0 8px;color:${P.helpText};font-size:12px;}`,
+    `.rp-character{position:relative;min-height:0;flex:1 1 190px;margin:0 0 8px;overflow:hidden;border:1px solid ${P.boardBorder};background:${P.boardBg};isolation:isolate;}`,
+    '.rp-character__backdrop,.rp-character__portrait{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}',
+    '.rp-character__backdrop{filter:saturate(.62) contrast(1.08) brightness(.52);opacity:.78;}',
+    '.rp-character__portrait{z-index:1;object-position:center 20%;filter:saturate(.72) contrast(1.05);mix-blend-mode:screen;opacity:.9;}',
+    `.rp-character::after{content:"";position:absolute;z-index:2;inset:0;background:linear-gradient(180deg,transparent 38%,${P.floor});pointer-events:none;}`,
+    `.rp-character__seal{position:absolute;z-index:3;inset-inline:10px;inset-block-end:8px;display:grid;gap:3px;color:${P.text};font-size:11px;line-height:1.35;}`,
+    '.rp-character__seal strong{font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:16px;letter-spacing:.08em;}',
+    `.rp-retention{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center;margin:0 0 8px;color:${P.helpText};font-size:10px;}`,
+    `.rp-retention__track{height:7px;overflow:hidden;border:1px solid ${P.btnBorder};background:${P.boardBg};}`,
+    `.rp-retention__fill{height:100%;width:calc(var(--retention,0) * 1%);background:linear-gradient(90deg,${P.herbGreen},${P.boltViolet});box-shadow:0 0 10px ${P.boltBlue};}`,
     `.rp-run-stats{min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px;margin:0;padding:2px;background:${P.boardBorder};}`,
-    `.rp-run-stat{min-width:0;background:${P.btnBg};padding:10px 6px;text-align:center;}`,
+    `.rp-run-stat{min-width:0;background:${P.btnBg};padding:6px 4px;text-align:center;}`,
     `.rp-run-stat dt{margin:0;color:${P.helpText};font-size:12px;letter-spacing:.08em;}`,
-    '.rp-run-stat dd{margin:3px 0 0;font-variant-numeric:tabular-nums;font-size:14px;}',
+    '.rp-run-stat dd{margin:2px 0 0;font-variant-numeric:tabular-nums;font-size:12px;}',
     `.rp-agenda-meta{min-width:0;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:2px;color:${P.helpText};font-size:14px;}`,
-    '.rp-agenda-scroll{min-width:0;width:100%;position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:10px 0;isolation:isolate;}',
+    '.rp-agenda-scroll{min-width:0;width:100%;position:relative;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;list-style:none;margin:0;padding:5px 0;isolation:isolate;}',
     `.rp-agenda-scroll::before,.rp-agenda-scroll::after{content:"";position:absolute;left:0;right:0;height:4px;background:${P.btnBorder};z-index:-1;}`,
     '.rp-agenda-scroll::before{top:30px}.rp-agenda-scroll::after{bottom:30px}',
     '.rp-agenda-scroll>li{min-width:0;}',
-    `.rp-agenda-slot{min-width:0;width:100%;min-height:132px;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;gap:8px;padding:10px 6px;background:linear-gradient(90deg,${P.floor},${P.soilFill.loam} 48%,${P.floor});color:${P.text};border:1px solid ${P.btnBorder};border-radius:3px;box-shadow:inset 3px 0 rgba(0,0,0,.18),inset -3px 0 rgba(0,0,0,.18);cursor:pointer;transition:transform .16s ease,border-color .16s ease;}`,
+    `.rp-agenda-slot{min-width:0;width:100%;min-height:82px;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;gap:4px;padding:6px 4px;background:linear-gradient(90deg,${P.floor},${P.soilFill.loam} 48%,${P.floor});color:${P.text};border:1px solid ${P.btnBorder};border-radius:3px;box-shadow:inset 3px 0 rgba(0,0,0,.18),inset -3px 0 rgba(0,0,0,.18);cursor:pointer;transition:transform .16s ease,border-color .16s ease;}`,
     `.rp-agenda-slot:hover{border-color:${P.accent};}`,
     `.rp-agenda-slot[aria-pressed="true"]{transform:translateY(-5px);border-color:${P.accent};box-shadow:0 7px 0 rgba(0,0,0,.2),inset 3px 0 rgba(0,0,0,.18),inset -3px 0 rgba(0,0,0,.18);}`,
     `.rp-slot-index{color:${P.accent};font-size:12px;font-variant-numeric:tabular-nums;}`,
-    '.rp-slot-label{align-self:center;text-align:center;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:20px;letter-spacing:.14em;writing-mode:vertical-rl;}',
+    '.rp-slot-label{align-self:center;text-align:center;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:16px;letter-spacing:.06em;writing-mode:horizontal-tb;}',
     `.rp-slot-label.is-empty{color:${P.helpText};font-size:14px;letter-spacing:.08em;}`,
     `.rp-slot-time{color:${P.helpText};font-size:12px;}`,
-    `.rp-activity-fieldset{min-width:0;display:grid;gap:10px;border:0;border-block-start:1px solid ${P.boardBorder};margin:0;padding:12px 0 0;}`,
-    `.rp-activity-fieldset legend{padding:0 12px 0 0;color:${P.text};font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:18px;}`,
-    '.rp-activity-grid{min-width:0;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}',
-    `.rp-activity-btn{min-width:0;min-block-size:76px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"key name" "key note";column-gap:10px;align-content:center;text-align:left;padding:10px 12px;background:${P.btnBg};color:${P.text};border:1px solid ${P.btnBorder};border-radius:5px;cursor:pointer;touch-action:manipulation;}`,
+    `.rp-activity-fieldset{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px;border:0;border-block-start:1px solid ${P.boardBorder};margin:0;padding:7px 0 0;overflow:hidden;}`,
+    `.rp-activity-fieldset legend{padding:0 10px 0 0;color:${P.text};font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:15px;}`,
+    '.rp-activity-grid{min-width:0;min-height:0;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--activity-rows,2),minmax(54px,1fr));grid-auto-rows:minmax(54px,1fr);align-content:stretch;gap:6px;overflow-y:auto;overscroll-behavior:contain;padding:1px 3px 1px 1px;scrollbar-width:thin;}',
+    `.rp-activity-btn{min-width:0;min-block-size:54px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"key name" "key note";column-gap:7px;align-content:center;text-align:left;padding:6px 8px;background:${P.btnBg};color:${P.text};border:1px solid ${P.btnBorder};border-radius:4px;cursor:pointer;touch-action:manipulation;}`,
+    '.rp-activity-btn[hidden]{display:none!important;}',
     `.rp-activity-btn:hover,.rp-activity-btn[data-selected="true"]{border-color:${P.accent};}`,
-    `.rp-activity-key{grid-area:key;align-self:center;display:grid;place-items:center;inline-size:28px;block-size:28px;border:1px solid ${P.btnBorder};color:${P.accent};font:12px/1 system-ui,sans-serif;}`,
+    `.rp-activity-key{grid-area:key;align-self:center;display:grid;place-items:center;inline-size:24px;block-size:24px;border:1px solid ${P.btnBorder};color:${P.accent};font:11px/1 system-ui,sans-serif;}`,
     '.rp-activity-name{grid-area:name;font-weight:700;}',
-    `.rp-activity-note{grid-area:note;min-width:0;color:${P.helpText};font-size:13px;line-height:1.45;white-space:normal;overflow-wrap:anywhere;}`,
+    `.rp-activity-note{grid-area:note;min-width:0;color:${P.helpText};font-size:11px;line-height:1.3;white-space:normal;overflow-wrap:anywhere;}`,
     `.rp-plan-feedback{min-height:1.5em;margin:0;padding:8px 10px;border-left:3px solid ${P.btnBorder};color:${P.helpText};font-size:13px;line-height:1.5;align-self:end;}`,
     `.rp-plan-feedback[data-tone="error"]{border-color:${P.badText};color:${P.badText};background:${P.badBg};}`,
     `.rp-plan-feedback[data-tone="success"]{border-color:${P.okText};color:${P.okText};background:${P.okBg};}`,
-    `.rp-causal-safe{margin:9px 0 16px;padding:11px 12px;border-inline-start:3px solid ${P.boltViolet};background:${P.btnBg};color:${P.text};font-size:14px;line-height:1.55;}`,
+    `.rp-causal-safe{margin:7px 0;padding:8px 9px;border-inline-start:3px solid ${P.boltViolet};background:${P.btnBg};color:${P.text};font-size:12px;line-height:1.4;}`,
+    `.rp-breakthrough{display:grid;gap:4px;margin:0 0 8px;padding:8px 9px;border:1px solid ${P.primaryBorder};background:${P.primaryBg};font-size:11px;line-height:1.4;}`,
+    `.rp-breakthrough strong{color:${P.accent};font-size:12px;}`,
     `.rp-causal-heading{margin:0 0 9px;color:${P.helpText};font-size:13px;font-weight:600;}`,
-    '.rp-causal-chain{display:grid;gap:7px;margin:0;padding:0;list-style:none;}',
-    `.rp-causal-chain li{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px;padding-block-end:7px;border-block-end:1px solid ${P.boardBorder};font-size:12px;line-height:1.45;}`,
+    '.rp-causal-chain{display:grid;gap:4px;margin:0;padding:0;list-style:none;}',
+    `.rp-causal-chain li{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px;padding-block-end:4px;border-block-end:1px solid ${P.boardBorder};font-size:10.5px;line-height:1.3;}`,
     `.rp-causal-chain strong{color:${P.accent};}`,
     `.rp-causal-chain span{color:${P.helpText};}`,
-    `.rp-plan-actions{display:flex;justify-content:flex-end;align-items:stretch;gap:12px;flex-direction:column;margin-top:auto;border-block-start:1px solid ${P.boardBorder};padding-block-start:14px;}`,
+    `.rp-plan-actions{display:flex;justify-content:flex-end;align-items:stretch;gap:6px;flex-direction:column;margin-top:auto;border-block-start:1px solid ${P.boardBorder};padding-block-start:8px;}`,
     `.rp-plan-help{margin:0;color:${P.helpText};font-size:12px;}`,
     '.rp-plan-buttons{display:grid;grid-template-columns:1fr;gap:8px;}',
-    `.rp-tribulation{display:grid;grid-template-columns:minmax(420px,1.4fr) minmax(300px,.8fr);grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:12px;padding:clamp(12px,2vw,22px);background:${P.boardBg};border:1px solid ${P.boardBorder};color:${P.text};}`,
+    `.rp-tribulation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(360px,1.35fr) minmax(280px,.75fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:10px;padding:clamp(8px,1.4vw,16px);overflow:hidden;background:${P.boardBg};border:1px solid ${P.boardBorder};color:${P.text};}`,
     `.rp-hud{grid-area:hud;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:2px;background:${P.boardBorder};font-size:14px;font-variant-numeric:tabular-nums;}`,
     `.rp-hud-item{min-width:0;padding:8px 10px;background:${P.btnBg};color:${P.text};line-height:1.45;}`,
     `.rp-hud-stage{color:${P.accent};font-family:"Noto Serif CJK SC","Songti SC",serif;font-weight:700;}`,
     `.rp-hud-preparation{grid-column:1/-1;border-inline-start:3px solid ${P.boltViolet};font-size:15px;}`,
     `.rp-hud-meta{grid-column:1/-1;color:${P.helpText};font-size:13px;}`,
     '.rp-hud-outcome:empty{display:none;}',
-    `.rp-canvas{grid-area:canvas;display:block;max-width:100%;height:auto;justify-self:center;background:${P.boardBg};border:1px solid ${P.boardBorder};border-radius:8px;touch-action:none;}`,
-    `.rp-help{grid-area:help;font-size:13px;color:${P.helpText};max-width:480px;text-align:left;line-height:1.6;}`,
+    `.rp-canvas{grid-area:canvas;display:block;width:min(100%,620px);height:auto;max-width:100%;max-height:100%;align-self:center;justify-self:center;background:${P.boardBg};border:1px solid ${P.boardBorder};border-radius:8px;image-rendering:pixelated;touch-action:none;}`,
+    `.rp-help{grid-area:help;min-width:0;display:grid;gap:8px;font-size:13px;color:${P.helpText};max-width:480px;text-align:left;line-height:1.5;}`,
+    `.rp-help__diagram{display:grid;grid-template-columns:auto auto auto auto auto auto auto;gap:5px;align-items:center;padding:8px;border:1px solid ${P.boardBorder};background:${P.btnBg};font-style:normal;}`,
+    `.rp-help__diagram i,.rp-help__diagram b,.rp-help__diagram strong{display:grid;place-items:center;min-height:28px;padding:3px 6px;border:1px solid ${P.btnBorder};font-style:normal;font-size:10px;text-align:center;}`,
+    `.rp-help__diagram i{color:${P.goalBody}}.rp-help__diagram b{color:${P.accent}}.rp-help__diagram strong{color:${P.boltBlue}}.rp-help__diagram em{color:${P.boltViolet};font-style:normal;}`,
+    '.rp-help__copy{display:block;}',
     `.rp-help kbd{background:${P.btnBg};border:1px solid ${P.btnBorder};border-radius:3px;padding:0 5px;color:${P.accent};}`,
     '.rp-actions{grid-area:actions;display:flex;gap:8px;flex-wrap:wrap;}',
     '.rp-dpad{grid-area:dpad;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:6px;justify-content:start;}',
@@ -271,10 +298,11 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     '.rp-outcome{font-size:18px;font-weight:bold;padding:6px 12px;border-radius:8px;}',
     `.rp-outcome.ok{background:${P.okBg};color:${P.okText};}`,
     `.rp-outcome.bad{background:${P.badBg};color:${P.badText};}`,
-    '@media(min-width:1200px) and (max-height:820px){.rp-wrap{gap:8px;padding:6px}.rp-planning{gap:9px;padding:10px 12px}.rp-plan-head{gap:12px}.rp-plan-title{font-size:24px}.rp-plan-lede{margin-top:2px;font-size:12px;line-height:1.35}.rp-round-seal{padding:6px 10px;font-size:12px}.rp-planning-body{gap:10px}.rp-status-panel,.rp-causal-panel{padding:10px}.rp-schedule-panel{gap:7px;padding:9px 10px}.rp-panel-kicker{margin-bottom:3px;font-size:11px}.rp-identity-name,.rp-causal-title{font-size:18px}.rp-identity-stage{margin:3px 0 8px;font-size:11px}.rp-run-stat{padding:6px 4px}.rp-run-stat dt{font-size:10px}.rp-run-stat dd{font-size:12px}.rp-agenda-meta{font-size:12px}.rp-agenda-scroll{gap:6px;padding:4px 0}.rp-agenda-scroll::before{top:24px}.rp-agenda-scroll::after{bottom:24px}.rp-agenda-slot{min-height:82px;gap:4px;padding:6px 4px}.rp-slot-index,.rp-slot-time{font-size:10px}.rp-slot-label,.rp-slot-label.is-empty{font-size:15px;letter-spacing:.05em;writing-mode:horizontal-tb}.rp-activity-fieldset{gap:6px;padding-top:7px}.rp-activity-fieldset legend{font-size:15px}.rp-activity-grid{gap:6px}.rp-activity-btn{min-block-size:56px;column-gap:6px;padding:6px 8px}.rp-activity-key{inline-size:24px;block-size:24px}.rp-activity-name{font-size:13px}.rp-activity-note{font-size:11px;line-height:1.25}.rp-plan-feedback{min-height:1.35em;padding:5px 8px;font-size:11px;line-height:1.35}.rp-causal-safe{margin:6px 0 8px;padding:8px 9px;font-size:12px;line-height:1.4}.rp-causal-heading{margin-bottom:5px;font-size:11px}.rp-causal-chain{gap:3px}.rp-causal-chain li{gap:6px;padding-block-end:4px;font-size:10.5px;line-height:1.3}.rp-plan-actions{gap:6px;padding-block-start:8px}.rp-plan-help{font-size:10px}.rp-plan-buttons{gap:6px}.rp-btn{padding:8px 10px;font-size:12px}}',
-    '@media(max-width:1120px){.rp-planning-body{grid-template-columns:minmax(190px,.7fr) minmax(480px,1.8fr)}.rp-causal-panel{grid-column:1/-1;display:grid;grid-template-columns:minmax(190px,.7fr) minmax(0,1.8fr);gap:10px 18px}.rp-causal-panel>.rp-panel-kicker,.rp-causal-panel>.rp-causal-title,.rp-causal-panel>.rp-causal-safe{grid-column:1}.rp-causal-heading,.rp-causal-chain{grid-column:2}.rp-causal-heading{grid-row:1}.rp-causal-chain{grid-row:2/5}.rp-plan-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr auto}.rp-plan-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}}',
-    '@media(max-width:760px){.rp-wrap{padding:8px}.rp-planning{display:grid}.rp-plan-head{display:grid}.rp-planning-body{grid-template-columns:1fr}.rp-status-panel,.rp-causal-panel{display:flex;grid-column:auto}.rp-schedule-panel{padding:12px}.rp-run-stats{grid-template-columns:repeat(4,1fr)}.rp-agenda-scroll{grid-template-columns:repeat(3,1fr);padding:10px 0}.rp-agenda-scroll::before,.rp-agenda-scroll::after{display:none}.rp-agenda-slot{min-height:104px}.rp-slot-label{writing-mode:horizontal-tb;font-size:18px}.rp-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.rp-plan-actions{display:flex}.rp-plan-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}.rp-tribulation{display:flex;flex-direction:column;align-items:center}.rp-hud{grid-template-columns:repeat(2,minmax(0,1fr))}.rp-hud-preparation,.rp-hud-meta{grid-column:1/-1}.rp-help{text-align:center}.rp-dpad{justify-content:center}}',
-    '@media(max-width:460px){.rp-round-seal{justify-self:start}.rp-run-stats{grid-template-columns:repeat(2,1fr)}.rp-agenda-scroll{gap:6px}.rp-activity-grid{grid-template-columns:1fr}.rp-plan-actions{align-items:stretch}.rp-plan-buttons{width:100%;grid-template-columns:1fr}}',
+    '@media(max-height:760px){.rp-plan-lede{font-size:11px}.rp-character{flex-basis:150px}.rp-causal-chain li:nth-child(n+4){display:none}.rp-plan-help{display:none}.rp-btn{min-block-size:44px;padding:7px 10px}.rp-hud-item{padding:6px 8px;font-size:12px}.rp-help{font-size:11px;line-height:1.4}}',
+    '@media(max-width:1120px){.rp-planning-body{grid-template-columns:minmax(200px,.72fr) minmax(440px,1.6fr)}.rp-causal-panel{grid-column:1/-1;display:grid;grid-template-columns:minmax(200px,.72fr) minmax(0,1.6fr) auto;grid-template-rows:auto auto;gap:5px 10px;padding:8px 10px}.rp-causal-panel>.rp-panel-kicker,.rp-causal-panel>.rp-causal-title{grid-column:1}.rp-causal-safe,.rp-breakthrough{grid-column:2;margin:0}.rp-causal-heading,.rp-causal-chain{display:none}.rp-plan-actions{grid-column:3;grid-row:1/3;border:0;padding:0}.rp-plan-help{display:none}.rp-plan-buttons{grid-template-columns:1fr}}',
+    '@media(max-width:760px){.rp-wrap{padding:4px}.rp-planning{gap:5px;padding:6px}.rp-plan-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px}.rp-plan-title{font-size:20px}.rp-plan-lede{display:none}.rp-round-seal{font-size:10px;padding:5px 7px}.rp-planning-body{grid-template-columns:1fr;grid-template-rows:126px minmax(0,1fr) 86px;gap:5px}.rp-status-panel{display:grid;grid-template-columns:94px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:8px;padding:6px}.rp-status-panel>.rp-panel-kicker{grid-column:2;margin:0}.rp-identity-name,.rp-identity-stage{grid-column:2}.rp-character{grid-column:1;grid-row:1/4;min-height:0;margin:0}.rp-character__seal{inset-inline:5px;font-size:8px}.rp-character__seal strong{font-size:11px}.rp-retention{grid-column:2;margin:0}.rp-run-stats{grid-column:2;grid-template-columns:repeat(4,1fr);align-self:end}.rp-run-stat{padding:3px 2px}.rp-run-stat dt{font-size:8px}.rp-run-stat dd{font-size:10px}.rp-schedule-panel{gap:4px;padding:5px 6px}.rp-agenda-meta{font-size:10px}.rp-agenda-scroll{grid-template-columns:repeat(6,1fr);gap:3px;padding:2px 0}.rp-agenda-scroll::before,.rp-agenda-scroll::after{display:none}.rp-agenda-slot{min-height:58px;padding:3px 2px}.rp-slot-index,.rp-slot-time{font-size:8px}.rp-slot-label,.rp-slot-label.is-empty{font-size:11px;letter-spacing:0}.rp-activity-fieldset{padding-top:4px}.rp-activity-fieldset legend{font-size:12px}.rp-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--activity-rows,2),minmax(48px,1fr));grid-auto-rows:minmax(48px,1fr);gap:4px}.rp-activity-btn{min-block-size:48px;padding:4px 5px}.rp-activity-key{inline-size:20px;block-size:20px}.rp-activity-name{font-size:11px}.rp-activity-note{font-size:9px;line-height:1.15}.rp-plan-feedback{min-height:0;margin:0;padding:4px 6px;font-size:9px;line-height:1.25}.rp-causal-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;padding:5px 6px;gap:3px 6px}.rp-causal-panel>.rp-panel-kicker{display:none}.rp-causal-title{grid-column:1;font-size:13px}.rp-causal-safe{grid-column:1;font-size:9px;padding:4px 6px}.rp-breakthrough{display:none}.rp-plan-actions{grid-column:2;grid-row:1/3}.rp-plan-buttons{display:grid;grid-template-columns:1fr}.rp-plan-buttons .rp-btn:not(.rp-btn-primary){display:none}.rp-btn{min-block-size:44px;padding:6px 8px;font-size:11px}.rp-tribulation{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto;grid-template-areas:"canvas" "hud" "actions";gap:4px;padding:5px}.rp-canvas{max-height:100%;max-width:100%}.rp-hud{grid-template-columns:repeat(3,minmax(0,1fr));font-size:10px}.rp-hud-preparation,.rp-hud-meta{grid-column:1/-1}.rp-help,.rp-dpad{display:none}.rp-actions{justify-content:center}}',
+    '@media(max-width:760px){.rp-tribulation{grid-template-rows:minmax(0,1fr) auto auto auto auto;grid-template-areas:"canvas" "hud" "help" "dpad" "actions"}.rp-help{display:grid;gap:3px;max-width:none;font-size:9px;line-height:1.25}.rp-help__diagram{grid-template-columns:repeat(7,minmax(0,auto));justify-content:center;gap:2px;padding:4px}.rp-help__diagram i,.rp-help__diagram b,.rp-help__diagram strong{min-height:22px;padding:2px 3px;font-size:8px}.rp-help__copy{max-height:2.6em;overflow:hidden}.rp-dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:3px;justify-content:center}.rp-dpad .rp-btn{min-width:44px;min-block-size:44px;padding:4px}.rp-actions{justify-content:center}}',
+    '@media(max-width:460px){.rp-plan-title{font-size:18px}.rp-planning-body{grid-template-rows:118px minmax(0,1fr) 78px}.rp-run-stats .rp-run-stat:nth-child(n+5){display:none}.rp-agenda-scroll{grid-template-columns:repeat(3,1fr)}.rp-agenda-slot{min-height:44px;grid-template-columns:auto 1fr auto;grid-template-rows:1fr;gap:2px}.rp-slot-label{font-size:10px}.rp-slot-index{display:none}.rp-activity-note{display:none}.rp-activity-btn{grid-template-areas:"key name";grid-template-columns:auto minmax(0,1fr)}.rp-plan-feedback{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}',
     '@media(prefers-reduced-motion:reduce){.rp-agenda-slot{transition:none}.rp-agenda-slot[aria-pressed="true"]{transform:none}}',
     '.rp-reduce-motion .rp-agenda-slot{transition:none}.rp-reduce-motion .rp-agenda-slot[aria-pressed="true"]{transform:none}'
   ].join('\n');
@@ -297,11 +325,11 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   const planTitle = document.createElement('h2');
   planTitle.id = 'rp-agenda-heading';
   planTitle.className = 'rp-plan-title';
-  planTitle.textContent = '一世日课';
+  planTitle.textContent = '劫前修途';
   planTitleGroup.appendChild(planTitle);
   const planLede = document.createElement('p');
   planLede.className = 'rp-plan-lede';
-  planLede.textContent = '本步：填满六格日课。它们按先后结算——先得资源，后续活动才能用；心压越界，后面的收益会立刻衰减。';
+  planLede.textContent = '用六段有顺序的修行准备下一劫：先养资源，再锻体、炼丹或参悟；渡劫后才会扩大上限并解锁新修途。';
   planTitleGroup.appendChild(planLede);
   const roundSeal = document.createElement('div');
   roundSeal.className = 'rp-round-seal';
@@ -313,20 +341,53 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   const statusPanel = document.createElement('aside');
   statusPanel.className = 'rp-status-panel';
-  statusPanel.setAttribute('aria-label', '这一世的身份与状态');
+  statusPanel.setAttribute('aria-label', '此身的境界与状态');
   planningBody.appendChild(statusPanel);
   const identityKicker = document.createElement('p');
   identityKicker.className = 'rp-panel-kicker';
-  identityKicker.textContent = '这一世';
+  identityKicker.textContent = '此身修行';
   const identityNameEl = document.createElement('h3');
   identityNameEl.className = 'rp-identity-name';
   const identityStageEl = document.createElement('p');
   identityStageEl.className = 'rp-identity-stage';
   statusPanel.append(identityKicker, identityNameEl, identityStageEl);
 
+  const characterFigure = document.createElement('figure');
+  characterFigure.className = 'rp-character';
+  characterFigure.setAttribute('role', 'img');
+  const characterBackdrop = document.createElement('img');
+  characterBackdrop.className = 'rp-character__backdrop';
+  characterBackdrop.alt = '';
+  characterBackdrop.setAttribute('aria-hidden', 'true');
+  const characterPortrait = document.createElement('img');
+  characterPortrait.className = 'rp-character__portrait';
+  characterPortrait.alt = '';
+  characterPortrait.setAttribute('aria-hidden', 'true');
+  const characterSeal = document.createElement('figcaption');
+  characterSeal.className = 'rp-character__seal';
+  const characterRealm = document.createElement('strong');
+  const characterState = document.createElement('span');
+  characterSeal.append(characterRealm, characterState);
+  characterFigure.append(characterBackdrop, characterPortrait, characterSeal);
+  statusPanel.appendChild(characterFigure);
+
+  const retention = document.createElement('div');
+  retention.className = 'rp-retention';
+  retention.setAttribute('aria-label', '灵气留存率');
+  const retentionLabel = document.createElement('span');
+  retentionLabel.textContent = '留存';
+  const retentionTrack = document.createElement('span');
+  retentionTrack.className = 'rp-retention__track';
+  const retentionFill = document.createElement('span');
+  retentionFill.className = 'rp-retention__fill';
+  retentionTrack.appendChild(retentionFill);
+  const retentionValue = document.createElement('strong');
+  retention.append(retentionLabel, retentionTrack, retentionValue);
+  statusPanel.appendChild(retention);
+
   const runStats = document.createElement('dl');
   runStats.className = 'rp-run-stats';
-  runStats.setAttribute('aria-label', '当前一世状态');
+  runStats.setAttribute('aria-label', '当前修行状态');
   statusPanel.appendChild(runStats);
 
   const schedulePanel = document.createElement('div');
@@ -342,7 +403,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   const agendaList = document.createElement('ol');
   agendaList.className = 'rp-agenda-scroll';
-  agendaList.setAttribute('aria-label', '六格日程，按从左到右顺序结算');
+  agendaList.setAttribute('aria-label', '六段修途，按从左到右顺序结算');
   schedulePanel.appendChild(agendaList);
   const slotButtons: HTMLButtonElement[] = [];
   const slotLabelEls: HTMLSpanElement[] = [];
@@ -376,10 +437,11 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   activityFieldset.className = 'rp-activity-fieldset';
   schedulePanel.appendChild(activityFieldset);
   const activityLegend = document.createElement('legend');
-  activityLegend.textContent = '写入所选竹简';
+  activityLegend.textContent = '可选修途 · 此区可滚动';
   activityFieldset.appendChild(activityLegend);
   const activityGrid = document.createElement('div');
   activityGrid.className = 'rp-activity-grid';
+  activityGrid.setAttribute('aria-label', '当前境界可选修途');
   activityFieldset.appendChild(activityGrid);
   const activityButtons = new Map<CultivationActivityId, HTMLButtonElement>();
   const activityPresentations = cultivationActivityPresentations();
@@ -418,23 +480,31 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   planningBody.appendChild(causalPanel);
   const causalKicker = document.createElement('p');
   causalKicker.className = 'rp-panel-kicker';
-  causalKicker.textContent = '下一场大考';
+  causalKicker.textContent = '下一道境门';
   const causalTribulationEl = document.createElement('h3');
   causalTribulationEl.className = 'rp-causal-title';
   const causalSafeEl = document.createElement('p');
   causalSafeEl.className = 'rp-causal-safe';
   causalPanel.append(causalKicker, causalTribulationEl, causalSafeEl);
+  const breakthrough = document.createElement('div');
+  breakthrough.className = 'rp-breakthrough';
+  const breakthroughTitle = document.createElement('strong');
+  breakthroughTitle.textContent = '渡过此劫';
+  const breakthroughReward = document.createElement('span');
+  const breakthroughUnlock = document.createElement('span');
+  breakthrough.append(breakthroughTitle, breakthroughReward, breakthroughUnlock);
+  causalPanel.appendChild(breakthrough);
   const causalHeading = document.createElement('h4');
   causalHeading.className = 'rp-causal-heading';
-  causalHeading.textContent = '这轮日课如何抵达天劫';
+  causalHeading.textContent = '修途如何改写天劫';
   const causalChain = document.createElement('ol');
   causalChain.className = 'rp-causal-chain';
   for (const [label, detail] of [
     ['灵田', '产出灵草与食物，养活后续苦练并把护田资源带进劫盘。'],
-    ['炼丹', '把灵草换成撤步与护脉，让一次判断失误不必直接断送此世。'],
+    ['炼丹', '把灵草换成撤步与护脉，让一次判断失误不必直接断送此身。'],
     ['苦练', '把食物换成体魄、耐力与意志，抬高真正可承受的雷威。'],
     ['参悟', '用灵石换劫兆与残卷批注，逐步看清甜蜜雷威区间。'],
-    ['谋生 / 歇息', '补灵石、压心压、养伤，让生态链不会因单一最优解而断裂。']
+    ['高阶修途', '通脉、演阵、纳雷与截天会逐境开放，收益更高，代价也更接近天道。']
   ] as const) {
     const item = document.createElement('li');
     const strong = document.createElement('strong');
@@ -452,7 +522,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   const planHelp = document.createElement('p');
   planHelp.id = 'rp-plan-help';
   planHelp.className = 'rp-plan-help';
-  planHelp.textContent = '快捷键：1–6 写入活动；方向键切换竹简；Delete 清空所选格。';
+  planHelp.textContent = '快捷键：1–9 / 0 写入修途；方向键切换竹简；Delete 清空所选格。';
   planActions.appendChild(planHelp);
   const planButtons = document.createElement('div');
   planButtons.className = 'rp-plan-buttons';
@@ -590,20 +660,20 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   function currentLifeIdentity(): { readonly name: string; readonly portraitId: string } {
     return {
-      name: generation === 1 ? '沈砚' : `后来人·第${generation}世`,
+      name: generation === 1 ? '沈砚' : `承火者·${generation - 1}`,
       portraitId: 'portrait.player-default-v1'
     };
   }
 
   function cultivationStageLabel(stageValue: number): string {
-    const realm = cultivationRealmAt(stageValue);
-    return realm ? `第 ${realm.stage} 境 · ${realm.name}` : '凡骨 · 认劫';
+    const profile = cultivationStageProfile(stageValue);
+    return `${profile.realmName} · ${profile.epithet}`;
   }
 
   function nextTribulationLabel(stageValue: number): string {
     if (stageValue >= CULTIVATION_FINAL_STAGE) return '归一 · 紫雷终劫';
     const nextRealm = cultivationRealmAt(stageValue + 1);
-    return nextRealm ? `第 ${nextRealm.stage} 劫 · ${nextRealm.name}` : '第一劫 · 察漏';
+    return nextRealm ? `破入${nextRealm.name} · 第 ${nextRealm.stage} 劫` : '凡骨初劫';
   }
 
   function tribulationResultLabel(result: TribulationSessionOutcome['result']): string {
@@ -742,28 +812,42 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   function openingBeats(): readonly CultivationOpeningBeat[] {
     return [
       {
-        mark: '醒',
-        kicker: '入世录之一 · 异乡醒来',
-        title: '没有系统，也没有人来救你',
+        mark: '谷',
+        kicker: '入谷录之一 · 仙门之下',
+        title: '这个世界的雷，先落在凡人屋顶',
         body: [
-          '你在永恒山谷外的湿林里醒来，记得原来的世界，却不记得自己如何死去。袖中没有法宝，脑海里也没有会替你报数的声音。',
-          '谷民把你捡回去，只给了一碗粥和一个名字：沈砚。往后的每一天，都要用真实会老、会伤的身体去换。'
+          '永恒山谷依附太一门活着。宗门在云上论道，谷民在地上修屋、种粮，也承受仙人斗法与天象异动的余波。',
+          '你是山洪后被谷民从湿林捡回的孩子。一碗粥、一间破屋、一个名字——沈砚——就是你能确认的全部来处。'
         ],
-        consequence: '第一条规则：余寿不是倒计时装饰。日课、受伤与天劫都会把它写进结局。',
+        consequence: '世界规则：修士追求长生，凡人只有会老、会伤、会被余波撕碎的肉身。余寿是每一次选择的真实代价。',
         assetId: 'cg.prologue.awakening-v1',
         artworkUrl: assetUrlForId?.('cg.prologue.awakening-v1'),
         artworkAlt: '沈砚在永恒山谷外的破屋中醒来',
         artworkCaption: '陌生的雨声停在檐外，身体先于答案醒来'
       },
       {
-        mark: '田',
-        kicker: '入世录之二 · 归谷执锄',
-        title: '测不出的灵根，先学看水往哪里走',
+        mark: '零',
+        kicker: '入谷录之二 · 测灵无声',
+        title: '测灵石上，你的答案是零',
         body: [
-          '太一门的测灵石没有给出一条可走的路。你回到谷里，老人没有安慰，也没有羞辱，只把一柄旧锄塞进手中。',
-          '“先看水往哪里走。”于是你从灵田学会第一件事：修行不是凭空涨出的数字，身体要吃，丹炉要草，草要地与时日。'
+          '太一门的测灵石只记录一个人最终留下了多少灵气。石柱在你面前毫无光亮，执事便判定：无根，不可入门。',
+          '没有人关心灵气是否曾经进入你的身体；人们只看见最后什么也没留下。你也只能把这个“零”当成结论。'
         ],
-        consequence: '灵田 → 食物与灵草 → 苦练与炼丹。每一份资源都要在生态里找到来处和去处。',
+        consequence: '当前真相：你被这个世界当作无法修行的凡人。“为什么是零”仍是一个未被回答的问题。',
+        assetId: 'cg.prologue.spirit-test-silent-v1',
+        artworkUrl: assetUrlForId?.('cg.prologue.spirit-test-silent-v1'),
+        artworkAlt: '沈砚站在没有亮起的测灵石前',
+        artworkCaption: '石柱没有亮。于是人们认为，你体内什么也没有'
+      },
+      {
+        mark: '田',
+        kicker: '入谷录之三 · 归谷执锄',
+        title: '修行之前，先弄清一碗饭从哪里来',
+        body: [
+          '你回到谷里，老人没有安慰，也没有羞辱，只把一柄旧锄塞进手中：“先看水往哪里走。”',
+          '你从灵田学会这个世界最朴素的回路：田产食物与灵草，食物撑住苦练，灵草进入丹炉，身体和丹药才能共同抵住一道雷。'
+        ],
+        consequence: '生态闭环：灵田 → 食物 / 灵草 → 锻体 / 炼丹 → 承雷。任何一项收益都必须有来处，也必须能在天劫中找到去处。',
         assetId: 'cg.prologue.return-valley-v1',
         artworkUrl: assetUrlForId?.('cg.prologue.return-valley-v1'),
         artworkAlt: '沈砚扛着旧锄回到永恒山谷的灵田',
@@ -771,13 +855,13 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       },
       {
         mark: '灰',
-        kicker: '入世录之三 · 灰落灵田',
+        kicker: '入谷录之四 · 灰落灵田',
         title: '仙人斗法时，凡人的田先碎了',
         body: [
           '两名修士从云上打进山谷。护田阵像纸一样裂开，作物、屋瓦和来不及逃的人一同被雷火卷走。',
           '那个只留下一个“逆”字的陌生人死在田埂上，化作灰。无主储物戒在你掌心打开，里面没有答案，只有奇种、残炉和一册破得不能再破的手稿。'
         ],
-        consequence: '第二条规则：天劫不是独立小游戏。田里保下的草、炼出的丹和练成的身体，都会被带上劫盘结算。',
+        consequence: '天劫闭环：田里保下的草、炉里炼出的丹、身上练出的根底，都会被带上劫盘结算；它不是与前面无关的小游戏。',
         assetId: 'cg.first-person.scene.ni-ash-v2',
         artworkUrl: assetUrlForId?.('cg.first-person.scene.ni-ash-v2'),
         artworkAlt: '雷火后的灵田与名为逆的修士留下的劫灰',
@@ -785,17 +869,17 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       },
       {
         mark: '劫',
-        kicker: '入世录之四 · 残卷立誓',
-        title: '以劫为薪，以骨为柴',
+        kicker: '入谷录之五 · 万气不留',
+        title: '测得是零，不等于什么都没进来',
         body: [
-          '残卷上的字属于你原来的世界：无灵根者，方可习之。所谓空无，不是没有灵气，而是来得快、漏得更快。',
-          '灵田放大吞吐，丹药暂堵漏隙，雷劫把每一次裂口烧成身体的一部分。失败的人化灰，后来人只继承真正被此世证明过的一页批注与一件旧物。'
+          '残卷的字形古怪，你却几乎不需辨认便知道它的意思。那点熟悉只在脑中一闪而过，无法追问，你也没有把它当成答案。',
+          '卷中只给出一个可验证的猜想：你不是无法吸入灵气，而是万缕难存一。灵田放大吞吐，丹药暂缓漏失，劫雷则可能把裂口烧成肉身的一部分。'
         ],
-        consequence: '日课准备 → 主动引劫 → 肉身结算 → 劫灰传承。今天排下的六格，就是这条因果链的第一笔。',
+        consequence: '成长目标：从“万气不留”开始，每渡过一劫就封住一部分漏失、提高能力上限并解锁更强的修途；直到不再只是承受天劫，而是把天道之力留为己用。',
         assetId: 'cg.first-person.act1.script-v2',
         artworkUrl: assetUrlForId?.('cg.first-person.act1.script-v2'),
-        artworkAlt: '写着偷天换劫诀的残卷在丹炉旁展开',
-        artworkCaption: '此诀非人所修。习此诀者，已死'
+        artworkAlt: '《偷天换劫诀》残卷在丹炉旁展开',
+        artworkCaption: '第一次引劫不是命定，而是对一个可能致死猜想的验证'
       }
     ];
   }
@@ -826,14 +910,14 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
         stageLabel: cultivationStageLabel(machineState.runState.stage),
         lifespanRemainingDays: machineState.runState.lifespanRemainingDays,
         premise: generation === 1
-          ? '你只有一副会老、会伤、会被雷劈碎的凡人身体。每一格日课都在用余寿换取下一场天劫的答案。'
+          ? '你只有一副会老、会伤、会被雷劈碎的凡人身体。每一段修途都在用余寿换取下一场天劫的答案。'
           : '前人的身体已经归灰；留下来的只有一页真正读懂的批注、一件旧物，以及这一次仍会耗尽的余寿。',
         inheritedMarks
       },
       artwork: {
         assetId: 'cg.prologue.awakening-v1',
         url: assetUrlForId?.('cg.prologue.awakening-v1'),
-        alt: `${identity.name}在破屋中醒来，准备翻开这一世的日课`,
+        alt: `${identity.name}在破屋中醒来，准备面对第一道劫兆`,
         caption: '凡骨仍轻，旧愿已经压在手中'
       },
       onContinue: showOmen
@@ -849,7 +933,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       view: {
         stageLabel: cultivationStageLabel(runState.stage),
         tribulationName: nextTribulationLabel(runState.stage),
-        objective: '先完成一轮日课即可主动引劫；若再准备一轮，天道随后强制催讨。',
+        objective: '先完成一轮修途即可主动引劫；若再准备一轮，天道随后强制催讨。',
         lifespanRemainingDays: runState.lifespanRemainingDays,
         knownSigns: [
           `当前最多可承受雷威 ${currentPreparation.maxSurvivablePower}，甜蜜区间 ${currentPreparation.sweetSpotMinPower}–${currentPreparation.sweetSpotMaxPower}。`,
@@ -858,12 +942,12 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
         risks: [
           {
             label: '心压与凡心',
-            detail: `心压 ${runState.pressure}/100，凡心 ${runState.mortalHeart}/100；失衡会压低后续日课效率。`,
+            detail: `心压 ${runState.pressure}/100，凡心 ${runState.mortalHeart}/100；失衡会压低后续修途效率。`,
             severity: pressureSeverity
           },
           {
             label: '护持库存',
-            detail: runState.pills > 0 ? `现有 ${runState.pills} 枚丹药，可在劫中撤步或护脉。` : '尚无丹药；致命过载将直接结束这一世。',
+            detail: runState.pills > 0 ? `现有 ${runState.pills} 枚丹药，可在劫中撤步或护脉。` : '尚无丹药；致命过载将直接断绝此身。',
             severity: runState.pills > 0 ? 'known' : 'danger'
           }
         ]
@@ -887,7 +971,6 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     tribulation.hidden = true;
     audio?.setMusicContext?.('farm', 'calm');
     renderPlanning();
-    planning.scrollIntoView?.({ block: 'start', behavior: 'auto' });
     if (focus) slotButtons[agendaDraft.selectedSlot]?.focus({ preventScroll: true });
   }
 
@@ -981,13 +1064,38 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     const agendasThisCycle = Math.max(1, agendaTargetIndex - agendaCycleStartIndex);
     const runState = machineState.runState;
     const identity = currentLifeIdentity();
+    const stageProfile = cultivationStageProfile(runState.stage);
+    const nextStageProfile = cultivationStageProfile(Math.min(CULTIVATION_FINAL_STAGE, runState.stage + 1));
     const currentPreparation = deriveTribulationPreparation(runState);
     identityNameEl.textContent = identity.name;
-    identityStageEl.textContent = `第 ${generation} 世 · ${cultivationStageLabel(runState.stage)}`;
+    identityStageEl.textContent = generation === 1
+      ? cultivationStageLabel(runState.stage)
+      : `余灰续卷 · ${cultivationStageLabel(runState.stage)}`;
+    characterRealm.textContent = stageProfile.realmName;
+    characterState.textContent = stageProfile.epithet;
+    characterFigure.dataset.stage = String(stageProfile.stage);
+    characterFigure.setAttribute('aria-label', `${identity.name}当前为${stageProfile.realmName}，${stageProfile.epithet}`);
+    const backdropId = CULTIVATION_STAGE_BACKDROP_IDS[stageProfile.stage] ?? CULTIVATION_STAGE_BACKDROP_IDS[0];
+    const backdropUrl = assetUrlForId?.(backdropId);
+    characterBackdrop.hidden = !backdropUrl;
+    if (backdropUrl) characterBackdrop.src = backdropUrl;
+    const portraitUrl = assetUrlForId?.(identity.portraitId);
+    characterPortrait.hidden = !portraitUrl;
+    if (portraitUrl) characterPortrait.src = portraitUrl;
+    const retentionPercent = stageProfile.retentionPerTenThousand / 100;
+    retentionFill.style.setProperty('--retention', String(retentionPercent));
+    retentionValue.textContent = `${retentionPercent.toFixed(retentionPercent < 1 ? 2 : 0)}%`;
     causalTribulationEl.textContent = nextTribulationLabel(runState.stage);
     causalSafeEl.textContent = currentPreparation.previewLevel > 0
       ? `现可预见：存活上限 ${currentPreparation.maxSurvivablePower}，甜蜜雷威 ${currentPreparation.sweetSpotMinPower}–${currentPreparation.sweetSpotMaxPower}。`
       : `劫兆仍模糊。当前肉身最多承受雷威 ${currentPreparation.maxSurvivablePower}；参悟会逐步揭开甜蜜区间。`;
+    const nextUnlock = activityPresentations.find(activity => activity.unlockStage === nextStageProfile.stage);
+    breakthroughReward.textContent = runState.stage >= CULTIVATION_FINAL_STAGE
+      ? `终劫不再扩容：把已存的劫力全部归于此身。`
+      : `灵气留存 ${retentionPercent.toFixed(retentionPercent < 1 ? 2 : 0)}% → ${(nextStageProfile.retentionPerTenThousand / 100).toFixed(nextStageProfile.retentionPerTenThousand < 100 ? 2 : 0)}%；体魄上限 ${stageProfile.caps.bodyFoundation} → ${nextStageProfile.caps.bodyFoundation}。`;
+    breakthroughUnlock.textContent = nextUnlock
+      ? `新修途：${nextUnlock.label}——${nextUnlock.summary}`
+      : '终点不再追加新选项，只结算你是否真的留住了天道之力。';
     const stats = cultivationRunStats(runState, agendasThisCycle, agendaCycleStartIndex);
     runStats.replaceChildren(
       ...stats.map(stat => {
@@ -1002,7 +1110,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       })
     );
     const cycleRound = Math.min(runState.agendaIndex - agendaCycleStartIndex + 1, agendasThisCycle);
-    roundSeal.textContent = `第 ${cycleRound} 轮 · 劫前日课`;
+    roundSeal.textContent = `第 ${cycleRound} 轮 · 劫前修途`;
     const filled = filledCultivationAgendaSlots(agendaDraft);
     filledMeta.textContent = `已排 ${filled}/${agendaDraft.slots.length}`;
     daysMeta.textContent = `预计耗时 ${cultivationAgendaEstimatedDays(agendaDraft)} 日`;
@@ -1022,20 +1130,27 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     }
 
     const selectedActivity = agendaDraft.slots[agendaDraft.selectedSlot] ?? null;
+    const availableActivities = cultivationAvailableActivityPresentations(runState.stage);
     for (const [activity, button] of activityButtons) {
+      const presentation = activityPresentations.find(item => item.id === activity);
+      const unlocked = (presentation?.unlockStage ?? Number.POSITIVE_INFINITY) <= runState.stage;
+      button.hidden = !unlocked;
+      button.disabled = !unlocked;
       button.dataset.selected = String(activity === selectedActivity);
     }
+    activityGrid.style.setProperty('--activity-rows', String(Math.ceil(availableActivities.length / 2)));
+    activityGrid.setAttribute('aria-label', `${stageProfile.realmName}可选 ${availableActivities.length} 项修途`);
     planFeedback.textContent = agendaFeedback;
     planFeedback.dataset.tone = agendaFeedbackTone;
     const remaining = agendaDraft.slots.length - filled;
-    const minimumAgendaDays = Math.min(...activityPresentations.map(activity => activity.timeCostDays)) * agendaDraft.slots.length;
+    const minimumAgendaDays = Math.min(...availableActivities.map(activity => activity.timeCostDays)) * agendaDraft.slots.length;
     const canPlanFullAgenda = runState.lifespanRemainingDays >= minimumAgendaDays;
     confirmAgendaBtn.disabled = !canPlanFullAgenda;
     concludeLifeBtn.hidden = canPlanFullAgenda;
     concludeLifeBtn.disabled = canPlanFullAgenda;
-    confirmAgendaBtn.textContent = remaining > 0 ? `结算本轮（还差 ${remaining} 格）` : runState.agendaIndex + 1 >= agendaTargetIndex ? '结清本轮并引劫' : '结清本轮日课';
+    confirmAgendaBtn.textContent = remaining > 0 ? `结算本轮（还差 ${remaining} 格）` : runState.agendaIndex + 1 >= agendaTargetIndex ? '结清本轮并引劫' : '结清本轮修途';
     if (!canPlanFullAgenda) {
-      agendaFeedback = `余寿只剩 ${runState.lifespanRemainingDays} 日，已不足排满最短的一轮日课。可以封卷，让后来人接续。`;
+      agendaFeedback = `余寿只剩 ${runState.lifespanRemainingDays} 日，已不足排满最短的一轮修途。可以封卷，让后来人接续。`;
       agendaFeedbackTone = 'error';
       planFeedback.textContent = agendaFeedback;
       planFeedback.dataset.tone = agendaFeedbackTone;
@@ -1044,6 +1159,13 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   }
 
   function chooseActivity(activity: CultivationActivityId): void {
+    const presentation = activityPresentations.find(item => item.id === activity);
+    if (!presentation || presentation.unlockStage > machineState.runState.stage) {
+      agendaFeedback = '此项修途尚未随境界解锁。';
+      agendaFeedbackTone = 'error';
+      renderPlanning();
+      return;
+    }
     agendaDraft = assignCultivationActivity(agendaDraft, activity);
     agendaFeedback = `已写入「${CULTIVATION_ACTIVITY_LABELS[activity]}」。可选中任一竹简继续替换。`;
     agendaFeedbackTone = 'neutral';
@@ -1084,7 +1206,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     const result = dispatchMachine({ type: 'conclude-lifespan' });
     if (result.ok) return;
     agendaFeedback = result.error.code === 'lifespan-still-sufficient'
-      ? '余寿尚能排满一轮最短日课；先把这一轮活完。'
+      ? '余寿尚能排满一轮最短修途；先把这一轮活完。'
       : '当前步骤已经改变，请按新的修行步骤继续。';
     agendaFeedbackTone = 'error';
     renderPlanning();
@@ -1193,7 +1315,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     deadRun = false;
     lastScroll = null;
     resizeCanvasForState();
-    agendaFeedback = agendas === 1 ? '雷威已入体却不足以破境。你保住了性命，再补一轮日课后重新引劫。' : `第 ${stage + 1} 阶劫兆已至。先完成两轮日课，再引雷入体。`;
+    agendaFeedback = agendas === 1 ? '雷威已入体却不足以破境。你保住了性命，再补一轮修途后重新引劫。' : `第 ${stage + 1} 阶劫兆已至。先完成两轮修途，再引雷入体。`;
     agendaFeedbackTone = agendas === 1 ? 'error' : 'neutral';
     showOmen();
   }
@@ -1316,11 +1438,11 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   }
 
   function configureCultivationPlanningKeypoint(mode: 'default' | 'pressure' = 'default'): CultivationBrowserTestSnapshot {
-    stage = 0;
+    stage = 2;
     seedSalt = 0;
     const runState = createCultivationRunState({
       seed: 27_002,
-      ...(mode === 'pressure' ? { overrides: { pressure: 79, mortalHeart: 30 } } : {})
+      overrides: { stage, ...(mode === 'pressure' ? { pressure: 79, mortalHeart: 30 } : {}) }
     });
     machineState = createCultivationRunMachineState(runState);
     agendaCycleStartIndex = runState.agendaIndex;
@@ -1375,7 +1497,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     deadRun = false;
     lastScroll = null;
     agendaDraft = createCultivationAgendaDraft();
-    agendaFeedback = '余寿已不足再排满一轮；此世只能封卷。';
+    agendaFeedback = '余寿已不足再排满一轮；此身只能封卷。';
     agendaFeedbackTone = 'error';
     resizeCanvasForState();
     showPlanning();
@@ -1732,14 +1854,14 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
         case 'overload':
           return `<b>雷威越过肉身上限，灰飞烟灭。</b>雷威 ${tribulationOutcome.beamPower}，安全上限 ${preparation.maxSurvivablePower}。${suffix}`;
         case 'timeout':
-          return `<b>步数耗尽，天道强制落雷。</b>这一世化作劫灰。${suffix}`;
+          return `<b>步数耗尽，天道强制落雷。</b>此身化作劫灰。${suffix}`;
         case 'unreached':
           break;
       }
     }
     switch (state.status) {
       case 'playing':
-        return '推 <b>金阵石(金)</b> 折射雷光、<b>绝缘石(紫)</b> 阻断、<b>水阵石(蓝)</b> 直通。把雷光导进 <b>身体(青环)</b> 即渡劫；别烧到 <b>灵草(绿)</b>。<kbd>方向键/WASD</kbd> 推、<kbd>R</kbd> 消耗丹药撤步，必要时先启用护脉丹。';
+        return '<span class="rp-help__diagram" aria-hidden="true"><i>你</i><b>推阵石</b><em>→</em><b>雷路过草</b><em>→</em><strong>身体承雷</strong></span><span class="rp-help__copy">先移动到阵石旁再推动：<b>金石</b>折射、<b>紫石</b>阻断、<b>蓝石</b>直通。让雷路经过灵草后落入青环身体，并把雷威控制在 HUD 的甜蜜区间。<kbd>方向键/WASD</kbd> 移动，<kbd>R</kbd> 撤步。</span>';
       case 'won':
         return `<b>雷光入体，淬体突破！</b>${lastScroll ? `<br>📜 <b>${lastScroll.title}</b><br>${lastScroll.body}` : ''}`;
       case 'lost':
@@ -1786,7 +1908,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       nextBtn.textContent = '劫力不足·补修一轮';
       nextBtn.disabled = !settlementApplied;
     } else if (tribulationOutcome?.result === 'perfect' || tribulationOutcome?.result === 'survived') {
-      nextBtn.textContent = '下一阶·先修日课 →';
+      nextBtn.textContent = '下一境·先修新途 →';
       nextBtn.disabled = !settlementApplied || !isStageUnlocked(meta, stage + 1);
     } else {
       nextBtn.textContent = '下一阶 →';
@@ -1809,7 +1931,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       preparedHerbsScorched: herbLoss
     });
     if (!result.ok) {
-      tribulationFeedback = '<b>天劫结算未能回写。</b>请返回标题后重新进入，避免污染这一世的记录。';
+      tribulationFeedback = '<b>天劫结算未能回写。</b>请返回标题后重新进入，避免污染此身记录。';
       return;
     }
     settlementApplied = true;
@@ -1947,7 +2069,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     agendaCycleStartIndex = result.state.agendaIndex;
     agendaTargetIndex = agendaCycleStartIndex + CULTIVATION_AGENDAS_BEFORE_TRIBULATION;
     machineState = { ...machineState, tribulationAgendaTarget: agendaTargetIndex };
-    agendaFeedback = '前人的一页批注与一件旧物已经交到手中。请写下这一世的第一轮日课。';
+    agendaFeedback = '前人的一页批注与一件旧物已经交到手中。请写下此身的第一轮修途。';
     agendaFeedbackTone = 'success';
     deadRun = false;
     lastScroll = null;
@@ -2002,13 +2124,13 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       view: {
         kind: 'ascended',
         identityName: identity.name,
-        title: '一世日课，终于留下了没有化灰的身体',
+        title: '六境修途，终于留下了没有化灰的身体',
         epilogue: '察漏、引路、借势、淬骨、守我、归一。你不是把凡人的一生抹去，而是让每一格用余寿换来的选择都随身体一起越过了天门。',
         records: [
           { label: '传承世代', value: `第 ${generation} 世` },
           { label: '最高境阶', value: cultivationStageLabel(machineState.runState.stage), tone: 'good' },
           { label: '结局余寿', value: `${machineState.runState.lifespanRemainingDays} 日`, tone: 'warning' },
-          { label: '日课总轮', value: `${machineState.settledAgendaCount} 轮` }
+          { label: '修途总轮', value: `${machineState.settledAgendaCount} 轮` }
         ],
         closingLines: [
           '第一次，劫灰碑没有等到新的名字。',
@@ -2051,12 +2173,12 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       : settlement.kind === 'breakthrough'
         ? `破入${cultivationStageLabel(settlement.stageAfter)}`
         : settlement.kind === 'death-prevented'
-          ? '护脉留住了这一世'
+          ? '护脉留住了此身'
           : '雷威退去，境界仍在原处';
     const detail = isAscension
       ? '终劫已经结算：身体、记忆与未尽的人间牵挂都留了下来。'
       : settlement.kind === 'breakthrough'
-        ? '成功不是清零。伤势、丹毒与库存损耗仍会进入下一境的第一轮日课。'
+        ? '成功不是清零。伤势、丹毒与库存损耗仍会进入下一境的第一轮修途。'
         : settlement.kind === 'death-prevented'
           ? '护持替你挡住了致命一刻，但伤势和消耗都是真的；下一轮必须为活下来付账。'
           : '这次雷威不足以破境。已得的淬体与已失的资源都不会回滚。';
@@ -2106,9 +2228,10 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   const onPlanningKeyDown = (event: KeyboardEvent): void => {
     if (phase !== 'planning' || event.altKey || event.ctrlKey || event.metaKey) return;
-    if (/^[1-6]$/.test(event.key)) {
-      const activity = activityPresentations[Number(event.key) - 1];
-      if (activity) {
+    const shortcutIndex = event.key === '0' ? 9 : /^[1-9]$/.test(event.key) ? Number(event.key) - 1 : -1;
+    if (shortcutIndex >= 0) {
+      const activity = activityPresentations[shortcutIndex];
+      if (activity && activity.unlockStage <= machineState.runState.stage) {
         event.preventDefault();
         chooseActivity(activity.id);
       }

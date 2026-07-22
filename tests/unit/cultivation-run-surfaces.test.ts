@@ -69,7 +69,7 @@ describe('D27-c 事件玩家面', () => {
     expect(root.querySelector('h2')?.textContent).toBe('门槛上的热粥');
     expect(root.querySelectorAll<HTMLButtonElement>('.cr-event__button')).toHaveLength(2);
     expect(root.querySelector('.cr-event__resources')?.textContent).toContain('食物 4');
-    expect(root.querySelector('.cr-event__instruction')?.textContent).toContain('代价与变化会立即写入此世');
+    expect(root.querySelector('.cr-event__instruction')?.textContent).toContain('代价与变化会立即写入此身记录');
     expect(root.querySelector('.cr-event__choice-cost')?.textContent).toContain('食物 −1');
     expect(root.querySelector('.cr-event__choice-effect')?.textContent).toContain('心压 -8');
     expect(root.querySelector('.cr-event__feedback')?.getAttribute('role')).toBe('status');

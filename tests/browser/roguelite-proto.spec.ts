@@ -26,10 +26,11 @@ async function fillAgenda(page: Page, activities: readonly string[]): Promise<vo
 }
 
 const OPENING_TITLES = [
-  '没有系统，也没有人来救你',
-  '测不出的灵根，先学看水往哪里走',
+  '这个世界的雷，先落在凡人屋顶',
+  '测灵石上，你的答案是零',
+  '修行之前，先弄清一碗饭从哪里来',
   '仙人斗法时，凡人的田先碎了',
-  '以劫为薪，以骨为柴'
+  '测得是零，不等于什么都没进来'
 ] as const;
 
 async function finishFirstLifeOpening(page: Page, startAt = 0): Promise<void> {
@@ -41,9 +42,9 @@ async function finishFirstLifeOpening(page: Page, startAt = 0): Promise<void> {
 
 async function enterFirstAgenda(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: '沈砚' })).toBeVisible();
-  await page.getByRole('button', { name: '翻开今世日课' }).click();
-  await expect(page.getByRole('heading', { name: /第 1 劫 · 察漏/ })).toBeVisible();
-  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await expect(page.getByRole('heading', { name: /破入练气 · 第 1 劫/ })).toBeVisible();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
 }
 
 async function finishRoundStory(page: Page, destination: 'planning' | 'tribulation'): Promise<void> {
@@ -71,8 +72,8 @@ async function finishRoundStory(page: Page, destination: 'planning' | 'tribulati
   await timing.getByRole('button', { name: destination === 'planning' ? /再备一轮/ : /现在引劫/ }).click();
 }
 
-test.describe('D27 日程→事件→参悟→天劫主路径 · smoke', () => {
-  test('开始游戏→完成两轮完整日课链→进入天劫→HUD/D-pad/键盘可用', async ({ page }) => {
+test.describe('D27 修途→事件→参悟→天劫主路径 · smoke', () => {
+  test('开始游戏→完成两轮完整修途链→进入天劫→HUD/D-pad/键盘可用', async ({ page }) => {
     await page.goto(gameEntryPath());
     await expect
       .poll(
@@ -93,24 +94,25 @@ test.describe('D27 日程→事件→参悟→天劫主路径 · smoke', () => {
     await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible({ timeout: 8000 });
     await finishFirstLifeOpening(page);
     await enterFirstAgenda(page);
-    await expect(page.getByRole('heading', { name: '一世日课' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: '劫前修途' })).toBeVisible();
     await expect(page.locator('.rp-agenda-slot')).toHaveCount(6);
-    await expect(page.locator('.rp-activity-btn')).toHaveCount(6);
+    await expect(page.locator('.rp-activity-btn')).toHaveCount(10);
+    await expect(page.locator('.rp-activity-btn:visible')).toHaveCount(4);
 
-    await fillAgenda(page, ['灵田', '炼丹', '谋生', '参悟', '苦练', '歇息']);
-    await page.getByRole('button', { name: '结清本轮日课' }).click();
+    await fillAgenda(page, ['灵田', '苦练', '谋生', '歇息', '灵田', '苦练']);
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
     await finishRoundStory(page, 'planning');
     await expect(page.locator('.rp-round-seal')).toContainText('第 2 轮');
 
-    await fillAgenda(page, ['灵田', '灵田', '炼丹', '苦练', '歇息', '参悟']);
+    await fillAgenda(page, ['灵田', '灵田', '苦练', '谋生', '歇息', '苦练']);
     await page.getByRole('button', { name: '结清本轮并引劫' }).click();
     await finishRoundStory(page, 'tribulation');
 
     const canvas = page.locator('.rp-canvas');
     await expect(canvas).toBeVisible();
-    await expect(page.locator('#roguelite-proto-root .rp-help')).toContainText('金阵石');
+    await expect(page.locator('#roguelite-proto-root .rp-help')).toContainText('推阵石');
     await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/预见 \d/);
-    await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/护持 [1-9]/);
+    await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/护持 \d/);
     const dpad = page.locator('.rp-dpad');
     await expect(dpad).toBeVisible();
     await expect(dpad.getByRole('button')).toHaveCount(4);

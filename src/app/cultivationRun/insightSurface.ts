@@ -10,7 +10,7 @@ export interface CultivationInsightSurfaceOptions {
 }
 
 const INSIGHT_CATEGORY_LABELS: Readonly<Record<CultivationInsightNodeCategory, string>> = {
-  'activity-upgrade': '日课批注',
+  'activity-upgrade': '修途批注',
   'array-stone': '阵理',
   'pill-recipe': '丹方',
   'tribulation-intel': '劫兆',
@@ -58,8 +58,8 @@ export function createCultivationInsightSurface(options: CultivationInsightSurfa
 
   const style = document.createElement('style');
   style.textContent = [
-    '.cr-insight-host{container-type:inline-size;}',
-    '.cr-insight{display:grid;gap:18px;max-width:1040px;margin:0 auto;padding:clamp(14px,3vw,24px);color:var(--color-paperBright);}',
+    '.cr-insight-host{height:100%;min-height:0;overflow:hidden;container-type:inline-size;}',
+    '.cr-insight{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:10px;width:min(100%,1040px);height:100%;min-height:0;margin:0 auto;padding:clamp(10px,2vw,18px);overflow:hidden;color:var(--color-paperBright);}',
     '.cr-insight__header{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end;border-block-end:1px solid rgb(var(--rgb-paperBorder) / .5);padding-block-end:12px;}',
     '.cr-insight__kicker{margin:0;color:var(--color-giltPale);font-size:12px;letter-spacing:.16em;}',
     '.cr-insight__title{margin:4px 0 0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:clamp(24px,5vw,38px);font-weight:600;text-wrap:balance;}',
@@ -67,13 +67,13 @@ export function createCultivationInsightSurface(options: CultivationInsightSurfa
     '.cr-insight__summary strong{color:var(--color-giltUi);font-size:20px;}',
     '.cr-insight__summary span{color:var(--color-paperMuted);font-size:12px;}',
     '.cr-insight__lede{margin:0;padding:9px 11px;border-inline-start:3px solid rgb(var(--rgb-paperBorder) / .72);background:rgb(var(--rgb-shellPine) / .38);color:var(--color-paperUi);line-height:1.65;text-wrap:pretty;}',
-    '.cr-insight__graph{position:relative;display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));grid-template-rows:repeat(2,minmax(172px,auto));gap:18px 16px;list-style:none;margin:0;padding:12px 0;}',
+    '.cr-insight__graph{position:relative;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));grid-template-rows:repeat(2,minmax(150px,auto));gap:10px;list-style:none;margin:0;padding:8px 4px 8px 1px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;}',
     '.cr-insight__node{position:relative;min-width:0;}',
     '.cr-insight__node:not(:first-child)::before{content:"";position:absolute;z-index:0;inset-inline-start:-16px;inset-block-start:50%;inline-size:16px;border-block-start:1px solid rgb(var(--rgb-paperBorder) / .58);}',
     '.cr-insight__node:not(:first-child)::after{content:"◆";position:absolute;z-index:2;inset-inline-start:-20px;inset-block-start:calc(50% - 7px);color:rgb(var(--rgb-paperBorder) / .78);font-size:10px;}',
     '.cr-insight__node[data-availability="available"]::before,.cr-insight__node[data-availability="unlocked"]::before{border-color:var(--color-giltUi);}',
     '.cr-insight__node[data-availability="available"]::after,.cr-insight__node[data-availability="unlocked"]::after{color:var(--color-giltUi);}',
-    '.cr-insight__node-button{position:relative;z-index:1;width:100%;height:100%;min-height:172px;display:grid;grid-template-rows:auto auto 1fr auto;gap:8px;text-align:left;padding:14px;border:1px solid rgb(var(--rgb-paperBorder) / .55);border-inline-start-width:3px;border-radius:3px;background:linear-gradient(145deg,rgb(var(--rgb-shellPine) / .78),rgb(var(--rgb-shellInk) / .86));color:var(--color-paperBright);cursor:pointer;touch-action:manipulation;}',
+    '.cr-insight__node-button{position:relative;z-index:1;width:100%;height:100%;min-height:150px;display:grid;grid-template-rows:auto auto 1fr auto;gap:6px;text-align:left;padding:10px;border:1px solid rgb(var(--rgb-paperBorder) / .55);border-inline-start-width:3px;border-radius:3px;background:linear-gradient(145deg,rgb(var(--rgb-shellPine) / .78),rgb(var(--rgb-shellInk) / .86));color:var(--color-paperBright);cursor:pointer;touch-action:manipulation;}',
     '.cr-insight__node-button:hover{border-color:var(--color-giltUi);}',
     '.cr-insight__node-button:focus-visible,.cr-insight__continue:focus-visible{outline:3px solid var(--color-giltUi);outline-offset:3px;}',
     '.cr-insight__node-button[aria-pressed="true"]{border-color:var(--color-giltUi);background:linear-gradient(145deg,rgb(var(--rgb-giltUi) / .18),rgb(var(--rgb-shellPine) / .88));box-shadow:inset 0 0 0 1px rgb(var(--rgb-giltUi) / .2);}',
@@ -95,7 +95,7 @@ export function createCultivationInsightSurface(options: CultivationInsightSurfa
     '.cr-insight__footer{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;}',
     '.cr-insight__hint{margin:0;color:var(--color-paperMuted);font-size:13px;}',
     '.cr-insight__continue{min-block-size:48px;padding:10px 16px;border:1px solid var(--color-giltUi);border-radius:4px;background:rgb(var(--rgb-giltUi) / .14);color:var(--color-giltPale);font-weight:700;cursor:pointer;touch-action:manipulation;}',
-    '@container(max-width:760px){.cr-insight__graph{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;gap:14px;padding-block:8px}.cr-insight__graph::before{content:"";position:absolute;z-index:0;inset-block:8px;inset-inline-start:50%;inline-size:1px;background:linear-gradient(180deg,transparent,rgb(var(--rgb-paperBorder) / .58) 8% 92%,transparent)}.cr-insight__node{grid-column:auto!important;grid-row:auto!important}.cr-insight__node:not(:first-child)::before{display:block;inset-block-start:20px;inline-size:7px}.cr-insight__node:nth-child(odd)::before{inset-inline-start:auto;inset-inline-end:-7px}.cr-insight__node:nth-child(even)::before{inset-inline-start:-7px}.cr-insight__node:nth-child(odd)::after{inset-inline-start:auto;inset-inline-end:-11px;inset-block-start:14px}.cr-insight__node:nth-child(even)::after{inset-inline-start:-11px;inset-block-start:14px}.cr-insight__node-button{min-height:168px}}',
+    '@container(max-width:760px){.cr-insight{gap:6px;padding:7px}.cr-insight__header{padding-block-end:6px}.cr-insight__title{font-size:22px}.cr-insight__lede{font-size:11px;line-height:1.35;padding:5px 7px}.cr-insight__graph{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;gap:8px;padding-block:5px}.cr-insight__graph::before{content:"";position:absolute;z-index:0;inset-block:8px;inset-inline-start:50%;inline-size:1px;background:linear-gradient(180deg,transparent,rgb(var(--rgb-paperBorder) / .58) 8% 92%,transparent)}.cr-insight__node{grid-column:auto!important;grid-row:auto!important}.cr-insight__node:not(:first-child)::before{display:block;inset-block-start:20px;inline-size:7px}.cr-insight__node:nth-child(odd)::before{inset-inline-start:auto;inset-inline-end:-7px}.cr-insight__node:nth-child(even)::before{inset-inline-start:-7px}.cr-insight__node:nth-child(odd)::after{inset-inline-start:auto;inset-inline-end:-11px;inset-block-start:14px}.cr-insight__node:nth-child(even)::after{inset-inline-start:-11px;inset-block-start:14px}.cr-insight__node-button{min-height:142px;padding:8px}.cr-insight__feedback,.cr-insight__hint{font-size:11px}}',
     '@container(max-width:380px){.cr-insight__header{grid-template-columns:1fr}.cr-insight__summary{justify-self:start;text-align:left}.cr-insight__graph{grid-template-columns:1fr}.cr-insight__graph::before{inset-inline-start:14px}.cr-insight__node:not(:first-child)::before{inset-inline-start:-10px;inset-inline-end:auto;inline-size:10px}.cr-insight__node:nth-child(odd)::after,.cr-insight__node:nth-child(even)::after{inset-inline-start:-14px;inset-inline-end:auto;inset-block-start:14px}.cr-insight__node-button{min-height:auto}}'
   ].join('\n');
   root.appendChild(style);
@@ -278,7 +278,6 @@ export function createCultivationInsightSurface(options: CultivationInsightSurfa
     },
     focusInitial(): void {
       if (destroyed) return;
-      section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       focusableButton(root, '.cr-insight__node-button:not([disabled])')?.focus({ preventScroll: true });
     },
     destroy(): void {

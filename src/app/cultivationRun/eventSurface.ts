@@ -65,13 +65,14 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
 
   const style = document.createElement('style');
   style.textContent = [
-    '.cr-event{display:grid;gap:16px;max-width:760px;margin:0 auto;padding:clamp(14px,3vw,24px);color:var(--color-paperBright);}',
+    '.cr-event-host{height:100%;min-height:0;overflow:hidden;}',
+    '.cr-event{display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;gap:10px;width:min(100%,760px);height:100%;min-height:0;margin:0 auto;padding:clamp(10px,2vw,18px);overflow:hidden;color:var(--color-paperBright);}',
     '.cr-event__header{display:grid;gap:6px;border-inline-start:4px solid var(--color-giltUi);padding-inline-start:14px;}',
     '.cr-event__kicker{margin:0;color:var(--color-giltPale);font-size:12px;letter-spacing:.16em;}',
     '.cr-event__title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:clamp(24px,5vw,38px);font-weight:600;text-wrap:balance;}',
     '.cr-event__detail{margin:0;color:var(--color-paperUi);line-height:1.75;text-wrap:pretty;}',
     '.cr-event__resources{display:flex;flex-wrap:wrap;gap:6px 12px;margin:0;color:var(--color-paperMuted);font-size:13px;font-variant-numeric:tabular-nums;}',
-    '.cr-event__choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;list-style:none;margin:0;padding:0;}',
+    '.cr-event__choices{min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;list-style:none;margin:0;padding:1px 4px 1px 1px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}',
     '.cr-event__choice{min-width:0;}',
     '.cr-event__button{width:100%;min-height:100%;display:grid;gap:8px;align-content:start;text-align:left;padding:14px;border:1px solid rgb(var(--rgb-paperBorder) / .55);border-radius:4px;background:rgb(var(--rgb-shellPine) / .72);color:var(--color-paperBright);cursor:pointer;touch-action:manipulation;}',
     '.cr-event__button:hover{border-color:var(--color-giltUi);background:rgb(var(--rgb-shellPine) / .9);}',
@@ -88,7 +89,7 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
     '.cr-event__feedback{min-height:1.5em;margin:0;padding:8px 10px;border-inline-start:3px solid var(--color-paperBorder);color:var(--color-paperMuted);line-height:1.5;}',
     '.cr-event__feedback[data-tone="success"]{border-color:var(--color-giltUi);color:var(--color-giltPale);}',
     '.cr-event__feedback[data-tone="error"]{border-color:var(--color-dangerUi);color:var(--color-dangerUi);}',
-    '@media(max-width:620px){.cr-event__choices{grid-template-columns:1fr}.cr-event__button{min-height:auto}}'
+    '@media(max-width:620px){.cr-event{gap:6px;padding:7px}.cr-event__header{gap:3px}.cr-event__title{font-size:22px}.cr-event__detail{font-size:12px;line-height:1.4}.cr-event__instruction{font-size:11px;padding:5px 7px}.cr-event__choices{grid-template-columns:1fr}.cr-event__button{min-height:auto;padding:9px;gap:4px}.cr-event__feedback{font-size:11px;padding:5px 7px}}'
   ].join('\n');
   root.appendChild(style);
 
@@ -110,7 +111,7 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
   resources.setAttribute('aria-label', '当前可用资源');
   section.appendChild(resources);
 
-  appendTextElement(section, 'p', 'cr-event__instruction', '本步：从两种处置中选一项；代价与变化会立即写入此世。');
+  appendTextElement(section, 'p', 'cr-event__instruction', '本步：从两种处置中选一项；代价与变化会立即写入此身记录。');
 
   const choices = document.createElement('ol');
   choices.className = 'cr-event__choices';
@@ -133,7 +134,7 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
       feedback = machineErrorMessage(result.error);
       feedbackTone = 'error';
     } else {
-      feedback = `已选择「${choice.label}」。这一笔会写进此世记录。`;
+      feedback = `已选择「${choice.label}」。这一笔会写进此身记录。`;
       feedbackTone = 'success';
     }
     render();
@@ -211,7 +212,6 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
     },
     focusInitial(): void {
       if (destroyed) return;
-      section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       focusableButton(root, '.cr-event__button:not([disabled])')?.focus({ preventScroll: true });
     },
     destroy(): void {
