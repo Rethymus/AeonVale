@@ -7,7 +7,7 @@
  */
 import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
 import { idx, traceBeam } from './beam';
-import { isSolvable } from './generator';
+import { solveBoard } from './generator';
 import type { BlockKind, SokobanState, Terrain } from './types';
 
 export interface PreparedPuzzlePlacement {
@@ -18,6 +18,7 @@ export interface PreparedPuzzlePlacement {
   readonly inventoryHerbIndices: readonly number[];
   /** 事件额外生成，不得从当世灵草库存重复扣除。 */
   readonly eventHerbIndices: readonly number[];
+  /** 本次准备实际接入棋盘、且被最短解使用的阵石。 */
   readonly placedBlockKinds: readonly Exclude<BlockKind, 'none'>[];
   readonly appliedBoardModifierTags: readonly string[];
   readonly ignoredBoardModifierTags: readonly string[];
@@ -73,7 +74,10 @@ function refreshDerivedState(state: SokobanState): void {
 }
 
 function remainsPlayable(state: SokobanState): boolean {
-  return !traceBeam(state.board).reachedBody && isSolvable(state.board, state.player);
+  const solution = solveBoard(state.board, state.player, { maxMoves: state.moveBudget - state.movesUsed });
+  return !traceBeam(state.board).reachedBody
+    && solution !== null
+    && (state.challenge?.requiredBlockKinds.every(kind => solution.movedBlockKinds.includes(kind)) ?? true);
 }
 
 function tryPlaceTerrain(state: SokobanState, terrain: Terrain): number | null {
@@ -90,9 +94,64 @@ function tryPlaceTerrain(state: SokobanState, terrain: Terrain): number | null {
 }
 
 function tryPlaceBlock(state: SokobanState, kind: Exclude<BlockKind, 'none'>): boolean {
+  if (state.board.blocks.includes(kind)) {
+    const solution = solveBoard(state.board, state.player, { maxMoves: state.moveBudget - state.movesUsed });
+    return solution?.movedBlockKinds.includes(kind) ?? false;
+  }
+
+  // 水阵石必须与断裂雷脉成套出现，否则“直通”与空地没有玩法差异。
+  if (kind === 'conductor') {
+    const beamCandidates = state.beam.cells
+      .map(cell => idx(state.board, cell.x, cell.y))
+      .filter(index => state.board.terrain[index] === 'empty' && state.board.blocks[index] === 'none');
+    for (const targetIndex of beamCandidates) {
+      const tx = targetIndex % state.board.width;
+      const ty = Math.floor(targetIndex / state.board.width);
+      const sideVectors = [{ x: -1, y: 0 }, { x: 1, y: 0 }, { x: 0, y: -1 }, { x: 0, y: 1 }] as const;
+      for (const side of sideVectors) {
+        const sx = tx - side.x;
+        const sy = ty - side.y;
+        const px = tx - side.x * 2;
+        const py = ty - side.y * 2;
+        if (sx < 0 || sy < 0 || px < 0 || py < 0 || sx >= state.board.width || px >= state.board.width || sy >= state.board.height || py >= state.board.height) continue;
+        const stoneIndex = idx(state.board, sx, sy);
+        const standIndex = idx(state.board, px, py);
+        if (state.board.terrain[stoneIndex] !== 'empty' || state.board.blocks[stoneIndex] !== 'none') continue;
+        if (state.board.terrain[standIndex] !== 'empty' || state.board.blocks[standIndex] !== 'none') continue;
+        state.board.terrain[targetIndex] = 'rift';
+        state.board.blocks[stoneIndex] = kind;
+        const solution = solveBoard(state.board, state.player, { maxMoves: state.moveBudget - state.movesUsed });
+        if (solution?.movedBlockKinds.includes(kind)) {
+          refreshDerivedState(state);
+          return true;
+        }
+        state.board.terrain[targetIndex] = 'empty';
+        state.board.blocks[stoneIndex] = 'none';
+      }
+    }
+    return false;
+  }
+
+  // 绝缘石优先封住当前雷路，确保它是需要移开的“闸门”，不是无关摆设。
+  if (kind === 'insulator') {
+    for (const cell of state.beam.cells) {
+      const index = idx(state.board, cell.x, cell.y);
+      if (state.board.terrain[index] !== 'empty' || state.board.blocks[index] !== 'none') continue;
+      state.board.blocks[index] = kind;
+      const solution = solveBoard(state.board, state.player, { maxMoves: state.moveBudget - state.movesUsed });
+      if (solution?.movedBlockKinds.includes(kind)) {
+        refreshDerivedState(state);
+        return true;
+      }
+      state.board.blocks[index] = 'none';
+    }
+    return false;
+  }
+
   for (const index of candidateIndices(state)) {
     state.board.blocks[index] = kind;
-    if (remainsPlayable(state)) {
+    const solution = solveBoard(state.board, state.player, { maxMoves: state.moveBudget - state.movesUsed });
+    if (!traceBeam(state.board).reachedBody && solution?.movedBlockKinds.includes(kind)) {
       refreshDerivedState(state);
       return true;
     }
@@ -126,6 +185,11 @@ export function applyPreparationToPuzzle(
   const appliedBoardModifierTags: string[] = [];
   const ignoredBoardModifierTags: string[] = [];
 
+  // 先接入会改变解题结构的阵石，再把灵草与事件放进剩余的预算内安全格。
+  for (const kind of preparation.unlockedBlockKinds) {
+    if (tryPlaceBlock(state, kind)) placedBlockKinds.push(kind);
+  }
+
   const herbCount = requestedPreparedHerbs(preparation);
   for (let count = 0; count < herbCount; count += 1) {
     const placedIndex = tryPlaceTerrain(state, 'herb');
@@ -143,10 +207,6 @@ export function applyPreparationToPuzzle(
     }
   }
 
-  for (const kind of preparation.unlockedBlockKinds) {
-    if (tryPlaceBlock(state, kind)) placedBlockKinds.push(kind);
-  }
-
   for (const tag of boardModifierTags) {
     if (tag === 'starting-herb:thunder') continue;
     if (tag === 'sword-scar-obstacle:1') {
@@ -159,15 +219,39 @@ export function applyPreparationToPuzzle(
   }
 
   refreshDerivedState(state);
+  const certified = solveBoard(state.board, state.player, { maxMoves: state.moveBudget });
+  const effectivePlacedBlockKinds = certified
+    ? placedBlockKinds.filter(kind => certified.movedBlockKinds.includes(kind))
+    : [];
+  const requiredBlockKinds = [...new Set([
+    ...(state.challenge?.requiredBlockKinds ?? []),
+    ...effectivePlacedBlockKinds
+  ])];
+  const challenge = certified
+    ? {
+        archetype: requiredBlockKinds.includes('conductor') && requiredBlockKinds.includes('insulator')
+          ? 'compound-array' as const
+          : requiredBlockKinds.includes('conductor')
+            ? 'broken-meridian' as const
+            : requiredBlockKinds.includes('insulator')
+              ? 'sealed-meridian' as const
+              : state.challenge?.archetype ?? 'turning-rune' as const,
+        requiredBlockKinds,
+        certifiedMoves: certified.moves.length,
+        budgetSlack: Math.max(0, state.moveBudget - certified.moves.length),
+        preserveHerbsTarget: state.board.terrain.filter(terrain => terrain === 'herb').length
+      }
+    : state.challenge;
   return {
     state: {
       ...state,
-      herbsTotal: state.board.terrain.filter(terrain => terrain === 'herb').length
+      herbsTotal: state.board.terrain.filter(terrain => terrain === 'herb').length,
+      ...(challenge ? { challenge } : {})
     },
     preparedHerbIndices,
     inventoryHerbIndices,
     eventHerbIndices,
-    placedBlockKinds,
+    placedBlockKinds: effectivePlacedBlockKinds,
     appliedBoardModifierTags,
     ignoredBoardModifierTags
   };

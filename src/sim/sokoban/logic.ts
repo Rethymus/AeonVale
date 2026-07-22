@@ -8,7 +8,7 @@
 import { Rng } from '@sim/world/rng';
 import type { Vec2 } from '@sim/world/types';
 import { idx, inBounds, traceBeam } from './beam';
-import { generateBoard } from './generator';
+import { generateBoard, solveBoard, type GenerateBoardOptions } from './generator';
 import {
   DIR_VECTORS,
   type BlockKind,
@@ -16,6 +16,7 @@ import {
   type SokobanAction,
   type SokobanActionOutcome,
   type SokobanBoard,
+  type SokobanChallenge,
   type SokobanState,
   type Terrain
 } from './types';
@@ -86,7 +87,13 @@ function buildBoard(tpl: Template): { board: SokobanBoard; herbsTotal: number } 
   return { board, herbsTotal };
 }
 
-function makeState(stage: number, board: SokobanBoard, player: Vec2, moveBudget: number): SokobanState {
+function makeState(
+  stage: number,
+  board: SokobanBoard,
+  player: Vec2,
+  moveBudget: number,
+  challenge?: SokobanChallenge
+): SokobanState {
   return {
     stage,
     board,
@@ -96,7 +103,8 @@ function makeState(stage: number, board: SokobanBoard, player: Vec2, moveBudget:
     herbsTotal: board.terrain.filter(t => t === 'herb').length,
     moveBudget,
     movesUsed: 0,
-    status: 'playing'
+    status: 'playing',
+    ...(challenge ? { challenge } : {})
   };
 }
 
@@ -104,14 +112,27 @@ function makeState(stage: number, board: SokobanBoard, player: Vec2, moveBudget:
  * 开局：优先程序化生成（docs/26 §4），seedSalt 控制同阶不同布局；生成失败回退手工模板。
  * 确定性：同 stage + seedSalt ⇒ 同棋盘（可复现 / 可蒙特卡洛调参）。
  */
-export function createPuzzle(stage: number, seedSalt = 0, rng?: Rng): SokobanState {
+export function createPuzzle(
+  stage: number,
+  seedSalt = 0,
+  rng?: Rng,
+  options: GenerateBoardOptions = {}
+): SokobanState {
   const safeStage = Math.max(0, stage);
   const r = rng ?? new Rng(`sokoban:${safeStage}:${seedSalt}`);
-  const gen = generateBoard(safeStage, r);
-  if (gen) return makeState(safeStage, gen.board, gen.player, gen.moveBudget);
+  const gen = generateBoard(safeStage, r, options);
+  if (gen) return makeState(safeStage, gen.board, gen.player, gen.moveBudget, gen.challenge);
   const tpl = TEMPLATES[safeStage % TEMPLATES.length] ?? TEMPLATES[0]!;
   const { board } = buildBoard(tpl);
-  return makeState(safeStage, board, tpl.player, tpl.moveBudget);
+  const solution = solveBoard(board, tpl.player, { maxMoves: tpl.moveBudget });
+  const certifiedMoves = solution?.moves.length ?? tpl.moveBudget;
+  return makeState(safeStage, board, tpl.player, Math.max(tpl.moveBudget, certifiedMoves + 8), {
+    archetype: 'turning-rune',
+    requiredBlockKinds: ['mirror'],
+    certifiedMoves,
+    budgetSlack: Math.max(0, tpl.moveBudget - certifiedMoves),
+    preserveHerbsTarget: board.terrain.filter(terrain => terrain === 'herb').length
+  });
 }
 
 /** 还存活的灵草数（未被烧毁）。 */
@@ -125,6 +146,10 @@ export function herbsAliveOf(state: SokobanState): number {
 
 function canEnter(t: Terrain): boolean {
   return t === 'empty' || t === 'body';
+}
+
+function canBlockRest(kind: Exclude<BlockKind, 'none'>, terrain: Terrain): boolean {
+  return canEnter(terrain) || (kind === 'conductor' && terrain === 'rift');
 }
 
 export function applyMove(state: SokobanState, action: SokobanAction): SokobanActionOutcome {
@@ -146,7 +171,7 @@ export function applyMove(state: SokobanState, action: SokobanAction): SokobanAc
     const by = ty + dv.y;
     if (!inBounds(board, bx, by)) return { ok: false, reason: 'push-off-board' };
     const bi = idx(board, bx, by);
-    if (!canEnter(board.terrain[bi] ?? 'empty')) return { ok: false, reason: 'push-into-obstacle' };
+    if (!canBlockRest(targetBlock, board.terrain[bi] ?? 'empty')) return { ok: false, reason: 'push-into-obstacle' };
     if ((board.blocks[bi] ?? 'none') !== 'none') return { ok: false, reason: 'push-into-block' };
     board.blocks[bi] = targetBlock;
     board.blocks[ti] = 'none';

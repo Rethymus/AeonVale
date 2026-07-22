@@ -6,7 +6,7 @@
  * 红线：app 层可用 DOM/Math.random（随机归效果，不进 sim）；HUD 每帧走 textContent，help 仅状态切换刷新。
  * factory 名 `createRogueliteProtoSurface` 保留（surface id 'roguelite-proto' 为 dev-only 不可见字符串）。
  */
-import { applyPreparationToPuzzle, createPuzzle, createTribulationSession, herbsAliveOf, traceBeam, transitionTribulationSession } from '@sim/sokoban';
+import { applyPreparationToPuzzle, createPuzzle, createTribulationSession, herbsAliveOf, solveBoard, traceBeam, transitionTribulationSession } from '@sim/sokoban';
 import type { Dir, PreparedPuzzlePlacement, SokobanState, TribulationSessionOutcome, TribulationSessionState } from '@sim/sokoban';
 import {
   CULTIVATION_ACTIVITY_LABELS,
@@ -95,11 +95,12 @@ type RogueliteProtoPhase =
   | 'lifespan-ended';
 
 const TERRAIN_FILL: Record<string, string> = {
-  empty: P.floor,
+  empty: P.btnBg,
   wall: P.wallStone,
-  source: P.beamSource,
-  body: P.goalBody,
-  herb: P.herbGreen
+  source: P.btnBg,
+  body: P.btnBg,
+  herb: P.btnBg,
+  rift: P.boardBg
 };
 
 interface Particle {
@@ -126,6 +127,7 @@ interface CultivationBrowserTestSnapshot {
   readonly generation: number;
   readonly stage: number;
   readonly settlementKind: CultivationTribulationSettlement['kind'] | null;
+  readonly solutionMoves: readonly Dir[];
 }
 
 interface CultivationJourneySnapshot {
@@ -161,6 +163,7 @@ interface CultivationBrowserTestApi {
   readonly configureCultivationPlanningKeypoint?: (mode?: 'default' | 'pressure') => CultivationBrowserTestSnapshot;
   readonly configureCultivationLifespanKeypoint?: () => CultivationBrowserTestSnapshot;
   readonly configureCultivationAscensionKeypoint?: () => CultivationBrowserTestSnapshot;
+  readonly configureCultivationArrayKeypoint?: () => CultivationBrowserTestSnapshot;
   readonly cultivationSnapshot?: () => CultivationBrowserTestSnapshot;
 }
 
@@ -190,6 +193,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   let settlementApplied = false;
   let lastSettlement: CultivationTribulationSettlement | null = null;
   let tribulationFeedback: string | null = null;
+  let browserKeypointSolutionMoves: readonly Dir[] = [];
   let agendaFeedback = '先选中一格，再把活动写入竹简。活动会按从左到右的顺序结算。';
   let agendaFeedbackTone: 'neutral' | 'success' | 'error' = 'neutral';
   let meta: SokobanMeta = loadMeta();
@@ -273,17 +277,17 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-plan-actions{display:flex;justify-content:flex-end;align-items:stretch;gap:6px;flex-direction:column;margin-top:auto;border-block-start:1px solid ${P.boardBorder};padding-block-start:8px;}`,
     `.rp-plan-help{margin:0;color:${P.helpText};font-size:12px;}`,
     '.rp-plan-buttons{display:grid;grid-template-columns:1fr;gap:8px;}',
-    `.rp-tribulation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(360px,1.35fr) minmax(280px,.75fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:10px;padding:clamp(8px,1.4vw,16px);overflow:hidden;background:${P.boardBg};border:1px solid ${P.boardBorder};color:${P.text};}`,
-    `.rp-hud{grid-area:hud;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;padding:2px;background:${P.boardBorder};font-size:14px;font-variant-numeric:tabular-nums;}`,
-    `.rp-hud-item{min-width:0;padding:8px 10px;background:${P.btnBg};color:${P.text};line-height:1.45;}`,
-    `.rp-hud-stage{color:${P.accent};font-family:"Noto Serif CJK SC","Songti SC",serif;font-weight:700;}`,
-    `.rp-hud-preparation{grid-column:1/-1;border-inline-start:3px solid ${P.boltViolet};font-size:15px;}`,
+    `.rp-tribulation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(390px,1.45fr) minmax(300px,.78fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:12px;padding:clamp(8px,1.4vw,16px);overflow:hidden;background:radial-gradient(circle at 28% 48%,${P.primaryBg} 0,${P.boardBg} 46%,${P.boardBg} 130%);border:1px solid ${P.primaryBorder};color:${P.text};}`,
+    `.rp-hud{grid-area:hud;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:3px;background:${P.boardBorder};font-size:13px;font-variant-numeric:tabular-nums;box-shadow:0 10px 28px rgba(0,0,0,.22);}`,
+    `.rp-hud-item{min-width:0;padding:8px 10px;background:linear-gradient(145deg,${P.btnBg},${P.boardBg});color:${P.text};line-height:1.45;}`,
+    `.rp-hud-stage{grid-column:1/-1;color:${P.accent};font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:18px;font-weight:700;letter-spacing:.08em;border-block-end:1px solid ${P.primaryBorder};}`,
+    `.rp-hud-preparation{grid-column:1/-1;border-inline-start:3px solid ${P.boltBlue};font-size:13px;}`,
     `.rp-hud-meta{grid-column:1/-1;color:${P.helpText};font-size:13px;}`,
     '.rp-hud-outcome:empty{display:none;}',
-    `.rp-canvas{grid-area:canvas;display:block;width:min(100%,620px);height:auto;max-width:100%;max-height:100%;align-self:center;justify-self:center;background:${P.boardBg};border:1px solid ${P.boardBorder};border-radius:8px;image-rendering:pixelated;touch-action:none;}`,
+    `.rp-canvas{grid-area:canvas;display:block;width:min(100%,650px);height:auto;max-width:100%;max-height:100%;align-self:center;justify-self:center;background:${P.boardBg};border:1px solid ${P.accent};border-radius:12px;box-shadow:0 0 0 4px rgba(0,0,0,.32),0 18px 50px rgba(0,0,0,.38),inset 0 0 40px ${P.primaryBg};touch-action:none;}`,
     `.rp-help{grid-area:help;min-width:0;display:grid;gap:8px;font-size:13px;color:${P.helpText};max-width:480px;text-align:left;line-height:1.5;}`,
-    `.rp-help__diagram{display:grid;grid-template-columns:auto auto auto auto auto auto auto;gap:5px;align-items:center;padding:8px;border:1px solid ${P.boardBorder};background:${P.btnBg};font-style:normal;}`,
-    `.rp-help__diagram i,.rp-help__diagram b,.rp-help__diagram strong{display:grid;place-items:center;min-height:28px;padding:3px 6px;border:1px solid ${P.btnBorder};font-style:normal;font-size:10px;text-align:center;}`,
+    `.rp-help__diagram{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;align-items:stretch;padding:8px;border:1px solid ${P.primaryBorder};background:linear-gradient(145deg,${P.btnBg},${P.boardBg});font-style:normal;}`,
+    `.rp-help__diagram i,.rp-help__diagram b,.rp-help__diagram em,.rp-help__diagram strong{display:grid;place-items:center;min-height:28px;padding:3px 6px;border:1px solid ${P.btnBorder};font-style:normal;font-size:10px;text-align:center;}`,
     `.rp-help__diagram i{color:${P.goalBody}}.rp-help__diagram b{color:${P.accent}}.rp-help__diagram strong{color:${P.boltBlue}}.rp-help__diagram em{color:${P.boltViolet};font-style:normal;}`,
     '.rp-help__copy{display:block;}',
     `.rp-help kbd{background:${P.btnBg};border:1px solid ${P.btnBorder};border-radius:3px;padding:0 5px;color:${P.accent};}`,
@@ -1216,11 +1220,22 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     destroyPhaseSurfaces();
     const interpretation = interpretCultivationTribulationTags([...machineState.tribulationTags, ...machineState.insightEffectTags]);
     preparation = deriveTribulationPreparation(machineState.runState, interpretation.preparationModifiers);
-    const basePuzzle = createPuzzle(machineState.runState.stage, seedSalt);
+    const basePuzzle = createPuzzle(machineState.runState.stage, seedSalt, undefined, {
+      requiredBlockKinds: preparation.unlockedBlockKinds
+    });
     const prepared = applyPreparationToPuzzle(basePuzzle, preparation, interpretation.boardModifierTags);
+    const moveBudgetBonus = preparation.moveBudgetBonus;
     const puzzle = {
       ...prepared.state,
-      moveBudget: prepared.state.moveBudget + preparation.moveBudgetBonus
+      moveBudget: prepared.state.moveBudget + moveBudgetBonus,
+      ...(prepared.state.challenge
+        ? {
+            challenge: {
+              ...prepared.state.challenge,
+              budgetSlack: prepared.state.challenge.budgetSlack + moveBudgetBonus
+            }
+          }
+        : {})
     };
     preparedPuzzle = { ...prepared, state: puzzle };
     tribulationSession = createTribulationSession(puzzle, preparation);
@@ -1372,7 +1387,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       legacyReady: pendingEpitaph !== null && pendingLegacyCandidates !== null,
       generation,
       stage: machineState.runState.stage,
-      settlementKind: lastSettlement?.kind ?? null
+      settlementKind: lastSettlement?.kind ?? null,
+      solutionMoves: browserKeypointSolutionMoves
     };
   }
 
@@ -1569,6 +1585,71 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     return cultivationBrowserTestSnapshot();
   }
 
+  function configureCultivationArrayKeypoint(): CultivationBrowserTestSnapshot {
+    stage = 4;
+    seedSalt = 9;
+    const runState = createCultivationRunState({
+      seed: 27_005,
+      overrides: {
+        stage,
+        lifespanRemainingDays: 360,
+        bodyFoundation: 10_000,
+        endurance: 10_000,
+        mortalHeart: 80,
+        herbs: 0,
+        food: 1,
+        pills: 0
+      }
+    });
+    machineState = {
+      ...createCultivationRunMachineState(runState),
+      phase: 'tribulation',
+      tribulationAgendaTarget: 0,
+      settledAgendaCount: 8
+    };
+    const basePreparation = deriveTribulationPreparation(runState, {
+      unlockedBlockKinds: ['conductor', 'insulator']
+    });
+    preparation = {
+      ...basePreparation,
+      minTemperingPower: 0,
+      maxSurvivablePower: 10_000,
+      sweetSpotMinPower: 0,
+      sweetSpotMaxPower: 10_000
+    };
+    const puzzle = createPuzzle(stage, seedSalt, undefined, {
+      requiredBlockKinds: preparation.unlockedBlockKinds
+    });
+    browserKeypointSolutionMoves = solveBoard(puzzle.board, puzzle.player, {
+      maxMoves: puzzle.moveBudget
+    })?.moves ?? [];
+    preparedPuzzle = {
+      state: puzzle,
+      preparedHerbIndices: [],
+      inventoryHerbIndices: [],
+      eventHerbIndices: [],
+      placedBlockKinds: ['conductor', 'insulator'],
+      appliedBoardModifierTags: [],
+      ignoredBoardModifierTags: []
+    };
+    tribulationSession = createTribulationSession(puzzle, preparation);
+    state = tribulationSession.puzzle;
+    tribulationOutcome = null;
+    settlementApplied = false;
+    lastSettlement = null;
+    pendingEpitaph = null;
+    pendingLegacyCandidates = null;
+    deadRun = false;
+    lastScroll = null;
+    destroyPhaseSurfaces();
+    phase = 'tribulation';
+    planning.hidden = true;
+    phaseHost.hidden = true;
+    tribulation.hidden = false;
+    showTribulationBoard();
+    return cultivationBrowserTestSnapshot();
+  }
+
   const browserTestTarget = window as typeof window & {
     __AEON_TEST__?: CultivationBrowserTestApi;
   };
@@ -1581,6 +1662,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       configureCultivationPlanningKeypoint,
       configureCultivationLifespanKeypoint,
       configureCultivationAscensionKeypoint,
+      configureCultivationArrayKeypoint,
       cultivationSnapshot: cultivationBrowserTestSnapshot
     };
   }
@@ -1601,6 +1683,9 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     if (next.configureCultivationAscensionKeypoint === configureCultivationAscensionKeypoint) {
       delete next.configureCultivationAscensionKeypoint;
     }
+    if (next.configureCultivationArrayKeypoint === configureCultivationArrayKeypoint) {
+      delete next.configureCultivationArrayKeypoint;
+    }
     if (next.cultivationSnapshot === cultivationBrowserTestSnapshot) {
       delete next.cultivationSnapshot;
     }
@@ -1619,13 +1704,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   }
 
   // —— P3 stand-in 精灵：异步加载，加载到即 redraw 替换色块（失败/未到则回退色块，不阻断）——
-  const sprites: { floor: HTMLImageElement | null; wall: HTMLImageElement | null; herb: HTMLImageElement | null; mirror: HTMLImageElement | null } = {
-    floor: null,
-    wall: null,
-    herb: null,
-    mirror: null
-  };
-  function loadSprite(key: 'floor' | 'wall' | 'herb' | 'mirror', id: string): void {
+  const sprites: { herb: HTMLImageElement | null } = { herb: null };
+  function loadSprite(key: 'herb', id: string): void {
     const url = assetUrlForId?.(id);
     if (!url) return;
     const img = new Image();
@@ -1638,14 +1718,6 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     };
     img.src = url;
   }
-  function drawTileSprite(img: HTMLImageElement | null, px: number, py: number, fallback: string): void {
-    if (img && ctx) ctx.drawImage(img, px, py, TILE, TILE);
-    else if (ctx) {
-      ctx.fillStyle = fallback;
-      ctx.fillRect(px, py, TILE, TILE);
-    }
-  }
-
   // —— juice：粒子 + 震屏（reduced-motion 降级）——
   function spawnBurst(cx: number, cy: number, colors: readonly string[], count: number): void {
     if (reduceFx) return;
@@ -1696,37 +1768,69 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   function draw(): void {
     if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height); // 先清全幅（不偏移），再 save+平移画内容，震屏时露出底色
+    ctx.fillStyle = P.boardBg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.save();
     if (shakeTtl > 0 && shakeMag > 0) {
       ctx.translate((Math.random() - 0.5) * shakeMag, (Math.random() - 0.5) * shakeMag);
     }
     const b = state.board;
 
-    // 地形
+    // 黑玉命盘：地块本身就是雷篆，去掉与灵田混淆的泥土纹理。
     for (let y = 0; y < b.height; y++) {
       for (let x = 0; x < b.width; x++) {
         const i = y * b.width + x;
         const terrain = b.terrain[i] ?? 'empty';
         const px = x * TILE;
         const py = y * TILE;
-        drawTileSprite(terrain === 'wall' ? sprites.wall : sprites.floor, px, py, TERRAIN_FILL[terrain] ?? P.floor);
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillStyle = TERRAIN_FILL[terrain] ?? P.btnBg;
+        ctx.fillRect(px + 3, py + 3, TILE - 6, TILE - 6);
+        ctx.strokeStyle = terrain === 'rift' ? P.boltViolet : terrain === 'source' || terrain === 'body' ? P.accent : P.boardBorder;
         ctx.lineWidth = 1;
-        ctx.strokeRect(px + 0.5, py + 0.5, TILE - 1, TILE - 1);
+        ctx.strokeRect(px + 3.5, py + 3.5, TILE - 7, TILE - 7);
+        if (terrain === 'empty') {
+          ctx.save();
+          ctx.globalAlpha = 0.24;
+          ctx.strokeStyle = P.accent;
+          ctx.beginPath();
+          ctx.moveTo(px + 10, py + 15);
+          ctx.lineTo(px + 10, py + 10);
+          ctx.lineTo(px + 15, py + 10);
+          ctx.moveTo(px + TILE - 15, py + TILE - 10);
+          ctx.lineTo(px + TILE - 10, py + TILE - 10);
+          ctx.lineTo(px + TILE - 10, py + TILE - 15);
+          ctx.stroke();
+          ctx.restore();
+        }
         if (terrain === 'source') {
           const { cx, cy } = center(x, y);
+          ctx.strokeStyle = P.boltBlue;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, TILE * 0.3, TILE * 0.18, 0, 0, Math.PI * 2);
+          ctx.stroke();
           ctx.fillStyle = P.beamGlow;
           ctx.beginPath();
-          ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+          ctx.arc(cx, cy, 5, 0, Math.PI * 2);
           ctx.fill();
+          const sourceVector = state.board.sourceDir === 'right' ? { x: 1, y: 0 } : state.board.sourceDir === 'left' ? { x: -1, y: 0 } : state.board.sourceDir === 'down' ? { x: 0, y: 1 } : { x: 0, y: -1 };
+          ctx.strokeStyle = P.accent;
+          ctx.beginPath();
+          ctx.moveTo(cx + sourceVector.x * 11, cy + sourceVector.y * 11);
+          ctx.lineTo(cx + sourceVector.x * 20, cy + sourceVector.y * 20);
+          ctx.stroke();
         } else if (terrain === 'body') {
           const { cx, cy } = center(x, y);
           ctx.strokeStyle = P.goalBody;
-          ctx.lineWidth = 3;
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.arc(cx, cy, TILE * 0.28, 0, Math.PI * 2);
+          ctx.arc(cx, cy, TILE * 0.3, 0, Math.PI * 2);
+          ctx.arc(cx, cy, TILE * 0.18, 0, Math.PI * 2);
           ctx.stroke();
+          ctx.fillStyle = P.goalBody;
+          ctx.beginPath();
+          ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+          ctx.fill();
         } else if (terrain === 'herb') {
           const { cx, cy } = center(x, y);
           if (sprites.herb && ctx) {
@@ -1738,6 +1842,24 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
             ctx.arc(cx, cy, 5, 0, Math.PI * 2);
             ctx.fill();
           }
+        } else if (terrain === 'rift') {
+          const { cx, cy } = center(x, y);
+          ctx.save();
+          ctx.shadowColor = P.boltBlue;
+          ctx.shadowBlur = 10;
+          ctx.strokeStyle = P.boltViolet;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(cx - 13, cy - 19);
+          ctx.lineTo(cx - 4, cy - 7);
+          ctx.lineTo(cx - 10, cy + 1);
+          ctx.lineTo(cx + 3, cy + 10);
+          ctx.lineTo(cx - 1, cy + 19);
+          ctx.moveTo(cx + 5, cy - 15);
+          ctx.lineTo(cx + 2, cy - 4);
+          ctx.lineTo(cx + 13, cy + 3);
+          ctx.stroke();
+          ctx.restore();
         }
         if (state.scorched[i]) {
           ctx.fillStyle = 'rgba(0,0,0,0.45)';
@@ -1772,6 +1894,29 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       ctx.strokeStyle = P.bodyAlive;
       ctx.lineWidth = 2;
       ctx.stroke();
+      let previous = b.sourcePos;
+      for (let index = 0; index < state.beam.cells.length; index += 1) {
+        const cell = state.beam.cells[index]!;
+        if (index % 2 === 1) {
+          previous = cell;
+          continue;
+        }
+        const dx = Math.sign(cell.x - previous.x);
+        const dy = Math.sign(cell.y - previous.y);
+        const point = center(cell.x, cell.y);
+        ctx.save();
+        ctx.translate(point.cx, point.cy);
+        ctx.rotate(Math.atan2(dy, dx));
+        ctx.fillStyle = P.bodyAlive;
+        ctx.beginPath();
+        ctx.moveTo(8, 0);
+        ctx.lineTo(-5, -4);
+        ctx.lineTo(-5, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+        previous = cell;
+      }
     }
 
     // 可推阵石
@@ -1781,47 +1926,100 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
         if (block === 'none') continue;
         const { cx, cy } = center(x, y);
         const half = TILE * 0.28;
+        const pushAdjacent = Math.abs(state.player.x - x) + Math.abs(state.player.y - y) === 1;
+        ctx.save();
+        if (pushAdjacent) {
+          ctx.shadowColor = P.accent;
+          ctx.shadowBlur = 13;
+        }
         if (block === 'mirror') {
-          if (sprites.mirror && ctx) {
-            const s = half * 2;
-            ctx.drawImage(sprites.mirror, cx - half, cy - half, s, s);
-          } else {
-            ctx.fillStyle = P.mirrorGold;
-            ctx.fillRect(cx - half, cy - half, half * 2, half * 2);
-            ctx.strokeStyle = P.bodyStroke;
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(cx - half, cy - half);
-            ctx.lineTo(cx + half, cy + half);
-            ctx.stroke();
-          }
-        } else if (block === 'conductor') {
-          ctx.fillStyle = P.conductorBlue;
-          ctx.fillRect(cx - half, cy - half, half * 2, half * 2);
-        } else if (block === 'insulator') {
-          ctx.fillStyle = P.insulatorPurple;
-          ctx.fillRect(cx - half, cy - half, half * 2, half * 2);
+          ctx.translate(cx, cy);
+          ctx.rotate(Math.PI / 4);
+          ctx.fillStyle = P.mirrorGold;
+          ctx.fillRect(-half, -half, half * 2, half * 2);
           ctx.strokeStyle = P.bodyStroke;
           ctx.lineWidth = 2;
+          ctx.strokeRect(-half, -half, half * 2, half * 2);
+          ctx.rotate(-Math.PI / 4);
+          ctx.strokeStyle = P.bodyStroke;
+          ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.moveTo(cx - half, cy - half);
-          ctx.lineTo(cx + half, cy + half);
-          ctx.moveTo(cx + half, cy - half);
-          ctx.lineTo(cx - half, cy + half);
+          ctx.moveTo(-9, 8);
+          ctx.lineTo(-9, -7);
+          ctx.lineTo(7, -7);
+          ctx.moveTo(3, -12);
+          ctx.lineTo(10, -7);
+          ctx.lineTo(3, -2);
+          ctx.stroke();
+        } else if (block === 'conductor') {
+          ctx.translate(cx, cy);
+          ctx.fillStyle = P.conductorBlue;
+          ctx.beginPath();
+          ctx.moveTo(-half + 5, -half);
+          ctx.lineTo(half - 5, -half);
+          ctx.lineTo(half, -half + 5);
+          ctx.lineTo(half, half - 5);
+          ctx.lineTo(half - 5, half);
+          ctx.lineTo(-half + 5, half);
+          ctx.lineTo(-half, half - 5);
+          ctx.lineTo(-half, -half + 5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = P.bodyAlive;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(-8, 0, 5, 0, Math.PI * 2);
+          ctx.arc(8, 0, 5, 0, Math.PI * 2);
+          ctx.moveTo(-3, 0);
+          ctx.lineTo(3, 0);
+          ctx.stroke();
+        } else if (block === 'insulator') {
+          ctx.translate(cx, cy);
+          ctx.fillStyle = P.insulatorPurple;
+          ctx.beginPath();
+          ctx.arc(0, 0, half, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = P.bodyAlive;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(-9, -11);
+          ctx.lineTo(-9, 11);
+          ctx.moveTo(0, -11);
+          ctx.lineTo(0, 11);
+          ctx.moveTo(9, -11);
+          ctx.lineTo(9, 11);
           ctx.stroke();
         }
+        ctx.restore();
       }
     }
 
-    // 玩家
+    // 玩家：小型道袍剪影，避免与“身体/命门”青环混淆。
     const { cx: pcx, cy: pcy } = center(state.player.x, state.player.y);
+    ctx.save();
+    ctx.shadowColor = state.status === 'lost' ? P.bodyDead : P.accent;
+    ctx.shadowBlur = 8;
     ctx.fillStyle = state.status === 'lost' ? P.bodyDead : P.bodyAlive;
     ctx.beginPath();
-    ctx.arc(pcx, pcy, TILE * 0.24, 0, Math.PI * 2);
+    ctx.arc(pcx, pcy - 10, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(pcx, pcy - 3);
+    ctx.lineTo(pcx - 13, pcy + 17);
+    ctx.lineTo(pcx + 13, pcy + 17);
+    ctx.closePath();
     ctx.fill();
     ctx.strokeStyle = P.bodyStroke;
     ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.strokeStyle = P.accent;
+    ctx.beginPath();
+    ctx.moveTo(pcx - 8, pcy + 4);
+    ctx.lineTo(pcx + 8, pcy + 4);
+    ctx.stroke();
+    ctx.restore();
 
     // 粒子（juice）
     for (const p of particles) {
@@ -1833,6 +2031,26 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     }
     ctx.globalAlpha = 1;
     ctx.restore();
+  }
+
+  function blockKindLabel(kind: 'mirror' | 'conductor' | 'insulator'): string {
+    if (kind === 'mirror') return '金石·折雷';
+    if (kind === 'conductor') return '水石·续脉';
+    return '紫石·封雷';
+  }
+
+  function challengePresentation(): { readonly title: string; readonly objective: string } {
+    switch (state.challenge?.archetype) {
+      case 'sealed-meridian':
+        return { title: '封脉移闸式', objective: '先把紫色绝缘石推出雷路，再校正金石折向命门。' };
+      case 'broken-meridian':
+        return { title: '断脉续桥式', objective: '把蓝色水阵石推入发光裂隙，接续雷脉后折雷入体。' };
+      case 'compound-array':
+        return { title: '封断合阵式', objective: '移开封雷闸、补上断脉桥，再让金石完成最后折向。' };
+      case 'turning-rune':
+      default:
+        return { title: '金篆折雷式', objective: '从阵石侧后方推动金石，让雷光顺时针折入青色命门。' };
+    }
   }
 
   function helpText(): string {
@@ -1860,8 +2078,10 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       }
     }
     switch (state.status) {
-      case 'playing':
-        return '<span class="rp-help__diagram" aria-hidden="true"><i>你</i><b>推阵石</b><em>→</em><b>雷路过草</b><em>→</em><strong>身体承雷</strong></span><span class="rp-help__copy">先移动到阵石旁再推动：<b>金石</b>折射、<b>紫石</b>阻断、<b>蓝石</b>直通。让雷路经过灵草后落入青环身体，并把雷威控制在 HUD 的甜蜜区间。<kbd>方向键/WASD</kbd> 移动，<kbd>R</kbd> 撤步。</span>';
+      case 'playing': {
+        const challenge = challengePresentation();
+        return `<span class="rp-help__diagram" aria-hidden="true"><i>天眼<br>雷源</i><b>金石<br>折雷</b><em>水石<br>续脉</em><strong>命门<br>淬体</strong></span><span class="rp-help__copy"><b>${challenge.title}</b>：${challenge.objective}<br>操作要点：移动到侧后方推阵石。亮边表示可立即推动，雷线箭头表示当前流向；灵草是可选保全目标。<kbd>方向键/WASD</kbd> 移动，<kbd>R</kbd> 撤步。</span>`;
+      }
       case 'won':
         return `<b>雷光入体，淬体突破！</b>${lastScroll ? `<br>📜 <b>${lastScroll.title}</b><br>${lastScroll.body}` : ''}`;
       case 'lost':
@@ -1874,12 +2094,15 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   let lastStatus: SokobanState['status'] | null = null;
   let lastOutcomeResult: TribulationSessionOutcome['result'] | null = null;
   function syncHud(): void {
-    stageEl.textContent = cultivationStageLabel(stage);
-    movesEl.textContent = `步数 ${state.movesUsed}/${state.moveBudget}`;
+    const challenge = challengePresentation();
+    stageEl.textContent = `劫式 · ${challenge.title}　${cultivationStageLabel(stage)}`;
+    movesEl.textContent = `余步 ${Math.max(0, state.moveBudget - state.movesUsed)} / ${state.moveBudget}`;
     herbsEl.textContent = `灵草 ${herbsAliveOf(state)}/${state.herbsTotal}`;
     const session = tribulationSession;
     const intel = preparation.previewLevel <= 0 ? '劫兆未明' : preparation.previewLevel === 1 ? `存活上限 ≤${preparation.maxSurvivablePower}` : preparation.previewLevel === 2 ? `安全雷威 ${preparation.minTemperingPower}–${preparation.maxSurvivablePower}` : `甜蜜雷威 ${preparation.sweetSpotMinPower}–${preparation.sweetSpotMaxPower}`;
-    preparationEl.textContent = `${intel} · 预见 ${preparation.previewLevel} · 护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`;
+    const required = state.challenge?.requiredBlockKinds.map(blockKindLabel).join(' · ') ?? '金石·折雷';
+    const certificate = state.challenge ? `认证 ${state.challenge.certifiedMoves} 步 · 余量 ${state.challenge.budgetSlack}` : '已验可解';
+    preparationEl.textContent = `${required} ｜ ${certificate} ｜ ${intel} · 预见 ${preparation.previewLevel} ｜ 护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`;
     metaEl.textContent = `残卷 ${meta.unlockedScrolls.length}/${SCROLL_TOTAL} · 灰烬 ${meta.deathCount} · 突破 ${meta.breakthroughs}`;
     const outcomeLabel = lastSettlement?.kind === 'ascended' ? { label: '归一飞升', cls: 'ok' } : tribulationOutcome?.deathPrevented ? { label: '护脉保命', cls: 'ok' } : tribulationOutcome?.result === 'perfect' ? { label: '完美淬体', cls: 'ok' } : tribulationOutcome?.result === 'survived' ? { label: '带伤突破', cls: 'ok' } : tribulationOutcome?.result === 'insufficient' ? { label: '劫力不足', cls: 'bad' } : tribulationOutcome?.result === 'overload' ? { label: '雷威过载', cls: 'bad' } : tribulationOutcome?.result === 'timeout' ? { label: '步数耗尽', cls: 'bad' } : null;
     if (!outcomeLabel && state.status === 'playing') {
@@ -2306,10 +2529,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     canvas.addEventListener('keydown', onKeyDown);
     planning.addEventListener('keydown', onPlanningKeyDown);
     installCultivationBrowserTestHooks();
-    loadSprite('floor', 'tile.loam');
-    loadSprite('wall', 'tile.rock');
     loadSprite('herb', 'inventory-icon.herb.balmleaf-v1');
-    loadSprite('mirror', 'icon.item.array-core');
     if (opts.startMode === 'continue') {
       const saved = loadCultivationJourney<unknown>();
       if (isJourneySnapshot(saved)) {
