@@ -1,4 +1,4 @@
-const CULTIVATION_JOURNEY_STORAGE_KEY = 'aeonvale-cultivation-journey-v1';
+const CULTIVATION_JOURNEY_STORAGE_SLOT = 'aeonvale-cultivation-journey-v1';
 const CULTIVATION_JOURNEY_VERSION = 1;
 
 interface CultivationJourneyEnvelope {
@@ -31,7 +31,7 @@ export function saveCultivationJourney(payload: unknown): boolean {
   const storage = storageOrNull();
   if (!storage) return false;
   try {
-    storage.setItem(CULTIVATION_JOURNEY_STORAGE_KEY, JSON.stringify({
+    storage.setItem(CULTIVATION_JOURNEY_STORAGE_SLOT, JSON.stringify({
       version: CULTIVATION_JOURNEY_VERSION,
       payload
     } satisfies CultivationJourneyEnvelope));
@@ -44,19 +44,19 @@ export function saveCultivationJourney(payload: unknown): boolean {
 export function loadCultivationJourney<T>(): T | null {
   const storage = storageOrNull();
   if (!storage) return null;
-  return (decodeEnvelope(storage.getItem(CULTIVATION_JOURNEY_STORAGE_KEY))?.payload as T | undefined) ?? null;
+  return (decodeEnvelope(storage.getItem(CULTIVATION_JOURNEY_STORAGE_SLOT))?.payload as T | undefined) ?? null;
 }
 
 export function hasCultivationJourney(): boolean {
   const storage = storageOrNull();
-  return storage ? decodeEnvelope(storage.getItem(CULTIVATION_JOURNEY_STORAGE_KEY)) !== null : false;
+  return storage ? decodeEnvelope(storage.getItem(CULTIVATION_JOURNEY_STORAGE_SLOT)) !== null : false;
 }
 
 export function clearCultivationJourney(): void {
   const storage = storageOrNull();
   if (!storage) return;
   try {
-    storage.removeItem(CULTIVATION_JOURNEY_STORAGE_KEY);
+    storage.removeItem(CULTIVATION_JOURNEY_STORAGE_SLOT);
   } catch {
     // Storage can be blocked at runtime; a new in-memory journey still remains playable.
   }
