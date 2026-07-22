@@ -39,14 +39,14 @@ describe('页面语义镜像', () => {
       surface: '当前页面：标题。',
       status: '当前状态：标题菜单。',
       objective: '当前目标：开始一段本地旅程。',
-      actions: '当前可用动作：新游戏；设置。',
+      actions: '当前可用动作：开始游戏；设置。',
       panel: '当前没有打开面板。',
       announcement: ''
     });
     expectNoWorldJourney(withoutSave);
 
     const withSave = deriveSemanticGameState({ ...input('title', 'title'), presentation: presentation('title', 'title', true) });
-    expect(withSave.actions).toBe('当前可用动作：新游戏；继续旅程；设置。');
+    expect(withSave.actions).toBe('当前可用动作：开始游戏；继续旅程；设置。');
   });
 
   it('World 只在 world mode 发布旅程目标与世界动作', () => {

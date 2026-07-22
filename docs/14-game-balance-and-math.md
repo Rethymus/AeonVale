@@ -512,6 +512,103 @@ finalPills = round(baseYield × yieldMultiplier × balanceScore)
 | P036 | `alchemy.extraction.width` | 由 idealHeat 区间定 | 炉温 | ±30% | **高** | §9 提取拱形 |
 | P037 | `alchemy.yieldMultiplier.min` | 0 | × | [0, 0.3] | 低 | §9 产出下限 |
 
+### 11.1 D27 日程与天劫耦合原型参数（P038–P113）
+
+以下参数对应 `DEFAULT_BALANCE.cultivationRun`，是 D27-b 六格日程与 D27-d 首版雷威契约的原型起点 θ₀。`*EfficiencyMilli` 以千分数存储（`1000 = 100%`）；体魄、耐力、意志与丹毒沿用 sim 的毫点量纲。事件与参悟节点当前采用离散内容定义，不在本表虚设数值参数。
+
+#### 日程结构、上限与压力曲线
+
+| ID | 参数名 | 默认 | 量纲 | 范围 | 敏感度 | 意图 / 所属公式 |
+|----|--------|------|------|------|--------|----------------|
+| P038 | `cultivationRun.slotsPerAgenda` | 6 | 格/轮 | [6, 6] | 结构 | D27-b 固定六格日程 |
+| P039 | `cultivationRun.pressureCap` | 100 | 心压点 | [100, 100] | 结构 | 心压硬上限与危机触发线 |
+| P040 | `cultivationRun.mortalHeartCap` | 100 | 凡心点 | [100, 100] | 结构 | 凡心硬上限 |
+| P041 | `cultivationRun.injuryCap` | 100 | 伤势点 | [100, 100] | 结构 | 伤势硬上限 |
+| P042 | `cultivationRun.startPressure` | 20 | 心压点 | [0, 40] | 中 | 每世初始心压 |
+| P043 | `cultivationRun.startMortalHeart` | 50 | 凡心点 | [25, 75] | 中 | 每世初始凡心缓冲 |
+| P044 | `cultivationRun.startFood` | 4 | 份 | [2, 8] | 高 | 首轮苦练/歇息的资源余量 |
+| P045 | `cultivationRun.repeatSecondEfficiencyMilli` | 850 | ‰ | [700, 950] | **高** | 连续第 2 格同活动的正收益效率 |
+| P046 | `cultivationRun.repeatLaterEfficiencyMilli` | 700 | ‰ | [500, 850] | **高** | 连续第 3 格起同活动的正收益效率 |
+| P047 | `cultivationRun.repeatPressureStep` | 2 | 心压点/重复格 | [0, 5] | 高 | 连续同活动追加心压 |
+| P048 | `cultivationRun.repeatInjuryStep` | 2 | 伤势点/重复苦练格 | [0, 5] | 中 | 连续苦练追加伤势 |
+| P049 | `cultivationRun.pressurePenaltyThreshold` | 80 | 心压点 | [60, 90] | **高** | 高心压收益惩罚起点 |
+| P050 | `cultivationRun.pressurePenaltyEfficiencyMilli` | 750 | ‰ | [500, 900] | **高** | 高心压时正收益效率 |
+| P051 | `cultivationRun.mortalHeartPressureDivisor` | 25 | 凡心点/减压点 | [15, 50] | 高 | `floor(凡心 / divisor)` 抵消正向心压 |
+
+#### 六类活动的时间、成本与主要收益
+
+| ID | 参数名 | 默认 | 量纲 | 范围 | 敏感度 | 意图 / 所属活动 |
+|----|--------|------|------|------|--------|----------------|
+| P052 | `cultivationRun.activities.training.timeCostDays` | 12 | 日 | [7, 18] | **高** | 苦练寿元成本 |
+| P053 | `cultivationRun.activities.training.foodCost` | 1 | 份 | [0, 2] | 高 | 苦练口粮成本 |
+| P054 | `cultivationRun.activities.training.bodyFoundationGain` | 1600 | 体魄毫点 | [800, 2800] | **高** | 苦练体魄根基收益 |
+| P055 | `cultivationRun.activities.training.enduranceGain` | 700 | 耐力毫点 | [300, 1200] | 高 | 苦练耐力收益 |
+| P056 | `cultivationRun.activities.training.willpowerGain` | 400 | 意志毫点 | [150, 800] | 中 | 苦练意志收益 |
+| P057 | `cultivationRun.activities.training.pressureGain` | 14 | 心压点 | [8, 22] | **高** | 苦练基础心压 |
+| P058 | `cultivationRun.activities.training.injuryGain` | 6 | 伤势点 | [2, 12] | 高 | 苦练基础伤势 |
+| P059 | `cultivationRun.activities.farming.timeCostDays` | 10 | 日 | [6, 16] | 高 | 灵田寿元成本 |
+| P060 | `cultivationRun.activities.farming.herbGain` | 3 | 株 | [1, 5] | **高** | 灵田灵草产出 |
+| P061 | `cultivationRun.activities.farming.foodGain` | 2 | 份 | [1, 4] | 高 | 灵田口粮产出 |
+| P062 | `cultivationRun.activities.farming.pressureRelief` | 2 | 心压点 | [0, 8] | 中 | 灵田减压收益 |
+| P063 | `cultivationRun.activities.farming.mortalHeartGain` | 4 | 凡心点 | [1, 8] | 中 | 灵田凡心收益 |
+| P064 | `cultivationRun.activities.alchemy.timeCostDays` | 8 | 日 | [5, 14] | 高 | 炼丹寿元成本 |
+| P065 | `cultivationRun.activities.alchemy.herbCost` | 2 | 株 | [1, 4] | **高** | 每次炼丹灵草成本 |
+| P066 | `cultivationRun.activities.alchemy.pillGain` | 1 | 枚 | [1, 3] | 高 | 炼丹成丹收益 |
+| P067 | `cultivationRun.activities.alchemy.insightGain` | 1 | 悟痕 | [0, 3] | 中 | 炼丹附带悟痕 |
+| P068 | `cultivationRun.activities.alchemy.poisonGain` | 6000 | 丹毒毫点 | [2000, 12000] | **高** | 炼丹原型的丹毒代价 |
+| P069 | `cultivationRun.activities.alchemy.pressureGain` | 8 | 心压点 | [4, 16] | 高 | 炼丹基础心压 |
+| P070 | `cultivationRun.activities.livelihood.timeCostDays` | 14 | 日 | [8, 20] | **高** | 谋生寿元成本 |
+| P071 | `cultivationRun.activities.livelihood.spiritStoneGain` | 5 | 灵石 | [2, 8] | **高** | 谋生货币收益 |
+| P072 | `cultivationRun.activities.livelihood.pressureGain` | 12 | 心压点 | [6, 20] | 高 | 谋生基础心压 |
+| P073 | `cultivationRun.activities.livelihood.mortalHeartLoss` | 2 | 凡心点 | [0, 6] | 中 | 谋生凡心损耗 |
+| P074 | `cultivationRun.activities.insight.timeCostDays` | 10 | 日 | [6, 16] | 高 | 参悟寿元成本 |
+| P075 | `cultivationRun.activities.insight.spiritStoneCost` | 1 | 灵石 | [0, 3] | 高 | 参悟灵石成本 |
+| P076 | `cultivationRun.activities.insight.insightGain` | 4 | 悟痕 | [2, 8] | **高** | 参悟主要悟痕收益；当前仅为资源，不代表节点图已实现 |
+| P077 | `cultivationRun.activities.insight.willpowerGain` | 300 | 意志毫点 | [100, 700] | 中 | 参悟意志收益 |
+| P078 | `cultivationRun.activities.insight.pressureGain` | 10 | 心压点 | [5, 18] | 高 | 参悟基础心压 |
+| P079 | `cultivationRun.activities.rest.timeCostDays` | 7 | 日 | [4, 12] | 高 | 歇息寿元成本 |
+| P080 | `cultivationRun.activities.rest.foodCost` | 1 | 份 | [0, 2] | 中 | 歇息口粮成本 |
+| P081 | `cultivationRun.activities.rest.pressureRelief` | 20 | 心压点 | [10, 30] | **高** | 歇息主要减压收益 |
+| P082 | `cultivationRun.activities.rest.mortalHeartGain` | 8 | 凡心点 | [3, 15] | 高 | 歇息凡心恢复 |
+| P083 | `cultivationRun.activities.rest.injuryRelief` | 12 | 伤势点 | [6, 24] | 高 | 歇息伤势恢复 |
+| P084 | `cultivationRun.activities.rest.poisonRelief` | 2000 | 丹毒毫点 | [0, 6000] | 中 | 歇息丹毒恢复 |
+
+#### 当世准备、安全雷威与光路倍率
+
+| ID | 参数名 | 默认 | 量纲 | 范围 | 敏感度 | 意图 / 所属公式 |
+|----|--------|------|------|------|--------|----------------|
+| P085 | `cultivationRun.tribulation.baseMinTemperingPower` | 50 | 雷威 | [30, 80] | **高** | 初阶最低有效淬体雷威 |
+| P086 | `cultivationRun.tribulation.stageMinTemperingPower` | 10 | 雷威/阶 | [5, 20] | 高 | 阶段提升后的最低雷威斜率 |
+| P087 | `cultivationRun.tribulation.willpowerPerMinPower` | 1000 | 意志毫点/雷威 | [500, 2500] | 中 | 意志进展折算最低雷威 |
+| P088 | `cultivationRun.tribulation.baseMaxSurvivablePower` | 85 | 雷威 | [65, 110] | **高** | 未准备角色的基础承雷上限 |
+| P089 | `cultivationRun.tribulation.stageMaxSurvivablePower` | 5 | 雷威/阶 | [0, 15] | 中 | 阶段提供的基础承雷增量 |
+| P090 | `cultivationRun.tribulation.bodyFoundationPerMaxPower` | 200 | 体魄毫点/雷威 | [100, 500] | **高** | 苦练对承雷上限的主耦合 |
+| P091 | `cultivationRun.tribulation.endurancePerMaxPower` | 350 | 耐力毫点/雷威 | [150, 700] | 高 | 耐力对承雷上限的辅耦合 |
+| P092 | `cultivationRun.tribulation.injuryPerMaxPowerPenalty` | 2 | 伤势点/负雷威 | [1, 5] | 高 | 伤势降低承雷上限 |
+| P093 | `cultivationRun.tribulation.pressurePenaltyThreshold` | 80 | 心压点 | [60, 90] | 高 | 心压开始损害承雷的阈值 |
+| P094 | `cultivationRun.tribulation.pressurePerMaxPowerPenalty` | 2 | 心压点/负雷威 | [1, 5] | 高 | 超阈心压的承雷惩罚 |
+| P095 | `cultivationRun.tribulation.minimumSafeWidth` | 5 | 雷威 | [1, 15] | 结构 | 保证安全区间非空 |
+| P096 | `cultivationRun.tribulation.sweetSpotInsetMilli` | 250 | ‰安全区间 | [100, 400] | **高** | 完美淬体甜蜜区宽度 |
+| P097 | `cultivationRun.tribulation.insightPerPreviewLevel` | 4 | 悟痕/级 | [2, 8] | 高 | 参悟映射劫兆预览等级 |
+| P098 | `cultivationRun.tribulation.maxPreviewLevel` | 3 | 级 | [1, 4] | 结构 | 首切片预览等级上限 |
+| P099 | `cultivationRun.tribulation.mortalHeartPerMoveBudgetBonus` | 25 | 凡心点/步 | [15, 50] | 中 | 凡心提供容错而非直接降难 |
+| P100 | `cultivationRun.tribulation.pillsPerUndoCharge` | 2 | 丹/次 | [1, 3] | 高 | 护持分配完成后，剩余丹药折算撤步资源 |
+| P101 | `cultivationRun.tribulation.maxUndoCharges` | 2 | 次 | [1, 3] | 结构 | 撤步资源上限 |
+| P102 | `cultivationRun.tribulation.maxWardCharges` | 2 | 次 | [1, 3] | 高 | 优先按一丹一次分配的护持上限；达到上限后才分配撤步 |
+| P103 | `cultivationRun.tribulation.maxPreparedHerbs` | 3 | 株 | [1, 5] | 高 | 灵田带入棋盘的灵草上限 |
+| P104 | `cultivationRun.tribulation.baseSourcePower` | 100 | 雷威 | [70, 140] | **高** | 棋盘雷源基础威力 |
+| P105 | `cultivationRun.tribulation.pathCellLossMilli` | 15 | ‰/格 | [5, 30] | 高 | 光路每经过一个 `beam.cells` 格产生一次传导损耗，身体格也计入 |
+| P106 | `cultivationRun.tribulation.minimumPathConductivityMilli` | 700 | ‰ | [500, 850] | 高 | 光路传导下限，防长路归零 |
+| P107 | `cultivationRun.tribulation.mirrorModifierMilli` | 960 | ‰/块 | [850, 1000] | 中 | 金阵石折射损耗 |
+| P108 | `cultivationRun.tribulation.conductorModifierMilli` | 1080 | ‰/块 | [1000, 1200] | 高 | 水阵石导雷增幅 |
+| P109 | `cultivationRun.tribulation.herbHitModifierMilli` | 950 | ‰/株 | [800, 1100] | 高 | 当前雷路穿过、且在本次结算前尚未烧毁的灵草雷威修正 |
+| P110 | `cultivationRun.tribulation.timeoutBodyDamage` | 10 | 伤势点 | [5, 30] | 高 | 步数耗尽、天道强落雷时的固定肉身伤害 |
+| P111 | `cultivationRun.tribulation.perfectTemperingGainMultiplier` | 10 | 淬体毫点/雷威 | [6, 14] | **高** | 完美淬体的雷威收益倍率 |
+| P112 | `cultivationRun.tribulation.survivedTemperingGainMultiplier` | 6 | 淬体毫点/雷威 | [3, 9] | 高 | 勉强承受的雷威收益倍率 |
+| P113 | `cultivationRun.tribulation.insufficientTemperingGainMultiplier` | 2 | 淬体毫点/雷威 | [0, 4] | 中 | 劫力不足但入体后的少量复盘收益倍率 |
+
+丹药分配遵守互斥预算：先分配 `wardCharges = min(pills, maxWardCharges)`，再以剩余丹药折算 `undoCharges`，因此 `wardCharges + undoCharges × pillsPerUndoCharge <= pills`。事件或参悟提供的显式 bonus 不消耗当世丹药，单独受各 charge 上限约束。
+
 > **使用方式**（对接 `17-testing-and-automation.md`）：调参 runner 以本表为搜索空间，目标函数见 `17` §4（首劫存活率、通关时长分布等），用进化算法/参数扫描搜索。敏感度"高"的参数优先扰动。
 
 ---
@@ -528,6 +625,7 @@ finalPills = round(baseYield × yieldMultiplier × balanceScore)
 | §8 进阶 | `09-progression-system.md` | **已对齐**：采用 7 个实修阶段 + 飞升，见 `20` R1 |
 | §9 炼丹 | `06-mechanic-alchemy.md` | **已对齐**：内部四轴 + 玩家面一维投影，炸炉阈值 `14+2×stage` |
 | §11 注册表 | `17-testing-and-automation.md` | 本文为输入，17 为消费方 |
+| §11 P038–P113 日程与雷威原型 | `27-cultivation-schedule-container.md` | **D27-b / D27-d 契约初版已对齐**：六格活动与当世准备、雷威安全区间、光路倍率及结果收益以 `DEFAULT_BALANCE.cultivationRun` 为代码默认 |
 
 机制设计师落地时，若需偏离默认值，须：①在本文 §11 改默认并记版本；②在机制文档反向引用本文参数 ID（如 `P024`）。
 

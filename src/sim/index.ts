@@ -196,3 +196,4 @@ export type { GreenhouseRumor, TendGreenhouseResult } from './social/greenhouse'
 export { DEFAULT_BALANCE, withDefaultBalanceParams } from './params';
 export type { BalanceParams } from './params';
 export type { GameState } from './world/state';
+export * from './cultivation-run';

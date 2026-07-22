@@ -2,9 +2,9 @@
  * 灵韵叙录端到端浏览器测试（docs/22 §2/§6/§11，docs/23 §7 验收）。
  *
  * 覆盖 autopilot spec 验收三条：
- *  1. 标题屏「灵韵叙录」入口 → 开发者自白对话框（含「─ 来自开发者」+ 颜文字）→ 选 A
+ *  1. 标题屏「灵韵叙录」入口 → 开发者自白（自贬/产品私货/颜文字）→ 选择进入
  *     → [data-app-surface="narration"] 显示。
- *  2. 推进到结局：序章「山谷深处」（prologue.deep）→ E0 红伞白杆早夭。
+ *  2. 推进到结局：序章「山谷深处」（prologue.deep）→ E0 林中第四日。
  *  3. 叙录界面：narration 内点「叙录」→ codex overlay → 章节进度 X/4 + 结局图鉴墙（locked 问号）。
  *  4. 无障碍：#narration-stage aria-label/role、aria-live 区。
  *
@@ -92,28 +92,38 @@ async function enterMainNarration(page: Page): Promise<void> {
 }
 
 test.describe('灵韵叙录 · 端到端 narration flow', () => {
-  test('标题入口开「开发者自白」对话框，选 A 进入 narration surface（含无障碍）', async ({ page }) => {
+  test('标题入口开开发者自白，保留私货与颜文字后进入 narration surface', async ({ page }) => {
     await prepareFreshNarration(page);
     await openTitleAndEntry(page);
 
     const entry = page.locator('#flow-title-narration');
     await expect(entry).toBeVisible();
-    // 副标题「以灵韵写就，再叙一遍」印证入口身份（spec 接入点）。
-    await expect(entry.locator('#flow-title-narration-subtitle')).toContainText('以灵韵写就');
+    // 副标题明确形态与时长，不再用谜语式宣传语。
+    await expect(entry.locator('#flow-title-narration-subtitle')).toContainText('第一人称叙事');
 
     // 点击入口 → 自白对话框 modal 浮现（仍在 title surface，不切 screen）。
     await entry.click();
     await expect(page.locator('.narration-intro-overlay')).toBeVisible();
-    // 署名「─ 来自开发者」+ 颜文字选项印证 docs/22 §2.2 自白信笺皮。
-    await expect(page.locator('#narration-intro-heading')).toHaveText('─ 来自开发者');
+    await expect(page.locator('#narration-intro-heading')).toHaveText('— 来自开发者');
     await expect(page.locator('#narration-intro-vn')).toBeVisible();
 
-    // reducedMotion 即时打字：推进直到 A 选项按钮出现，点 A「试一试」。
+    const introText = page.locator('#narration-intro-stage .narration-text');
+    await expect(introText).toContainText('第一次尝试做这样的游戏');
+    await expect(introText).toContainText('笨拙和缺憾');
+    await clickStage(page);
+    await expect(introText).toContainText('MuseFlow · 灵韵');
+    await expect(introText).toContainText('AI 协作创作工具');
+    await clickStage(page);
+    await expect(introText).toContainText('(｡•̀ᴗ-)✧');
+
+    // reducedMotion 即时打字：推进直到进入选项出现。
     await advanceUntil(page, async () =>
       page.locator('button.narration-choice[data-choice-id="try"]').isVisible()
     );
     const tryLabel = page.locator('button.narration-choice[data-choice-id="try"]');
-    await expect(tryLabel).toContainText('试一试');
+    const declineLabel = page.locator('button.narration-choice[data-choice-id="decline"]');
+    await expect(tryLabel).toContainText('(ﾉ>ω<)ﾉ');
+    await expect(declineLabel).toContainText('(｡•́︿•̀｡)');
     await tryLabel.click();
 
     // 切到灵韵叙录 surface。
@@ -134,7 +144,24 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
     await expect(page.locator('#narration-stage [aria-live="polite"]')).toHaveCount(1);
   });
 
-  test('序章「山谷深处」分支推进到 E0 红伞白杆早夭结局', async ({ page }) => {
+  test('开发者自白的拒绝分支保留挽留颜文字，并尊重退出', async ({ page }) => {
+    await prepareFreshNarration(page);
+    await openTitleAndEntry(page);
+    await page.locator('#flow-title-narration').click();
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="decline"]').isVisible()
+    );
+
+    const declineLabel = page.locator('button.narration-choice[data-choice-id="decline"]');
+    await expect(declineLabel).toContainText('(｡•́︿•̀｡)');
+    await declineLabel.click();
+    await expect(page.locator('#narration-intro-stage .narration-text')).toContainText('(╥﹏╥)');
+    await clickStage(page);
+    await expect(page.locator('.narration-intro-overlay')).toBeHidden();
+    await expect(page.locator('[data-app-surface="title"]')).toBeVisible();
+  });
+
+  test('序章「山谷深处」分支推进到 E0 林中第四日早夭结局', async ({ page }) => {
     await prepareFreshNarration(page);
     await page.addInitScript(() => {
       Object.defineProperty(HTMLImageElement.prototype, 'decode', {
@@ -165,7 +192,7 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
 
     const endingCard = page.locator('.narration-ending-card[data-ending-id="e0-mushroom"]');
     await expect(endingCard).toBeVisible();
-    await expect(endingCard.locator('.narration-ending-name')).toHaveText('红伞白杆');
+    await expect(endingCard.locator('.narration-ending-name')).toHaveText('林中第四日');
     const endingCg = endingCard.locator('.narration-ending-cg');
     await expect(endingCg).toHaveAttribute('data-decoded', 'true');
     await expect(endingCg).toBeVisible();
@@ -214,7 +241,7 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
     await expect(wall.locator('.codex-wall-title')).toContainText('/8');
   });
 
-  test('回访 hub 不重播开场：一次性选项消失且正文/心声不残留', async ({ page }) => {
+  test('重大选项先完整兑现多段后果，再进入下一场景', async ({ page }) => {
     await prepareFreshNarration(page);
     await enterMainNarration(page);
 
@@ -222,22 +249,19 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
       page.locator('button.narration-choice[data-choice-id="village"]').isVisible()
     );
     await page.locator('button.narration-choice[data-choice-id="village"]').click();
-    await advanceUntil(page, async () =>
-      page.locator('button.narration-choice[data-choice-id="system"]').isVisible()
-    );
-
-    await page.locator('button.narration-choice[data-choice-id="system"]').click();
-    await advanceUntil(page, async () => {
-      const askVisible = await page.locator('button.narration-choice[data-choice-id="ask"]').isVisible().catch(() => false);
-      const systemCount = await page.locator('button.narration-choice[data-choice-id="system"]').count();
-      return askVisible && systemCount === 0;
-    });
-
     const stage = page.locator('#narration-stage');
     await expect(stage).toHaveAttribute('data-scene-id', 'prologue.village');
-    await expect(page.locator('button.narration-choice[data-choice-id="system"]')).toHaveCount(0);
-    await expect(stage.locator('.narration-text')).toHaveText('');
-    await expect(stage.locator('.narration-cabinet')).toBeHidden();
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="help"]').isVisible()
+    );
+    await page.locator('button.narration-choice[data-choice-id="help"]').click();
+    await expect(stage).toHaveAttribute('data-scene-id', 'prologue.village');
+    await expect(stage.locator('.narration-text')).toContainText('我踩进水里');
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="on"]').isVisible()
+    );
+    await expect(stage).toHaveAttribute('data-scene-id', 'prologue.village.calm');
+    await expect(stage.locator('.narration-text')).not.toContainText('我踩进水里');
   });
 
   test('内心声部只显示在主阅读面，不再与识海浮纹复制同一文段', async ({ page }) => {
@@ -253,6 +277,11 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
     );
     await page.locator('button.narration-choice[data-choice-id="ask"]').click();
 
+    await advanceUntil(page, async () =>
+      page.locator('button.narration-choice[data-choice-id="on"]').isVisible()
+    );
+    await page.locator('button.narration-choice[data-choice-id="on"]').click();
+
     const selfLine = '我没听懂修仙那半句，只把“先看清”记住了。那是他第一次主动教我一件事。';
     await advanceUntil(page, async () =>
       (await page.locator('#narration-stage .narration-text').textContent().catch(() => ''))?.includes('我没听懂修仙') === true
@@ -263,7 +292,7 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
     await expect(page.locator('#narration-stage .narration-cabinet')).not.toContainText('我没听懂修仙');
   });
 
-  test('移动端大字号五选项：心声、对话框与快捷菜单保持顺序且不相交', async ({ page }) => {
+  test('移动端大字号长选项：心声、对话框与快捷菜单保持顺序且不相交', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await prepareFreshNarration(page);
     await page.addInitScript(() => {
@@ -280,7 +309,7 @@ test.describe('灵韵叙录 · 端到端 narration flow', () => {
     );
     await page.locator('button.narration-choice[data-choice-id="village"]').click();
     await advanceUntil(page, async () =>
-      page.locator('button.narration-choice[data-choice-id="system"]').isVisible()
+      page.locator('button.narration-choice[data-choice-id="help"]').isVisible()
     );
 
     const geometry = await page.locator('#narration-stage').evaluate(stage => {

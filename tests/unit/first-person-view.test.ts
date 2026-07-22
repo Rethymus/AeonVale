@@ -588,7 +588,7 @@ describe('firstPersonView · 终局节点与真实数据契约', () => {
     expect(judgeEnding(ascend)).toBe('ascension');
   });
 
-  it('真实修炼链必须走完六劫：cult=6 仍锁雷关，stage6 后 cult=7 才开放', () => {
+  it('真实修炼链必须走完六劫：cult=6 尚未入终局，stage6 后 cult=7 才进入洞府', () => {
     const reveal = NARRATION_SCENES_BY_ID.get('act1.reveal')!;
     let state = nextState(initialState(), reveal, 'practice').state;
     expect(state.cultProgress).toBe(1);
@@ -605,14 +605,13 @@ describe('firstPersonView · 终局节点与真实数据契约', () => {
       state = nextState(enterScene(state, stage), stage, 'on').state;
     }
     expect(state.cultProgress).toBe(6);
-    const train = NARRATION_SCENES_BY_ID.get('act2.train')!;
-    const assault = train.choices!.find(choice => choice.id === 'assault')!;
-    expect(isChoiceAvailable(state, train.id, assault)).toBe(false);
+    expect(state.currentSceneId).not.toBe('act3.entry');
 
     const stage6 = NARRATION_SCENES_BY_ID.get('act2.temper.stage6')!;
-    state = nextState(enterScene(state, stage6), stage6, 'on').state;
+    const result = nextState(enterScene(state, stage6), stage6, 'on');
+    state = result.state;
     expect(state.cultProgress).toBe(CULT_PROGRESSION_MAX);
-    expect(isChoiceAvailable(state, train.id, assault)).toBe(true);
+    expect(result.nextSceneId).toBe('act3.entry');
   });
 
   it('采药女分支读取真实选择：放弃后只开放冷遇路线，不会固定声称曾背她下山', () => {

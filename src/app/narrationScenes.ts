@@ -71,7 +71,7 @@ const CG = {
  * 灵韵叙录全部场景（按幕顺序）。CI 护栏（Wave 4 governance-check）将 BFS 校验：
  * 8 结局全可达、无孤儿 scene、无死锁循环、打字机文本无空键。
  */
-export const NARRATION_SCENES: readonly NarrationScene[] = [
+const ALL_NARRATION_SCENES: readonly NarrationScene[] = [
   // ============ 序章·幻灭（act: 'prologue'） ============
   {
     id: 'prologue.awaken',
@@ -79,27 +79,29 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.valley },
     lines: [
       { text: '——睁眼。', speaker: 'narrator' },
-      { text: '先是一片黑，像谁把所有的灯都关了。然后鸟叫漏了进来，兽蹄踏过虚空一样的闷响，还有，很远很远的地方，一缕炊烟。', speaker: 'narrator' },
-      { text: '我撑起身子。这不是我的房间，不是我的城市，甚至——不像是我该在的任何一个地方。', speaker: 'narrator' },
-      { text: '那缕炊烟熟悉得像一个被讲过太多次的开场。可真正站在岔路口时，没有人替我标出哪一边才是活路。', speaker: 'narrator' }
+      { text: '眼皮先感到冷。雨水顺着额角钻进耳后，泥土贴在掌心，带着草根被踩断后的涩味。', speaker: 'narrator' },
+      { text: '我撑起身子。身后没有车声，口袋里没有会亮的屏幕，远山却悬在云上，几道人影踩着剑光从天边掠过。', speaker: 'narrator' },
+      { text: '惊讶只维持了很短的一会儿。胃里的空响更近，也更有说服力。', speaker: 'self' },
+      { text: '山涧在左边，水声清楚；右边隔着湿林，有一缕被雨压低的炊烟。这里没有路牌，而我得在天黑以前先活下来。', speaker: 'narrator' }
     ],
     choices: [
-      { id: 'deep', label: '循着炊烟，往深处走', goto: 'prologue.deep' },
-      { id: 'village', label: '折向荒村', goto: 'prologue.village' }
+      { id: 'deep', label: '先找水，沿山涧往林深处走', goto: 'prologue.deep' },
+      { id: 'village', label: '循着炊烟，去敲一扇门', goto: 'prologue.village' }
     ],
     status: 'approved'
   },
   {
-    // 炊烟抉择·深处：迷路断粮→红伞白杆→E0 早夭（docs/22 §6）。
+    // 炊烟抉择·深处：迷路断粮，在信息不足与饥饿之间作出生存判断（docs/22 §6）。
     id: 'prologue.deep',
     act: 'prologue',
     layerKeys: { bg: CG.memeMushroom },
     lines: [
-      { text: '我往深处走。林子越来越密，鸟叫没了，路也没了。干粮在第二天吃完，到第三天，我只剩半壶水。', speaker: 'narrator' },
-      { text: '第四天，饿得发昏。树根底下生着一丛红伞白杆的菇，嫩得晃眼。', speaker: 'narrator' },
-      { text: '我在另一个世界背过这句——红伞伞，白杆杆。可饿昏头的人，侥幸总比知识响。', speaker: 'narrator' },
-      { text: '我摘下来，吃了。', speaker: 'narrator' },
-      { text: '舌尖发麻的那一秒，我居然笑出声：异乡人的第一课，别乱吃。', speaker: 'narrator' }
+      { text: '水找到了，路却没有。山涧把我领进更深的林子，第一夜还能听见远处的犬吠，第二夜以后，只有雨。', speaker: 'narrator' },
+      { text: '第三天，我开始拿石头在树皮上刻记号；第四天，同一个记号从前方又出现了一次。', speaker: 'narrator' },
+      { text: '树根下长着一丛菌子，伞盖鲜红，菌柄白得干净。它们好看得不像食物，也不像警告，只像山林对一个饿昏的人保持沉默。', speaker: 'narrator' },
+      { text: '若有毒，吃下去以后才会死；若不吃，我大概熬不过今晚。选择有时并不宽阔，只比绝路多半步。', speaker: 'self' },
+      { text: '我挑了最小的一朵，咬下去。舌尖发麻时，我终于知道，山林没有义务把答案写在颜色上。', speaker: 'narrator' },
+      { text: '来到仙山的第四天，我没见到仙人，只见到一朵比我更懂得如何活下去的蘑菇。', speaker: 'self' }
     ],
     ends: 'e0-mushroom',
     status: 'approved'
@@ -110,27 +112,39 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 'prologue',
     layerKeys: { bg: CG.village },
     lines: [
-      { text: '荒村。几户人家，炊烟勉强算活。我在村口坐了三天，等一个能解释此地的人，也等一道只对我开口的声音。', speaker: 'narrator' },
-      { text: '没有面板，没有指引，也没有藏在随身物件里的残魂。等到第三天傍晚，我终于承认：这里不会有人替我宣布，我为何而来。', speaker: 'narrator' },
-      { text: '村口的老者——人们叫他「忘言叟」——远远看着，一言不发。', speaker: 'narrator' }
+      { text: '炊烟落在一座荒村里。最靠外的院墙塌了半边，一个妇人正用肩膀顶住歪斜的木闸，浑水从她脚边漫进菜地。', speaker: 'narrator' },
+      { text: '我站在篱笆外，她先看我的湿衣和空手，再把自己的水瓢递过来：「喝。喝完再说你从哪儿来。」', speaker: 'narrator' },
+      { text: '水有井绳和木桶的味道。我喝得太急，呛得弯下腰；她没有笑，只把瓢接回去，继续顶那扇闸。', speaker: 'narrator' },
+      { text: '村口坐着个瘦老头，斗笠压得很低。后来我才知道，人们叫他忘言叟。此刻他只是隔着雨，看我会先开口，还是先伸手。', speaker: 'narrator' }
     ],
-    revisitMode: 'choices-only',
     choices: [
-      { id: 'system', label: '在心里喊一声「系统」', once: true, response: '回应我的只有自己的呼吸。它很乱，却至少是真的。', effects: [{ kind: 'flag', target: 'asked-system' }], goto: 'prologue.village' },
-      { id: 'elder', label: '检查所有随身物件', once: true, response: '衣袋空空，鞋底磨破。没有戒指，没有密钥，只有一双还走得动的腿。', goto: 'prologue.village' },
-      { id: 'soul', label: '闭眼，等一道陌生声音', once: true, response: '风从屋檐下穿过去。脑海里没有别人，只有我。', goto: 'prologue.village' },
       {
         id: 'help',
-        label: '帮村里修渠、赶野猪',
-        once: true,
-        response: '渠修好了，野猪也赶了。村里的大娘追着我塞鞋，我推不掉，也舍不得推。',
+        label: '先帮她把木闸扶正',
+        tags: ['major'],
+        responseLines: [
+          { text: '我踩进水里，和她一起把木闸抬高。闸脚不是断了，而是被上游冲来的石块顶歪；搬开石头以后，水终于重新回到渠里。', speaker: 'narrator' },
+          { text: '忙完时天已经黑了。妇人把我领进灶屋，让我坐在最靠火的地方，又把一双旧布鞋推过来：「先穿着。明天再想明天的事。」', speaker: 'narrator' },
+          { text: '那是我来到这里以后，第一件没有附带谜语的善意。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 14 },
           { kind: 'flag', target: 'did-righteous' }
         ],
         goto: 'prologue.village.calm'
       },
-      { id: 'ask', label: '向忘言叟打听前路', goto: 'prologue.depart' }
+      {
+        id: 'ask',
+        label: '先说明来意，请她指一条活路',
+        tags: ['major'],
+        responseLines: [
+          { text: '我说自己醒在山里，不记得来路，也没有可以投奔的人。话说出口以后，连我自己都觉得像个拙劣的谎。', speaker: 'narrator' },
+          { text: '妇人却只问了一句：「会干活吗？」我说会学。她便朝屋檐下努了努嘴，给我留出一块不漏雨的地方。', speaker: 'narrator' },
+          { text: '她没有相信我的故事。她只是决定，今晚不让我死在门外。', speaker: 'self' }
+        ],
+        effects: [{ kind: 'flag', target: 'village-sheltered' }],
+        goto: 'prologue.village.calm'
+      }
     ],
     status: 'approved'
   },
@@ -139,10 +153,14 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 'prologue',
     layerKeys: { bg: CG.village },
     lines: [
-      { text: '村里稍稍安顿下来。忘言叟点了点头，目光越过屋脊，落向山外。', speaker: 'narrator' }
+      { text: '我在荒村住了七天。白日劈柴、挑水、学着分辨田里的草；夜里听人讲山外的宗门和能活几百年的修士。', speaker: 'narrator' },
+      { text: '那双旧布鞋不合脚，走路时总磨左脚后跟，却比赤脚踩在碎石上好得多。', speaker: 'narrator', requires: 'flag:did-righteous' },
+      { text: '屋檐下的草席每天都会被人往灶火边挪一点。没人问我什么时候走，也没人说我可以永远留下。', speaker: 'narrator', requires: 'flag:village-sheltered' },
+      { text: '第七天清晨，忘言叟第一次主动叫住我。他看着山外，说太一宗正在收徒，凡人若想知道自己有没有仙缘，总要去测一次灵根。', speaker: 'narrator' },
+      { text: '我知道那不算承诺。可在一个什么都不认识的世界里，“去看看”已经足够像一条路。', speaker: 'self' }
     ],
     choices: [
-      { id: 'on', label: '动身，往太一宗去', goto: 'prologue.depart' }
+      { id: 'on', label: '向收留我的人辞行', goto: 'prologue.depart' }
     ],
     status: 'approved'
   },
@@ -178,7 +196,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'help',
         label: '先帮骡车正轴，再回头拿话挤对散修',
-        response: '我蹲下摸了摸车辙，找两块碎石垫进左轮底，让赶车的慢推——车轴一正，骡车吱呀上了路。回头走到小贩那边，没拔锄头，只笑着点破两个散修的玉牌来历。他俩脸一僵，骂骂咧咧地走了。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我先蹲进泥里摸车辙，让车夫别再硬推。左轮下垫进两块碎石，歪掉的车轴慢慢回正，骡子终于把车拖上硬地。', speaker: 'narrator' },
+          { text: '两个散修已经把小贩逼到路边。我没拔锄头，只当着过路人的面念出他们腰牌上的外门编号，再问了一遍：太一宗山门就在前头，你们真要我替你们把规矩问清楚？', speaker: 'narrator' },
+          { text: '他们骂了几句，还是走了。我的手心全是汗——不是因为赢了，而是因为我直到他们转身以后，才确定自己猜对了。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 6 },
           { kind: 'flag', target: 'did-righteous' },
@@ -189,7 +212,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'hurry',
         label: '赶路要紧，绕过去',
-        response: '我低着头绕开了。小贩那声「大哥」我没接。山道还长，测灵根不等人。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我沿着路边最窄的石脊绕过去，没有看那两个散修，也没有看泥里的粮。', speaker: 'narrator' },
+          { text: '小贩在身后喊了一声「大哥」。那两个字追了十几步，便被山风吹散。', speaker: 'narrator' },
+          { text: '我告诉自己，若真测出灵根，往后能救的人会更多。这个理由听起来很像远见，也很像把眼前的人交给以后。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 5 },
           { kind: 'flag', target: 'road-bypassed' }
@@ -261,7 +289,9 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.sectGate },
     lines: [
       { text: '太一宗山门。少年天才们挨个按上测灵柱，掌心绽出五色光华，长老颔首记录。', speaker: 'narrator' },
-      { text: '轮到我时，那长老看了看我沾泥的锄头和磨破的手，搁下笔：「根骨虽凡，能一步步走到这里，这股恒心倒少见。」', speaker: 'narrator' },
+      { text: '排到我时，先前那支商队也到了。车夫隔着人群冲我抬了抬手，山门执事便多看了我一眼。', speaker: 'narrator', requires: 'flag:road-helped' },
+      { text: '排到我时，没人知道我从哪条山路来。只有鞋底磨出的血，在白石阶上留下很浅的印。', speaker: 'narrator', requires: 'flag:road-bypassed' },
+      { text: '接引长老看了看我沾泥的衣摆和磨破的手，搁下笔：「凡人能走到这里，至少不是一时兴起。」', speaker: 'narrator' },
       { text: '他让我上前，掌心贴上测灵柱。死寂——像按在一块冷石头上。换更高阶的柱，依旧死寂。', speaker: 'narrator' },
       { text: '（我把手按得更实，直到掌心发白。石柱没有恶意；它只是冷静地告诉所有人，它在我身上什么也看不见。）', speaker: 'self' },
       { text: '长老的神识探过我丹田，沉默良久，长叹一声：「可惜了这股志气。无灵根——此生与修仙无缘。」', speaker: 'narrator' },
@@ -279,9 +309,11 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 'prologue',
     layerKeys: { bg: CG.valley },
     lines: [
-      { text: '揣着那袋盘缠，我回到这破败的永恒山谷，认命种地。', speaker: 'narrator' },
-      { text: '忘言叟远远看着，一言不发，只把一把锈锄头塞进我手里。', speaker: 'narrator' },
-      { text: '难道没有灵根，就真的不能修仙了吗？——没人回答。', speaker: 'narrator' }
+      { text: '下山时下了雨。盘缠贴在胸口，那句“与修仙无缘”却比钱袋更沉，一步一步跟我回到永恒山谷。', speaker: 'narrator' },
+      { text: '路过当初那处泥坑时，车辙已经干了。有人用碎石把最深的坑填平，木哨在我怀里轻轻碰了一下。', speaker: 'narrator', requires: 'flag:road-helped' },
+      { text: '路过当初那处泥坑时，地上只剩被踩进土里的几粒干果。我没有停，鞋底却像又听见了那声没接住的呼喊。', speaker: 'narrator', requires: 'flag:road-bypassed' },
+      { text: '忘言叟在田边等我。他没有问测出了什么，只把一把锈锄头递过来，说：「先把今夜的饭种出来。」', speaker: 'narrator' },
+      { text: '我接过锄头。难道没有灵根，就真的不能修仙了吗？这一次我没有把问题问出口。田里还有水，草也不会因为我失望就少长一寸。', speaker: 'self' }
     ],
     choices: [
       { id: 'farm', label: '接过锄头，下田', goto: 'act1.battle' }
@@ -297,8 +329,9 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 1,
     layerKeys: { bg: CG.storageRing },
     lines: [
-      { text: '那场斗法来得毫无征兆。我正弯腰拔草，头顶忽然炸开两道身影——一青一灰，撞在农庄上空，灵光炸裂，半块田瞬间焦黑。', speaker: 'narrator' },
-      { text: '（我来不及分辨他们是谁，只知道下一道光落下前，必须先离开无遮无挡的田埂。）', speaker: 'self' }
+      { text: '我在荒村种了三个月的地。最难的不是劳累，而是日子太具体：哪一畦缺水，哪一袋谷种发霉，今晚还能不能多添半碗饭。', speaker: 'narrator' },
+      { text: '那天下午，我正蹲在田里拔草，头顶忽然炸开两道身影——一青一灰，撞在农庄上空。灵光把云层撕成两半，半块田在我眼前焦黑。', speaker: 'narrator' },
+      { text: '我甚至来不及害怕。下一道光已经在他们剑下成形，而田埂无遮无挡。', speaker: 'self' }
     ],
     choices: [
       { id: 'hide', label: '扑进田沟，抬头看', goto: 'act1.battle.sky' }
@@ -313,10 +346,9 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 1,
     layerKeys: { bg: CG.battleDuel },
     lines: [
-      { text: '我趴在沟里，仰头。远处太一宗方向，一道道遁光秩序井然地升落，像编好了号的雁阵——那是顺天道的修士，天劫绕着他们走，连衣角都不沾。', speaker: 'narrator' },
-      { text: '我头顶这两道，不一样。青光那个剑意工整，近乎刻板；灰光那个，灵气乱得像一团逆流的漩涡，每硬接一记，天就阴沉一分。', speaker: 'narrator' },
-      { text: '顺天的，被天护着；逆天的，天在劈他。', speaker: 'narrator' },
-      { text: '（原来天劫不是落在“哪里”，而是落在“谁”身上。天意会辨认异类，然后一遍遍纠正。）', speaker: 'self' }
+      { text: '我扑进田沟，泥水灌进衣领。青光中的剑修每一剑都干净得近乎冷漠；灰衣人却像在逆着一条看不见的河走，退一步，云中的紫雷便追近一步。', speaker: 'narrator' },
+      { text: '远处太一宗的遁光仍照常升落。雷没有劈山，没有劈田，只追着灰衣人身上那股不合常轨的气息。', speaker: 'narrator' },
+      { text: '我第一次看清，所谓天意并不是一张盖住所有人的天幕。它会挑中某一个人，然后耐心地把他改回去。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '屏住呼吸', goto: 'act1.battle.cellar' }
@@ -383,11 +415,9 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.storageRing },
     lines: [
       { text: '我把它捡起来，戒面冰凉。先以指腹按住，又试着转动内圈——都没有反应。', speaker: 'narrator' },
-      { text: '（它不认触碰。若真有门槛，多半不在这具肉身表面。）', speaker: 'self' },
-      { text: '我咬破指头，滴了一滴血上去。血珠在戒面滚了一圈，滑落，像滴在荷叶上。没反应。', speaker: 'narrator' },
-      { text: '（血也不对。它认的应当是神魂；可原主的神魂已经散尽，留下的禁制反而失去了归属。）', speaker: 'self' },
-      { text: '就在这时，天上又滚过一记打斗的余波。那道波从我身上扫过，又扫过掌心的戒——戒面忽然一震，像有什么「咔哒」一下松开了。', speaker: 'narrator' },
-      { text: '神魂俱灭之后，它成了一枚真正的无主之物。连我这样一个凡人，都推得开了。', speaker: 'narrator' }
+      { text: '我咬破指头，滴了一滴血。血珠滚落，仍旧没有反应。若这是故事里常见的机缘，它显然不打算配合我的见识。', speaker: 'self' },
+      { text: '天边残余的剑光忽然扫过田地。戒面在我掌心轻轻一震，里面那道绷紧的阻力随之断开。', speaker: 'narrator' },
+      { text: '不是它认了我。是原主连神魂都不在了，最后一道门失去了要拦的人。', speaker: 'narrator' }
     ],
     choices: [
       { id: 'open', label: '把它翻开', goto: 'act1.ring.flash' }
@@ -417,11 +447,10 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 1,
     layerKeys: { bg: CG.storageRing },
     lines: [
-      { text: '我把戒里每一寸都翻过。没有残魂，没有传音，也没有被封住的第二层意识。', speaker: 'narrator' },
-      { text: '那个本可以解释一切的人，已经在戒外化成劫灰，只留下临死前的一个字——「勿」。', speaker: 'narrator' },
-      { text: '（所以我能依靠的，只剩他留下的实物，以及我是否读得懂它们。）', speaker: 'self' },
-      { text: '……一个走投无路的人，给另一个走投无路的人留下的东西。', speaker: 'heart-demon' },
-      { text: '我把那枚刻「逆」的玉佩攥紧了一点。勿。勿什么？他没说完。这世上最让人睡不着的，不是答案，是一句没说完的话。', speaker: 'narrator' }
+      { text: '戒里很安静。没有谁从黑暗里醒来，也没有一句替死者补完的遗言。', speaker: 'narrator' },
+      { text: '我把那枚刻着「逆」的玉佩放在膝上。方才还活着的人，如今只剩一个字、一层灰，以及一些来不及决定由谁继承的东西。', speaker: 'narrator' },
+      { text: '……你会拿走。走投无路的人，总会把遗物看成邀请。', speaker: 'heart-demon' },
+      { text: '我没有反驳。只是把每件东西依次摆开，像在替一个陌生人整理无人认领的行囊。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '翻那卷《偷天换劫诀》', goto: 'act1.scroll' }
@@ -437,18 +466,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       { text: '戒里是些零碎：几粒异种种子、一卷残缺丹谱、一只破炉、半枚刻「逆」的玉佩，还有一卷残卷，封皮四个字——《偷天换劫诀》。', speaker: 'narrator' },
       { text: '我翻开残卷，只读了一句，手就抖了。', speaker: 'narrator' },
       { text: '「此诀非人所修。无灵根者，方可习之。以劫为薪，以骨为柴。偷天一线，换劫三生。习此诀者，已死。」', speaker: 'heart-demon' },
-      { text: '这些字，是我原世界的字。简体，横排，标点都在该在的位置——不是这世界的任何一种古文。', speaker: 'narrator' },
-      { text: '偈语之下，是一篇年代更久的正文；页边另有较新的批注，像有人用几十年，把前人的路重新走过、校验、补齐。正文与批注都不藏私，把「偷天」一点点拆成四步。', speaker: 'narrator' },
-      { text: '一曰「察漏」。空灵根不蓄气，寻常修士当它是废；可废有废的好处——它不拒。天劫劈来，凡骨当碎，可那一劫的力道里，总有半成、一成，会从骨头崩开的缝里漏过去。旁人硬抗，把漏掉的一缕当损耗；这卷却说，这一缕，才是无灵根者唯一能上手的东西。', speaker: 'narrator' },
-      { text: '要练它，先磨眼力：雷落之前，看清它要劈在哪一处、会从哪一道骨缝里漏。看不清，便接不住。', speaker: 'narrator' },
-      { text: '二曰「引路」。漏过去的那一缕是野的，会乱窜，烧穿皮肉。要给它预先铺一条该走的线——按阵理，在骨上刻好走向，像在田里先挖好渠，水来了顺渠走，不漫不淹。', speaker: 'narrator' },
-      { text: '这步最吃慢功夫。线刻浅了，劫一冲就溃；刻深了，劫走不动，反堵死在半路。批注里一笔一画地写：宁可慢，宁可细，一道一道地引。', speaker: 'narrator' },
-      { text: '三曰「借势」。劫有来势，有去势。硬抗是顶牛，顶不过便是死。这步不顶——顺它来的势，把它送进你要它去的骨缝；再借它去时的回劲，把淬炼的力，钉得更深。', speaker: 'narrator' },
-      { text: '如治水：堵则溃，疏则通。借它一分势，省自己三分力。', speaker: 'narrator' },
-      { text: '四曰「淬骨」。引进来、顺过去的劫，最终都要落进骨头里。凡骨被一道道劫淬过，碎了，又用那劫的余烬，一寸寸重塑。旧的死去，新的长成——长成的，不再是凡骨。', speaker: 'narrator' },
-      { text: '这一步没有取巧。每一寸新生，都拿一寸旧骨去换。所以残卷开篇那句「习此诀者，已死」，不是诅咒——是账。', speaker: 'narrator' },
-      { text: '（察漏，引路，借势，淬骨。看清，布线，借力，落实物。这不是什么玄学，是一套照着走的法子——和我原世界拆解任何一道难题，是一个路数。写这卷的人，跟我，是一个脑子。）', speaker: 'self' },
-      { text: '戒里还有一本日记。它的字迹与页边批注相同，却和残卷正文不同。最后一页只写了一句：我走通了。后来者，愿你也是。', speaker: 'narrator' }
+      { text: '这些字是简体，横排，甚至保留着修改时画下的箭头和括号。纸已经旧得发脆，句子的习惯却来自我认识的世界。', speaker: 'narrator' },
+      { text: '正文的笔迹更早，像一篇被反复修订的研究记录；页边另有一层新墨，记录骨折的位置、失败的阵线，以及每次活下来以后改动了什么。', speaker: 'narrator' },
+      { text: '整条路只归纳成四件事：先看见雷力从哪里漏走；再替它刻出一条不会烧穿心脉的路；顺着来势与回势借力；最后让旧骨死去，用劫后的余烬重塑。', speaker: 'narrator' },
+      { text: '正文旁画着一条田渠。忘言叟那句“先看水往哪里走”，忽然从三个月前走回来，落在了纸上。', speaker: 'self' },
+      { text: '越往后，页边的字越乱。有人在第五次骨裂后写：右手仍抖；第六次后写：不要相信不疼的丹；最后一页只有一句——我走通了。后来者，愿你也是。', speaker: 'narrator' },
+      { text: '正文和批注不是同一个人。一个人留下方法，另一个人用一身伤证明它不是妄想。', speaker: 'self' }
     ],
     choices: [
       { id: 'reveal', label: '合上残卷，理清头绪', goto: 'act1.reveal' }
@@ -462,19 +485,34 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 1,
     layerKeys: { bg: CG.script },
     lines: [
-      { text: '我坐在田埂上，想了很久，终于把这些碎片拼成了一条线。', speaker: 'narrator' },
-      { text: '那个化灰的「逆」，是另一个异乡人。日记和页边批注属于他：他同样被判无灵根，却照着残卷把这条路走通了。', speaker: 'narrator' },
-      { text: '而残卷正文来自更早的异乡人——一个在我们之前不知多少年，以凡人之躯研究灵田、拆解天劫的人。', speaker: 'narrator' },
-      { text: '人们后来给他起了个名字，叫神农。', speaker: 'narrator' },
-      { text: '「能读这文字」本身，就是铁证——我，也是异乡人；这副被判废的躯壳里，是空灵根。', speaker: 'narrator' },
-      { text: '测灵柱没说错，长老也没说错。只是这世上，另有一条不给灵柱看见的路。', speaker: 'narrator' },
-      { text: '我怔住。空灵根不是藏起来的灵根，也不是迟到的恩赐。它只是一个没有容量、却能让力量通过的空处——弱点与道路，原来是同一件事。', speaker: 'self' }
+      { text: '我在田埂上坐到天黑，把玉佩、日记和残卷排在膝前。雨后的泥土慢慢返潮，纸页也跟着卷起边。', speaker: 'narrator' },
+      { text: '化成劫灰的那个人把自己称作「逆」。日记和页边批注属于他；他也读得懂简体字，也曾被测灵柱判作无灵根。', speaker: 'narrator' },
+      { text: '正文却比他的日记古老得多。开头没有名号，只有一行自述：承一户农家三年饭，先还他们三年收成。', speaker: 'narrator' },
+      { text: '村里关于无面人的传说、田渠里过分规整的灵气、这卷用另一种文字写成的功法，第一次在我眼前有了同一个方向。', speaker: 'narrator' },
+      { text: '也许后来的人叫他神农。也许那只是凡人为了记住恩情，给一个不留名的人添上的名字。', speaker: 'self' },
+      { text: '至于我——测灵柱看不见的，不是迟来的天赋，而是一处无法蓄气的空。它使我像凡人，也使天劫舍弃的那一线力量可以从我这里经过。', speaker: 'narrator' },
+      { text: '这不是翻身的证明，只是一条有人活着走过、也有人刚刚死在我面前的路。', speaker: 'self' }
     ],
     choices: [
-      { id: 'seclude', label: '把它埋回去，老老实实种田', goto: 'act1.seclude' },
+      {
+        id: 'seclude',
+        label: '把残卷埋回劫灰旁，留下来种田',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把纸页重新包好。逆的死离我太近，近得任何“我会不同”都像一句轻薄的话。', speaker: 'narrator' },
+          { text: '锄头至少不会承诺飞升。它只要求我明早仍起得来。', speaker: 'self' }
+        ],
+        goto: 'act1.seclude'
+      },
       {
         id: 'practice',
-        label: '「习此诀者，已死。」——我偏要习',
+        label: '把第一页压在膝上，从“察漏”开始',
+        tags: ['major'],
+        responseLines: [
+          { text: '我没有说“我偏要胜天”。那种话在一摊尚未冷透的劫灰旁边，显得太响。', speaker: 'narrator' },
+          { text: '我只点亮一盏油灯，把正文和逆的批注逐句抄开：哪里是方法，哪里是伤，哪里只是一个活下来的人给自己的安慰。', speaker: 'narrator' },
+          { text: '第一夜，我读到灯油烧尽。第二天清晨，田还是要浇。修行并没有替生活让路；它只是从生活最窄的缝里开始。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'flag', target: 'chose-practice' }
@@ -503,21 +541,19 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
 
   // ============ 第二幕·淬劫（act: 2） ============
   {
-    // 主修炼 hub：第一次完整入场，后续导航回访直接列剩余选项。
+    // 第二幕改为线性主脊：修炼、关系与代价按季节交错，不再回菜单式 hub 刷 storylet。
     id: 'act2.train',
     act: 2,
-    layerKeys: { bg: CG.valley },
-    revisitMode: 'choices-only',
+    layerKeys: { bg: CG.spiritFarm },
     lines: [
-      { text: '灵田稳固下来以后，我把《偷天换劫诀》摊在膝上。残卷不许人跳步：看不见漏口，便不能引路；引不稳，便谈不上借势。', speaker: 'narrator' },
-      { text: '下一步可以炼丹、寻访旧迹、处理村外的事，或者继续用自己的骨头验证那四句话。', speaker: 'narrator' }
+      { text: '我花了一个冬天修复被斗法毁掉的田。焦土翻到第三遍时开始返黑，逆留下的异种也终于从最冷的一畦里冒出两片叶。', speaker: 'narrator' },
+      { text: '白日我跟着村人下地，夜里抄残卷。正文写方法，逆的批注写疼痛；两种字迹叠在一起，像一条路同时留下方向和尸骨。', speaker: 'narrator' },
+      { text: '第一道小劫来临前，我在田中央埋下引雷石。忘言叟站在田外看了很久，只问：「水路看清了？」', speaker: 'narrator' },
+      { text: '我说还没有。他便点头：「那就先别逞能。」', speaker: 'narrator' },
+      { text: '雷云压低时，我才明白，真正的开始不是抬手接雷，而是忍住立刻证明自己的冲动。', speaker: 'self' }
     ],
     choices: [
-      { id: 'temper', label: '继续淬体，把残卷练进骨里', goto: 'act2.temper' },
-      { id: 'alchemy', label: '只炼一次渡劫丹，决定药性与代价', once: true, goto: 'act2.alchemy' },
-      { id: 'lore-hub', label: '巡视灵田，核对神农留下的痕迹', goto: 'act2.train.lore-hub' },
-      { id: 'side', label: '离开灵田，看看这条路会伤到谁', goto: 'act2.side.hub' },
-      { id: 'assault', label: '六劫圆满，叩开紫雷关', requires: 'cultProgress>=7', goto: 'act3.entry' }
+      { id: 'temper', label: '等雷尾显形，再做第一个动作', goto: 'act2.temper.stage1' }
     ],
     status: 'approved'
   },
@@ -586,8 +622,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'on',
         label: '等雷尾越过旧伤，再扣住那一线',
-        response: '我晚了半息才收拢空灵根。锁骨照样裂开，可那一线苍白被留在臂骨里，像黑夜中第一条可复走的路。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我让主力先落。锁骨裂开的声音比雷更近，眼前也白了一瞬；直到那缕失去天意约束的余量越过旧伤，我才收拢空灵根。', speaker: 'narrator' },
+          { text: '它被留在臂骨里，细得几乎不算力量，却有清楚的来处和去处。疼痛没有变小，只第一次有了可以复述的形状。', speaker: 'self' },
+          { text: '雷停以后，忘言叟没有扶我。他把掉在泥里的粉笔捡起来，等我自己把那条漏口画完。', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 10 },
@@ -595,13 +635,17 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'lifespan', value: -5 },
           { kind: 'flag', target: 'temper-stage1-steady' }
         ],
-        goto: 'act2.temper'
+        goto: 'act2.temper.stage2'
       },
       {
         id: 'force',
         label: '在雷尾显形前强行攥住它',
-        response: '我抢早了。雷尾确实被截住，右臂却从指尖抖到肩头；我学会了察漏，也在骨里留下了一阵再也消不干净的颤。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我在看清以前就伸手。空灵根吞进了更多雷，也把我从指尖一直掀到肩头。', speaker: 'narrator' },
+          { text: '我确实抓住了那一线，只是从此右手多了一阵细颤。它在雷雨前最明显，像身体替我记着：那天我没有等。', speaker: 'self' },
+          { text: '忘言叟看见我把粉笔握断，没有训斥，只把另一截放到地上：「既然抢了这一步，下一步就别再骗自己说没付钱。」', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 6 },
@@ -610,7 +654,7 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'defiance', value: 4 },
           { kind: 'flag', target: 'temper-stage1-forced' }
         ],
-        goto: 'act2.temper'
+        goto: 'act2.temper.stage2'
       }
     ],
     status: 'approved'
@@ -628,8 +672,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'on',
         label: '削薄药泥，让雷沿骨线缓慢通过',
-        response: '我用指甲刮开半层药泥。雷被迫收窄，沿右臂、肩骨、脊柱一节节走完；每一节都疼，却没有一处失控。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我用指甲刮开半层药泥。雷被迫收窄，沿右臂、肩骨、脊柱一节节走完；每经过一处，先热，再痛，最后留下短暂的麻木。', speaker: 'narrator' },
+          { text: '它没有听我的命令。它只是发现，别的方向都比这条路更难走。', speaker: 'self' },
+          { text: '当晚我重新挖了田渠最窄的弯口。骨里的路和田里的路原来一样，所谓控制，多半只是提前替洪水准备好一个愿意接受它的地方。', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 10 },
@@ -637,13 +685,17 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'lifespan', value: -6 },
           { kind: 'flag', target: 'temper-stage2-steady' }
         ],
-        goto: 'act2.temper'
+        goto: 'act2.side.herb'
       },
       {
         id: 'force',
         label: '加深骨线，让整道雷一次灌入',
-        response: '雷走得更快，也更凶。骨线没有断，肩后的皮肉却被热流撕开；我换来了速度，也让下一道劫记住了这处薄弱。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把骨线又压深一分。雷走得更快，也更凶，肩后的皮肉被热流从里面撕开，血沿着衣摆滴进田里。', speaker: 'narrator' },
+          { text: '引路成功了。只是这条路太像刀刻出来的沟，下一道雷会更容易认出它。', speaker: 'self' },
+          { text: '伤口结痂用了十二天。第十三天，我仍旧抬不起右臂，却已经在纸上画下一次要把线刻得更深的位置。', speaker: 'heart-demon' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 6 },
@@ -652,7 +704,7 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'defiance', value: 4 },
           { kind: 'flag', target: 'temper-stage2-forced' }
         ],
-        goto: 'act2.temper'
+        goto: 'act2.side.herb'
       }
     ],
     status: 'approved'
@@ -670,8 +722,13 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'on',
         label: '顺势跪下，在回弹时锁住余劲',
-        response: '双膝砸进泥里，雷从脊柱贯到脚底；等它回身的一瞬，我才收紧骨线。离去的是雷，留下的是一层更密的骨质。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我顺着来势跪下，双膝砸进泥里。雷从脊柱贯到脚底，又在离身前猛地回卷。', speaker: 'narrator' },
+          { text: '我等的就是那一刻。骨线收紧，离开的仍是雷，留下的余劲却在膝骨外凝成一层更密的白。', speaker: 'self' },
+          { text: '我用了很久才站起来。采药女留在门边的木杖正好够高——她没进屋，只在杖头绑了一小包止痛草。', speaker: 'narrator', requires: 'flag:herb-saved' },
+          { text: '我用了很久才站起来。门外没有人，只有风把一截断草吹到台阶上。我忽然想起崖边那条没有回头确认的路。', speaker: 'narrator', requires: 'flag:herb-abandoned' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 10 },
@@ -679,13 +736,18 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'lifespan', value: -6 },
           { kind: 'flag', target: 'temper-stage3-steady' }
         ],
-        goto: 'act2.temper'
+        goto: 'act2.alchemy'
       },
       {
         id: 'force',
         label: '逆势站起，把来势和去势一并压住',
-        response: '我站住了，也听见腿骨里一连串细碎的裂声。两股力都被留下，淬炼更深；可从此每逢雷雨，膝弯都会先一步发痛。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我逆着雷站了起来。第一步成功，第二步却把来势和回势一并锁进腿骨，细碎的裂声从膝弯一路爬到髋骨。', speaker: 'narrator' },
+          { text: '我站住了。往后每逢阴雨，膝骨也会比天空更早知道雷要来。', speaker: 'self' },
+          { text: '采药女把止痛草放在门边，没有问我为什么总把能慢慢做的事，逼成必须当场赢下来的事。', speaker: 'narrator', requires: 'flag:herb-saved' },
+          { text: '我扶着门框熬过那一夜。疼得最厉害时，崖边那句“我会找人回来”又在脑中响了一遍。', speaker: 'narrator', requires: 'flag:herb-abandoned' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 7 },
@@ -694,7 +756,7 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'defiance', value: 5 },
           { kind: 'flag', target: 'temper-stage3-forced' }
         ],
-        goto: 'act2.temper'
+        goto: 'act2.alchemy'
       }
     ],
     status: 'approved'
@@ -712,8 +774,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'on',
         label: '停雷三息，让药、阵与土地分担',
-        response: '第一息，药泥封住血；第二息，引雷石替我崩掉一角；第三息，脚下湿土吞走余热。新骨在这三口喘息里一寸寸接回。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我压下继续引雷的手。第一息，药泥封住血；第二息，引雷石替我崩掉一角；第三息，脚下湿土吞走余热。', speaker: 'narrator' },
+          { text: '新骨在这三口喘息里一寸寸接回。它没有因此变弱，只不再把“全由我承担”误认成勇气。', speaker: 'self' },
+          { text: '逆的纸条被汗浸软。我终于把他没说完的那个“勿”字，读成了一句可以照做的话。', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 10 },
@@ -721,13 +787,17 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'lifespan', value: -7 },
           { kind: 'flag', target: 'temper-stage4-shared' }
         ],
-        goto: 'act2.temper.late'
+        goto: 'act2.encounter.hub'
       },
       {
         id: 'force',
         label: '不停雷，让新骨在雷中一次长成',
-        response: '我把纸压回残卷。新骨确实长得更快，代价是每一寸都带着未散的雷意；它们服从我，也时时想把我从里面烧开。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把纸条压回残卷，没有停雷。新骨在旧骨尚未完全崩落时强行长出，两层骨质彼此挤压，像身体里同时住着两个方向相反的人。', speaker: 'narrator' },
+          { text: '它们长得更快，也带着未散的雷意。平静时服从，夜深以后却时时想把我从里面烧开。', speaker: 'self' },
+          { text: '我又一次证明自己能独自撑过去。至于为什么非要证明，雷没有问。', speaker: 'heart-demon' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 7 },
@@ -736,7 +806,7 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'defiance', value: 6 },
           { kind: 'flag', target: 'temper-stage4-forced' }
         ],
-        goto: 'act2.temper.late'
+        goto: 'act2.encounter.hub'
       }
     ],
     status: 'approved'
@@ -754,8 +824,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'on',
         label: '反复默念我曾接住的人与事',
-        response: '名字仍有缺口，可那些人的手、眼神和欠下的情分留了下来。它们不解释我是谁，却阻止我变成一条只会运转的功法。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我先想起一双旧布鞋，再想起木闸边递来的水瓢、泥路上的车辙、有人把止痛草绑在杖头的手。', speaker: 'narrator' },
+          { text: '旧名仍有缺口，可这些人的动作留了下来。它们不能证明我还是原来的人，却阻止我变成一条只会运转的功法。', speaker: 'self' },
+          { text: '雷声退远时，我听见村里有人在敲粮仓的门。第五劫保住了记忆，接下来要决定的，是这些记忆是否只用来安慰我自己。', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 9 },
@@ -764,13 +838,17 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'bond', value: 4 },
           { kind: 'flag', target: 'kept-human-anchor' }
         ],
-        goto: 'act2.temper.late'
+        goto: 'act2.side.famine'
       },
       {
         id: 'force',
         label: '放弃旧名，让空灵根运转得更彻底',
-        response: '我不再追那两个已经模糊的字。功法顿时顺畅许多，识海也安静下来；只是那安静太像一间被搬空的屋子。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我不再追那两个已经模糊的字。它们从舌尖退开以后，雷在识海里骤然顺畅，像终于清掉一块碍事的石头。', speaker: 'narrator' },
+          { text: '安静随之落下来。那不是平和，更像一间被搬空的屋子：走动更容易了，也再没有什么会在深夜碰响。', speaker: 'self' },
+          { text: '雷声退远时，村里有人敲响粮仓。那声音传进来，我花了一息才想起，自己为什么应该在意。', speaker: 'heart-demon' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 8 },
@@ -780,7 +858,7 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'bond', value: -2 },
           { kind: 'flag', target: 'shed-old-name' }
         ],
-        goto: 'act2.temper.late'
+        goto: 'act2.side.famine'
       }
     ],
     status: 'approved'
@@ -798,8 +876,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'on',
         label: '以灵田为阵，让万物各接一线',
-        response: '雷落下时，田渠亮成一张巨大的脉络。根须替我引路，湿土替我卸势，引雷石替我先碎；我仍受伤，却第一次没有把所有疼痛都关在自己体内。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '雷落下时，田渠亮成一张巨大的脉络。根须替我引路，湿土替我卸势，引雷石替我先碎。', speaker: 'narrator' },
+          { text: '我仍旧受伤，仍旧听见胸骨裂开，却第一次没有把所有疼痛都关在自己体内。分出去的力量没有消失，它变成田边同时亮起的许多微小回应。', speaker: 'self' },
+          { text: '云散以后，倒伏的稻叶一片片重新抬起。我终于走完残卷前六重，也终于知道“圆满”不等于身上再无裂缝。', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 12 },
@@ -808,13 +890,17 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'bond', value: 4 },
           { kind: 'flag', target: 'full-cycle-field' }
         ],
-        goto: 'act2.train'
+        goto: 'act3.entry'
       },
       {
         id: 'force',
         label: '以自身为唯一阵眼，独吞整道雷',
-        response: '我把田渠全部切断。雷只在我体内完成四步，干净、迅速、没有旁支；等云散时，脚下的草全伏倒了，只有我还站着。',
-        speaker: 'self',
+        tags: ['major'],
+        responseLines: [
+          { text: '我切断田渠，让所有泄口只指向自己。雷在体内完成四步，干净、迅速，没有一丝力量分给脚下的根和水。', speaker: 'narrator' },
+          { text: '云散时，周围的草全伏倒了，只有我还站着。那一刻的确像胜利——若不去看田边被灼黑的那一圈。', speaker: 'self' },
+          { text: '我走完了前六重。也把那张劝我分担的纸，留在了身后。', speaker: 'heart-demon' }
+        ],
         effects: [
           { kind: 'add', target: 'cultProgress', value: 1 },
           { kind: 'add', target: 'tribGrip', value: 8 },
@@ -823,7 +909,17 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
           { kind: 'add', target: 'defiance', value: 8 },
           { kind: 'flag', target: 'full-cycle-self' }
         ],
-        goto: 'act2.train'
+        goto: 'act3.entry'
+      },
+      {
+        id: 'break',
+        label: '撕开全部旧骨线，让六道雷一次完成',
+        tags: ['major'],
+        responseLines: [
+          { text: '我已经知道每一步该怎么走，于是开始相信，次序只是给不够强的人准备的扶手。', speaker: 'self' },
+          { text: '止劫符被撕开的声音很轻。天上的六道雷却同时找到了入口。', speaker: 'narrator' }
+        ],
+        goto: 'act2.madness-death'
       }
     ],
     status: 'approved'
@@ -834,34 +930,45 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.script },
     lines: [
       { text: '残缺丹谱只能拼出七成。主药能护住新骨，缺失的那三成却决定丹毒往哪里沉。', speaker: 'narrator' },
-      { text: '炉开时，一丝熟悉的腥味从丹香里钻出来——和我初到此地误食的毒菇相近。那次侥幸活下来的记忆，终于不只是笑谈。', speaker: 'narrator' },
+      { text: '炉开时，一丝铁腥味从丹香里钻出来。逆在丹谱边写过同样的气味：药力越完整，毒越会藏进没有立刻疼痛的地方。', speaker: 'narrator' },
       { text: '我可以牺牲药性，把毒逼出去；也可以把药力全部封进丹里，承认它会在以后讨债。', speaker: 'self' }
     ],
     choices: [
       {
         id: 'back',
         label: '弃去三成药力，慢火逼出毒性',
-        response: '丹丸最后只剩拇指大，颜色也淡了。它不能替我渡劫，却能在碎骨时护住一口气。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把炉火压低，守了整整一夜。黑烟从丹丸里一点点逼出，药香随之变淡，最后只剩一枚拇指大的灰白小丹。', speaker: 'narrator' },
+          { text: '它不能替我渡劫，也不能让疼痛消失；它只够在骨头碎开时，替心脉留住一口气。', speaker: 'self' },
+          { text: '我把那口气看得比完美更重要。', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'pillPoison', value: 8 },
           { kind: 'add', target: 'tribGrip', value: 8 },
           { kind: 'add', target: 'lifespan', value: -2 },
           { kind: 'flag', target: 'alchemy-purified' }
         ],
-        goto: 'act2.train'
+        goto: 'act2.village.hub'
       },
       {
         id: 'seal',
         label: '保全药力，把丹毒一并封入',
-        response: '丹成得近乎完美。我吞下去时没有疼，只在舌根留下一点铁锈味——越安静的代价，往往越晚开口。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我封死最后一道出烟口。丹丸成得近乎完美，表面连一丝裂纹都没有。', speaker: 'narrator' },
+          { text: '吞下去时不疼，只在舌根留下一点铁锈味。那份安静让我满意，也让我想起逆写在页边的话：不要相信不疼的丹。', speaker: 'self' },
+          { text: '我没有吐出来。代价既然已经咽下去，沉默并不会让它变轻。', speaker: 'heart-demon' }
+        ],
         effects: [
           { kind: 'add', target: 'pillPoison', value: 35 },
           { kind: 'add', target: 'tribGrip', value: 12 },
           { kind: 'add', target: 'lifespan', value: -5 },
           { kind: 'add', target: 'madness', value: 4 },
+          { kind: 'add', target: 'defiance', value: 15 },
           { kind: 'flag', target: 'alchemy-sealed-poison' }
         ],
-        goto: 'act2.train'
+        goto: 'act2.village.hub'
       },
       {
         id: 'overdose',
@@ -1019,31 +1126,42 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 2,
     layerKeys: { bg: CG.villageDawn },
     lines: [
-      { text: '采药女一条腿卡在崖缝里，背篓已经坠下去。她看见我，先看我的眼睛，再看我身后的路。', speaker: 'narrator' },
-      { text: '救她要在天黑前折返十里；不救，我仍能赶上自己的修炼时辰。', speaker: 'self' }
+      { text: '第二劫后的第十二天，我去山腰找封骨草。回程时，崖下传来一声很短的呼救，像喊的人已经试过很多次，不敢再浪费力气。', speaker: 'narrator' },
+      { text: '采药女一条腿卡在石缝里，背篓早已坠下去。她看见我，先看我的肩伤，再看天色：「你一个人背不动我。」', speaker: 'narrator' },
+      { text: '她说得没错。若现在下崖，我会错过今晚最稳的一场雷；若继续赶路，她也许能等到别人，也许不能。', speaker: 'self' }
     ],
     choices: [
       {
         id: 'save',
         label: '拆下背带固定伤腿，背她下山',
-        response: '她一路咬着衣袖没出声。到村口才把一包止血草塞给我，说这不是谢礼，是下次别把自己也弄断。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把背带绕过她的膝弯，又削了两根树枝固定伤腿。真正把她背起来时，肩后的裂口立刻重新渗血。', speaker: 'narrator' },
+          { text: '她一路咬着衣袖，没有催我。我们在天黑以后才到村口，那场原本要接的雷已经散了。', speaker: 'narrator' },
+          { text: '她把一包止血草塞给我，说这不是谢礼：「是让你下次救人以前，先别把自己也弄断。」我疼得笑了一声——这句话比仙门的教诲实用。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 8 },
           { kind: 'add', target: 'lifespan', value: -2 },
           { kind: 'flag', target: 'herb-saved' }
         ],
-        goto: 'act2.side.hub'
+        goto: 'act2.temper.stage3'
       },
       {
         id: 'abandon',
-        label: '记住她的位置，先赶自己的路',
-        response: '我告诉自己会找人回来。可走出很远以后，天已经黑了；我没有再确认她是否等到别人。',
+        label: '记下位置，先赶回田里接雷',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把附近的山势和那棵歪松记住，答应她会去村里叫人，然后转身赶路。', speaker: 'narrator' },
+          { text: '那道雷来得准时。我也准时站进阵里。等云散时天已经全黑，肩伤没有加重，第三劫的准备一项不少。', speaker: 'narrator' },
+          { text: '我没有再下山确认她是否等到别人。往后每次想起这件事，我最先记得的不是她的脸，而是自己那晚准备得多么周全。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 15 },
           { kind: 'add', target: 'bond', value: -2 },
           { kind: 'flag', target: 'herb-abandoned' }
         ],
-        goto: 'act2.side.hub'
+        goto: 'act2.temper.stage3'
       }
     ],
     status: 'approved'
@@ -1129,13 +1247,18 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'flee',
         label: '引雷入地，借田脉遮断剑意',
-        response: '我没有赢，只让整片田替我藏住一息。萧无极收剑时说，下次再见，不会再给我退路。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把剑意引进田脉，六条旧渠同时亮起。整片田替我藏住一息，也替我承受了被剑光削断的根。', speaker: 'narrator' },
+          { text: '我没有赢。萧无极收剑时说，下次再见，不会再给我退路。', speaker: 'narrator' },
+          { text: '他离开后，我跪在田里把断根一株株接回。逃走并不比迎战轻，它只是把活下来的工作全部留给以后。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 5 },
           { kind: 'add', target: 'tribGrip', value: 2 },
           { kind: 'flag', target: 'escaped-xiao' }
         ],
-        goto: 'act2.side.more-hub'
+        goto: 'act2.temper.stage5'
       }
     ],
     status: 'approved'
@@ -1158,22 +1281,44 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.farmAutumn },
     lines: [
       { text: '荒年比预想来得早。仓里见底以后，村中老人先把自己的份量减半，孩子却仍在长。', speaker: 'narrator' },
-      { text: '我的灵田还能保住修炼所需，也能拆掉阵眼多种一季凡粮；两件事不能同时做到。', speaker: 'self' }
+      { text: '我的灵田还能保住第六劫所需，也能拆掉一座阵眼，赶在霜前多种一季凡粮。两件事不能同时做到。', speaker: 'narrator' },
+      { text: '没有哪个选项能让所有人毫发无伤。一个会把风险留给我的终劫，一个会把饥饿留在别人的冬天。', speaker: 'self' }
     ],
     choices: [
       {
         id: 'share',
         label: '拆一座引雷阵，把田让给凡粮',
-        response: '那一季我少了一处渡劫阵眼，村里却没有人饿死。孩子们收割时，把第一捆稻谷放在我门前。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我拆掉东侧阵眼，把灵土翻成能种凡粮的浅畦。那一季我少了一处渡劫泄口，也少睡了许多夜。', speaker: 'narrator' },
+          { text: '霜降前，村里收下最后一批稻谷。孩子们把第一捆放在我门前，稻穗还带着潮气。', speaker: 'narrator' },
+          { text: '这不是免费的善意。第六劫会更难；只是到了那时，我至少知道自己为什么少了一块阵石。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 10 },
           { kind: 'add', target: 'lifespan', value: -10 },
           { kind: 'add', target: 'tribGrip', value: -3 },
           { kind: 'flag', target: 'shared-famine-grain' }
         ],
-        goto: 'act2.side.more-hub'
+        goto: 'act2.temper.stage6'
       },
-      { id: 'leave', label: '封住灵田，离村寻找自己的活路', goto: 'act2.famine-death' }
+      {
+        id: 'keep',
+        label: '封住灵田，只把仓中余粮分出去',
+        tags: ['major'],
+        responseLines: [
+          { text: '我没有拆阵，只把自己能省下的粮全部搬进公仓。那点粮让最难熬的几户多撑了半月，却填不满整个冬天。', speaker: 'narrator' },
+          { text: '有人理解，有人不再来我门前。两种反应都合理；我保住了第六劫，也让别人替这个决定承担了看得见的部分。', speaker: 'self' },
+          { text: '第一场雪落下时，灵田的阵纹一笔未缺。村里的炊烟却比往年少了几处。', speaker: 'narrator' }
+        ],
+        effects: [
+          { kind: 'add', target: 'defiance', value: 15 },
+          { kind: 'add', target: 'bond', value: -5 },
+          { kind: 'add', target: 'tribGrip', value: 4 },
+          { kind: 'flag', target: 'kept-tribulation-field' }
+        ],
+        goto: 'act2.temper.stage6'
+      }
     ],
     status: 'approved'
   },
@@ -1205,16 +1350,15 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     id: 'act2.village.hub',
     act: 2,
     layerKeys: { bg: CG.villageDawn },
-    revisitMode: 'choices-only',
     lines: [
-      { text: '荒村仍把我当作当年那个背锄头回来的人。修为越高，这种不变越显得珍贵，也越容易被我亲手弄丢。', speaker: 'narrator' }
+      { text: '第三劫以后，我在床上躺了二十多天。荒村的人轮流送饭，没有谁问我修到了哪一重，只问伤口还渗不渗血。', speaker: 'narrator' },
+      { text: '能下地时，秋收已经近了。老李家的旧渠又堵，集市来了一批便宜得反常的灵米，村口的孩子则在学一首关于无面人的旧歌。', speaker: 'narrator' },
+      { text: '第四劫前只剩半日。我不可能把所有事都做完，只能决定这半日要留在哪一处。', speaker: 'self' }
     ],
     choices: [
-      { id: 'ditch', label: '修好老李家反复淤堵的旧渠', once: true, goto: 'act2.village.ditch' },
-      { id: 'market', label: '陪老李去辨一批来路可疑的灵米', once: true, goto: 'act2.village.market' },
-      { id: 'song', label: '听孩子们唱无面人的旧歌', once: true, goto: 'act2.village.song' },
-      { id: 'go-out', label: '沿山道拜访几位同路人', goto: 'act2.encounter.hub' },
-      { id: 'back', label: '回灵田继续修炼', goto: 'act2.train' }
+      { id: 'ditch', label: '把半日留给那条总会淤堵的旧渠', goto: 'act2.village.ditch' },
+      { id: 'market', label: '陪老李去集市，把那批灵米查清', goto: 'act2.village.market' },
+      { id: 'song', label: '坐到村口，听完无面人的旧歌', goto: 'act2.village.song' }
     ],
     status: 'approved'
   },
@@ -1230,10 +1374,11 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     lines: [
       { text: '老李家旧渠不是堵在一处，而是坡度年年沉降，水每次都在同一个弯口失去去路。', speaker: 'narrator' },
       { text: '我没有用灵力把淤泥炸开，只领着几个人重定坡、加溢口。渠水慢慢转过弯，连旁边紊乱的灵气也跟着安静。', speaker: 'narrator' },
-      { text: '忘言叟当年那句“先看水往哪里走”，到这里才真正回到我手上。', speaker: 'self' }
+      { text: '忙到日落，老李蹲在渠边看了很久，说这条水路至少还能用十年。', speaker: 'narrator' },
+      { text: '忘言叟当年那句“先看水往哪里走”，到这里才真正回到我手上。功法教我借雷，村里却先教会我，路若只够自己活，就不算修好。', speaker: 'self' }
     ],
     choices: [
-      { id: 'back', label: '洗掉手上的泥，回村', goto: 'act2.village.hub' }
+      { id: 'back', label: '洗掉手上的泥，去迎第四劫', goto: 'act2.temper.stage4' }
     ],
     status: 'approved'
   },
@@ -1250,10 +1395,10 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       { text: '集市上一批灵米便宜得反常，米香下压着极淡的腥味。老李已经掏出钱，我让他先等。', speaker: 'narrator' },
       { text: '我碾开一粒，颜色与丹炉里那味赤散相同。卖家用灵香盖住了毒，凡人吃不出第一口的异样。', speaker: 'narrator' },
       { text: '我把证据摊在众人面前。卖家卷摊逃走，老李追不上，只抱着钱袋站在原地喘气。', speaker: 'narrator' },
-      { text: '第一次误食教我的东西，终于替别人挡住了一次。亏没有消失，只是换了一个迟到的用处。', speaker: 'self' }
+      { text: '若不是那夜守着丹炉闻过同一种铁腥，这批米会在冬天进许多人的锅。修行第一次没有只改变我的骨头。', speaker: 'self' }
     ],
     choices: [
-      { id: 'back', label: '陪老李把真米买齐，回村', goto: 'act2.village.hub' }
+      { id: 'back', label: '陪老李把真米买齐，去迎第四劫', goto: 'act2.temper.stage4' }
     ],
     status: 'approved'
   },
@@ -1273,18 +1418,43 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     choices: [
       {
         id: 'whistle',
-        label: '把山路上得到的木哨递给领唱的孩子',
+        label: '把木哨还给认出它的孩子',
         requires: 'flag:got-wooden-whistle',
         tags: ['hide-when-unavailable'],
-        once: true,
-        response: '孩子认出了那穗歪斜的稻子：这是我娘小时候刻给外祖父的。外祖父总说，有个背锄头的人在山路上救过他。木哨绕了一圈，终于回到那家人的手里。',
+        responseLines: [
+          { text: '领唱的孩子认出了哨面那穗歪斜的稻子：「这是我娘小时候刻给外祖父的。」', speaker: 'narrator' },
+          { text: '外祖父总说，年轻时在山路上遇见过一个背锄头的人。木哨绕了许多年，终于回到那家人的手里；那桩小事也终于有了后来。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 4 },
-          { kind: 'flag', target: 'wooden-whistle-returned' }
+          { kind: 'flag', target: 'wooden-whistle-returned' },
+          { kind: 'unflag', target: 'got-wooden-whistle' }
         ],
-        goto: 'act2.village.song'
+        goto: 'act2.temper.stage4'
       },
-      { id: 'back', label: '等歌唱完，回村', goto: 'act2.village.hub' }
+      {
+        id: 'keep-whistle',
+        label: '把木哨留在腕间，记住山路上的那一刻',
+        requires: 'flag:got-wooden-whistle',
+        tags: ['hide-when-unavailable'],
+        responseLines: [
+          { text: '我没有拿出木哨，只隔着衣袖摸到它的轮廓。孩子们唱完时，最后一个音落在暮色里。', speaker: 'narrator' },
+          { text: '有些东西回到原主手里才算圆满；有些东西被留下，是因为持有它的人还没有学会告别。我分不清自己属于哪一种。', speaker: 'self' }
+        ],
+        effects: [{ kind: 'flag', target: 'wooden-whistle-kept' }],
+        goto: 'act2.temper.stage4'
+      },
+      {
+        id: 'back',
+        label: '等歌唱完，把最后一句记进残卷',
+        requires: '!flag:got-wooden-whistle',
+        tags: ['hide-when-unavailable'],
+        responseLines: [
+          { text: '歌里没有神通，只有一个人怎样除虫、改渠，又怎样不肯留下名字。孩子们把许多词唱错了，做过的事却一件没有少。', speaker: 'narrator' },
+          { text: '我把最后一句记进残卷。传说也许不准确，但它至少知道该感谢什么。', speaker: 'self' }
+        ],
+        goto: 'act2.temper.stage4'
+      }
     ],
     status: 'approved'
   },
@@ -1292,31 +1462,28 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     id: 'act2.encounter.hub',
     act: 2,
     layerKeys: { bg: CG.villageDawn },
-    revisitMode: 'choices-only',
     lines: [
-      { text: '山道上走着各自不完整的人。有人知道逆，有人只知道草药和阵纹；他们能给我的，不会自动成为我的。', speaker: 'narrator' }
+      { text: '第四劫以后，我收到几封口信。有人见过逆最后一次借宿；采药女的药田出了麻烦；阵匠老陆找到一张能改变终劫的图；萧无极也再次到了山谷外。', speaker: 'narrator' },
+      { text: '第五劫已经在识海里起雷。我只来得及赴一处约——不是因为其余的人不重要，而是时间终于开始像寿元一样，可以被花完。', speaker: 'self' }
     ],
     choices: [
-      { id: 'wanderer', label: '听游方散修讲逆最后一次借宿', once: true, goto: 'act2.encounter.wanderer' },
+      { id: 'wanderer', label: '去破庙，见最后收留过逆的人', goto: 'act2.encounter.wanderer' },
       {
         id: 'herbgirl',
-        label: '去看被我背下山的采药女',
+        label: '去药田，见被我背下山的采药女',
         requires: 'flag:herb-saved',
         tags: ['hide-when-unavailable'],
-        once: true,
         goto: 'act2.encounter.herbgirl'
       },
       {
         id: 'herbgirl-cold',
-        label: '去见那位我没有回头救的人',
+        label: '去药田，面对那位我没有回头救的人',
         requires: 'flag:herb-abandoned',
         tags: ['hide-when-unavailable'],
-        once: true,
         goto: 'act2.encounter.herbgirl-cold'
       },
-      { id: 'artificer', label: '帮阵匠老陆校一座护田阵', once: true, goto: 'act2.encounter.artificer' },
-      { id: 'ring-peek', label: '在无人处读逆留下的夹页', once: true, goto: 'act2.encounter.ring-peek' },
-      { id: 'back', label: '离开山道，回荒村', goto: 'act2.village.hub' }
+      { id: 'artificer', label: '去阵坊，和老陆校完那张反向阵图', goto: 'act2.encounter.artificer' },
+      { id: 'xiao', label: '留在田界，等萧无极的剑落下来', goto: 'act2.side.xiao' }
     ],
     status: 'approved'
   },
@@ -1337,23 +1504,31 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'help',
         label: '替他拖住追兵，让半张图先走',
-        response: '我借田脉制造了三处假雷痕。追兵被引开时，他没有道谢，只说紫雷关外见——如果我们都活得到那里。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我借田脉制造三处假雷痕，把追兵引向不同山口。游方散修背着那半张图先走，直到安全处才回头。', speaker: 'narrator' },
+          { text: '他没有道谢，只说：「紫雷关外见——如果我们都活得到那里。」这句约定没有保证，却比任何誓言都诚实。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 8 },
           { kind: 'flag', target: 'wanderer-helped' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       },
       {
         id: 'stay-out',
         label: '不认玉佩，也不认这桩旧账',
-        response: '我退开一步。追兵带走他时，那半张图从袖中落下，被泥水泡烂；我知道它原本可以到我手里。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把玉佩收回衣内，退开一步。追兵带走他时，那半张图从袖中滑落，被泥水一点点泡开。', speaker: 'narrator' },
+          { text: '我没有失去一件本来属于我的东西。可正因为如此，站在原地看它烂掉才显得如此容易。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 12 },
           { kind: 'add', target: 'bond', value: -2 },
           { kind: 'flag', target: 'wanderer-refused' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       }
     ],
     status: 'approved'
@@ -1375,24 +1550,34 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'stand',
         label: '把药田接入公共水渠，逼对方公开争理',
-        response: '界碑最后被移到山脊外。她把一包淬骨药交给我，条件是渡劫后若还活着，回来告诉她哪一味最疼。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我们把药田接进公共水渠，又把界碑和旧地契一起抬到村议前。对方还能仗修为，却不能再假装这里从来无人耕种。', speaker: 'narrator' },
+          { text: '界碑最终被移到山脊外。她把一包淬骨药交给我，条件是渡劫后若还活着，回来告诉她哪一味最疼。', speaker: 'narrator' },
+          { text: '我答应了。承诺未必能让我活下来，却让“活下来”第一次有了一个具体的去处。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 8 },
           { kind: 'lore', target: 'lore', value: 1 },
           { kind: 'flag', target: 'herb-allied' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       },
       {
         id: 'deaf',
         label: '收下配方，不介入她与修士的争端',
-        response: '她把配方从我手里抽回去，说救命和站在谁那边，原来真是两回事。药田后来是否保住，我没有再问。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我说第五劫将至，不能再卷进一场没有把握的争端。她听完，把刚递出的配方从我手里抽了回去。', speaker: 'narrator' },
+          { text: '「救命和站在谁那边，原来真是两回事。」她说得很平静。药田后来是否保住，我没有再问。', speaker: 'narrator' },
+          { text: '我救过她。那件事没有因此变成一张可以反复抵扣的凭证。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 12 },
           { kind: 'add', target: 'bond', value: -2 },
           { kind: 'flag', target: 'herb-help-refused' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       }
     ],
     status: 'approved'
@@ -1410,24 +1595,34 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'atone',
         label: '承认失约，留下来把石料搬完',
-        response: '她没有原谅我，也没有赶我走。天黑前我们只谈石料该放哪里；有些关系不能恢复原样，只能从真实的损伤上重新开始。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我承认那晚没有叫人，也没有回去。解释说完以后，事实没有变轻。', speaker: 'narrator' },
+          { text: '她没有原谅我，也没有赶我走。天黑前我们只谈石料该放哪里；她指，我搬，木杖敲在地上替我们计算距离。', speaker: 'narrator' },
+          { text: '临走前，她丢来一小包最普通的封血草：「不是原谅。你第五劫若死在路上，今天这些石头就白搬了。」', speaker: 'narrator' },
+          { text: '有些关系不能恢复原样，只能从真实的损伤上重新开始。能开始，已经不是理所当然。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 6 },
           { kind: 'add', target: 'lifespan', value: -3 },
           { kind: 'flag', target: 'herb-atone' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       },
       {
         id: 'leave',
         label: '不为已经发生的事停下',
-        response: '我转身离开。木杖敲在石头上的声音没有追来，可我知道下一次也不会再有求救声。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我说第五劫将至，过去的事已经无法补回。她没有争辩，只把一块石料拖向自己。', speaker: 'narrator' },
+          { text: '我转身离开。木杖敲在石头上的声音没有追来，可我知道，下一次也不会再有求救声。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 8 },
           { kind: 'add', target: 'bond', value: -2 },
           { kind: 'flag', target: 'herb-abandoned-again' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       }
     ],
     status: 'approved'
@@ -1449,24 +1644,32 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'refuse',
         label: '只记护阵，把泄口留给所有田',
-        response: '我把四笔夺流纹划掉，另抄了一份护阵图给村里。老陆说这法子不够狠，却能让更多人活。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把四笔夺流纹从自己的抄本上划掉，又按村里每块田的坡势重排泄口。', speaker: 'narrator' },
+          { text: '老陆说这法子不够狠，终劫时少不了吃亏。我问他能不能让更多田活下来。他看了半晌，重新拿起笔：「能。那就把吃亏也算进图里。」', speaker: 'narrator' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 6 },
           { kind: 'flag', target: 'array-guarded' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       },
       {
         id: 'learn',
         label: '连夺流纹一起记下，终局或许用得上',
-        response: '我没有立刻害谁，只把那四笔收进袖中。可从记住它们开始，邻人的雷力就多了一种可能的去处。',
+        tags: ['major'],
+        responseLines: [
+          { text: '我把四笔夺流纹一并抄下。它们简单、有效，甚至不需要现在决定要从谁那里夺走力量。', speaker: 'narrator' },
+          { text: '可从记住它们开始，邻人的雷力就多了一种可能的去处。工具尚未伤人，并不等于选择它时没有方向。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'defiance', value: 12 },
           { kind: 'add', target: 'bond', value: -2 },
           { kind: 'add', target: 'tribGrip', value: 4 },
           { kind: 'flag', target: 'array-stolen' }
         ],
-        goto: 'act2.encounter.hub'
+        goto: 'act2.temper.stage5'
       }
     ],
     status: 'approved'
@@ -1496,8 +1699,10 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     act: 3,
     layerKeys: { bg: CG.shennongCave },
     lines: [
-      { text: '第六劫过后，灵田中央那条最老的根自行裂开，露出一扇埋在地下的石门。门上没有禁制，只有与残卷正文相同的四个刻痕。', speaker: 'narrator' },
-      { text: '我带着已经找到的线索进去。没找到的部分也不会凭空算作经历；洞府若要补全它们，就必须拿出证据。', speaker: 'self' }
+      { text: '第六劫后的第三夜，灵田中央那条最老的根在月下裂开，泥土缓慢下陷，露出一扇埋了不知多少年的石门。', speaker: 'narrator' },
+      { text: '门上没有禁制，只有“察漏、引路、借势、淬骨”四道刻痕。我的血落上去毫无反应；把手掌贴进田泥，门却从根系深处传来一声闷响。', speaker: 'narrator' },
+      { text: '它认的不是血脉，也不是修为。它认这片田是否仍活着。', speaker: 'self' },
+      { text: '石门开启时，一股干燥的纸灰味从地下涌上来。百万年前有人把答案留在这里，也把不能回答的部分一起留下。', speaker: 'narrator' }
     ],
     choices: [
       { id: 'on', label: '点亮残卷，走入洞府', goto: 'act3.cave.entrance' }
@@ -1510,13 +1715,11 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.shennongCave },
     onEnter: [{ kind: 'lore', target: 'lore', value: 3 }],
     lines: [
-      { text: '洞口石壁刻着六组相连的图，不要求我猜谜，而是把散落的证据按时间排好。', speaker: 'narrator' },
-      { text: '第一组是荒年田地：一个无名异乡人被农户收留，以劳作换饭。第二组是虫壳和剖刀，他逐只记录虫害、土性与草木毒理。', speaker: 'narrator' },
-      { text: '第三组是不断改道的田渠，和我测出的回流完全一致。第四组是成倍的稻谷，以及凡人把一尊没有脸的石像抬到田边。', speaker: 'narrator' },
-      { text: '第五组开始出现引雷石。那人把灵田中的回流规律搬进人体，用空灵根接住天劫舍弃的余量。', speaker: 'narrator' },
-      { text: '第六组只有一卷没有写完的正文。旁边留着许多后来者的批注，其中最末一层，正是逆的笔迹。', speaker: 'narrator' },
-      { text: '村志、石像、虫壳、田渠、残卷和童谣至此闭合：神农不是凭神名降世，而是一个被凡人收留、用一生试错回报这片田的异乡人。', speaker: 'narrator' },
-      { text: '浮雕没有刻他最后去了哪里。证据能补全他的来路与所做之事，不能替我编造他的生死。', speaker: 'self' }
+      { text: '石阶尽头是一条狭长的廊。墙上没有仙人乘云的图，只有荒年、破屋和一张低矮饭桌：一个衣着异样的人坐在农户中间，手里端着借来的碗。', speaker: 'narrator' },
+      { text: '再往前，是被逐只剖开的虫壳、改了又填的田渠、写满失败年份的稻种。许多试验旁都刻着同一句小字：本季仍有人要吃饭。', speaker: 'narrator' },
+      { text: '我在村里见过这些结果，却直到这里才看见它们曾经失败的样子。神迹把三年压成一句话，石壁却把每一次虫灾和歉收都还了回来。', speaker: 'self' },
+      { text: '廊道后半才出现引雷石。那个人先学会让水与灵气穿过田，再把同样的路刻进自己的骨头。功法不是从天上落下来的；它从一顿欠下的饭开始。', speaker: 'narrator' },
+      { text: '最后一幅浮雕没有脸。农户们把收成堆在他门前，他却背着行囊走进雷云，只在田边留下四道刻痕。', speaker: 'narrator' }
     ],
     choices: [
       { id: 'on', label: '记下完整传说，继续往里', goto: 'act3.cave.lab' }
@@ -1529,11 +1732,11 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.shennongCave },
     onEnter: [{ kind: 'lore', target: 'lore', value: 3 }],
     lines: [
-      { text: '洞府深处不是祭坛，而是一间停在某次试验后的石室。墙上按年份排着土样、虫壳、断骨和引雷石，每件都有简体编号。', speaker: 'narrator' },
-      { text: '最早的记录只问怎样让一季庄稼活下来；几百页以后，问题才变成：天劫为何总把“不合常轨”的力量清除。', speaker: 'narrator' },
-      { text: '《偷天换劫诀》的正文就在这些失败记录上长出来。它不是突然悟得的秘法，而是从田、毒、阵和无数次骨折里慢慢逼出的结论。', speaker: 'narrator' },
-      { text: '另一只石匣里放着逆的抄本。他在扉页写得很清楚：正文属神农；页边校验与后六劫伤记，属逆。', speaker: 'narrator' },
-      { text: '两个异乡人没有跨越百万年互相说话。他们只是把可验证的部分留在纸上，让后来者不必从同一个错误重新死起。', speaker: 'self' }
+      { text: '洞府深处是一间停在某次试验后的石室。土样、虫壳、断骨和引雷石按年份排满墙面，每件都贴着简体编号。', speaker: 'narrator' },
+      { text: '最早的记录只问怎样让一季庄稼活下来。几百页以后，问题才变成：为什么天劫总能找到那些不合常轨的人。', speaker: 'narrator' },
+      { text: '《偷天换劫诀》就长在这些记录中间。每一条像口诀的结论，背后都压着被划掉的旧方案、坏死的骨样和一行“此法不可再试”。', speaker: 'narrator' },
+      { text: '另一只石匣里放着逆的抄本。正文是神农的旧字，页边则是我已经熟悉的那层新墨：右手颤、膝骨痛、勿独扛。', speaker: 'narrator' },
+      { text: '他们相隔得太久，从未彼此说过一句话。可一个人认真记下失败，另一个人便能少死在同一个错误里。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '带上抄本，走向无面石像', goto: 'act3.cave.faceless' }
@@ -1549,8 +1752,8 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       { text: '洞府尽头也有一尊无面石像。与村外那尊不同，它的基座从未被香火和手掌磨亮。', speaker: 'narrator' },
       { text: '基座上刻着正文最后完整的一段：偷天者非逆天。天道有余而弃之，我等拾其余，先护一身，再护一田。', speaker: 'narrator' },
       { text: '下一行被紫雷烧去大半，只剩：若后来者走到此处，愿你记得，飞升不是唯一能证明此路的……', speaker: 'narrator' },
-      { text: '句子停在这里。石室没有尸骨，也没有飞升遗痕。神农是死于最后一劫，还是已经越过它，仍旧没有答案。', speaker: 'narrator' },
-      { text: '但他留下的问题已经足够清楚：这条路最后要证明的，是我能离开，还是我能决定力量为何而用。', speaker: 'self' }
+      { text: '句子停在这里。石室没有尸骨，没有飞升遗痕，也没有一封替后人收束疑问的遗书。', speaker: 'narrator' },
+      { text: '我在像前站了很久。原来一个故事真正留下的空白，不是等后来者随意填满，而是提醒后来者：你只能从这里开始回答自己的问题。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '向无面石像行一礼，离开石室', goto: 'act3.cave.light' }
@@ -1563,8 +1766,8 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.purpleSky },
     lines: [
       { text: '走出洞府时，紫云已经压到田顶。最后一劫没有给我闭关百年的余地，只给了一个日落前的准备时辰。', speaker: 'narrator' },
-      { text: '我把逆的便笺压在残卷最后一页。能带进劫中的，只能是我此前真正留下的人、物与方法。', speaker: 'narrator' },
-      { text: '没有发生过的善缘不会突然赶来，没有学过的阵法也不会在最后一刻从天而降。', speaker: 'self' }
+      { text: '我把逆的便笺压在残卷最后一页，然后沿田埂走了一圈。旧渠、药包、阵图、木哨或一截空绳，各自在它们该在的位置。', speaker: 'narrator' },
+      { text: '有些位置空着。我没有把空处当作遗漏；那也是一路选择留下的形状。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '回到田上，清点真正拥有的准备', goto: 'act3.preparation' }
@@ -1586,7 +1789,10 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
         requires: 'flag:got-wooden-whistle',
         tags: ['hide-when-unavailable'],
         once: true,
-        response: '木哨若已还给孩子，我便只系上一截同样的旧绳。重要的不是占有它，而是我还记得那条山路上曾有人互相接住。',
+        responseLines: [
+          { text: '我把木哨系在左腕。它不是法器，挡不住一道雷；木纹里却还留着那条山路上的雨和泥。', speaker: 'narrator' },
+          { text: '终劫会烧掉许多东西。至少在它落下以前，我想清楚自己为何不愿把这一件忘掉。', speaker: 'self' }
+        ],
         effects: [
           { kind: 'add', target: 'bond', value: 4 },
           { kind: 'flag', target: 'prep-memory-anchor' }
@@ -1596,7 +1802,7 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
       {
         id: 'herbs',
         label: '把采药女的淬骨药放进停雷位',
-        requires: '(flag:herb-saved || flag:herb-atone)',
+        requires: '(flag:herb-allied || flag:herb-atone)',
         tags: ['hide-when-unavailable'],
         once: true,
         response: '药包上写着先敷左肩，再敷膝骨。她没有替我承受雷，只把我曾经留下的伤，一处处算进了准备。',
@@ -1660,11 +1866,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.tribulation },
     onEnter: [
       { kind: 'add', target: 'madness', value: 5 },
-      { kind: 'add', target: 'lifespan', value: -6 }
+      { kind: 'add', target: 'lifespan', value: -4 }
     ],
     lines: [
       { text: '紫雷不是一道光，而是一整片天同时收紧。它先压住呼吸，再让旧伤一处处发亮，像在核对我六次淬体留下的全部记录。', speaker: 'narrator' },
-      { text: '我没有抬手挡。第一劫教过我：在主力真正落下以前，雷尾会先从右肩旧伤旁探路。', speaker: 'narrator' },
+      { text: '右手先轻轻一颤。第一劫留下的抢早并没有被后来的力量治好，它只是比我更早认出了雷。', speaker: 'narrator', requires: 'flag:temper-stage1-forced' },
+      { text: '右肩旧伤先泛起一线凉意。第一劫留下的耐心没有变成天赋，只变成身体知道该再等半息。', speaker: 'narrator', requires: 'flag:temper-stage1-steady' },
       { text: '那一线苍白出现了。百万年的正文、逆的批注和我自己的伤，到这一刻只剩一个动作——看准它。', speaker: 'self' }
     ],
     choices: [
@@ -1678,12 +1885,14 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.tribulation },
     onEnter: [
       { kind: 'add', target: 'madness', value: 5 },
-      { kind: 'add', target: 'lifespan', value: -6 }
+      { kind: 'add', target: 'lifespan', value: -4 }
     ],
     lines: [
-      { text: '我扣住雷尾，田中六次淬体留下的旧槽同时亮起。紫雷想冲向心脉，预先刻好的骨线与泄雷沟便一层层把它挤回正路。', speaker: 'narrator' },
-      { text: '引路不是一条完美直线。右肩颤、膝骨痛、阵石裂，每处旧代价都在改变雷的方向，也都在证明此前的选择没有被重置。', speaker: 'narrator' },
-      { text: '阵外可能有人守着，也可能只有风；但药、渠、石与记忆是否在场，都是我自己一路带到这里的结果。', speaker: 'self' }
+      { text: '我扣住雷尾，六次淬体留下的旧槽同时亮起。紫雷想冲向心脉，预先刻好的骨线便一层层把它挤回正路。', speaker: 'narrator' },
+      { text: '第二劫强刻的那道深槽先承住雷，也先从肩后重新裂开。捷径没有消失，只在终局按原价回来。', speaker: 'narrator', requires: 'flag:temper-stage2-forced' },
+      { text: '第二劫留下的细线仍旧狭窄，却没有一处争抢方向。雷走得慢，我也因此多出一口能调整阵势的气。', speaker: 'narrator', requires: 'flag:temper-stage2-steady' },
+      { text: '修好的旧渠在田外接住第一股泄雷，水面瞬间亮成一条弯曲的银线。', speaker: 'narrator', requires: 'flag:village-ditch-repaired' },
+      { text: '阵外有多少人、多少物，并不由最后一刻决定。它们只是把一路上真实发生过的事，重新送到我手边。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '守住骨线，把雷送往下一处泄口', goto: 'act3.tribulation.borrow' }
@@ -1696,10 +1905,12 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.purpleSky },
     onEnter: [
       { kind: 'add', target: 'madness', value: 6 },
-      { kind: 'add', target: 'lifespan', value: -7 }
+      { kind: 'add', target: 'lifespan', value: -5 }
     ],
     lines: [
       { text: '紫雷走到脊柱时骤然回卷。来势要把我压入地底，去势又要把刚长成的骨全部带走。', speaker: 'narrator' },
+      { text: '四处护阵泄口依次崩开，没有一处向邻田夺力。风险没有消失，只被分到各自承受得住的位置。', speaker: 'narrator', requires: 'flag:prep-guard-array' },
+      { text: '夺流纹亮起时，远处几块田同时暗下去。我的阵势骤然变强，代价也在同一瞬有了方向。', speaker: 'narrator', requires: 'flag:prep-stolen-array' },
       { text: '我顺着来势俯身，手掌按进田泥；等雷开始回收，才借它自己的拉力把淬炼钉回骨缝。', speaker: 'narrator' },
       { text: '这一步没有胜过天。我只是让同一股力先完成天意，再完成我的意图。', speaker: 'self' }
     ],
@@ -1714,13 +1925,16 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     layerKeys: { bg: CG.tribulation },
     onEnter: [
       { kind: 'add', target: 'madness', value: 8 },
-      { kind: 'add', target: 'lifespan', value: -8 }
+      { kind: 'add', target: 'lifespan', value: -6 }
     ],
     lines: [
       { text: '旧骨终于承受不住。先是锁骨断开，随后肋骨、脊柱、膝骨依次失去形状；我听见身体内部像一座木屋在火中倒塌。', speaker: 'narrator' },
       { text: '淬骨不是疼过以后恢复原样。劫的余烬沿着六次旧痕填入裂口，长出的每一寸都更能承雷，也更难回到凡人的轻盈。', speaker: 'narrator' },
-      { text: '右手先重新有了知觉，仍带着第一劫留下的细颤；膝骨随后闭合，阴雨前仍会疼。力量没有抹掉代价，它只是让代价成为新身体的一部分。', speaker: 'narrator' },
-      { text: '最后闭合的是胸骨。那里压着逆的便笺，也压着我还愿意承认属于自己的那些人和事。', speaker: 'self' }
+      { text: '右手先重新有了知觉，细颤仍在；膝骨随后闭合，阴雨前的旧痛也没有离开。力量没有抹掉代价，只把代价编进新身体。', speaker: 'narrator' },
+      { text: '腕间的木哨被热浪烤得发烫。我已经听不见它的声音，却记得那条泥路和一双把家传之物递出来的手。', speaker: 'narrator', requires: 'flag:wooden-whistle-kept' },
+      { text: '腕间只系着一截旧绳。木哨已经回到孩子手里，记忆却没有因此离开。', speaker: 'narrator', requires: 'flag:wooden-whistle-returned' },
+      { text: '采药女写下的次序一一应验：左肩、膝骨、胸口。药不能替我受雷，却让每处伤在最坏以前多留了一息。', speaker: 'narrator', requires: 'flag:prep-herbs' },
+      { text: '最后闭合的是胸骨。那里压着逆的便笺，也压着我仍愿意承认属于自己的那些人和事。', speaker: 'self' }
     ],
     choices: [
       { id: 'on', label: '让最后一寸新骨合拢，抬头看天', goto: 'act3.tribulation.question' }
@@ -1809,6 +2023,32 @@ export const NARRATION_SCENES: readonly NarrationScene[] = [
     status: 'approved'
   }
 ];
+
+/**
+ * 2026-07 人工复测后的线性化裁剪：旧版第二幕把支线、线索和修炼都摊成可反复返回的菜单，
+ * 虽然图论可达，却把阅读切成许多彼此孤立的短卡片。保留数据一轮便于对照，运行时只发布
+ * 新主脊；待下一次内容清扫可物理删除这些旧节点。
+ */
+const RETIRED_MENU_SCENES = new Set<string>([
+  'act2.train.lore-hub',
+  'act2.temper',
+  'act2.temper.late',
+  'act2.peek',
+  'act2.farm-lore',
+  'act2.relic-lore',
+  'act2.annals-lore',
+  'act2.side.hub',
+  'act2.side.more-hub',
+  'act2.side.bully',
+  'act2.side.bribe',
+  'act2.side.whistle',
+  'act2.famine-death',
+  'act2.encounter.ring-peek'
+]);
+
+export const NARRATION_SCENES: readonly NarrationScene[] = ALL_NARRATION_SCENES.filter(
+  scene => !RETIRED_MENU_SCENES.has(scene.id)
+);
 
 function buildScenesById(scenes: readonly NarrationScene[]): ReadonlyMap<string, NarrationScene> {
   const map = new Map<string, NarrationScene>();

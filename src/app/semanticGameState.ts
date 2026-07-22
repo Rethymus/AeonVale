@@ -121,7 +121,7 @@ function pageContent(input: SemanticGameStateInput): SemanticPageContent {
       return {
         status: '标题菜单',
         objective: '开始一段本地旅程',
-        actions: input.presentation?.continueAvailable ? ['新游戏', '继续旅程', '设置'] : ['新游戏', '设置'],
+        actions: input.presentation?.continueAvailable ? ['开始游戏', '继续旅程', '设置'] : ['开始游戏', '设置'],
         panel: null
       };
     case 'prologue':
@@ -186,6 +186,8 @@ function pageContent(input: SemanticGameStateInput): SemanticPageContent {
       return { status: save?.endingStatus ?? '旅程已经结束', objective: '查看本次旅程结局', actions: ['返回标题'], panel: '结局' };
     case 'narration':
       return { status: '灵韵叙录进行中', objective: '阅读第一人称叙事，或在叙录界面回看章节与结局', actions: ['继续', '略过', '前文', '叙录'], panel: '灵韵叙录' };
+    case 'roguelite-proto':
+      return { status: '偷天换劫进行中', objective: '安排一世日课，并让资源、肉身与天劫形成因果链', actions: ['阅读入世录', '安排日课', '处理事件', '参悟残卷', '主动引劫'], panel: '偷天换劫' };
     case 'portrait-blocked':
       return { status: save?.portraitStatus ?? '当前存档状态尚未确认', objective: '旋转设备后继续', actions: ['请将设备横置'], panel: '设备方向提示' };
     default:

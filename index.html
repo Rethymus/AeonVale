@@ -119,7 +119,7 @@
           <p class="flow-lede">一方灵田，一炉草木，一场早知会来的雷。</p>
           <p id="flow-title-version" class="flow-version">版本 0.1.0 · 试玩构建</p>
           <div class="flow-actions flow-actions-stack" aria-label="开始选项">
-            <button id="flow-title-new-game" class="flow-button flow-button-primary" type="button" data-flow-action="start-new-game" data-flow-focusable="true">新游戏</button>
+            <button id="flow-title-new-game" class="flow-button flow-button-primary" type="button" data-flow-action="start-roguelite-proto" data-flow-focusable="true">开始游戏</button>
             <button id="flow-title-continue" class="flow-button" type="button" data-flow-action="continue-game" data-flow-focusable="true" aria-describedby="flow-continue-status" disabled hidden>继续旅程</button>
             <button id="flow-title-settings" class="flow-button flow-button-quiet" type="button" data-flow-action="open-settings" data-flow-focusable="true">设置</button>
             <button id="flow-title-narration" class="flow-button flow-button-narration" type="button" data-flow-focusable="true" aria-describedby="flow-title-narration-subtitle">
@@ -129,7 +129,7 @@
                   <span class="flow-button-mark" aria-hidden="true">✦</span>
                   <span class="flow-button-label">灵韵叙录</span>
                 </span>
-                <span class="flow-button-subtitle" id="flow-title-narration-subtitle">以灵韵写就，再叙一遍。</span>
+                <span class="flow-button-subtitle" id="flow-title-narration-subtitle">第一人称叙事 · 约一个安静的时辰</span>
               </span>
             </button>
           </div>
@@ -156,6 +156,15 @@
           <p class="flow-narration-foot">
             <button id="flow-narration-codex-open" class="flow-button flow-button-quiet narration-codex-toggle" type="button" data-flow-focusable="true">叙录</button>
           </p>
+        </div>
+      </section>
+
+      <section class="app-surface flow-surface roguelite-proto-surface" data-app-surface="roguelite-proto" aria-labelledby="flow-roguelite-proto-heading" aria-hidden="true" hidden inert>
+        <div class="flow-frame flow-frame-reading roguelite-frame">
+          <p class="flow-kicker">一世日课 · 天劫大考 · 劫灰传承</p>
+          <h1 id="flow-roguelite-proto-heading">偷天换劫</h1>
+          <p class="flow-lede">在有限余寿内安排日课，主动引劫；身死化灰，后来人继承一页残卷与一件旧物。</p>
+          <div id="roguelite-proto-root" data-app-slot="roguelite-proto" role="group" aria-label="修仙日程养成舞台"></div>
         </div>
       </section>
 
