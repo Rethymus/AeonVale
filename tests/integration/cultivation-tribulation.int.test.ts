@@ -33,10 +33,10 @@ describe('D27-d · 日程到天劫集成', () => {
   test('同一雷路下，苦练日程把过载死亡改为可承受结果', () => {
     const initial = createCultivationRunState();
     const trained = resolveCultivationAgenda(initial, {
-      slots: ['farming', 'training', 'training', 'rest', 'livelihood', 'insight']
+      slots: ['farming', 'training', 'training', 'training', 'rest', 'livelihood']
     });
     const untrained = resolveCultivationAgenda(initial, {
-      slots: ['farming', 'farming', 'livelihood', 'rest', 'livelihood', 'insight']
+      slots: ['farming', 'farming', 'livelihood', 'rest', 'livelihood', 'farming']
     });
     expect(trained.ok).toBe(true);
     expect(untrained.ok).toBe(true);
@@ -54,7 +54,7 @@ describe('D27-d · 日程到天劫集成', () => {
   });
 
   test('灵田→炼丹顺序产出的药与余草进入天劫准备', () => {
-    const result = resolveCultivationAgenda(createCultivationRunState(), {
+    const result = resolveCultivationAgenda(createCultivationRunState({ overrides: { stage: 1 } }), {
       slots: ['farming', 'alchemy', 'farming', 'alchemy', 'rest', 'training']
     });
     expect(result.ok).toBe(true);

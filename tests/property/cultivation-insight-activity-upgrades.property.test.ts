@@ -37,6 +37,7 @@ const caseArb: fc.Arbitrary<UpgradeCase> = fc.record({
   state: createCultivationRunState({
     seed: input.seed,
     overrides: {
+      stage: 6,
       lifespanRemainingDays: 840,
       food: 100,
       herbs: 100,

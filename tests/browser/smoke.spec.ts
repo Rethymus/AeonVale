@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { gameDebugSnapshot, gameEntryPath, waitForInitialSurface } from './openGame';
 
-const OPENING_TITLES = ['没有系统，也没有人来救你', '测不出的灵根，先学看水往哪里走', '仙人斗法时，凡人的田先碎了', '以劫为薪，以骨为柴'] as const;
+const OPENING_TITLES = ['这个世界的雷，先落在凡人屋顶', '测灵石上，你的答案是零', '修行之前，先弄清一碗饭从哪里来', '仙人斗法时，凡人的田先碎了', '测得是零，不等于什么都没进来'] as const;
 
 async function dismissOrientationIfPresent(page: import('@playwright/test').Page): Promise<void> {
   const override = page.locator('#orientation-override');
@@ -55,13 +55,14 @@ test('loads the current journey and reaches its desktop workbench without page e
     await expect(page.getByRole('heading', { name: title })).toBeVisible();
     await page.locator('.cr-opening__button[data-primary="true"]').click();
   }
-  await page.getByRole('button', { name: '翻开今世日课' }).click();
-  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
 
   await expect(page.locator('.rp-planning')).toBeVisible();
-  await expect(page.getByRole('heading', { name: '一世日课' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '劫前修途' })).toBeVisible();
   await expect(page.locator('.rp-agenda-slot')).toHaveCount(6);
-  await expect(page.locator('.rp-activity-btn')).toHaveCount(6);
-  await expect(page.locator('.rp-causal-panel')).toContainText(/日课|资源|心压|村落|天劫/);
+  await expect(page.locator('.rp-activity-btn')).toHaveCount(10);
+  await expect(page.locator('.rp-activity-btn:visible')).toHaveCount(4);
+  await expect(page.locator('.rp-causal-panel')).toContainText(/修途|资源|心压|村落|天劫/);
   expect(errors).toEqual([]);
 });

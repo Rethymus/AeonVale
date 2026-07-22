@@ -62,15 +62,19 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
 
   const style = document.createElement('style');
   style.textContent = [
-    '.cr-legacy{display:grid;gap:18px;max-width:920px;margin:0 auto;padding:clamp(14px,3vw,26px);color:var(--color-paperBright);}',
+    '.cr-legacy-host{height:100%;min-height:0;overflow:hidden;}',
+    '.cr-legacy{display:grid;grid-template-columns:minmax(220px,.78fr) minmax(360px,1.22fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"header header" "details selections" "details actions";gap:10px 14px;width:min(100%,1040px);height:100%;min-height:0;margin:0 auto;padding:clamp(8px,2vw,16px);overflow:hidden;color:var(--color-paperBright);}',
+    '.cr-legacy__header{grid-area:header;}',
+    '.cr-legacy__details{grid-area:details;min-width:0;min-height:0;display:grid;grid-template-rows:minmax(100px,1fr) auto auto;gap:8px;overflow:hidden;}',
+    '.cr-legacy__selections{grid-area:selections;min-width:0;min-height:0;display:grid;align-content:start;gap:12px;padding:1px 5px 1px 1px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}',
     '.cr-legacy__header{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;border-block-end:1px solid rgb(var(--rgb-paperBorder) / .5);padding-block-end:14px;}',
     '.cr-legacy__portrait{inline-size:72px;block-size:72px;display:grid;place-items:center;margin:0;border:1px solid var(--color-giltUi);border-radius:50%;background:rgb(var(--rgb-shellPine) / .78);color:var(--color-giltPale);font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:26px;}',
     '.cr-legacy__portrait-image{inline-size:100%;block-size:100%;display:block;object-fit:cover;object-position:center 18%;border-radius:inherit;filter:saturate(.72) contrast(1.04);}',
     '.cr-legacy__kicker{margin:0;color:var(--color-giltPale);font-size:12px;letter-spacing:.16em;}',
     '.cr-legacy__title{margin:4px 0 0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:clamp(26px,5vw,40px);font-weight:600;text-wrap:balance;}',
-    '.cr-legacy__art{position:relative;min-block-size:190px;max-block-size:330px;overflow:hidden;margin:0;border:1px solid rgb(var(--rgb-paperBorder) / .55);background:rgb(var(--rgb-shellPine) / .72);}',
+    '.cr-legacy__art{position:relative;min-block-size:100px;overflow:hidden;margin:0;border:1px solid rgb(var(--rgb-paperBorder) / .55);background:rgb(var(--rgb-shellPine) / .72);}',
     '.cr-legacy__art::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgb(var(--rgb-shellInk) / .82));pointer-events:none;}',
-    '.cr-legacy__art-image{inline-size:100%;block-size:100%;min-block-size:190px;max-block-size:330px;display:block;object-fit:cover;object-position:center 52%;filter:saturate(.7) contrast(1.06);}',
+    '.cr-legacy__art-image{inline-size:100%;block-size:100%;min-block-size:100px;display:block;object-fit:cover;object-position:center 52%;filter:saturate(.7) contrast(1.06);}',
     '.cr-legacy__art-caption{position:absolute;z-index:1;inset-inline:14px;inset-block-end:12px;color:var(--color-paperBright);font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:13px;letter-spacing:.12em;}',
     '.cr-legacy__summary{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:7px 14px;margin:0;padding:12px;border:1px solid rgb(var(--rgb-paperBorder) / .45);background:rgb(var(--rgb-shellPine) / .48);}',
     '.cr-legacy__summary-term{color:var(--color-paperMuted);}',
@@ -91,12 +95,12 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
     '.cr-legacy__option-copy{display:grid;gap:5px;}',
     '.cr-legacy__option-name{font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:18px;font-weight:700;}',
     '.cr-legacy__option-effect{color:var(--color-paperUi);font-size:13px;line-height:1.55;}',
-    '.cr-legacy__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:12px;}',
+    '.cr-legacy__actions{grid-area:actions;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:12px;}',
     '.cr-legacy__status{flex:1 1 260px;min-height:1.5em;margin:0;color:var(--color-paperMuted);line-height:1.5;}',
     '.cr-legacy__confirm{min-block-size:48px;padding:10px 18px;border:1px solid var(--color-giltUi);border-radius:4px;background:rgb(var(--rgb-giltUi) / .14);color:var(--color-giltPale);font-weight:700;cursor:pointer;touch-action:manipulation;}',
     '.cr-legacy__confirm:focus-visible{outline:3px solid var(--color-giltUi);outline-offset:3px;}',
     '.cr-legacy__confirm:disabled{cursor:default;opacity:.58;}',
-    '@media(max-width:620px){.cr-legacy__header{grid-template-columns:1fr}.cr-legacy__portrait{inline-size:60px;block-size:60px}.cr-legacy__options{grid-template-columns:1fr}.cr-legacy__summary{grid-template-columns:1fr}.cr-legacy__summary-value{margin-block-end:5px}.cr-legacy__confirm{inline-size:100%}}'
+    '@media(max-width:620px){.cr-legacy{grid-template-columns:1fr;grid-template-rows:auto auto minmax(0,1fr) auto;grid-template-areas:"header" "details" "selections" "actions";gap:6px;padding:6px}.cr-legacy__header{grid-template-columns:auto minmax(0,1fr);gap:8px;padding-block-end:6px}.cr-legacy__portrait{inline-size:48px;block-size:48px;font-size:18px}.cr-legacy__title{font-size:21px}.cr-legacy__details{display:block}.cr-legacy__art,.cr-legacy__testament{display:none}.cr-legacy__summary{grid-template-columns:repeat(2,max-content minmax(0,1fr));gap:3px 7px;padding:5px;font-size:9px}.cr-legacy__selections{gap:8px}.cr-legacy__fieldset{gap:5px}.cr-legacy__legend{font-size:16px}.cr-legacy__helper{font-size:10px}.cr-legacy__options{grid-template-columns:1fr}.cr-legacy__option-label{min-block-size:0;padding:7px}.cr-legacy__option-name{font-size:14px}.cr-legacy__option-effect{font-size:10px}.cr-legacy__actions{gap:5px}.cr-legacy__status{font-size:10px}.cr-legacy__confirm{min-block-size:44px;padding:6px 10px}}'
   ].join('\n');
   root.appendChild(style);
 
@@ -132,6 +136,10 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
   heading.id = `${instanceId}-heading`;
   heading.tabIndex = -1;
 
+  const details = document.createElement('div');
+  details.className = 'cr-legacy__details';
+  section.appendChild(details);
+
   if (epitaphArtUrl) {
     const art = document.createElement('figure');
     art.className = 'cr-legacy__art';
@@ -145,7 +153,7 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
     caption.className = 'cr-legacy__art-caption';
     caption.textContent = '雷散之后，只余旧物与未竟之字';
     art.append(image, caption);
-    section.appendChild(art);
+    details.appendChild(art);
   }
 
   const summary = document.createElement('dl');
@@ -155,13 +163,18 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
   summaryRow(summary, '凡业倾向', epitaph.vocation.primaryActivity === null ? '尚未形成' : CULTIVATION_ACTIVITY_LABELS[epitaph.vocation.primaryActivity]);
   summaryRow(summary, '灵草遗痕', `烧毁 ${epitaph.herbLegacy.scorchedCount} · 保全 ${epitaph.herbLegacy.preservedCount}`);
   summaryRow(summary, '代表灵草', epitaph.herbLegacy.representativeHerb ?? '无');
-  section.appendChild(summary);
+  details.appendChild(summary);
 
   const testament = document.createElement('blockquote');
   testament.className = 'cr-legacy__testament';
   appendTextElement(testament, 'span', 'cr-legacy__testament-label', '遗书');
   appendTextElement(testament, 'p', 'cr-legacy__testament-text', epitaph.testament);
-  section.appendChild(testament);
+  details.appendChild(testament);
+
+  const selections = document.createElement('div');
+  selections.className = 'cr-legacy__selections';
+  selections.setAttribute('aria-label', '传承选择');
+  section.appendChild(selections);
 
   function createCandidateGroup(kind: 'knowledge' | 'relic', legendText: string, helperText: string): { readonly fieldset: HTMLFieldSetElement; readonly list: HTMLUListElement } {
     const fieldset = document.createElement('fieldset');
@@ -177,7 +190,7 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
     list.className = 'cr-legacy__options';
     list.setAttribute('aria-label', `${legendText}候选`);
     fieldset.appendChild(list);
-    section.appendChild(fieldset);
+    selections.appendChild(fieldset);
     return { fieldset, list };
   }
 
@@ -262,7 +275,6 @@ export function createCultivationLegacySurface(options: CultivationLegacySurface
   return {
     focusInitial(): void {
       if (destroyed) return;
-      section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       heading.focus({ preventScroll: true });
     },
     destroy(): void {

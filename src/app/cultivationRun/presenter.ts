@@ -2,6 +2,7 @@ import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@
 import {
   CULTIVATION_ACTIVITY_IDS,
   CULTIVATION_ACTIVITY_LABELS,
+  cultivationActivityUnlockStage,
   type CultivationActivityId,
   type CultivationAgenda,
   type CultivationAgendaError,
@@ -21,6 +22,7 @@ export interface CultivationActivityPresentation {
   readonly shortcut: string;
   readonly timeCostDays: number;
   readonly summary: string;
+  readonly unlockStage: number;
 }
 
 export interface CultivationStatPresentation {
@@ -32,11 +34,17 @@ const ACTIVITY_SUMMARY: Readonly<Record<CultivationActivityId, (params: BalanceP
   training: params => `食物 −${params.cultivationRun.activities.training.foodCost} · 体魄、耐力、意志`,
   farming: params =>
     `灵草 +${params.cultivationRun.activities.farming.herbGain} · 食物 +${params.cultivationRun.activities.farming.foodGain}`,
-  alchemy: params => `灵草 −${params.cultivationRun.activities.alchemy.herbCost} · 丹药、悟痕`,
   livelihood: params => `灵石 +${params.cultivationRun.activities.livelihood.spiritStoneGain} · 心压上升`,
+  rest: params => `食物 −${params.cultivationRun.activities.rest.foodCost} · 养伤、减压`,
+  alchemy: params => `灵草 −${params.cultivationRun.activities.alchemy.herbCost} · 丹药、悟痕`,
   insight: params => `灵石 −${params.cultivationRun.activities.insight.spiritStoneCost} · 悟痕、意志`,
-  rest: params => `食物 −${params.cultivationRun.activities.rest.foodCost} · 养伤、减压`
+  meridian: params => `食物 −${params.cultivationRun.activities.meridian.foodCost} · 体魄 +${params.cultivationRun.activities.meridian.bodyFoundationGain} · 通脉涨幅`,
+  arrayStudy: params => `灵石 −${params.cultivationRun.activities.arrayStudy.spiritStoneCost} · 悟痕 +${params.cultivationRun.activities.arrayStudy.insightGain} · 劫阵预演`,
+  lightningBath: params => `灵草 −${params.cultivationRun.activities.lightningBath.herbCost} · 体魄 +${params.cultivationRun.activities.lightningBath.bodyFoundationGain} · 积债`,
+  heavenTheft: params => `灵石 −${params.cultivationRun.activities.heavenTheft.spiritStoneCost} · 体魄 +${params.cultivationRun.activities.heavenTheft.bodyFoundationGain} · 窃力`
 };
+
+const ACTIVITY_SHORTCUTS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'] as const;
 
 const DEFAULT_AGENDA_SLOT_COUNT = DEFAULT_BALANCE.cultivationRun.slotsPerAgenda;
 
@@ -110,10 +118,18 @@ export function cultivationActivityPresentations(
   return CULTIVATION_ACTIVITY_IDS.map((id, index) => ({
     id,
     label: CULTIVATION_ACTIVITY_LABELS[id],
-    shortcut: String(index + 1),
+    shortcut: ACTIVITY_SHORTCUTS[index] ?? '',
     timeCostDays: resolved.cultivationRun.activities[id].timeCostDays,
-    summary: ACTIVITY_SUMMARY[id](resolved)
+    summary: ACTIVITY_SUMMARY[id](resolved),
+    unlockStage: cultivationActivityUnlockStage(id)
   }));
+}
+
+export function cultivationAvailableActivityPresentations(
+  stage: number,
+  params: BalanceParams = DEFAULT_BALANCE
+): readonly CultivationActivityPresentation[] {
+  return cultivationActivityPresentations(params).filter(activity => activity.unlockStage <= stage);
 }
 
 export function cultivationRunStats(
@@ -139,11 +155,13 @@ export function cultivationAgendaErrorMessage(error: CultivationAgendaError): st
   const target = `${slot}${activity}`;
   switch (error.code) {
     case 'invalid-state':
-      return '当前修行记录无法结算。请返回标题后重新开始这一世。';
+      return '当前修行记录无法结算。请返回标题后重新开始此身历程。';
     case 'invalid-slot-count':
       return '日程必须排满六格。请继续选择活动。';
     case 'run-ended':
-      return '余寿已经耗尽，无法继续安排日程。';
+      return '余寿已经耗尽，无法继续安排修途。';
+    case 'activity-locked':
+      return `${target}尚未随境界解锁。请先渡过当前天劫。`;
     case 'insufficient-lifespan':
       return `${target}所需余寿不足。请换成耗时更短的活动。`;
     case 'insufficient-food':
@@ -156,5 +174,5 @@ export function cultivationAgendaErrorMessage(error: CultivationAgendaError): st
 }
 
 export function cultivationAgendaSuccessMessage(state: CultivationRunState): string {
-  return `第 ${state.agendaIndex} 轮日课结清：余寿 ${state.lifespanRemainingDays} 日，心压 ${state.pressure}，凡心 ${state.mortalHeart}。`;
+  return `第 ${state.agendaIndex} 轮修途结清：余寿 ${state.lifespanRemainingDays} 日，心压 ${state.pressure}，凡心 ${state.mortalHeart}。`;
 }

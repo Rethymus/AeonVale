@@ -14,6 +14,7 @@ function fundedMachine(): CultivationRunMachineState {
     createCultivationRunState({
       seed: 73,
       overrides: {
+        stage: 2,
         lifespanRemainingDays: 840,
         insight: 100,
         herbs: 100,
@@ -68,7 +69,11 @@ describe('D27-c 应用层修仙状态机', () => {
       alchemy: 1,
       livelihood: 1,
       insight: 1,
-      rest: 1
+      rest: 1,
+      meridian: 0,
+      arrayStudy: 0,
+      lightningBath: 0,
+      heavenTheft: 0
     });
 
     const choiceId = eventState.currentEvent!.choices[0].id;
@@ -169,6 +174,7 @@ describe('D27-c 应用层修仙状态机', () => {
   it('日程恰好耗尽余寿时先保留逐格结算，再进入寿终', () => {
     const exactLife = createCultivationRunMachineState(createCultivationRunState({
       overrides: {
+        stage: 2,
         lifespanRemainingDays: 61,
         insight: 100,
         herbs: 100,

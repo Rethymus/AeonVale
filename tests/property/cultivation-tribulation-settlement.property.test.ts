@@ -4,6 +4,7 @@ import { DEFAULT_BALANCE } from '@sim/params';
 import {
   applyCultivationTribulationOutcome,
   createCultivationRunState,
+  cultivationStageCaps,
   type CultivationRunState
 } from '@sim/cultivation-run';
 import {
@@ -105,7 +106,10 @@ describe('D27-d · 天劫结算性质', () => {
       expect(a.state.pills).toBeGreaterThanOrEqual(0);
       expect(a.state.injury).toBeGreaterThanOrEqual(input.injury);
       expect(a.state.injury).toBeLessThanOrEqual(DEFAULT_BALANCE.cultivationRun.injuryCap);
-      expect(a.state.bodyFoundation).toBe(input.bodyFoundation + input.temperingGain);
+      expect(a.state.bodyFoundation).toBe(Math.min(
+        input.bodyFoundation + input.temperingGain,
+        cultivationStageCaps(a.state.stage).bodyFoundation
+      ));
       expect(a.settlement.herbsLost).toBe(herbLoss);
       expect(a.settlement.pillsConsumed).toBe(pillLoss);
       expect(a.settlement.injuryGained).toBe(a.state.injury - input.injury);

@@ -7,7 +7,7 @@ import {
 import { cloneCultivationRunState } from './activities';
 import { cultivationRunStateError } from './agenda';
 import { clampInt } from './pressure';
-import { resolveCultivationProgression } from './progression';
+import { cultivationStageCaps, resolveCultivationProgression } from './progression';
 import type { CultivationRunState } from './types';
 
 export type CultivationTribulationSettlementKind =
@@ -109,7 +109,7 @@ export function applyCultivationTribulationOutcome(
   const stageBefore = next.stage;
   const herbsLost = requestedHerbLoss;
   const injuryBefore = next.injury;
-  const temperingGained = request.outcome.temperingGain;
+  const bodyFoundationBefore = next.bodyFoundation;
   next.herbs -= herbsLost;
   next.pills -= pillConsumption;
   next.injury = clampInt(
@@ -117,7 +117,6 @@ export function applyCultivationTribulationOutcome(
     0,
     resolved.cultivationRun.injuryCap
   );
-  next.bodyFoundation += temperingGained;
 
   let kind: CultivationTribulationSettlementKind;
   let lifespanGained = 0;
@@ -141,6 +140,14 @@ export function applyCultivationTribulationOutcome(
   } else {
     kind = 'insufficient';
   }
+
+  const stageCaps = cultivationStageCaps(next.stage, resolved);
+  next.bodyFoundation = clampInt(
+    next.bodyFoundation + request.outcome.temperingGain,
+    0,
+    stageCaps.bodyFoundation
+  );
+  const temperingGained = next.bodyFoundation - bodyFoundationBefore;
 
   if (cultivationRunStateError(next, resolved)) return reject(request.state, 'invalid-outcome');
 

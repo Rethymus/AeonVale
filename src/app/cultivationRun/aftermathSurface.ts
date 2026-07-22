@@ -28,7 +28,7 @@ export interface CultivationAftermathSurfaceOptions {
 
 const AFTERMATH_COPY: Readonly<Record<CultivationAftermathKind, { readonly mark: string; readonly label: string; readonly kicker: string; readonly caption: string }>> = {
   breakthrough: { mark: '破', label: '雷后新境', kicker: '劫雷入骨 · 境阶已破', caption: '雷光退去，留下的是一副更能承受天意的身体' },
-  recovery: { mark: '生', label: '带伤归田', kicker: '护持生效 · 此世未断', caption: '命保住了，代价会写进下一轮日课' },
+  recovery: { mark: '生', label: '带伤归田', kicker: '护持生效 · 此身未断', caption: '命保住了，代价会写进下一轮修途' },
   repelled: { mark: '退', label: '劫后清点', kicker: '天劫暂退 · 功行未成', caption: '失败没有抹去准备，也没有替你免除代价' }
 };
 
@@ -55,13 +55,12 @@ export function createCultivationAftermathSurface(options: CultivationAftermathS
   appendCultivationFacts(frame.copy, view.consequences);
   appendCultivationList(frame.copy, view.rememberedMoments ?? [], '这一劫没有留下额外记述。').setAttribute('aria-label', '本次天劫留下的记忆');
 
-  const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, view.kind === 'breakthrough' ? '继续后进入下一阶段，新的劫兆将随之显现。' : '继续后回到日课，伤势与损耗会保留。');
+  const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, view.kind === 'breakthrough' ? '继续后进入下一境，新修途与劫兆将随之显现。' : '继续后回到修途，伤势与损耗会保留。');
   const continueButton = appendCultivationAction(frame.actions, view.nextActionLabel, status.id);
   const unbindContinue = bindSingleUseAction(continueButton, onContinue);
 
   return {
     focusInitial(): void {
-      frame.section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       frame.heading.focus({ preventScroll: true });
     },
     destroy(): void {

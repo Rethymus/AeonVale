@@ -33,7 +33,7 @@ export function createCultivationOmenSurface(options: CultivationOmenSurfaceOpti
     sectionClass: 'cr-omen',
     phaseMark: '兆',
     phaseLabel: '天书示警',
-    kicker: `${view.stageLabel} · 下一场大考`,
+    kicker: `${view.stageLabel} · 下一道境门`,
     title: view.tribulationName,
     lede: view.objective,
     artwork: options.artwork ?? {
@@ -69,13 +69,12 @@ export function createCultivationOmenSurface(options: CultivationOmenSurfaceOpti
   }
   frame.copy.appendChild(risks);
 
-  const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, '劫兆只说明风险，不替你决定日程。');
-  const continueButton = appendCultivationAction(frame.actions, '记下劫兆，安排日课', status.id);
+  const status = appendCultivationStatus(frame.actions, `${frame.section.getAttribute('aria-labelledby')}-status`, '劫兆只说明风险，不替你决定修途。');
+  const continueButton = appendCultivationAction(frame.actions, '记下劫兆，安排修途', status.id);
   const unbindContinue = bindSingleUseAction(continueButton, onContinue);
 
   return {
     focusInitial(): void {
-      frame.section.scrollIntoView?.({ block: 'start', behavior: 'auto' });
       frame.heading.focus({ preventScroll: true });
     },
     destroy(): void {
