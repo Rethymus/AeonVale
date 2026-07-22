@@ -21,7 +21,7 @@ import { runTribulation } from '@sim/tribulation/tribulationSystem';
 import { readyForBreakthrough, breakthrough, stageQiCap } from '@sim/progression/progression';
 import type { Direction } from '@sim/world/types';
 import type { Season } from '@sim/world/types';
-import { AudioEngine } from '@io/audio';
+import { AudioEngine, type SfxId } from '@io/audio';
 import type { CropQuality } from '@sim/farm/quality';
 import { HOTBAR_SLOTS, cycleHotbarIndex, findNextOwnedSeedHotbarIndex, hotbarIndexFromDigitKey, hotbarSlotAssetId, hotbarStatusText, hotbarToastPresentation, hotbarWheelDelta, ownedSeedHotbarIndex, type HotbarSlotKind } from './hotbar';
 import { FARM_ACTION_ORDER, cycleSelection, farmActionIndexFromDigitKey, farmActionLabel, interactionPanelActive, isLocationActionPanelCommand, normalizeSelection, npcActionIndexFromDigitKey, selectionLabel, type FarmActionKind, type InteractionPanelState, type LocationActionPanelCommand } from './interactionPanels';
@@ -69,6 +69,8 @@ import { createAppFlowViewController, type AppFlowViewController } from './appFl
 import { createPrologueVN, type PrologueVNController } from './prologueVN';
 import { createNarrationIntro, type NarrationIntroController } from './narrationIntro';
 import { createNarrationSurface, NARRATION_E7_FLAG_KEY, type NarrationSurfaceController } from './narrationSurface';
+import { createRogueliteProtoSurface, type RogueliteProtoSurface } from './rogueliteProto/surface';
+import { hasCultivationJourney } from './rogueliteProto/runSave';
 import { createNarrationCodex, type NarrationCodexController } from './narrationCodex';
 import { renderEndingSurface } from './endingSurface';
 import { gameCommandFromKeyboard, type GameCommand } from './semanticInputRouter';
@@ -397,6 +399,7 @@ async function main(): Promise<void> {
   let prologueVN: PrologueVNController | null = null;
   let narrationIntro: NarrationIntroController | null = null;
   let narrationSurface: NarrationSurfaceController | null = null;
+  let rogueliteProtoSurface: RogueliteProtoSurface | null = null;
   let narrationCodex: NarrationCodexController | null = null;
   let pointerTile: { x: number; y: number } | null = null;
   let lastPointerTile: { x: number; y: number } | null = null;
@@ -416,7 +419,7 @@ async function main(): Promise<void> {
 
   function updateSaveHealthUi(): void {
     const presentation = deriveSaveHealthPresentation(saveHealth);
-    flowView?.setContinueAvailable(presentation.continueAvailable);
+    flowView?.setContinueAvailable(hasCultivationJourney());
     setElementText('flow-settings-save-status', presentation.settingsStatus);
     setElementText('flow-pause-save-status', presentation.pauseStatus);
     setElementText('orientation-save-status', `农田、丹炉与天劫需要更宽的视野。${presentation.portraitStatus}`);
@@ -816,6 +819,32 @@ async function main(): Promise<void> {
     narrationSurface = null;
   }
 
+  function startRogueliteProtoSurface(startMode: 'new' | 'continue'): void {
+    destroyRogueliteProtoSurface();
+    const root = document.querySelector<HTMLElement>('#roguelite-proto-root');
+    if (!root) return;
+    // 主模式 Sokoban surface（docs/26）：自有 canvas，驱动 @sim/sokoban 切片；audio 接 io 层（playSfx + BGM context）。
+    rogueliteProtoSurface = createRogueliteProtoSurface({
+      root,
+      startMode,
+      reducedMotion: runtimeSettings.reducedMotion,
+      assetUrlForId: id => assetUrlForId(assetStore, id),
+      audio: {
+        playSfx: id => audio.playSfx(id as SfxId),
+        setMusicContext: (zone, tension) => audio.setMusicContext({ season: state.season, zone, tension, active: true })
+      },
+      onReturnToTitle: () => flowView?.dispatch({ type: 'return-title-from-roguelite-proto' }),
+      onSaveAvailabilityChange: available => flowView?.setContinueAvailable(available)
+    });
+    rogueliteProtoSurface.start();
+    flowView?.refocusCurrentSurface();
+  }
+
+  function destroyRogueliteProtoSurface(): void {
+    rogueliteProtoSurface?.destroy();
+    rogueliteProtoSurface = null;
+  }
+
   function startNarrationCodex(): void {
     destroyNarrationCodex();
     const root = document.querySelector<HTMLElement>('#codex-root');
@@ -885,7 +914,6 @@ async function main(): Promise<void> {
     if (previous.screen === 'world' && (next.screen !== 'world' || next.overlay != null)) {
       cancelWorldMovementForSurfaceTransition();
     }
-    if (event.type === 'continue-game' && enterEndingIfNeeded()) return;
     if (event.type === 'start-new-game') {
       clearSave();
       resetRuntimeState(createFreshState());
@@ -904,6 +932,14 @@ async function main(): Promise<void> {
     } else if (event.type === 'return-title-from-narration') {
       // 灵韵叙录 → 标题屏（玩家退出 / 结局返回）：拆 surface，BGM 交还帧循环。
       destroyNarrationSurface();
+    } else if (event.type === 'start-roguelite-proto') {
+      // 标题屏 → 新的一世：清空当前修行旅程，从入世录开始。
+      startRogueliteProtoSurface('new');
+    } else if (event.type === 'continue-game') {
+      // 标题屏 → 当前修行旅程：恢复日课、事件、天劫或传承所在的精确阶段。
+      startRogueliteProtoSurface('continue');
+    } else if (event.type === 'return-title-from-roguelite-proto') {
+      destroyRogueliteProtoSurface();
     }
 
     // 叙录覆盖层生命周期（docs/22 §11）：进入 codex overlay 渲染三区，离开时拆。
@@ -920,15 +956,6 @@ async function main(): Promise<void> {
     refreshAppPresentation();
     // E7 改写标题屏：每次流程变更后同步诅咒层（idempotent，docs/22 §2.5）。
     applyE7TitleCurse();
-
-    if (event.type === 'continue-game') {
-      if (state.tutorialTribulation.phase === 'active') {
-        flowView?.dispatch({ type: 'start-tribulation' });
-      } else if (state.tutorialTribulation.phase === 'aftermath') {
-        flowView?.dispatch({ type: 'start-tribulation' });
-        flowView?.dispatch({ type: 'finish-tribulation' });
-      }
-    }
 
     // 序章视觉小说：进入序章即挂载（每次新进都全新开演），离开即拆除监听。
     if (next.screen === 'prologue' && previous.screen !== 'prologue') {
@@ -1395,6 +1422,7 @@ async function main(): Promise<void> {
         shippingBinItemCount: number;
       };
       __AEON_TEST__?: {
+        enterLegacyWorld: () => boolean;
         configureSowKeypoint: () => boolean;
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
@@ -1579,6 +1607,7 @@ async function main(): Promise<void> {
     if (import.meta.env.VITE_PRESERVE_DRAWING_BUFFER !== 'true') return;
     const target = window as typeof window & {
       __AEON_TEST__?: {
+        enterLegacyWorld: () => boolean;
         configureSowKeypoint: () => boolean;
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
@@ -1650,6 +1679,12 @@ async function main(): Promise<void> {
       };
     };
     target.__AEON_TEST__ = {
+      enterLegacyWorld: () => {
+        if (flowView?.getState().screen !== 'title') return false;
+        flowView.dispatch({ type: 'start-new-game' });
+        flowView.dispatch({ type: 'skip-prologue' });
+        return flowView.getState().screen === 'world';
+      },
       configureSowKeypoint: () => {
         const targetPoint = firstFarmsteadFarmPlotTile(state);
         if (!targetPoint) return false;
@@ -5835,7 +5870,7 @@ async function main(): Promise<void> {
   let portraitOverride = false;
   if (BUILD_TITLE) document.title = `永恒山谷：大道之歌 · ${BUILD_TITLE}`;
   flowView = createAppFlowViewController({
-    continueAvailable: deriveSaveHealthPresentation(saveHealth).continueAvailable,
+    continueAvailable: hasCultivationJourney(),
     buildLabel: BUILD_LABEL,
     onReloadRequest: () => window.location.reload(),
     onStateChange: handleFlowStateChange
@@ -5926,6 +5961,10 @@ async function main(): Promise<void> {
       narrationIntro?.open();
     });
   }
+
+  // Sokoban 主模式已升为标题「开始游戏」主入口（data-flow-action="start-roguelite-proto"，
+  // 见 index.html + appFlowView 的 AppFlowAction/isFlowAction/eventForAction）。
+  // 原 ?proto=roguelite dev 入口已移除——主路径即此，无需次要入口。
 
   // 叙录入口（#flow-narration-codex-open）：灵韵叙录内开「叙录」覆盖层（docs/22 §11）。
   // 该按钮无 data-flow-action（非 appFlowView 既定 action），由本处自管点击派发 open-overlay。
@@ -6806,7 +6845,7 @@ async function main(): Promise<void> {
     refreshAppPresentation();
     // BGM 自适应（Tone.js 四季调色板）：季节=state.season，分区=引劫在即→tribulation 否则 farm，张力随突破临近 calm→tense。
     // 灵韵叙录 surface 活跃时由 narrationSurface 自管 narration 语境（docs/22 §12 单点原则），此处跳过避免覆盖。
-    if (flowView?.getPresentation().surface !== 'narration') {
+    if (flowView?.getPresentation().surface !== 'narration' && flowView?.getPresentation().surface !== 'roguelite-proto') {
       const tense = readyForBreakthrough(state, DEFAULT_BALANCE);
       audio.setMusicContext({
         season: state.season,

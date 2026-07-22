@@ -1,30 +1,58 @@
 #!/usr/bin/env node
 /**
- * 灵韵叙录视觉查收：以用户视角从入口走完全部 8 结局，截图 + 问题日志。
- * 用法：pnpm exec playwright test 不依赖；直接 node --import tsx 或:
- *   node tools/visual-audit-narration.mjs
- * 预览服默认 http://127.0.0.1:4173
+ * 灵韵叙录视觉查收：按真实状态路径走完 8 个结局，截图并检查布局/破图/互斥终局。
+ * 用法：PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173 node tools/visual-audit-narration.mjs
  */
 import { chromium } from '@playwright/test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const BASE = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173';
 const OUT = path.resolve('tmp/visual-audit-narration');
+rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-const ENDINGS = {
-  'e0-mushroom': [
-    ['deep'], // awaken
-  ],
-  // 主线到 reveal 的公共前缀
-};
-
-/** 公共序章→习诀路径（选择 id 序列） */
-const TO_TRAIN = [
-  'village', // awaken
-  'ask', // village → depart (need ask path - village has system/elder/soul/ask/help?)
+const TO_REVEAL_HELP = [
+  'village', 'help', 'on', 'on', 'help', 'take', 'on', 'leave', 'farm',
+  'hide', 'on', 'on', 'approach', 'try', 'open', 'on', 'on', 'reveal'
 ];
+const TO_REVEAL_HURRY = [
+  'village', 'ask', 'on', 'on', 'hurry', 'on', 'leave', 'farm',
+  'hide', 'on', 'on', 'approach', 'try', 'open', 'on', 'on', 'reveal'
+];
+const CAVE_TO_PREPARATION = ['on', 'on', 'on', 'on', 'on'];
+const FINAL_TRIBULATION = ['on', 'on', 'on', 'on'];
+
+const ROUTES = {
+  'e0-mushroom': ['deep'],
+  'lifespan-death': [...TO_REVEAL_HELP, 'seclude'],
+  'poison-death': [
+    ...TO_REVEAL_HELP, 'practice', 'temper', 'on', 'on', 'save', 'on', 'overdose'
+  ],
+  madness: [
+    ...TO_REVEAL_HELP, 'practice', 'temper', 'on', 'on', 'save', 'on', 'back',
+    'ditch', 'back', 'on', 'wanderer', 'help', 'on', 'share', 'break'
+  ],
+  'tribulation-death': [
+    ...TO_REVEAL_HELP, 'practice', 'temper', 'on', 'on', 'save', 'on', 'back',
+    'ditch', 'back', 'on', 'xiao', 'fight'
+  ],
+  ascension: [
+    ...TO_REVEAL_HELP, 'practice', 'temper', 'on', 'on', 'save', 'on', 'back',
+    'ditch', 'back', 'on', 'herbgirl', 'stand', 'on', 'share', 'on',
+    ...CAVE_TO_PREPARATION, 'on', ...FINAL_TRIBULATION, 'answer'
+  ],
+  'e6-sacrifice': [
+    ...TO_REVEAL_HELP, 'practice', 'temper', 'force', 'force', 'save', 'force', 'seal',
+    'ditch', 'back', 'force', 'herbgirl', 'deaf', 'force', 'share', 'force',
+    ...CAVE_TO_PREPARATION, 'whistle', 'ditch', 'on', ...FINAL_TRIBULATION, 'e6'
+  ],
+  'e7-usurp': [
+    ...TO_REVEAL_HURRY, 'practice', 'temper', 'force', 'force', 'abandon', 'force', 'seal',
+    'market', 'back', 'force', 'herbgirl-cold', 'leave', 'force', 'keep', 'force',
+    ...CAVE_TO_PREPARATION, 'on', ...FINAL_TRIBULATION, 'e7'
+  ]
+};
 
 const findings = [];
 function note(severity, msg, extra = {}) {
@@ -36,7 +64,7 @@ async function prepare(page) {
   await page.addInitScript(() => {
     try {
       localStorage.setItem('aeonvale-settings-v1', JSON.stringify({ masterVolume: 0, reducedMotion: true }));
-      for (const k of [
+      for (const key of [
         'narration.introRead',
         'narration.codex.seenThisRun',
         'narration.codex.seenScenesEver',
@@ -44,30 +72,28 @@ async function prepare(page) {
         'narration.e7Triggered',
         'narration.readChoices',
         'narration.textSize'
-      ]) {
-        localStorage.removeItem(k);
-      }
+      ]) localStorage.removeItem(key);
     } catch {
-      /* ignore */
+      /* privacy mode */
     }
   });
 }
 
 async function shot(page, name) {
-  const p = path.join(OUT, `${name}.png`);
-  await page.screenshot({ path: p, fullPage: true });
-  return p;
+  const file = path.join(OUT, `${name}.png`);
+  await page.screenshot({ path: file, fullPage: true });
+  return file;
 }
 
 async function clickStage(page) {
-  const loc = page.locator('#narration-intro-stage, #narration-stage').first();
-  if (await loc.count()) await loc.evaluate((el) => el.click());
+  const stage = page.locator('#narration-intro-stage, #narration-stage').first();
+  if (await stage.count()) await stage.evaluate(element => element.click());
 }
 
-async function advanceUntil(page, pred, timeoutMs = 15000, label = 'cond') {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    if (await pred()) return true;
+async function advanceUntil(page, predicate, timeoutMs = 15000, label = 'condition') {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (await predicate()) return true;
     await clickStage(page).catch(() => undefined);
     await page.waitForTimeout(30);
   }
@@ -78,590 +104,228 @@ async function advanceUntil(page, pred, timeoutMs = 15000, label = 'cond') {
 async function waitChoice(page, id, timeoutMs = 15000) {
   return advanceUntil(
     page,
-    async () => page.locator(`button.narration-choice[data-choice-id="${id}"]`).isVisible(),
+    () => page.locator(`button.narration-choice[data-choice-id="${id}"]`).isVisible(),
     timeoutMs,
     `choice ${id}`
   );
 }
 
 async function pick(page, id) {
-  const ok = await waitChoice(page, id);
-  if (!ok) {
-    const labels = await page.locator('button.narration-choice:visible').allTextContents().catch(() => []);
-    note('critical', `找不到选项 ${id}`, { visible: labels });
+  if (!(await waitChoice(page, id))) {
+    const visible = await page.locator('button.narration-choice:visible').allTextContents().catch(() => []);
+    note('critical', `找不到选项 ${id}`, { visible });
     await shot(page, `missing-choice-${id}-${Date.now()}`);
     return false;
   }
-  const btn = page.locator(`button.narration-choice[data-choice-id="${id}"]`);
-  const disabled = await btn.isDisabled().catch(() => false);
-  const available = await btn.getAttribute('data-available');
-  if (disabled || available === 'false') {
-    const labels = await page.locator('button.narration-choice:visible').allTextContents().catch(() => []);
-    note('major', `选项 ${id} 可见但锁定/禁用`, { labels });
-    await shot(page, `locked-choice-${id}-${Date.now()}`);
+  const button = page.locator(`button.narration-choice[data-choice-id="${id}"]`);
+  if (await button.isDisabled().catch(() => false)) {
+    note('critical', `选项 ${id} 可见但不可用`);
     return false;
   }
-  await btn.click();
-  await page.waitForTimeout(80);
+  await button.click();
+  await page.waitForTimeout(50);
   return true;
 }
 
-async function enterNarration(page) {
+async function openTitle(page) {
   await page.goto(BASE + '/');
-  await page.locator('#flow-title-narration').waitFor({ state: 'visible', timeout: 25000 });
-  await shot(page, '00-title-entry');
-  // visual checks title
   const entry = page.locator('#flow-title-narration');
-  const box = await entry.boundingBox();
-  if (!box) note('critical', '入口按钮无 boundingBox');
-  else if (box.height < 24) note('major', '入口按钮高度过小', { box });
+  const portraitOverride = page.locator('#orientation-override');
+  await expectVisible(entry, portraitOverride);
+  return entry;
+}
+
+async function expectVisible(entry, portraitOverride) {
+  const started = Date.now();
+  while (Date.now() - started < 25000) {
+    if (await entry.isVisible().catch(() => false)) return;
+    if (await portraitOverride.isVisible().catch(() => false)) await portraitOverride.click();
+    await entry.page().waitForTimeout(50);
+  }
+  throw new Error('标题屏灵韵叙录入口未出现');
+}
+
+async function enterNarration(page, captureIntro = false) {
+  const entry = await openTitle(page);
+  if (captureIntro) await shot(page, '00-title-entry');
   await entry.click();
   await page.locator('.narration-intro-overlay').waitFor({ state: 'visible', timeout: 8000 });
-  await shot(page, '01-intro-dialog');
-  // advance intro
-  const tryOk = await waitChoice(page, 'try');
-  if (!tryOk) return false;
-  // check for empty text
-  const introText = await page.locator('#narration-intro-vn .narration-text, #narration-intro-stage .narration-text').first().textContent().catch(() => '');
-  if (!introText || !introText.trim()) note('major', '自白对话框正文为空');
+  if (captureIntro) await shot(page, '01-story-preface');
+  if (!(await waitChoice(page, 'try'))) return false;
   await page.locator('button.narration-choice[data-choice-id="try"]').click();
   await page.locator('[data-app-surface="narration"]').waitFor({ state: 'visible', timeout: 10000 });
-  await shot(page, '02-narration-start');
-  // a11y
+  if (captureIntro) await shot(page, '02-narration-start');
+  return true;
+}
+
+async function auditLayout(page, tag) {
   const stage = page.locator('#narration-stage');
-  const role = await stage.getAttribute('role');
-  const aria = await stage.getAttribute('aria-label');
-  if (role !== 'group') note('major', 'narration-stage role 不是 group', { role });
-  if (!aria?.trim()) note('major', 'narration-stage 缺 aria-label');
+  if (!(await stage.count())) return;
+  const data = await stage.evaluate(element => {
+    const info = selector => {
+      const target = element.querySelector(selector);
+      if (!(target instanceof HTMLElement)) return null;
+      const rect = target.getBoundingClientRect();
+      return {
+        text: (target.textContent ?? '').trim(),
+        visible: !target.hidden && target.offsetParent !== null,
+        top: rect.top,
+        bottom: rect.bottom,
+        height: rect.height,
+        clientHeight: target.clientHeight,
+        scrollHeight: target.scrollHeight
+      };
+    };
+    const rect = element.getBoundingClientRect();
+    return {
+      sceneId: element.dataset.sceneId,
+      stage: { top: rect.top, bottom: rect.bottom, height: rect.height },
+      cg: info('.narration-cg'),
+      chapter: info('.narration-chapter-mark'),
+      cabinet: info('.narration-cabinet'),
+      dialog: info('.narration-dialog'),
+      text: info('.narration-text'),
+      choices: info('.narration-choices'),
+      quick: info('.narration-quick-menu')
+    };
+  });
+
+  if (!data.chapter?.visible) note('major', `章节题签缺失 (${tag})`, { sceneId: data.sceneId });
+  if (data.cg && Math.abs(data.cg.bottom - data.stage.bottom) > 2) {
+    note('major', `CG 未铺满舞台 (${tag})`, { sceneId: data.sceneId, stage: data.stage, cg: data.cg });
+  }
+  if (data.cabinet?.visible && data.dialog && data.cabinet.bottom > data.dialog.top + 1) {
+    note('major', `心声与正文重叠 (${tag})`, { sceneId: data.sceneId });
+  }
+  if (data.dialog && data.quick && data.dialog.bottom > data.quick.top + 1) {
+    note('major', `正文与快捷菜单重叠 (${tag})`, { sceneId: data.sceneId });
+  }
+  if (data.text?.visible && data.choices?.visible && data.text.bottom > data.choices.top + 1) {
+    note('major', `正文与选项重叠 (${tag})`, { sceneId: data.sceneId });
+  }
+  if (data.dialog && data.dialog.bottom > data.stage.bottom + 1) {
+    note('major', `正文越出舞台 (${tag})`, { sceneId: data.sceneId });
+  }
+  if (data.text?.visible && data.text.clientHeight + 1 < data.text.scrollHeight) {
+    note('major', `正文自身溢出 (${tag})`, { sceneId: data.sceneId });
+  }
+  if (data.cabinet?.visible && data.text?.text && data.cabinet.text === data.text.text) {
+    note('major', `正文与心声精确重复 (${tag})`, { sceneId: data.sceneId });
+  }
+
+  const images = page.locator('#narration-stage img:visible');
+  for (let index = 0; index < await images.count(); index += 1) {
+    const ok = await images.nth(index).evaluate(image =>
+      image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0
+    );
+    if (!ok) note('major', `CG 破图 (${tag})`, { sceneId: data.sceneId, index });
+  }
+}
+
+async function walk(page, ids, tag) {
+  const captured = new Set();
+  const milestones = new Set([
+    'act2.train',
+    'act2.side.herb',
+    'act2.village.hub',
+    'act2.encounter.hub',
+    'act3.preparation',
+    'act3.tribulation.question'
+  ]);
+  for (const id of ids) {
+    await advanceUntil(page, () => page.locator('button.narration-choice:visible').count().then(count => count > 0), 15000, `${tag}-${id}`);
+    const sceneId = await page.locator('#narration-stage').getAttribute('data-scene-id');
+    await auditLayout(page, `${tag}-${sceneId ?? id}`);
+    if (sceneId && milestones.has(sceneId) && !captured.has(sceneId)) {
+      captured.add(sceneId);
+      await shot(page, `${tag}-${sceneId.replaceAll('.', '-')}`);
+    }
+    if (!(await pick(page, id))) return false;
+  }
   return true;
 }
 
 async function untilEnding(page, endingId, timeoutMs = 20000) {
   const ok = await advanceUntil(
     page,
-    async () => page.locator(`.narration-ending-card[data-ending-id="${endingId}"]`).isVisible(),
+    () => page.locator(`.narration-ending-card[data-ending-id="${endingId}"]`).isVisible(),
     timeoutMs,
     `ending ${endingId}`
   );
   if (!ok) return false;
-  // wait for ending CG naturalWidth if present
-  const img = page.locator('.narration-ending-cg');
-  if (await img.count()) {
-    await page
-      .waitForFunction(() => {
-        const im = document.querySelector('.narration-ending-cg');
-        return (
-          im instanceof HTMLImageElement &&
-          im.complete &&
-          im.naturalWidth > 0 &&
-          im.dataset.decoded === 'true' &&
-          Number(getComputedStyle(im).opacity) > 0.95
-        );
-      }, null, { timeout: 8000 })
-      .catch(() => note('major', `结局 ${endingId} CG 未在 8s 内完成加载并显影`));
-    const info = await img
-      .evaluate((im) =>
-        im instanceof HTMLImageElement
-          ? {
-              src: im.currentSrc || im.src,
-              w: im.naturalWidth,
-              h: im.naturalHeight,
-              cw: im.clientWidth,
-              ch: im.clientHeight,
-              decoded: im.dataset.decoded,
-              opacity: getComputedStyle(im).opacity
-            }
-          : null
-      )
-      .catch(() => null);
-    if (!info || !info.w) note('major', `结局 ${endingId} CG 尺寸异常`, { info });
-    else if (info.ch < 80) note('major', `结局 ${endingId} CG 显示高度过小`, { info });
-    else if (info.decoded !== 'true' || Number(info.opacity) === 0) {
-      note('major', `结局 ${endingId} CG 已加载但仍不可见`, { info });
-    }
-  } else {
-    const fb = await page.locator('.narration-ending-cg-fallback').count();
-    if (fb) note('major', `结局 ${endingId} 走了 fallback，无 CG`);
-  }
-  // cabinet must be empty/hidden on ending
-  const cabVisible = await page.locator('.narration-cabinet:not([hidden])').count();
-  if (cabVisible) note('major', `结局 ${endingId} 时心声条仍可见`);
-  return true;
-}
-
-async function auditCg(page, tag) {
-  const imgs = page.locator('.narration-cg-img, .narration-cg-bg, .narration-cg img');
-  const n = await imgs.count();
-  let broken = 0;
-  for (let i = 0; i < n; i++) {
-    const img = imgs.nth(i);
-    const visible = await img.isVisible().catch(() => false);
-    if (!visible) continue;
-    const ok = await img.evaluate((el) => {
-      const im = el;
-      if (!(im instanceof HTMLImageElement)) return true;
-      if (!im.src) return false;
-      return im.complete && im.naturalWidth > 0;
-    });
-    if (!ok) broken++;
-  }
-  if (broken) note('major', `CG 破图/空 src (${tag})`, { broken, total: n });
-  // check dialog text non-empty when present
-  const text = await page.locator('#narration-stage .narration-text').first().textContent().catch(() => '');
-  if (text !== null && text !== undefined && String(text).trim() === '') {
-    // might be between lines
-  }
-  // overlapping quick menu vs choices?
-  const choices = page.locator('button.narration-choice:visible');
-  const c = await choices.count();
-  if (c > 5) note('major', `可见选项 >5 (${tag})`, { count: c });
-  // locked choices without glyph consistency — soft
-  const labels = await choices.allTextContents();
-  if (labels.some((l) => !l || !l.trim())) note('major', `存在空文案选项 (${tag})`, { labels });
-  const frame = await page.locator('#narration-stage').evaluate((stage) => {
-    const info = (selector) => {
-      const el = stage.querySelector(selector);
-      if (!(el instanceof HTMLElement)) return null;
-      const rect = el.getBoundingClientRect();
-      return {
-        text: (el.textContent ?? '').trim(),
-        visible: !el.hidden && el.offsetParent !== null,
-        top: rect.top,
-        bottom: rect.bottom,
-        clientHeight: el.clientHeight,
-        scrollHeight: el.scrollHeight
-      };
-    };
-    const stageRect = stage.getBoundingClientRect();
-    return {
-      sceneId: stage.getAttribute('data-scene-id'),
-      stage: { top: stageRect.top, bottom: stageRect.bottom },
-      text: info('.narration-text'),
-      cabinet: info('.narration-cabinet'),
-      dialog: info('.narration-dialog'),
-      choices: info('.narration-choices'),
-      quick: info('.narration-quick-menu')
-    };
-  });
-  if (frame.text?.text && frame.cabinet?.visible && frame.cabinet.text === frame.text.text) {
-    note('major', `正文与心声条精确重复 (${tag})`, { sceneId: frame.sceneId });
-  }
-  if (frame.cabinet?.visible && frame.dialog && frame.cabinet.bottom > frame.dialog.top + 1) {
-    note('major', `心声条与对话框重叠 (${tag})`, { sceneId: frame.sceneId });
-  }
-  if (frame.dialog && frame.quick && frame.dialog.bottom > frame.quick.top + 1) {
-    note('major', `对话框与快捷菜单重叠 (${tag})`, { sceneId: frame.sceneId });
-  }
-  if (frame.dialog && frame.dialog.bottom > frame.stage.bottom + 1) {
-    note('major', `对话框越出舞台 (${tag})`, { sceneId: frame.sceneId });
-  }
-  if (frame.quick && frame.quick.bottom > frame.stage.bottom + 1) {
-    note('major', `快捷菜单越出舞台 (${tag})`, { sceneId: frame.sceneId });
-  }
-  if (frame.text?.visible && frame.text.clientHeight + 1 < frame.text.scrollHeight) {
-    note('major', `正文溢出自身盒子 (${tag})`, { sceneId: frame.sceneId });
-  }
-  if (frame.text?.visible && frame.choices?.visible && frame.text.bottom > frame.choices.top + 1) {
-    note('major', `正文与选项重叠 (${tag})`, { sceneId: frame.sceneId });
-  }
-  return { labels, cgCount: n, broken };
-}
-
-/** 走完一组 choice id，中途 audit */
-async function walk(page, choiceIds, tag) {
-  for (const id of choiceIds) {
-    await auditCg(page, `${tag}-before-${id}`);
-    const ok = await pick(page, id);
-    if (!ok) return false;
-    // if response line, advance past it
-    await page.waitForTimeout(50);
+  const card = page.locator(`.narration-ending-card[data-ending-id="${endingId}"]`);
+  await card.locator('.narration-ending-cg').waitFor({ state: 'visible', timeout: 8000 }).catch(() => undefined);
+  if (await page.locator('.narration-cabinet:not([hidden])').count()) {
+    note('major', `结局 ${endingId} 时心声条仍可见`);
   }
   return true;
 }
 
-async function pathToTrain(page) {
-  // awaken → village → help (optional once) → ask → depart.on → road.help → token? need check graph
-  // From BFS: village, ask, on, hurry, on, leave, farm, hide, on, on, approach, try, open, on, on, reveal, practice
-  // village choices: need actual ids
-  return walk(page, [
-    'village',
-    'ask',
-    'on', // depart
-    'help', // road help if exists else hurry - try help first
-  ], 'to-train-part1');
+async function auditCodex(page) {
+  await prepare(page);
+  if (!(await enterNarration(page))) return;
+  await page.locator('#flow-narration-codex-open').click();
+  await page.locator('#codex-root').waitFor({ state: 'visible', timeout: 5000 });
+  await shot(page, '07-codex');
+  const cards = await page.locator('.codex-ending').count();
+  if (cards !== 8) note('major', '结局图鉴卡数不是 8', { cards });
+  note('info', `codex locked=${await page.locator('.codex-ending[data-state="locked"]').count()}/${cards}`);
 }
 
 async function main() {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
-  page.on('pageerror', (err) => note('critical', `pageerror: ${err.message}`));
-  page.on('console', (msg) => {
-    if (msg.type() === 'error') note('major', `console.error: ${msg.text()}`);
+  page.on('pageerror', error => note('critical', `pageerror: ${error.message}`));
+  page.on('console', message => {
+    if (message.type() === 'error') note('major', `console.error: ${message.text()}`);
   });
 
   const results = {};
-
-  // —— E0 ——
-  await prepare(page);
-  if (!(await enterNarration(page))) {
-    note('critical', '无法进入 narration');
-  } else {
-    await walk(page, ['deep'], 'e0');
-    // deep may need advances to ending
-    const e0 = await untilEnding(page, 'e0-mushroom');
-    await shot(page, 'ending-e0-mushroom');
-    results['e0-mushroom'] = e0;
-    if (e0) {
-      const name = await page.locator('.narration-ending-name').textContent();
-      if (!name?.includes('红伞')) note('major', 'E0 结局名异常', { name });
-      await auditCg(page, 'e0-card');
-    }
-  }
-
-  // helper restart
-  async function restartToTrain() {
+  let first = true;
+  for (const [endingId, route] of Object.entries(ROUTES)) {
     await prepare(page);
-    if (!(await enterNarration(page))) return false;
-    // full BFS path to practice
-    const pathIds = [
-      'village',
-      'ask',
-      'on', // depart
-      'hurry', // road - use hurry to avoid token branch complexity; if help exists both ok
-      'on', // spread (if hurry goes spread)
-      'leave', // sect
-      'farm', // return
-      'hide', // battle
-      'on', // sky
-      'on', // cellar
-      'approach', // stare
-      'try', // ring
-      'open', // attempts
-      'on', // flash
-      'on', // oldman
-      'reveal', // scroll
-      'practice' // reveal
-    ];
-    // Some paths: after help goes token then spread - detect dynamically
-    for (const id of pathIds) {
-      // if choice not visible, try alternate
-      const visible = await page.locator(`button.narration-choice[data-choice-id="${id}"]`).isVisible().catch(() => false);
-      if (!visible) {
-        // try common alts
-        const alts = {
-          hurry: ['help'],
-          help: ['hurry'],
-          on: ['spread', 'leave', 'back'],
-          ask: ['help', 'system']
-        };
-        let picked = false;
-        // wait a bit for any choice
-        await advanceUntil(page, async () => (await page.locator('button.narration-choice:visible').count()) > 0, 8000, `any-choice-for-${id}`);
-        if (await page.locator(`button.narration-choice[data-choice-id="${id}"]`).isVisible().catch(() => false)) {
-          await pick(page, id);
-          picked = true;
-        } else if (alts[id]) {
-          for (const a of alts[id]) {
-            if (await page.locator(`button.narration-choice[data-choice-id="${a}"]`).isVisible().catch(() => false)) {
-              await pick(page, a);
-              picked = true;
-              break;
-            }
-          }
-        }
-        if (!picked) {
-          // pick first available to not stick - bad for path but log
-          const first = page.locator('button.narration-choice:visible').first();
-          if (await first.count()) {
-            const fid = await first.getAttribute('data-choice-id');
-            note('minor', `路径分叉：期望 ${id}，改选 ${fid}`);
-            await first.click();
-            await page.waitForTimeout(80);
-            // if we took help, need to continue token chain
-            if (fid === 'help') {
-              // token scene has on?
-              await advanceUntil(page, async () => (await page.locator('button.narration-choice:visible').count()) > 0, 8000, 'after-help');
-              if (await page.locator('button.narration-choice[data-choice-id="on"]').isVisible()) await pick(page, 'on');
-              if (await page.locator('button.narration-choice[data-choice-id="spread"]').isVisible()) await pick(page, 'spread');
-            }
-          } else {
-            note('critical', `卡死：无选项且需要 ${id}`);
-            await shot(page, `stuck-${id}`);
-            return false;
-          }
-        }
-      } else {
-        await pick(page, id);
-      }
-      // after choice may need advance through response
-      await page.waitForTimeout(40);
+    if (!(await enterNarration(page, first))) {
+      results[endingId] = false;
+      note('critical', `无法进入 ${endingId} 路径`);
+      first = false;
+      continue;
     }
-    // should be on act2.train
-    await auditCg(page, 'at-train');
-    await shot(page, '03-act2-train');
-    return true;
-  }
+    first = false;
+    const walked = await walk(page, route, endingId);
+    const reached = walked && await untilEnding(page, endingId);
+    results[endingId] = reached;
+    await shot(page, `ending-${endingId}`);
 
-  // —— lifespan via seclude ——
-  await prepare(page);
-  if (await enterNarration(page)) {
-    // to reveal then seclude
-    const ok = await (async () => {
-      // reuse dynamic walker until reveal choices
-      const prefix = [
-        'village','ask','on','hurry','on','leave','farm','hide','on','on','approach','try','open','on','on','reveal'
-      ];
-      for (const id of prefix) {
-        await advanceUntil(page, async () => (await page.locator('button.narration-choice:visible').count()) > 0, 10000, id);
-        if (!(await pick(page, id))) {
-          // try first
-          const first = page.locator('button.narration-choice:visible').first();
-          if (await first.count()) await first.click();
-          else return false;
-        }
-      }
-      return pick(page, 'seclude');
-    })();
-    if (ok) {
-      const e = await untilEnding(page, 'lifespan-death');
-      await shot(page, 'ending-lifespan-death');
-      results['lifespan-death'] = e;
+    if (endingId === 'e0-mushroom' && reached) {
+      const name = await page.locator('.narration-ending-name').textContent();
+      if (name !== '林中第四日') note('major', 'E0 结局名异常', { name });
     }
-  }
-
-  // —— poison ——
-  if (await restartToTrain()) {
-    if (await pick(page, 'alchemy')) {
-      if (await pick(page, 'overdose')) {
-        // may end immediately
-        const e = await untilEnding(page, 'poison-death');
-        await shot(page, 'ending-poison-death');
-        results['poison-death'] = e;
+    if (endingId === 'e7-usurp' && reached) {
+      await page.locator('.narration-ending-dismiss').click();
+      await page.waitForTimeout(250);
+      await shot(page, '06-title-after-e7');
+      if (!(await page.locator('[data-app-surface="title"].e7-cursed').count())) {
+        note('major', 'E7 后标题屏未出现 e7-cursed 改写');
       }
     }
   }
 
-  // —— madness ——
-  if (await restartToTrain()) {
-    const openedLateStages = await walk(
-      page,
-      ['temper', 'stage1', 'on', 'stage2', 'on', 'stage3', 'on', 'more', 'break'],
-      'madness-six-order'
-    );
-    if (openedLateStages) {
-      const e = await untilEnding(page, 'madness');
-      await shot(page, 'ending-madness');
-      results['madness'] = e;
-    }
-  }
-
-  // —— tribulation-death via xiao fight (need cult>=3) ——
-  if (await restartToTrain()) {
-    // do stage1,2,3
-    if (await pick(page, 'temper')) {
-      // stage1 available
-      if (await waitChoice(page, 'stage1', 5000)) {
-        await pick(page, 'stage1');
-        await pick(page, 'on'); // back temper
-      }
-      if (await waitChoice(page, 'stage2', 5000)) {
-        await pick(page, 'stage2');
-        await pick(page, 'on');
-      }
-      if (await waitChoice(page, 'stage3', 5000)) {
-        await pick(page, 'stage3');
-        await pick(page, 'on');
-      }
-      await pick(page, 'rest'); // train
-      if (await pick(page, 'side')) {
-        if (await pick(page, 'more')) {
-          if (await waitChoice(page, 'xiao', 5000)) {
-            await pick(page, 'xiao');
-            if (await pick(page, 'fight')) {
-              const e = await untilEnding(page, 'tribulation-death');
-              await shot(page, 'ending-tribulation-death');
-              results['tribulation-death'] = e;
-            }
-          } else note('major', 'cult>=3 后仍无 xiao 选项');
-        }
-      }
-    }
-  }
-
-  // —— 六劫与完整终局链 ——
-  async function doStages(page) {
-    return walk(
-      page,
-      ['temper', 'stage1', 'on', 'stage2', 'on', 'stage3', 'on', 'more', 'stage4', 'on', 'stage5', 'on', 'stage6', 'on'],
-      'six-stages'
-    );
-  }
-
-  async function stackDefiance(page) {
-    return walk(
-      page,
-      ['side', 'bully', 'watch', 'herb', 'abandon', 'bribe', 'accept', 'more', 'whistle', 'silent', 'back', 'back'],
-      'defiance-storylets'
-    );
-  }
-
-  async function stackBond(page) {
-    return walk(
-      page,
-      [
-        'side', 'more', 'famine', 'share', 'village',
-        'ditch', 'back', 'market', 'back', 'song', 'back',
-        'go-out', 'wanderer', 'help', 'herbgirl-cold', 'atone',
-        'artificer', 'refuse', 'back', 'back'
-      ],
-      'bond-storylets'
-    );
-  }
-
-  async function walkFinaleToQuestion(page, tag) {
-    if (!(await pick(page, 'assault'))) return false;
-    await shot(page, `${tag}-act3-entry`);
-    const atQuestion = async () =>
-      page
-        .locator(
-          'button.narration-choice[data-choice-id="e6"], button.narration-choice[data-choice-id="e7"], button.narration-choice[data-choice-id="answer"]'
-        )
-        .first()
-        .isVisible()
-        .catch(() => false);
-
-    for (let step = 0; step < 14; step++) {
-      const ready = await advanceUntil(
-        page,
-        async () => (await atQuestion()) || (await page.locator('button.narration-choice:visible').count()) > 0,
-        12000,
-        `${tag}-finale-${step}`
-      );
-      if (!ready) return false;
-      if (await atQuestion()) break;
-
-      const sceneId = await page.locator('#narration-stage').getAttribute('data-scene-id');
-      await auditCg(page, `${tag}-${sceneId ?? step}`);
-      if (sceneId === 'act3.preparation') {
-        await shot(page, `${tag}-preparation`);
-        for (const prepId of ['whistle', 'herbs', 'ditch', 'array', 'array-dark']) {
-          const prep = page.locator(`button.narration-choice[data-choice-id="${prepId}"]`);
-          if (await prep.isVisible().catch(() => false)) {
-            if (!(await pick(page, prepId))) return false;
-            await advanceUntil(
-              page,
-              async () => (await page.locator('button.narration-choice:visible').count()) > 0,
-              5000,
-              `${tag}-prep-${prepId}`
-            );
-          }
-        }
-      }
-      if (sceneId?.startsWith('act3.tribulation')) {
-        await shot(page, `${tag}-${sceneId.replaceAll('.', '-')}`);
-      }
-      if (!(await pick(page, 'on'))) return false;
-    }
-
-    if (!(await atQuestion())) {
-      note('critical', `${tag}: 未抵达天道诘问`);
-      await shot(page, `${tag}-stuck-before-question`);
-      return false;
-    }
-    await auditCg(page, `${tag}-question`);
-    await shot(page, `${tag}-tribulation-question`);
-    const visibleTerminal = await page
-      .locator(
-        'button.narration-choice[data-choice-id="e6"]:visible, button.narration-choice[data-choice-id="e7"]:visible, button.narration-choice[data-choice-id="answer"]:visible'
-      )
-      .evaluateAll((buttons) => buttons.map((button) => button.getAttribute('data-choice-id')));
-    if (visibleTerminal.length !== 1) {
-      note('major', `${tag}: 天道诘问泄露互斥结局矩阵`, { visibleTerminal });
-    }
-    return true;
-  }
-
-  // —— ascension: 六劫稳妥完成，不堆反抗 ——
-  if (await restartToTrain() && await doStages(page) && await walkFinaleToQuestion(page, 'ascension')) {
-    if (await pick(page, 'answer')) {
-      const e = await untilEnding(page, 'ascension');
-      await shot(page, 'ending-ascension');
-      results['ascension'] = e;
-    }
-  }
-
-  // —— E7: 高反抗、低羁绊 ——
-  if (await restartToTrain() && await doStages(page) && await stackDefiance(page) && await walkFinaleToQuestion(page, 'e7')) {
-    if (await pick(page, 'e7')) {
-      const e = await untilEnding(page, 'e7-usurp');
-      await shot(page, 'ending-e7-usurp');
-      results['e7-usurp'] = e;
-      if (e) {
-        await page.locator('.narration-ending-dismiss').click().catch(() => undefined);
-        await page.waitForTimeout(300);
-        await shot(page, '06-title-after-e7');
-        const cursed = await page.locator('[data-app-surface="title"].e7-cursed, .e7-cursed').count();
-        if (!cursed) note('major', 'E7 后标题屏未出现 e7-cursed 改写');
-      }
-    }
-  }
-
-  // —— E6: 高反抗、高羁绊；劫前准备完成最后回收 ——
-  if (
-    await restartToTrain() &&
-    await doStages(page) &&
-    await stackDefiance(page) &&
-    await stackBond(page) &&
-    await walkFinaleToQuestion(page, 'e6')
-  ) {
-    if (await pick(page, 'e6')) {
-      const e = await untilEnding(page, 'e6-sacrifice');
-      await shot(page, 'ending-e6-sacrifice');
-      results['e6-sacrifice'] = e;
-    }
-  }
-
-  // codex visual
-  await prepare(page);
-  if (await enterNarration(page)) {
-    await page.locator('#flow-narration-codex-open').click();
-    await page.locator('#codex-root').waitFor({ state: 'visible', timeout: 5000 });
-    await shot(page, '07-codex');
-    const locked = await page.locator('.codex-ending[data-state="locked"]').count();
-    const cards = await page.locator('.codex-ending').count();
-    if (cards !== 8) note('major', `结局图鉴卡数不是 8`, { cards });
-    // clue length check for locked
-    const clues = await page.locator('.codex-ending-clue, .codex-ending [data-clue]').allTextContents().catch(() => []);
-    for (const c of clues) {
-      if (c && c.length > 14) note('minor', 'locked 线索可能超 14 字', { c, len: c.length });
-    }
-    note('info', `codex locked=${locked}/${cards}`);
-  }
-
+  await auditCodex(page);
   await browser.close();
 
-  const report = {
-    base: BASE,
-    out: OUT,
-    endings: results,
-    findings,
-    summary: {
-      endingsReached: Object.entries(results).filter(([, v]) => v).map(([k]) => k),
-      endingsFailed: Object.entries(results).filter(([, v]) => !v).map(([k]) => k),
-      critical: findings.filter((f) => f.severity === 'critical').length,
-      major: findings.filter((f) => f.severity === 'major').length,
-      minor: findings.filter((f) => f.severity === 'minor').length
-    }
+  const summary = {
+    endingsReached: Object.entries(results).filter(([, value]) => value).map(([key]) => key),
+    endingsFailed: Object.entries(results).filter(([, value]) => !value).map(([key]) => key),
+    critical: findings.filter(finding => finding.severity === 'critical').length,
+    major: findings.filter(finding => finding.severity === 'major').length,
+    minor: findings.filter(finding => finding.severity === 'minor').length
   };
+  const report = { base: BASE, out: OUT, endings: results, findings, summary };
   writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));
   console.log('\n=== SUMMARY ===');
-  console.log(JSON.stringify(report.summary, null, 2));
+  console.log(JSON.stringify(summary, null, 2));
   console.log('findings', findings.length, 'screenshots →', OUT);
-  const failed =
-    report.summary.endingsFailed.length > 0 ||
-    report.summary.critical > 0 ||
-    report.summary.major > 0;
-  if (failed) {
+  if (summary.endingsFailed.length > 0 || summary.critical > 0 || summary.major > 0) {
     console.error('visual-audit-narration: FAILED');
     process.exitCode = 1;
   } else {
@@ -669,7 +333,7 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(e);
+main().catch(error => {
+  console.error(error);
   process.exit(1);
 });
