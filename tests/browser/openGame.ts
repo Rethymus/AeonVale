@@ -146,14 +146,16 @@ export async function waitForInitialSurface(page: Page): Promise<AeonDebugSnapsh
 export async function continueToWorld(page: Page): Promise<void> {
   const canvas = page.locator('canvas');
 
-  const continueButton = page.locator('#flow-title-continue');
   const newGameButton = page.locator('#flow-title-new-game');
   if (await newGameButton.isVisible()) {
-    if (await continueButton.isEnabled()) {
-      await continueButton.click();
-    } else {
+    const enteredThroughTestGate = await page.evaluate(() => {
+      const target = window as typeof window & { __AEON_TEST__?: { enterLegacyWorld?: () => boolean } };
+      return target.__AEON_TEST__?.enterLegacyWorld?.() ?? false;
+    });
+    if (!enteredThroughTestGate) {
       await newGameButton.click();
-      await page.locator('#flow-prologue-skip').click();
+      const skip = page.locator('#flow-prologue-skip');
+      if (await skip.isVisible().catch(() => false)) await skip.click();
     }
   }
 

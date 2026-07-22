@@ -183,9 +183,9 @@ describe('public demo application shell', () => {
 
   it('contains real focusable DOM surfaces for the complete application flow', () => {
     const surfaces = new Set(surfaceBlocks().map(surface => surface.surface));
-    expect(surfaces).toEqual(new Set(['world', 'loading', 'boot-error', 'title', 'prologue', 'narration', 'codex', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'portrait-blocked']));
+    expect(surfaces).toEqual(new Set(['world', 'loading', 'boot-error', 'title', 'prologue', 'narration', 'roguelite-proto', 'codex', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'portrait-blocked']));
 
-    for (const action of ['reload-page', 'start-new-game', 'continue-game', 'open-settings', 'close-overlay', 'open-pause', 'continue-aftermath', 'return-title']) {
+    for (const action of ['reload-page', 'start-roguelite-proto', 'continue-game', 'open-settings', 'close-overlay', 'open-pause', 'continue-aftermath', 'return-title']) {
       expect(html).toContain(`data-flow-action="${action}"`);
     }
 
@@ -224,7 +224,7 @@ describe('public demo application shell', () => {
 
     const ownerByAction = new Map(buttons.map(button => [String(button.attributes['data-flow-action']), surfaces.find(surface => button.start > surface.start && button.end < surface.close)?.surface]));
     expect(ownerByAction.get('reload-page')).toBe('boot-error');
-    expect(ownerByAction.get('start-new-game')).toBe('title');
+    expect(ownerByAction.get('start-roguelite-proto')).toBe('title');
     expect(ownerByAction.get('continue-aftermath')).toBe('aftermath');
     expect(ownerByAction.get('return-title')).toBe('ending');
   });

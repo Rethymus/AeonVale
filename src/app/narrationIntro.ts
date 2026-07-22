@@ -1,11 +1,9 @@
 /**
- * 灵韵叙录 · 开发者自白对话框（docs/22 §2.2-§2.4）。
+ * 灵韵叙录 · 开发者自白（docs/22 §2.2-§2.4）。
  *
- * 标题屏点击 `#flow-title-narration` 后浮现的 modal overlay（**不切 screen**，仍在 title），
- * 复用 {@link createNarrationVN} 演出 docs/22 §2.2 的六段自白（暖色信笺 / 手写信纸质感，
- * 署名「─ 来自开发者」，无立绘，颜文字）。双选项：
- *  - A「试一试呀 (ﾉ>ω<)ﾉ 点这里～」→ 标记已读 + dispatch start-narration（关 modal 切 screen）。
- *  - B「还是算了吧 (｡•́︿•̀｡)」→ 换为挽留文案（docs/22 §2.4），数秒后尊重退出回 title，入口保留可再点。
+ * 标题屏点击 `#flow-title-narration` 后浮现 modal overlay（**不切 screen**，仍在 title），
+ * 复用 {@link createNarrationVN} 演出开发者写给玩家的开场信笺（暖色信纸质感）。
+ * 自贬、产品私货与颜文字只允许存在于本 intro；进入序章后回归纯第一人称叙事。
  *
  * localStorage 记 `narration.introRead`：第二次点入口走「已读跳过」（docs/22 §2.4），
  * 直接 dispatch start-narration。
@@ -19,7 +17,7 @@ import type { NarrationScene } from './narrationTypes';
 import { createNarrationVN, type NarrationVNController } from './narrationVN';
 
 const INTRO_STORAGE_KEY = 'narration.introRead';
-/** B 选项挽留文案展示后自动收起的延时（docs/22 §2.4「显示数秒后尊重退出」）。 */
+/** 拒绝邀请后的回应展示完毕，再自动收起（docs/22 §2.4）。 */
 const FOLLOWUP_AUTOCLOSE_MS = 4500;
 
 /** 存储适配器（默认 localStorage；可注入便于测试）。 */
@@ -273,13 +271,13 @@ export function createNarrationIntro(options: NarrationIntroOptions): NarrationI
     const heading = document.createElement('p');
     heading.id = 'narration-intro-heading';
     heading.className = 'narration-intro-heading';
-    heading.textContent = '─ 来自开发者';
+    heading.textContent = '— 来自开发者';
 
     const mount = document.createElement('div');
     mount.id = 'narration-intro-vn';
     mount.className = 'narration-intro-mount';
     mount.setAttribute('role', 'group');
-    mount.setAttribute('aria-label', '开发者来信·打字机舞台');
+    mount.setAttribute('aria-label', '开发者自白·打字机舞台');
 
     paper.append(heading, mount);
     wrap.appendChild(paper);
@@ -350,7 +348,7 @@ export function createNarrationIntro(options: NarrationIntroOptions): NarrationI
       reducedMotion: options.reducedMotion,
       audio: null, // 自白信笺无心声 blip（与主玩法心魔分轨区分）。
       stageId: 'narration-intro-stage',
-      stageLabel: '开发者来信：按 Enter 或点击继续'
+      stageLabel: '开发者自白：按 Enter 或点击继续'
     });
     startIntroScene();
     // HIGH4：modal 焦点陷阱 + Escape 关闭。

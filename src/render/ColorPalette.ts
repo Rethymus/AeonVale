@@ -278,3 +278,57 @@ export function cssColor(key: ColorPaletteKey): string {
 export function cssRgb(key: ColorPaletteKey): string {
   return rgbChannels(ColorPalette[key]);
 }
+
+/**
+ * R4-a 雷劫炼体原型调色（dev-only surface 画板 + 内联样式用）。
+ * 集中于此以守色盘纪律（hex 只允许在 ColorPalette.ts）；正式整合（R4-d）时并入正式调色体系。
+ */
+export const ROGUELITE_PROTO_PALETTE = {
+  soilFill: {
+    loam: '#5b4632',
+    'wet-loam': '#3a2818',
+    'dry-sand': '#a8895a',
+    'metal-ore': '#8a8f99',
+    scorched: '#241a14',
+    insulated: '#163030',
+    'spirit-loam': '#5b4632',
+    rock: '#3b3b3b',
+    water: '#274060'
+  },
+  text: '#e8e0d0',
+  accent: '#ffd27a',
+  hpTrack: '#2a2030',
+  hpBorder: '#553a5a',
+  hpLo: '#e0556a',
+  hpHi: '#ffa078',
+  boardBg: '#0e0b12',
+  boardBorder: '#3a2f3a',
+  helpText: '#c2b7ab',
+  btnBg: '#2a2330',
+  btnBorder: '#4a3f4a',
+  primaryBg: '#4a2f5a',
+  primaryBorder: '#7a4f8a',
+  okBg: '#1c3a2a',
+  okText: '#9fe8b0',
+  badBg: '#3a1c22',
+  badText: '#ffb0b8',
+  rod: '#ffd27a',
+  boltViolet: '#c084ff',
+  boltBlue: '#7ad0ff',
+  ringPerfect: '#ffe066',
+  ringExpired: '#ff5566',
+  bodyAlive: '#f2e8d0',
+  bodyDead: '#7a2030',
+  bodyStroke: '#1a1418',
+  // R4′ Sokoban 布阵导流 用色（与上面共用一 palette，集中守纪律）
+  floor: '#3a2c1e',
+  wallStone: '#2a2a30',
+  beamSource: '#5aa0ff',
+  goalBody: '#7af0c8',
+  herbGreen: '#2e6b3a',
+  herbLight: '#5fa86a',
+  mirrorGold: '#ffcf4a',
+  conductorBlue: '#4ab6d8',
+  insulatorPurple: '#5a4a6a',
+  beamGlow: '#ffe066'
+} as const;

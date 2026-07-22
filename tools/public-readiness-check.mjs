@@ -206,8 +206,8 @@ if (typeof packageJson.scripts?.['test:browser:public-tree'] !== 'string') {
 }
 if (typeof packageJson.scripts?.['test:browser:keypoint'] !== 'string') {
   failures.push('package.json missing required script: test:browser:keypoint');
-} else if (!packageJson.scripts['test:browser:keypoint'].includes('tests/browser/keypoint-playability.spec.ts')) {
-  failures.push('test:browser:keypoint must run only the CDP keypoint playability spec');
+} else if (!packageJson.scripts['test:browser:keypoint'].includes('tests/browser/keypoint-playability.spec.ts') && !packageJson.scripts['test:browser:keypoint'].includes('tests/browser/cultivation-keypoint.spec.ts')) {
+  failures.push('test:browser:keypoint must run the current CDP keypoint playability spec');
 }
 if (typeof packageJson.scripts?.['test:browser:public-tree:keypoint'] !== 'string') {
   failures.push('package.json missing required script: test:browser:public-tree:keypoint');
@@ -216,7 +216,7 @@ if (typeof packageJson.scripts?.['test:browser:public-tree:keypoint'] !== 'strin
   if (!publicKeypointScript.includes('PLAYWRIGHT_APP_DIR=.public-tree')) failures.push('test:browser:public-tree:keypoint must run against the public tree');
   if (!publicKeypointScript.includes('PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree:keypoint must cover the GitHub Pages route');
   if (!publicKeypointScript.includes('PLAYWRIGHT_VITE_BASE_PATH=/AeonVale/')) failures.push('test:browser:public-tree:keypoint must build with the GitHub Pages base path');
-  if (!publicKeypointScript.includes('pnpm test:browser:keypoint') && !publicKeypointScript.includes('tests/browser/keypoint-playability.spec.ts')) failures.push('test:browser:public-tree:keypoint must run only the CDP keypoint playability spec');
+  if (!publicKeypointScript.includes('pnpm test:browser:keypoint') && !publicKeypointScript.includes('tests/browser/keypoint-playability.spec.ts') && !publicKeypointScript.includes('tests/browser/cultivation-keypoint.spec.ts')) failures.push('test:browser:public-tree:keypoint must run the current CDP keypoint playability spec');
 }
 if (typeof packageJson.scripts?.['test:browser:pages'] !== 'string') {
   failures.push('package.json missing required script: test:browser:pages');

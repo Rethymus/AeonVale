@@ -1,5 +1,12 @@
 import { expect, test } from '@playwright/test';
-import { clearIntroDialogue, continueToWorld, gameDebugSnapshot, gameEntryPath, waitForInitialSurface } from './openGame';
+import { gameDebugSnapshot, gameEntryPath, waitForInitialSurface } from './openGame';
+
+const OPENING_TITLES = ['没有系统，也没有人来救你', '测不出的灵根，先学看水往哪里走', '仙人斗法时，凡人的田先碎了', '以劫为薪，以骨为柴'] as const;
+
+async function dismissOrientationIfPresent(page: import('@playwright/test').Page): Promise<void> {
+  const override = page.locator('#orientation-override');
+  if (await override.isVisible().catch(() => false)) await override.click();
+}
 
 test('boot-ready reveals a playable first surface before any input', async ({ page }) => {
   test.setTimeout(process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 120_000 : 45_000);
@@ -18,109 +25,43 @@ test('boot-ready reveals a playable first surface before any input', async ({ pa
   }
 });
 
-test('loads the public demo first screen without page errors', async ({ page }) => {
+test('loads the current journey and reaches its desktop workbench without page errors', async ({ page }) => {
   test.setTimeout(process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? 120_000 : 45_000);
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await continueToWorld(page);
-  await expect(page.locator('canvas')).toBeVisible();
+  await dismissOrientationIfPresent(page);
+  await page.locator('#flow-title-new-game').click();
+
+  await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible();
+  await expect(page.locator('[data-app-surface="world"]')).toBeHidden();
   await expect(page).toHaveTitle(/Aeon Vale|永恒山谷/);
-  await clearIntroDialogue(page);
 
-  const debug = await gameDebugSnapshot(page);
-  expect(debug.dialogueBeatId).toBeNull();
-  expect(debug.dialogueBackdropVisible).toBe(false);
-  expect(debug.todayBriefingVisible).toBe(false);
-  expect(debug.panelPreviewVisible).toBe(false);
-  expect(debug.locationPreviewVisible).toBe(false);
-  expect(debug.paused).toBe(false);
-  expect(debug.inventoryVisible).toBe(false);
-  expect(debug.cultivationPanelVisible).toBe(false);
-  expect(debug.postAscensionMode).toBe('none');
-  expect(debug.interactionPanelKind).toBe('none');
-  expect(debug.debugSchemaVersion).toBe(2);
-  expect(debug.legacyShortcutsEnabled).toBe(false);
+  const entryDebug = await gameDebugSnapshot(page);
+  expect(entryDebug.debugSchemaVersion).toBe(2);
+  expect(entryDebug.legacyShortcutsEnabled).toBe(false);
   const expectedBuildRevision = process.env.PLAYWRIGHT_EXPECTED_BUILD_REVISION?.trim() || (process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? null : 'playwright-test');
-  if (expectedBuildRevision) expect(debug.buildRevision).toBe(expectedBuildRevision);
+  if (expectedBuildRevision) expect(entryDebug.buildRevision).toBe(expectedBuildRevision);
   else {
-    expect(debug.buildRevision).toEqual(expect.any(String));
-    expect(debug.buildRevision).not.toBe('dev');
-    expect(debug.buildRevision?.trim()).not.toBe('');
+    expect(entryDebug.buildRevision).toEqual(expect.any(String));
+    expect(entryDebug.buildRevision).not.toBe('dev');
+    expect(entryDebug.buildRevision?.trim()).not.toBe('');
   }
-  expect(debug.flowScreen).toBe('world');
-  expect(debug.appSurface).toBe('world');
-  expect(debug.renderFrameCount).toBeGreaterThan(0);
-  await expect(page.locator('#objective-rail')).toBeVisible();
-  await expect(page.locator('#objective-rail-progress')).toHaveText('1/4 · 获得灵草');
-  await expect(page.locator('#objective-rail-primary')).toContainText('灵田');
-  await expect(page.locator('#objective-rail #fate-rail-details')).toHaveCount(0);
-  await expect(page.locator('#objective-rail')).not.toContainText(/劫势|天象/);
-  await expect(page.locator('#fate-status-strip')).toBeVisible();
-  await expect(page.locator('#fate-status-strip')).toContainText(/劫|备劫/);
-  await expect(page.locator('#fate-summary-celestial')).toContainText('天象');
-  expect(await page.locator('#fate-rail-details').evaluate(el => (el as HTMLDetailsElement).open)).toBe(false);
-  await expect(page.locator('#fate-rail-details .fate-detail-body')).toBeHidden();
-  await page.locator('#fate-rail-summary').click();
-  await expect(page.locator('#fate-rail-details .fate-detail-body')).toBeVisible();
 
-  expect(debug.day).toBeGreaterThanOrEqual(1);
-  expect(debug.season).toMatch(/spring|summer|autumn|winter/);
-  expect(debug.seasonDay).toBeGreaterThanOrEqual(1);
-  expect(debug.playerHp).toBeGreaterThan(0);
-  expect(debug.playerStamina).toBeGreaterThan(0);
-  expect(debug.onboardingObjectiveId).toMatch(/^first-/);
-  expect(debug.helpText).toEqual(expect.stringContaining('目标'));
-  expect(debug.helpText).toEqual(expect.stringContaining('炼丹'));
-  expect(debug.helpText).toEqual(expect.stringContaining('引劫'));
-  expect(debug.helpText).toEqual(expect.stringContaining('回报'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('点击目标移动/互动'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('行囊常驻'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('丹炉/山河图/修行在更多中'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('B 行囊'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('Esc 暂停/返回'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('M/C'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('U 丹炉'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('滚轮'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('Q切换'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('\n'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('function'));
-  await expect(page.locator('#world-command-bar > button[data-game-command="inventory"]')).toBeVisible();
-  await expect(page.locator('#world-command-bar > button[data-game-command="inventory"]')).toHaveText('行囊');
-  await expect(page.locator('#world-command-bar > button[data-game-command="farm"]')).toHaveCount(0);
-  await expect(page.locator('#world-command-bar > button[data-game-command="pause"]')).toHaveCount(0);
-  await expect(page.locator('#world-command-more [data-game-command="farm"]')).toBeHidden();
-  await page.locator('#world-command-more > summary').click();
-  await expect(page.locator('#world-command-more [data-game-command="farm"]')).toBeVisible();
-  await expect(page.locator('#world-command-more [data-game-command="pause"]')).toBeVisible();
-  await page.locator('#world-command-more > summary').click();
-  await page.locator('canvas').hover();
-  await page.mouse.wheel(0, 120);
-  await page.keyboard.press('Q');
-  await page.keyboard.press('F9');
-  await page.waitForTimeout(80);
-  const afterLegacyInput = await gameDebugSnapshot(page);
-  expect(afterLegacyInput.hotbarIdx).toBe(debug.hotbarIdx);
-  expect(afterLegacyInput.interactionPanelKind).toBe('none');
-  expect(debug.todayBriefingTitle).toBe('1/4 · 获得灵草');
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('面对空地翻出第一块灵田'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('炼丹'));
-  expect(debug.todayBriefingBody).toEqual(expect.stringContaining('行动：开始翻地'));
-  expect(debug.todayBriefingBody).not.toEqual(expect.stringContaining('1/10'));
-  expect(debug.todayBriefingAssetId).toBe('logo.full');
-  expect(debug.hotbarSlotKind).toBe('till');
-  expect(debug.hotbarSeedId).toBeNull();
-  expect(debug.selectedLocationId).toBe('farmstead');
-  expect(debug.selectedLocationServiceCommand).toBe('show-farm-work');
-  expect(debug.starterMosslingSeedCount).toBe(6);
-  expect(debug.starterDewrootSeedCount).toBe(3);
-  expect(debug.starterMosslingHerbCount).toBe(3);
-  expect(debug.starterDewrootHerbCount).toBe(2);
-  expect(debug.starterSpiritStoneCount).toBe(2);
-  expect(debug.shippingBinItemCount).toBe(0);
-  const idleFrameCount = debug.renderFrameCount ?? 0;
-  await page.waitForTimeout(160);
-  expect((await gameDebugSnapshot(page)).renderFrameCount ?? 0).toBeGreaterThan(idleFrameCount);
+  expect(entryDebug.flowScreen).toBe('roguelite-proto');
+  expect(entryDebug.appSurface).toBe('roguelite-proto');
+  for (const title of OPENING_TITLES) {
+    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+    await page.locator('.cr-opening__button[data-primary="true"]').click();
+  }
+  await page.getByRole('button', { name: '翻开今世日课' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排日课' }).click();
+
+  await expect(page.locator('.rp-planning')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '一世日课' })).toBeVisible();
+  await expect(page.locator('.rp-agenda-slot')).toHaveCount(6);
+  await expect(page.locator('.rp-activity-btn')).toHaveCount(6);
+  await expect(page.locator('.rp-causal-panel')).toContainText(/日课|资源|心压|村落|天劫/);
   expect(errors).toEqual([]);
 });

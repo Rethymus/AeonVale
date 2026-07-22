@@ -173,6 +173,11 @@ function checkTypewriterKeys(): CheckResult {
       if (!choice.goto && !choice.ends) {
         messages.push(`空 choice 去向：scene ${scene.id} choice ${choice.id} 既无 goto 也无 ends（打字机空键）`);
       }
+      for (const [index, line] of (choice.responseLines ?? []).entries()) {
+        if (!line.text || line.text.trim().length === 0) {
+          messages.push(`空回应文本：scene ${scene.id} choice ${choice.id} responseLines[${index}]`);
+        }
+      }
     }
   }
   if (messages.length > 0) return fail(messages);
@@ -196,6 +201,9 @@ function sceneDisplayTexts(scene: NarrationScene): readonly { readonly key: stri
   for (const choice of scene.choices ?? []) {
     out.push({ key: `${scene.id}:choice:${choice.id}:label`, text: choice.label });
     if (choice.response) out.push({ key: `${scene.id}:choice:${choice.id}:response`, text: choice.response });
+    for (const [index, line] of (choice.responseLines ?? []).entries()) {
+      out.push({ key: `${scene.id}:choice:${choice.id}:response-line:${index}`, text: line.text });
+    }
   }
   if (scene.converge) out.push({ key: `${scene.id}:converge`, text: scene.converge });
   return out;

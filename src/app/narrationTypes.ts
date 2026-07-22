@@ -18,7 +18,7 @@ export type NarrationAct = 'prologue' | 1 | 2 | 3;
 
 /**
  * 结局标识（docs/22 §7）。
- *  - E0 红伞白杆（序章早夭支线）
+ *  - E0 林中第四日（序章早夭支线）
  *  - 5 失败/类型结局：飞升 / 丹毒亡 / 渡劫身死 / 走火入魔 / 寿终
  *  - E6 觉醒·牺牲救世 / E7 觉醒·合道驱逐（终局天道诘问，defiance≥门槛时触发）
  */
@@ -71,6 +71,8 @@ export type Speaker = 'narrator' | 'master' | 'heart-demon' | 'intuition' | 'sel
 export interface NarrationLine {
   readonly text: string;
   readonly speaker?: Speaker;
+  /** 条件行：仅在守卫满足时进入本次演出队列，用于让后文真实承认此前选择。 */
+  readonly requires?: string;
 }
 
 /** 分层选图键（docs/23 §2）。`daoAmbience:'auto'` 由纯函数按道心分桶派生。 */
@@ -89,8 +91,13 @@ export interface LayerKeys {
 export interface NarrationChoice {
   readonly id: string;
   readonly label: string;
-  /** 选中后浮现的回应行（复用 storyVN 的 response 漏斗语义）。 */
+  /** 选中后浮现的单段回应（兼容旧数据；新内容优先使用 responseLines）。 */
   readonly response?: string;
+  /**
+   * 选中后的独有兑现段。全部演完后才进入 converge / goto，避免“一句话回应后立刻弹回 hub”。
+   * 可混用 narrator / self / heart-demon 等声部。
+   */
+  readonly responseLines?: readonly NarrationLine[];
   /** 守卫表达式（见 `firstPersonView.checkRequires` 的最小语法）。 */
   readonly requires?: string;
   readonly effects?: readonly Effect[];
