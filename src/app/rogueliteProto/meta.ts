@@ -108,12 +108,12 @@ export function recordDeath(meta: SokobanMeta, stage: number): MetaTransition {
   };
 }
 
-const STORAGE_KEY = 'aeonvale-sokoban-meta-v1';
+const STORAGE_SLOT = 'aeonvale-sokoban-meta-v1';
 
 export function loadMeta(): SokobanMeta {
   if (typeof localStorage === 'undefined') return emptyMeta();
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_SLOT);
     if (!raw) return emptyMeta();
     const parsed = JSON.parse(raw) as Partial<SokobanMeta>;
     return {
@@ -130,7 +130,7 @@ export function loadMeta(): SokobanMeta {
 export function saveMeta(meta: SokobanMeta): void {
   if (typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+    localStorage.setItem(STORAGE_SLOT, JSON.stringify(meta));
   } catch {
     /* 隐私模式 / 配额满：静默降级，不阻塞游玩 */
   }
