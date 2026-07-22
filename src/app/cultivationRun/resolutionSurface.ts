@@ -52,7 +52,7 @@ export function createCultivationResolutionSurface(
     '.cr-resolution__delta,.cr-resolution__warning{font-size:12px;line-height:1.55;}',
     '.cr-resolution__delta{color:var(--color-paperUi);}',
     '.cr-resolution__warning{color:var(--color-dangerUi);font-weight:700;}',
-    '.cr-resolution__continue{justify-self:end;padding:10px 16px;border:1px solid var(--color-giltUi);border-radius:4px;background:rgb(var(--rgb-giltUi) / .14);color:var(--color-giltPale);font-weight:700;cursor:pointer;}',
+    '.cr-resolution__continue{justify-self:end;min-block-size:48px;padding:10px 16px;border:1px solid var(--color-giltUi);border-radius:4px;background:rgb(var(--rgb-giltUi) / .14);color:var(--color-giltPale);font-weight:700;cursor:pointer;touch-action:manipulation;}',
     '.cr-resolution__continue:focus-visible{outline:3px solid var(--color-giltUi);outline-offset:3px;}',
     '@media(max-width:680px){.cr-resolution__slots{grid-template-columns:repeat(2,minmax(0,1fr))}}',
     '@media(max-width:440px){.cr-resolution__slots{grid-template-columns:1fr}}'
