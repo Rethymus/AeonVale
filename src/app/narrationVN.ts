@@ -10,8 +10,8 @@
  *    （墨 narrator / 金 master 斜体 / 朱砂 heart-demon 粗 / 靛 intuition / 气青 self / 纸 system 反白）
  *    + 字形冗余（italic / weight / 字距）色盲安全。
  *  - Backlog：环形 200 行，`H` 唤出半透明覆盖层；Skip / Auto（行末停 800-2500ms）/ Rollback（滚轮上回退一步）。
- *  - 选项四态：默认（靛边）/ 悬停或聚焦（朱砂边+朱砂字）/ 已选（金边+角标✓）/ 禁用锁（墨 50%+锁图标+原因文案+aria-disabled）；
- *    `①②③④⑤` 数字键直选；触屏 target≥44px。
+ *  - 选项四态：默认 / 悬停或聚焦 / 已选 / 禁用锁（原因文案+aria-disabled）；
+ *    视觉上保持纸面分行，仍支持 `1`–`5` 数字键直选；触屏 target≥44px。
  *
  * 红线（硬守）：
  *  - 本引擎只负责 DOM 演出与无障碍，不引第二随机源（无 Math.random / Date.now / performance.now），
@@ -23,7 +23,7 @@
  */
 
 import type { NarrationBlipSpeaker } from '@io/audio';
-import { isChoiceAvailable, onceFlag } from './firstPersonView';
+import { checkRequires, isChoiceAvailable, onceFlag } from './firstPersonView';
 import type { EndingId, NarrationChoice, NarrationLine, NarrationScene, NarrationState, Speaker } from './narrationTypes';
 
 /** 打字机四档速度（docs/23 §5：38 标准 / 60 慢 / 18 快 / 0 即时）。 */
@@ -212,7 +212,7 @@ const SPEAKER_COLOR: Readonly<Record<Speaker, string>> = {
 /** 标点停顿字符集（docs/23 §5：`，。！？；：—` + `…` 每个 `…` 单独延时）。 */
 const PUNCT_CHARS = new Set<string>(['，', '。', '！', '？', '；', '：', '—', '…', ',', '.', '!', '?', ';', ':']);
 
-/** 数字键 → 选项序号（docs/23 §5：①②③④⑤ 数字键直选）。 */
+/** 数字键 → 选项序号（docs/23 §5：1–5 数字键直选）。 */
 const NUMBER_KEY_TO_INDEX: Readonly<Record<string, number>> = {
   '1': 0,
   '2': 1,
@@ -220,8 +220,6 @@ const NUMBER_KEY_TO_INDEX: Readonly<Record<string, number>> = {
   '4': 3,
   '5': 4
 };
-
-const NUMBER_GLYPHS = ['①', '②', '③', '④', '⑤'] as const;
 
 function clamp(value: number, min: number, max: number): number {
   if (Number.isNaN(value)) return min;
@@ -255,14 +253,14 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   let uiHidden = false;
   /** 每次换段/换场递增；旧 timer 即使已进入任务队列，也不得写回新场景。 */
   let renderEpoch = 0;
-  /** 回访 hub 直接列选项时不重复推入「须自择一途」提示。 */
-  let suppressDecisionCue = false;
 
   // —— 当前场景演出状态 ——
   let currentScene: NarrationScene | null = null;
   let currentState: NarrationState | null = null;
   let currentHandlers: NarrationSceneHandlers | null = null;
   let segmentQueue: readonly NarrationLine[] = [];
+  let responseQueue: readonly NarrationLine[] = [];
+  let renderedSceneLines: readonly NarrationLine[] = [];
   let pendingConvergeAfterResponse = false;
   let selectedChoiceId: string | null = null;
   let lastChoiceId: string | null = null;
@@ -317,6 +315,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   cgAmbienceImg.decoding = 'async';
   cgAmbienceImg.hidden = true;
   cgWrap.append(cgImg, cgAmbienceImg);
+
+  const chapterMark = document.createElement('p');
+  chapterMark.className = 'narration-chapter-mark';
+  chapterMark.setAttribute('aria-hidden', 'true');
 
   // 心声条（内心内阁）：对话框上方独立窄条，最多 2 条 FIFO。
   const cabinetEl = document.createElement('div');
@@ -393,7 +395,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   endingCard.hidden = true;
 
   bottomDock.append(cabinetEl, dialog, quickMenu);
-  stage.append(cgWrap, bottomDock, backlogOverlay, endingCard);
+  stage.append(cgWrap, chapterMark, bottomDock, backlogOverlay, endingCard);
   root.appendChild(stage);
 
   function mkButton(className: string, label: string, onClick: EventListener, title?: string): HTMLButtonElement {
@@ -413,6 +415,19 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   function setButtonHint(btn: HTMLButtonElement, title: string): void {
     btn.title = title;
     btn.setAttribute('aria-label', title);
+  }
+
+  function actLabel(act: NarrationScene['act']): string {
+    switch (act) {
+      case 'prologue':
+        return '序章 · 幻灭';
+      case 1:
+        return '第一幕 · 转折';
+      case 2:
+        return '第二幕 · 淬劫';
+      case 3:
+        return '终局 · 破立';
+    }
   }
 
   function bind(target: EventTarget, type: string, listener: EventListener, options?: boolean | AddEventListenerOptions): void {
@@ -595,7 +610,6 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   }
 
   function speakerLabel(speaker: Speaker, origin: BacklogOrigin): string {
-    if (origin === 'response') return '回应';
     if (origin === 'converge') return '';
     switch (speaker) {
       case 'master':
@@ -695,6 +709,12 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
   function goToNext(): void {
     // response → converge → onChoose 路由。
     if (activeOrigin === 'response') {
+      if (responseQueue.length > 0) {
+        const next = responseQueue[0]!;
+        responseQueue = responseQueue.slice(1);
+        startSegment(next.text, next.speaker ?? 'narrator', 'response');
+        return;
+      }
       if (pendingConvergeAfterResponse && currentScene?.converge) {
         pendingConvergeAfterResponse = false;
         startSegment(currentScene.converge, 'narrator', 'converge');
@@ -724,17 +744,6 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     const renderedChoices = choices.filter(choice => currentState !== null && shouldRenderChoice(currentState, scene.id, choice));
     const visibleChoices = renderedChoices.filter(choice => currentState !== null && isChoiceAvailable(currentState, scene.id, choice));
     if (renderedChoices.length > 0) {
-      // 重大抉择前强制 1 条心声：≥2 选项且本场景 lines 无 self/heart-demon/master/intuition 时，
-      // 轻量推入 cabinet 一句（不剧透结局），保持克制。
-      if (!suppressDecisionCue && renderedChoices.length >= 2) {
-        const hasInnerVoice = scene.lines.some(line => {
-          const s = line.speaker;
-          return s === 'self' || s === 'heart-demon' || s === 'master' || s === 'intuition';
-        });
-        if (!hasInnerVoice) {
-          pushCabinet('self', '（……须自择一途。）');
-        }
-      }
       phase = 'choices';
       renderChoices(scene);
       if (visibleChoices.length === 0) {
@@ -791,9 +800,9 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     for (const choice of choices) {
       if (state === null || !shouldRenderChoice(state, scene.id, choice)) continue;
       const available = state !== null && isChoiceAvailable(state, scene.id, choice);
-      let glyph = '';
+      let shortcut = '';
       if (available) {
-        glyph = renderIndex < NUMBER_GLYPHS.length ? NUMBER_GLYPHS[renderIndex]! : '';
+        shortcut = renderIndex < 5 ? String(renderIndex + 1) : '';
         renderIndex += 1;
       }
       const btn = document.createElement('button');
@@ -802,6 +811,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       btn.dataset.flowFocusable = 'true';
       btn.dataset.choiceId = choice.id;
       btn.dataset.available = String(available);
+      if (shortcut) {
+        btn.dataset.shortcut = shortcut;
+        btn.setAttribute('aria-keyshortcuts', shortcut);
+      }
       btn.style.minHeight = '44px'; // 触屏 target≥44px（docs/23 §5）。
       const isRead = available && readSet.has(readChoiceKey(scene.id, choice.id));
       if (isRead) btn.classList.add('narration-choice-read');
@@ -815,7 +828,7 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
         // 安全拼装 DOM（label 可能含特殊字符，禁止 innerHTML 注入）。
         const main = document.createElement('span');
         main.className = 'narration-choice-main';
-        main.textContent = `🔒 ${choice.label}`;
+        main.textContent = `未解 · ${choice.label}`;
         const reasonEl = document.createElement('span');
         reasonEl.className = 'narration-choice-reason';
         reasonEl.textContent = reason;
@@ -823,10 +836,10 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       } else if (selectedChoiceId === choice.id) {
         btn.classList.add('narration-choice-selected');
         btn.setAttribute('aria-pressed', 'true');
-        btn.textContent = `${glyph ? glyph + ' ' : ''}✓ ${choice.label}`;
+        btn.textContent = choice.label;
       } else {
-        const prefix = isRead ? '◇ ' : '';
-        btn.textContent = glyph ? `${glyph} ${prefix}${choice.label}` : `${prefix}${choice.label}`;
+        btn.textContent = choice.label;
+        if (shortcut) btn.title = `快捷键 ${shortcut}`;
       }
       const onSelect: EventListener = () => {
         if (destroyed) return;
@@ -857,10 +870,13 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     if (currentScene.choices) {
       renderChoices(currentScene); // 重渲染展示 ✓ 已选态。
     }
-    const responseText = choice.response;
-    if (responseText && responseText.length > 0) {
+    const responses = choice.responseLines?.filter(line => checkRequires(currentState!, line.requires))
+      ?? (choice.response ? [{ text: choice.response, speaker: choice.speaker }] : []);
+    if (responses.length > 0) {
       pendingConvergeAfterResponse = true;
-      startSegment(responseText, choice.speaker ?? 'narrator', 'response');
+      const first = responses[0]!;
+      responseQueue = responses.slice(1);
+      startSegment(first.text, first.speaker ?? choice.speaker ?? 'narrator', 'response');
       return;
     }
     if (currentScene.converge) {
@@ -1376,13 +1392,16 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
     selectedChoiceId = null;
     lastChoiceId = null;
     pendingConvergeAfterResponse = false;
+    responseQueue = [];
     cabinetSuppressed = false;
-    suppressDecisionCue = showOptions.startAtChoices === true;
     currentScene = scene;
     currentState = state;
     currentHandlers = handlers;
     stage.dataset.sceneId = scene.id;
-    segmentQueue = scene.lines.length > 0 ? scene.lines.slice(1) : [];
+    stage.dataset.act = String(scene.act);
+    chapterMark.textContent = actLabel(scene.act);
+    renderedSceneLines = scene.lines.filter(line => checkRequires(state, line.requires));
+    segmentQueue = renderedSceneLines.length > 0 ? renderedSceneLines.slice(1) : [];
     hint.textContent = 'Enter / 点击继续';
     if (showOptions.startAtChoices) {
       activeText = '';
@@ -1399,11 +1418,11 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       afterSceneLines();
       return;
     }
-    if (scene.lines.length === 0) {
+    if (renderedSceneLines.length === 0) {
       afterSceneLines();
       return;
     }
-    const firstLine = scene.lines[0]!;
+    const firstLine = renderedSceneLines[0]!;
     startSegment(firstLine.text, firstLine.speaker ?? 'narrator', firstLine.speaker ?? 'narrator');
   }
 

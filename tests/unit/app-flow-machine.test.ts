@@ -5,6 +5,8 @@ function runFlow(events: readonly AppFlowEvent[]): AppFlowState {
   return events.reduce(transitionAppFlow, createAppFlowState());
 }
 
+const LEGACY_WORLD_EVENTS = [{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }] as const satisfies readonly AppFlowEvent[];
+
 describe('AppFlowMachine', () => {
   it('drives the approved title-to-aftermath vertical slice', () => {
     let state = createAppFlowState();
@@ -57,16 +59,31 @@ describe('AppFlowMachine', () => {
     expect(skipped.screen).toBe('world');
   });
 
-  it('continues an existing save from title directly into world', () => {
+  it('continues an existing save from title directly into the current journey', () => {
     expect(runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }])).toEqual({
-      screen: 'world',
+      screen: 'roguelite-proto',
       overlay: null,
-      focus: { initial: APP_FLOW_FOCUS_TARGETS.world, restore: null }
+      focus: { initial: APP_FLOW_FOCUS_TARGETS.rogueliteProto, restore: null }
+    });
+  });
+
+  it('starts and leaves the current journey from title without entering the legacy world', () => {
+    const journey = runFlow([{ type: 'boot-ready' }, { type: 'start-roguelite-proto' }]);
+
+    expect(journey).toEqual({
+      screen: 'roguelite-proto',
+      overlay: null,
+      focus: { initial: APP_FLOW_FOCUS_TARGETS.rogueliteProto, restore: null }
+    });
+    expect(transitionAppFlow(journey, { type: 'return-title-from-roguelite-proto' })).toEqual({
+      screen: 'title',
+      overlay: null,
+      focus: { initial: APP_FLOW_FOCUS_TARGETS.titleNewGame, restore: null }
     });
   });
 
   it('keeps one overlay and restores its concrete trigger when it closes', () => {
-    const world = runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]);
+    const world = runFlow(LEGACY_WORLD_EVENTS);
     const inventory = transitionAppFlow(world, {
       type: 'open-overlay',
       overlay: 'inventory',
@@ -111,7 +128,7 @@ describe('AppFlowMachine', () => {
 
   it('rejects overlays on screens where they would break the page contract', () => {
     const prologue = runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }]);
-    const tribulation = runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }]);
+    const tribulation = runFlow([...LEGACY_WORLD_EVENTS, { type: 'start-tribulation' }]);
 
     expect(transitionAppFlow(prologue, { type: 'open-overlay', overlay: 'inventory' })).toBe(prologue);
     expect(transitionAppFlow(tribulation, { type: 'open-overlay', overlay: 'inventory' })).toBe(tribulation);
@@ -134,7 +151,7 @@ describe('AppFlowMachine', () => {
   });
 
   it('returns from ending to a clean title screen', () => {
-    const ending = runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'show-ending' }]);
+    const ending = runFlow([...LEGACY_WORLD_EVENTS, { type: 'show-ending' }]);
     expect(ending.screen).toBe('ending');
     expect(transitionAppFlow(ending, { type: 'return-title' })).toEqual({
       screen: 'title',
@@ -145,9 +162,9 @@ describe('AppFlowMachine', () => {
 
   it.each(['world', 'tribulation', 'aftermath'] as const)('lets terminal state preempt the %s screen', screen => {
     const states = {
-      world: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]),
-      tribulation: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }]),
-      aftermath: runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }, { type: 'start-tribulation' }, { type: 'finish-tribulation' }])
+      world: runFlow(LEGACY_WORLD_EVENTS),
+      tribulation: runFlow([...LEGACY_WORLD_EVENTS, { type: 'start-tribulation' }]),
+      aftermath: runFlow([...LEGACY_WORLD_EVENTS, { type: 'start-tribulation' }, { type: 'finish-tribulation' }])
     };
 
     expect(transitionAppFlow(states[screen], { type: 'show-ending' })).toEqual({
@@ -158,7 +175,7 @@ describe('AppFlowMachine', () => {
   });
 
   it.each(['', '#[', '#inventory,body', '#inventory button', '#inventory>button', '#app canvas'])('rejects unsafe return-focus selector %j without manufacturing a new state', returnFocus => {
-    const world = runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]);
+    const world = runFlow(LEGACY_WORLD_EVENTS);
     const malformed = transitionAppFlow(world, {
       type: 'open-overlay',
       overlay: 'inventory',
@@ -169,7 +186,7 @@ describe('AppFlowMachine', () => {
   });
 
   it('accepts one safe ID selector as a focus return target', () => {
-    const world = runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]);
+    const world = runFlow(LEGACY_WORLD_EVENTS);
     const inventory = transitionAppFlow(world, {
       type: 'open-overlay',
       overlay: 'inventory',

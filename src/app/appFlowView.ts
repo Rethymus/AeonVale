@@ -1,7 +1,7 @@
 import { APP_FLOW_FOCUS_TARGETS, createAppFlowState, transitionAppFlow, type AppFlowEvent, type AppFlowState, type AppFocusSelector } from './appFlowMachine';
 import { deriveUiMode, type UiMode, type UiModeInput } from './uiMode';
 
-export const APP_SURFACE_IDS = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'narration', 'codex', 'portrait-blocked'] as const;
+export const APP_SURFACE_IDS = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'narration', 'roguelite-proto', 'codex', 'portrait-blocked'] as const;
 
 export type AppSurfaceId = (typeof APP_SURFACE_IDS)[number];
 
@@ -20,6 +20,7 @@ export const APP_SURFACE_LABELS: Readonly<Record<AppSurfaceId, string>> = {
   aftermath: '战后结算',
   ending: '结局',
   narration: '灵韵叙录',
+  'roguelite-proto': '偷天换劫',
   codex: '叙录',
   'portrait-blocked': '请横置设备'
 };
@@ -85,7 +86,7 @@ export interface AppFlowViewController {
   destroy(): void;
 }
 
-type AppFlowAction = 'reload-page' | 'start-new-game' | 'continue-game' | 'open-settings' | 'finish-prologue' | 'skip-prologue' | 'close-overlay' | 'open-pause' | 'continue-aftermath' | 'return-title';
+type AppFlowAction = 'reload-page' | 'start-new-game' | 'continue-game' | 'open-settings' | 'finish-prologue' | 'skip-prologue' | 'close-overlay' | 'open-pause' | 'continue-aftermath' | 'start-roguelite-proto' | 'return-title';
 
 interface ListenerBinding {
   readonly target: AppFlowViewEventTarget;
@@ -138,6 +139,7 @@ function isFlowAction(value: string | null): value is AppFlowAction {
     case 'close-overlay':
     case 'open-pause':
     case 'continue-aftermath':
+    case 'start-roguelite-proto':
     case 'return-title':
       return true;
     default:
@@ -167,6 +169,8 @@ function eventForAction(action: Exclude<AppFlowAction, 'reload-page'>, trigger: 
       return { type: 'open-overlay', overlay: 'pause', returnFocus: focusSelectorFor(trigger, state.focus.initial) };
     case 'continue-aftermath':
       return { type: 'continue-aftermath' };
+    case 'start-roguelite-proto':
+      return { type: 'start-roguelite-proto' };
     case 'return-title':
       return { type: 'return-title' };
   }

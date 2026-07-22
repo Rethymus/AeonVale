@@ -9,6 +9,101 @@
  * 量纲：HP 0–100、丹毒 0–100、灵气 0–100、药性毫点、火候 0–100。
  */
 
+export interface CultivationRunBalanceParams {
+  slotsPerAgenda: number;
+  pressureCap: number;
+  mortalHeartCap: number;
+  injuryCap: number;
+  startPressure: number;
+  startMortalHeart: number;
+  startFood: number;
+  repeatSecondEfficiencyMilli: number;
+  repeatLaterEfficiencyMilli: number;
+  repeatPressureStep: number;
+  repeatInjuryStep: number;
+  pressurePenaltyThreshold: number;
+  pressurePenaltyEfficiencyMilli: number;
+  mortalHeartPressureDivisor: number;
+  tribulation: {
+    baseMinTemperingPower: number;
+    stageMinTemperingPower: number;
+    willpowerPerMinPower: number;
+    baseMaxSurvivablePower: number;
+    stageMaxSurvivablePower: number;
+    bodyFoundationPerMaxPower: number;
+    endurancePerMaxPower: number;
+    injuryPerMaxPowerPenalty: number;
+    pressurePenaltyThreshold: number;
+    pressurePerMaxPowerPenalty: number;
+    minimumSafeWidth: number;
+    sweetSpotInsetMilli: number;
+    insightPerPreviewLevel: number;
+    maxPreviewLevel: number;
+    mortalHeartPerMoveBudgetBonus: number;
+    pillsPerUndoCharge: number;
+    maxUndoCharges: number;
+    maxWardCharges: number;
+    maxPreparedHerbs: number;
+    baseSourcePower: number;
+    pathCellLossMilli: number;
+    minimumPathConductivityMilli: number;
+    mirrorModifierMilli: number;
+    conductorModifierMilli: number;
+    herbHitModifierMilli: number;
+    timeoutBodyDamage: number;
+    perfectTemperingGainMultiplier: number;
+    survivedTemperingGainMultiplier: number;
+    insufficientTemperingGainMultiplier: number;
+  };
+  activities: {
+    training: {
+      timeCostDays: number;
+      foodCost: number;
+      bodyFoundationGain: number;
+      enduranceGain: number;
+      willpowerGain: number;
+      pressureGain: number;
+      injuryGain: number;
+    };
+    farming: {
+      timeCostDays: number;
+      herbGain: number;
+      foodGain: number;
+      pressureRelief: number;
+      mortalHeartGain: number;
+    };
+    alchemy: {
+      timeCostDays: number;
+      herbCost: number;
+      pillGain: number;
+      insightGain: number;
+      poisonGain: number;
+      pressureGain: number;
+    };
+    livelihood: {
+      timeCostDays: number;
+      spiritStoneGain: number;
+      pressureGain: number;
+      mortalHeartLoss: number;
+    };
+    insight: {
+      timeCostDays: number;
+      spiritStoneCost: number;
+      insightGain: number;
+      willpowerGain: number;
+      pressureGain: number;
+    };
+    rest: {
+      timeCostDays: number;
+      foodCost: number;
+      pressureRelief: number;
+      mortalHeartGain: number;
+      injuryRelief: number;
+      poisonRelief: number;
+    };
+  };
+}
+
 export interface BalanceParams {
   /** 时间 */
   time: {
@@ -46,6 +141,9 @@ export interface BalanceParams {
     lifespanDailyLoss: number; // 每日自然消耗
     lifespanBreakthroughGain: number; // 突破后争回寿元
   };
+
+  /** D27 日程养成容器原型参数。 */
+  cultivationRun: CultivationRunBalanceParams;
 
   /** 工具耐久。
    * 工具为可选持有：无工具时凡人徒手操作（动作仍成功，sim 安全：headless bot 不持有工具→零回归）。
@@ -232,6 +330,100 @@ export const DEFAULT_BALANCE: BalanceParams = {
     lifespanDailyLoss: 1,
     lifespanBreakthroughGain: 180
   },
+  cultivationRun: {
+    slotsPerAgenda: 6,
+    pressureCap: 100,
+    mortalHeartCap: 100,
+    injuryCap: 100,
+    startPressure: 20,
+    startMortalHeart: 50,
+    startFood: 4,
+    repeatSecondEfficiencyMilli: 850,
+    repeatLaterEfficiencyMilli: 700,
+    repeatPressureStep: 2,
+    repeatInjuryStep: 2,
+    pressurePenaltyThreshold: 80,
+    pressurePenaltyEfficiencyMilli: 750,
+    mortalHeartPressureDivisor: 25,
+    tribulation: {
+      baseMinTemperingPower: 50,
+      stageMinTemperingPower: 10,
+      willpowerPerMinPower: 1000,
+      baseMaxSurvivablePower: 85,
+      stageMaxSurvivablePower: 5,
+      bodyFoundationPerMaxPower: 200,
+      endurancePerMaxPower: 350,
+      injuryPerMaxPowerPenalty: 2,
+      pressurePenaltyThreshold: 80,
+      pressurePerMaxPowerPenalty: 2,
+      minimumSafeWidth: 5,
+      sweetSpotInsetMilli: 250,
+      insightPerPreviewLevel: 4,
+      maxPreviewLevel: 3,
+      mortalHeartPerMoveBudgetBonus: 25,
+      pillsPerUndoCharge: 2,
+      maxUndoCharges: 2,
+      maxWardCharges: 2,
+      maxPreparedHerbs: 3,
+      baseSourcePower: 100,
+      pathCellLossMilli: 15,
+      minimumPathConductivityMilli: 700,
+      mirrorModifierMilli: 960,
+      conductorModifierMilli: 1080,
+      herbHitModifierMilli: 950,
+      timeoutBodyDamage: 10,
+      perfectTemperingGainMultiplier: 10,
+      survivedTemperingGainMultiplier: 6,
+      insufficientTemperingGainMultiplier: 2
+    },
+    activities: {
+      training: {
+        timeCostDays: 12,
+        foodCost: 1,
+        bodyFoundationGain: 1600,
+        enduranceGain: 700,
+        willpowerGain: 400,
+        pressureGain: 14,
+        injuryGain: 6
+      },
+      farming: {
+        timeCostDays: 10,
+        herbGain: 3,
+        foodGain: 2,
+        pressureRelief: 2,
+        mortalHeartGain: 4
+      },
+      alchemy: {
+        timeCostDays: 8,
+        herbCost: 2,
+        pillGain: 1,
+        insightGain: 1,
+        poisonGain: 6000,
+        pressureGain: 8
+      },
+      livelihood: {
+        timeCostDays: 14,
+        spiritStoneGain: 5,
+        pressureGain: 12,
+        mortalHeartLoss: 2
+      },
+      insight: {
+        timeCostDays: 10,
+        spiritStoneCost: 1,
+        insightGain: 4,
+        willpowerGain: 300,
+        pressureGain: 10
+      },
+      rest: {
+        timeCostDays: 7,
+        foodCost: 1,
+        pressureRelief: 20,
+        mortalHeartGain: 8,
+        injuryRelief: 12,
+        poisonRelief: 2000
+      }
+    }
+  },
   tools: {
     hoeDurability: 50, // 铁锈锄
     sickleDurability: 80, // 镰刀
@@ -365,6 +557,22 @@ export function withDefaultBalanceParams(params: BalanceParams): BalanceParams {
     time: { ...DEFAULT_BALANCE.time, ...params.time },
     player: { ...DEFAULT_BALANCE.player, ...params.player },
     bodyCultivation: { ...DEFAULT_BALANCE.bodyCultivation, ...params.bodyCultivation },
+    cultivationRun: {
+      ...DEFAULT_BALANCE.cultivationRun,
+      ...params.cultivationRun,
+      tribulation: {
+        ...DEFAULT_BALANCE.cultivationRun.tribulation,
+        ...params.cultivationRun?.tribulation
+      },
+      activities: {
+        training: { ...DEFAULT_BALANCE.cultivationRun.activities.training, ...params.cultivationRun?.activities?.training },
+        farming: { ...DEFAULT_BALANCE.cultivationRun.activities.farming, ...params.cultivationRun?.activities?.farming },
+        alchemy: { ...DEFAULT_BALANCE.cultivationRun.activities.alchemy, ...params.cultivationRun?.activities?.alchemy },
+        livelihood: { ...DEFAULT_BALANCE.cultivationRun.activities.livelihood, ...params.cultivationRun?.activities?.livelihood },
+        insight: { ...DEFAULT_BALANCE.cultivationRun.activities.insight, ...params.cultivationRun?.activities?.insight },
+        rest: { ...DEFAULT_BALANCE.cultivationRun.activities.rest, ...params.cultivationRun?.activities?.rest }
+      }
+    },
     tools: { ...DEFAULT_BALANCE.tools, ...params.tools },
     pillPoison: { ...DEFAULT_BALANCE.pillPoison, ...params.pillPoison },
     qi: {

@@ -1,4 +1,4 @@
-export type AppScreen = 'boot' | 'boot-error' | 'title' | 'prologue' | 'world' | 'tribulation' | 'aftermath' | 'ending' | 'narration';
+export type AppScreen = 'boot' | 'boot-error' | 'title' | 'prologue' | 'world' | 'tribulation' | 'aftermath' | 'ending' | 'narration' | 'roguelite-proto';
 
 export type AppOverlay = 'inventory' | 'cultivation' | 'map' | 'pause' | 'settings' | 'codex';
 
@@ -13,6 +13,7 @@ export const APP_FLOW_FOCUS_TARGETS = {
   titleNarration: '#flow-title-narration',
   prologue: '#prologue-vn-stage',
   narration: '#narration-stage',
+  rogueliteProto: '#roguelite-proto-root',
   world: '#game-canvas',
   tribulation: '#flow-tribulation-primary',
   aftermath: '#flow-aftermath-continue',
@@ -39,7 +40,7 @@ export interface AppFlowState {
   focus: AppFlowFocus;
 }
 
-export type AppFlowEvent = { type: 'boot-ready' } | { type: 'boot-error' } | { type: 'start-new-game' } | { type: 'continue-game' } | { type: 'finish-prologue' } | { type: 'skip-prologue' } | { type: 'start-tribulation' } | { type: 'finish-tribulation' } | { type: 'continue-aftermath' } | { type: 'show-ending' } | { type: 'return-title' } | { type: 'start-narration' } | { type: 'return-title-from-narration' } | { type: 'open-overlay'; overlay: AppOverlay; returnFocus?: AppFocusSelector } | { type: 'close-overlay' };
+export type AppFlowEvent = { type: 'boot-ready' } | { type: 'boot-error' } | { type: 'start-new-game' } | { type: 'continue-game' } | { type: 'finish-prologue' } | { type: 'skip-prologue' } | { type: 'start-tribulation' } | { type: 'finish-tribulation' } | { type: 'continue-aftermath' } | { type: 'show-ending' } | { type: 'return-title' } | { type: 'start-narration' } | { type: 'return-title-from-narration' } | { type: 'start-roguelite-proto' } | { type: 'return-title-from-roguelite-proto' } | { type: 'open-overlay'; overlay: AppOverlay; returnFocus?: AppFocusSelector } | { type: 'close-overlay' };
 
 const WORLD_OVERLAYS: readonly AppOverlay[] = ['inventory', 'cultivation', 'map', 'pause', 'settings'];
 const GAMEPLAY_OVERLAYS: readonly AppOverlay[] = ['pause', 'settings'];
@@ -78,6 +79,8 @@ export function appFocusTargetFor(screen: AppScreen, overlay: AppOverlay | null)
       return APP_FLOW_FOCUS_TARGETS.ending;
     case 'narration':
       return APP_FLOW_FOCUS_TARGETS.narration;
+    case 'roguelite-proto':
+      return APP_FLOW_FOCUS_TARGETS.rogueliteProto;
   }
 }
 
@@ -135,7 +138,7 @@ export function transitionAppFlow(state: AppFlowState, event: AppFlowEvent): App
     case 'start-new-game':
       return state.screen === 'title' ? moveTo('prologue') : state;
     case 'continue-game':
-      return state.screen === 'title' ? moveTo('world') : state;
+      return state.screen === 'title' ? moveTo('roguelite-proto') : state;
     case 'finish-prologue':
     case 'skip-prologue':
       return state.screen === 'prologue' ? moveTo('world') : state;
@@ -153,5 +156,9 @@ export function transitionAppFlow(state: AppFlowState, event: AppFlowEvent): App
       return state.screen === 'title' ? moveTo('narration') : state;
     case 'return-title-from-narration':
       return state.screen === 'narration' ? moveTo('title') : state;
+    case 'start-roguelite-proto':
+      return state.screen === 'title' ? moveTo('roguelite-proto') : state;
+    case 'return-title-from-roguelite-proto':
+      return state.screen === 'roguelite-proto' ? moveTo('title') : state;
   }
 }
