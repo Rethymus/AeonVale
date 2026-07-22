@@ -14,6 +14,7 @@ interface CultivationKeypointSnapshot {
   readonly generation: number;
   readonly stage: number;
   readonly settlementKind: string | null;
+  readonly solutionMoves: readonly ('up' | 'down' | 'left' | 'right')[];
 }
 
 async function finishFirstLifeOpening(page: Page): Promise<void> {
@@ -94,6 +95,17 @@ async function configureAscensionKeypoint(page: Page): Promise<CultivationKeypoi
   });
 }
 
+async function configureArrayKeypoint(page: Page): Promise<CultivationKeypointSnapshot> {
+  return page.evaluate(() => {
+    const target = window as typeof window & {
+      __AEON_TEST__?: { configureCultivationArrayKeypoint?: () => CultivationKeypointSnapshot };
+    };
+    const snapshot = target.__AEON_TEST__?.configureCultivationArrayKeypoint?.();
+    if (!snapshot) throw new Error('configureCultivationArrayKeypoint test hook is unavailable');
+    return snapshot;
+  });
+}
+
 async function fillAgenda(page: Page, activities: readonly string[]): Promise<void> {
   for (const activity of activities) {
     await page.getByRole('button', { name: new RegExp(`^${activity}，\\d+ 日`) }).click();
@@ -112,6 +124,26 @@ async function cultivationSnapshot(page: Page): Promise<CultivationKeypointSnaps
 }
 
 test.describe('D27 CDP 关键态门禁', () => {
+  test('复合劫式经真实方向输入依次使用绝缘石、导体与金石并完成淬体', async ({ page }) => {
+    await enterCultivation(page);
+    const configured = await configureArrayKeypoint(page);
+    expect(configured.solutionMoves.length).toBeGreaterThan(0);
+    await expect(page.locator('.rp-hud-stage')).toContainText('封断合阵式');
+    await expect(page.locator('.rp-hud-preparation')).toContainText('水石·续脉');
+    await expect(page.locator('.rp-hud-preparation')).toContainText('紫石·封雷');
+
+    const keys = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' } as const;
+    for (const move of configured.solutionMoves) await page.keyboard.press(keys[move]);
+
+    await expect(page.locator('.rp-outcome')).toContainText('完美淬体');
+    expect(await cultivationSnapshot(page)).toMatchObject({
+      outcome: 'perfect',
+      settlementApplied: true,
+      settlementKind: 'breakthrough',
+      stage: 5
+    });
+  });
+
   test('同一开局的资源活动先后顺序决定日程成败', async ({ page }) => {
     await enterCultivation(page);
     await configurePlanningKeypoint(page, 'default');

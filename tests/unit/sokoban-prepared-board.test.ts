@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { createCultivationRunState, deriveTribulationPreparation } from '@sim/cultivation-run';
 import { createPuzzle } from '@sim/sokoban/logic';
 import { applyPreparationToPuzzle } from '@sim/sokoban/prepared-board';
-import { isSolvable } from '@sim/sokoban/generator';
+import { isSolvable, solveBoard } from '@sim/sokoban/generator';
 
 describe('D27-d · 日程准备进入棋盘', () => {
   test('同一棋盘与同一准备得到完全相同的灵草和阵石落位', () => {
@@ -10,7 +10,7 @@ describe('D27-d · 日程准备进入棋盘', () => {
       createCultivationRunState({ overrides: { herbs: 3, insight: 8 } }),
       { unlockedBlockKinds: ['conductor'] }
     );
-    const base = createPuzzle(0, 13);
+    const base = createPuzzle(0, 13, undefined, { requiredBlockKinds: preparation.unlockedBlockKinds });
 
     const a = applyPreparationToPuzzle(base, preparation, ['starting-herb:thunder']);
     const b = applyPreparationToPuzzle(base, preparation, ['starting-herb:thunder']);
@@ -86,5 +86,31 @@ describe('D27-d · 日程准备进入棋盘', () => {
 
     expect(base).toEqual(baseBefore);
     expect(preparation).toEqual(preparationBefore);
+  });
+
+  test('回归：旧版会超出步数预算的种子，准备后均能在倒计时内完成', () => {
+    const regressions = [
+      { stage: 0, seeds: [3, 7, 11, 12, 14] },
+      { stage: 1, seeds: [4] }
+    ] as const;
+    for (const sample of regressions) {
+      for (const seed of sample.seeds) {
+        const preparation = deriveTribulationPreparation(
+          createCultivationRunState({ overrides: { stage: sample.stage, herbs: 3 } }),
+          { unlockedBlockKinds: ['mirror', 'conductor', 'insulator'] }
+        );
+        const base = createPuzzle(sample.stage, seed, undefined, {
+          requiredBlockKinds: preparation.unlockedBlockKinds
+        });
+        const result = applyPreparationToPuzzle(base, preparation, [
+          'starting-herb:thunder',
+          'sword-scar-obstacle:1'
+        ]);
+        expect(
+          solveBoard(result.state.board, result.state.player, { maxMoves: result.state.moveBudget }),
+          `stage ${sample.stage} seed ${seed}`
+        ).not.toBeNull();
+      }
+    }
   });
 });

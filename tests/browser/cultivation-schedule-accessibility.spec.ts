@@ -139,9 +139,12 @@ async function finishRoundWithAccessiblePhases(page: Page, destination: 'plannin
 }
 
 function parseMoves(hudText: string): { used: number; budget: number } {
-  const match = /步数\s+(\d+)\/(\d+)/.exec(hudText);
-  if (!match) throw new Error(`HUD 中未找到步数：${hudText}`);
-  return { used: Number(match[1]), budget: Number(match[2]) };
+  const match = /余步\s+(\d+)\s*\/\s*(\d+)/.exec(hudText);
+  if (!match) throw new Error(`HUD 中未找到余步：${hudText}`);
+  const remaining = Number(match[1]);
+  const budget = Number(match[2]);
+  if (remaining > budget) throw new Error(`HUD 余步超出总预算：${hudText}`);
+  return { used: budget - remaining, budget };
 }
 
 test.describe('修仙日程 · 无障碍与触控门禁', () => {
