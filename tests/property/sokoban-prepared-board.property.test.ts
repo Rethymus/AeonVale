@@ -3,7 +3,7 @@ import fc from 'fast-check';
 import { createCultivationRunState, deriveTribulationPreparation } from '@sim/cultivation-run';
 import { createPuzzle } from '@sim/sokoban/logic';
 import { applyPreparationToPuzzle } from '@sim/sokoban/prepared-board';
-import { isSolvable } from '@sim/sokoban/generator';
+import { solveBoard } from '@sim/sokoban/generator';
 import type { BlockKind } from '@sim/sokoban/types';
 
 const blockKinds: Exclude<BlockKind, 'none'>[] = ['mirror', 'conductor', 'insulator'];
@@ -17,11 +17,13 @@ describe('D27-d · 准备棋盘性质', () => {
       fc.subarray(blockKinds),
       fc.boolean(),
       (stage, seed, herbs, unlockedBlockKinds, eventHerb) => {
-        const base = createPuzzle(stage, seed);
         const preparation = deriveTribulationPreparation(
           createCultivationRunState({ overrides: { stage, herbs } }),
           { unlockedBlockKinds }
         );
+        const base = createPuzzle(stage, seed, undefined, {
+          requiredBlockKinds: preparation.unlockedBlockKinds
+        });
         const tags = eventHerb ? ['starting-herb:thunder'] as const : [];
         const baseBefore = structuredClone(base);
         const preparationBefore = structuredClone(preparation);
@@ -32,7 +34,11 @@ describe('D27-d · 准备棋盘性质', () => {
         expect(a).toEqual(b);
         expect(base).toEqual(baseBefore);
         expect(preparation).toEqual(preparationBefore);
-        expect(isSolvable(a.state.board, a.state.player)).toBe(true);
+        const solution = solveBoard(a.state.board, a.state.player, { maxMoves: a.state.moveBudget });
+        expect(solution, '准备后仍须在倒计时预算内可解').not.toBeNull();
+        for (const kind of a.placedBlockKinds) {
+          expect(solution?.movedBlockKinds, `${kind} 必须参与最短解`).toContain(kind);
+        }
         expect(a.state.beam.reachedBody).toBe(false);
         expect(new Set(a.preparedHerbIndices).size).toBe(a.preparedHerbIndices.length);
         expect(new Set([...a.inventoryHerbIndices, ...a.eventHerbIndices])).toEqual(

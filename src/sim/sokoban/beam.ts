@@ -1,5 +1,5 @@
 /**
- * 雷光追踪：从雷源沿 sourceDir 步进，金阵石折 90°cw、水阵石直通、绝缘石/墙阻断、到身体=胜、穿灵草=烧毁。
+ * 雷光追踪：从雷源沿 sourceDir 步进，金阵石折 90°cw、水阵石可接续断裂雷脉、绝缘石/墙阻断、到身体=胜、穿灵草=烧毁。
  * 纯函数、确定性、零随机（仅依赖板面状态）。步数上限防 mirror 成环死循环。
  */
 import type { Vec2 } from '@sim/world/types';
@@ -32,6 +32,7 @@ export function traceBeam(board: SokobanBoard): BeamTrace {
     if (terrain === 'wall' || terrain === 'source') break;
     const block = board.blocks[i] ?? 'none';
     cells.push({ x, y });
+    if (terrain === 'rift' && block !== 'conductor') break;
     if (block === 'insulator') break;
     if (terrain === 'body') {
       reachedBody = true;

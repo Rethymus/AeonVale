@@ -30,8 +30,8 @@ export function rotateCW(dir: Dir): Dir {
   }
 }
 
-/** 固定地形。source=雷源、body=身体(淬体终点)、herb=灵草(护)。 */
-export type Terrain = 'empty' | 'wall' | 'source' | 'body' | 'herb';
+/** 固定地形。rift=断裂雷脉，只有水阵石压在其上时雷光才能通过。 */
+export type Terrain = 'empty' | 'wall' | 'source' | 'body' | 'herb' | 'rift';
 
 /** 可推阵石。mirror=金阵石(折90°cw)、conductor=水阵石(直通)、insulator=绝缘石(阻断)。 */
 export type BlockKind = 'none' | 'mirror' | 'conductor' | 'insulator';
@@ -54,6 +54,17 @@ export interface BeamTrace {
 
 export type SokobanStatus = 'playing' | 'won' | 'lost';
 
+export type SokobanArchetype = 'turning-rune' | 'sealed-meridian' | 'broken-meridian' | 'compound-array';
+
+/** 生成器签发的可玩性证书；不含文案，避免 sim 反向依赖 UI。 */
+export interface SokobanChallenge {
+  readonly archetype: SokobanArchetype;
+  readonly requiredBlockKinds: readonly Exclude<BlockKind, 'none'>[];
+  readonly certifiedMoves: number;
+  readonly budgetSlack: number;
+  readonly preserveHerbsTarget: number;
+}
+
 export interface SokobanState {
   readonly stage: number;
   board: SokobanBoard;
@@ -64,6 +75,7 @@ export interface SokobanState {
   moveBudget: number;
   movesUsed: number;
   status: SokobanStatus;
+  readonly challenge?: SokobanChallenge;
 }
 
 export type SokobanAction = { kind: 'move'; dir: Dir };

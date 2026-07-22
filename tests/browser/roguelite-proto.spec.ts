@@ -122,7 +122,7 @@ test.describe('D27 修途→事件→参悟→天劫主路径 · smoke', () => {
     for (const k of ['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft']) await page.keyboard.press(k);
 
     await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible();
-    await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/步数 \d+\/\d+/);
+    await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/余步 \d+ \/ \d+/);
   });
 
   test('继续旅程恢复同一入世录与日程草稿，不回到旧世界模式', async ({ page }) => {

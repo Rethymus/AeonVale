@@ -3,7 +3,7 @@
  * 核心：生成的棋盘【可解】且【初始未解】（至少要推一步），确定性 + 多样性。
  */
 import { describe, expect, test } from 'vitest';
-import { generateBoard, isSolvable } from '@sim/sokoban/generator';
+import { generateBoard, solveBoard } from '@sim/sokoban/generator';
 import { traceBeam } from '@sim/sokoban/beam';
 import { createPuzzle } from '@sim/sokoban/logic';
 import { Rng } from '@sim/world/rng';
@@ -18,7 +18,13 @@ describe('sokoban generator · 可解性与初始未解', () => {
         if (!g) continue;
         const initBeam = traceBeam(g.board);
         expect(initBeam.reachedBody, `stage ${stage} seed ${seed} 初始必须未解`).toBe(false);
-        expect(isSolvable(g.board, g.player), `stage ${stage} seed ${seed} 必须可解`).toBe(true);
+        const solution = solveBoard(g.board, g.player, { maxMoves: g.moveBudget });
+        expect(solution, `stage ${stage} seed ${seed} 必须在预算内可解`).not.toBeNull();
+        expect(solution?.moves.length).toBe(g.challenge.certifiedMoves);
+        expect(g.moveBudget - g.challenge.certifiedMoves).toBe(g.challenge.budgetSlack);
+        for (const kind of g.challenge.requiredBlockKinds) {
+          expect(solution?.movedBlockKinds, `${kind} 必须参与最短解`).toContain(kind);
+        }
         expect(g.board.sourcePos.x).toBeGreaterThanOrEqual(0);
         expect(g.board.sourcePos.x).toBeLessThan(g.board.width);
         expect(g.board.sourcePos.y).toBeGreaterThanOrEqual(0);
@@ -44,5 +50,15 @@ describe('sokoban generator · 确定性与多样性', () => {
       sigs.add(JSON.stringify(s.board.terrain) + JSON.stringify(s.board.blocks) + JSON.stringify(s.player));
     }
     expect(sigs.size).toBeGreaterThanOrEqual(3);
+  });
+
+  test('劫式组合：中后期样本实际出现封脉、断脉与复合阵', () => {
+    const archetypes = new Set<string>();
+    for (let stage = 1; stage <= 6; stage += 1) {
+      for (let seed = 0; seed < 8; seed += 1) archetypes.add(createPuzzle(stage, seed).challenge?.archetype ?? 'none');
+    }
+    expect(archetypes.has('sealed-meridian')).toBe(true);
+    expect(archetypes.has('broken-meridian')).toBe(true);
+    expect(archetypes.has('compound-array')).toBe(true);
   });
 });
