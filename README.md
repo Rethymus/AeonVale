@@ -39,9 +39,9 @@
 
 ## 这是一款什么游戏？
 
-《永恒山谷：大道之歌》是一款中文原生单机游戏，将**修途筹备、灵田经营、炼丹与回合制雷阵解谜**串成同一条因果链。
+《永恒山谷：大道之歌》是一款中文原生单机游戏，将**修途筹备、炼丹制药与回合制雷阵解谜**串成同一条因果链。
 
-你不是为了种田而种田：灵草进入丹药，丹药扩大承雷余地，阵石改写雷光的路，而天劫会把整段筹备变成突破——或代价。
+你不是为了种田而种田：六段修途里的农事种出灵草，灵草进入丹药与雷阵，丹药与体魄扩大承雷的余地，阵石改写雷光的路，而天劫会把整段筹备变成突破——或代价。
 
 主模式「偷天换劫」负责让你**玩进这个世界**；「灵韵叙录」则从另一个视角，让你**亲自走过这个故事**。两种玩法共享世界观与线索，但拥有各自完整的操作与节奏。
 
@@ -51,11 +51,11 @@
 
 | 阶段 | 你的决定 | 这一步为什么重要 |
 |---|---|---|
-| **择途** | 在六段修途中安排苦练、灵田、炼丹、参悟与歇息 | 体魄、资源、情报和寿元不可能同时最优 |
-| **备劫** | 种植灵草、炼制丹药、读懂即将到来的劫式 | 筹备的每件东西都会进入天劫棋盘，而不是孤立数值 |
-| **布阵** | 推动折雷、续脉、封雷阵石，规划雷光的行路 | 棋盘随种子变化，但已展示的规则和目标不会临时变卦 |
-| **承雷** | 在伤害与淬体收益之间做取舍 | 天劫不是一次动画结算，而是验证整段准备的策略关卡 |
-| **留痕** | 成功进境，或让劫灰与残卷留下下一次破局的线索 | 失败不会把已学会的一切都抹掉 |
+| **择途** | 在六段修途中安排苦练、灵田、谋生与歇息；灵草、灵石攒够后再解锁炼丹与参悟 | 余寿、体魄、资源和心压不可能同时最优，重复同一件事还会收益递减 |
+| **备劫** | 种植灵草、炼制丹药，在生活事件与残卷参悟中读懂即将到来的劫式 | 筹备的每件东西都会进入天劫棋盘，而不是孤立数值 |
+| **布阵** | 推动折雷、续脉、封雷阵石，规划雷光的行路；一道劫可分多阶，逐阶推进 | 棋盘随种子变化，但认证步数、余量与撤步都摆在明处，规则不会临时变卦 |
+| **承雷** | 在雷威的甜蜜区与肉身上限之间做取舍 | 落在甜蜜区是完美淬体，越过上限灰飞烟灭；一枚护脉丹能多换一次保命 |
+| **留痕** | 成功进境，或在劫灰碑记留下知识、遗物与遗书，让下一位承火者接着叩天 | 失败不会把已学会的一切都抹掉 |
 
 ---
 
@@ -72,10 +72,12 @@
 **一颗心脏，两种心跳：从从容备劫，转入短促紧张的雷阵破局。**
 
 - **阵法引雷就是 build**：金石折雷、水石续脉、紫石封雷；裂隙、导体、绝缘与灵草会改变同一道雷的意义。
-- **随机决定局面，不暗改规则**：劫式由种子生成，目标、阵石特性与移动预算可读；相同种子与输入可复盘同一场劫。
-- **风险与收益共用一条雷路**：导开雷光可以保命，引雷入体才能淬体；怎样赢、愿意付出什么，由你布的阵决定。
-- **六境是六次重写玩法边界**：每次进境提高能力上限，并引入新的筹备项、劫式与阵场特性。
-- **劫灰传承**：失败不是原地重复；残卷与已掌握的路径经验会让后续尝试拥有新的起点。
+- **随机决定局面，不暗改规则**：劫式由种子生成，每阶公示认证步数与移动余量，撤步随时回退；相同种子与输入可复盘同一场劫。
+- **风险与收益共用一条雷路**：导开雷光可以保命，引雷入体才能淬体；雷威落在甜蜜区是完美淬体，越过肉身上限则当场灰飞烟灭。
+- **引劫之问：何时承雷由你决定**：每轮备劫后都可以「现在引劫」或「再备一轮」——早引劫少耗余寿，却要接受当前准备；天道不会无限等待。
+- **残卷参悟：把悟痕读成批注**：修途批注、引雷阵石、护脉丹方、紫劫兆拓、前人余声……一条从农事直通天劫情报的批注树。
+- **六境是六次重写玩法边界**：练气、筑基、结丹、元婴、化神、归一——每次进境提高能力上限，并引入新的筹备项、劫式与阵场特性。
+- **劫灰传承**：失败不是原地重复；劫灰碑记让你留下一页真正读懂的知识、一件遗物与一封遗书，下一位承火者带着它们重新入局。
 
 > “无灵根”的判定究竟错在哪里？第一道劫，只是答案的开头。
 
@@ -129,7 +131,7 @@ pnpm dev          # 打开 http://127.0.0.1:5173
 
 ## 当前版本与下一步
 
-- ✅ 「偷天换劫」已打通修途筹备、天劫棋盘、进境与劫灰传承的核心流程。
+- ✅ 「偷天换劫」已打通修途筹备、生活事件、残卷参悟、引劫之问、多阶天劫棋盘、进境突破与劫灰传承的完整循环。
 - ✅ 「灵韵叙录」已提供完整章节轨、分支选择与八种命数。
 - 🔄 正在打磨天劫解谜的手感、劫式多样性、引导可读性，并扩展残卷、阵石与灵草组合。
 - 🔄 桌面端优先继续优化；Windows / Linux 封装是近期目标，移动端仅作后续评估。
@@ -267,9 +269,9 @@ pnpm test:browser:pages-playable
 
 ## English Summary
 
-**Aeon Vale: Song of the Dao** is a Chinese-first single-player game that links cultivation planning, spirit-field management, alchemy, and turn-based lightning-routing puzzles into one causal loop.
+**Aeon Vale: Song of the Dao** is a Chinese-first single-player game that links cultivation planning, alchemy, and turn-based lightning-routing puzzles into one causal loop.
 
-- **Heaven-Stealing Tribulation** is the main cultivation roguelite. Prepare through six daily slots, then push array stones to route a seeded tribulation through herbs and into a mortal body. Randomness creates the board; visible rules, move budgets, and reproducible seeds keep failure learnable.
+- **Heaven-Stealing Tribulation** is the main cultivation roguelite. Draft a six-slot agenda of multi-day activities, weigh when to call the tribulation down, then push array stones to route a staged, seeded lightning strike through herbs and into a mortal body — aiming for the perfect-quench sweet spot without overloading a body that has no spiritual root. Randomness creates the board; visible rules, certified move counts, and reproducible seeds keep failure learnable.
 - **Lingyun Narration** is a separate first-person branching story set in the same world. Choices, wounds, relationships, and sacrifices lead toward eight thematically distinct fates without reducing them to simple good or bad endings.
 
 Built with TypeScript, PixiJS 8, Tone.js / Web Audio, Zod, Vite, deterministic simulation, automated balance sweeps, and 2700+ tests. The browser demo needs no installation; a local run does not depend on online services. Source code is MIT-licensed, while original narrative and art use CC BY-NC 4.0.
