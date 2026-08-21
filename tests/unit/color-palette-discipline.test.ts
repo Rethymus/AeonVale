@@ -42,7 +42,8 @@ describe('production color discipline', () => {
   it('keeps six/eight-digit color literals in ColorPalette only', () => {
     const findings: string[] = [];
     for (const path of [...productionFiles('src'), 'index.html']) {
-      const repoPath = relative('.', path);
+      // Windows 下 relative()/join() 产生反斜杠，统一为正斜杠再与白名单比较
+      const repoPath = relative('.', path).replaceAll('\\', '/');
       if (repoPath === COLOR_SOURCE) continue;
       const source = readFileSync(path, 'utf8');
       for (const match of source.matchAll(/(?:#[\da-f]{3,8}|%23[\da-f]{3,8}|\b0x[\da-f]{6,8}\b)/gi)) {
