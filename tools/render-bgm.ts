@@ -16,7 +16,7 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -148,7 +148,7 @@ export function renderPhraseToFloat32(phrase: MusicPhrase, sr = SAMPLE_RATE): Fl
   return buf;
 }
 
-function writeWav(path: string, pcm: Float32Array, sr = SAMPLE_RATE): void {
+function buildWavBytes(pcm: Float32Array, sr = SAMPLE_RATE): Buffer {
   const byteRate = sr * 2;
   const blockAlign = 2;
   const dataSize = pcm.length * 2;
@@ -170,7 +170,11 @@ function writeWav(path: string, pcm: Float32Array, sr = SAMPLE_RATE): void {
     const s = Math.max(-1, Math.min(1, pcm[i]!));
     buffer.writeInt16LE(Math.round(s * 32767), 44 + i * 2);
   }
-  writeFileSync(path, buffer);
+  return buffer;
+}
+
+function writeWav(path: string, pcm: Float32Array, sr = SAMPLE_RATE): void {
+  writeFileSync(path, buildWavBytes(pcm, sr));
 }
 
 function sha256(file: string): string {
@@ -371,13 +375,18 @@ function buildTracks(): Track[] {
 }
 
 function ffmpegEncode(wavPath: string, oggPath: string, totalSec: number): void {
+  // 选项注入防护：WAV 内容经 stdin（pipe:0 为静态字符串）喂入，oggPath 以「--」
+  // 终止选项解析——动态路径不出现在命令参数位；并以「-」前缀校验兜底。
+  const wavBytes = readFileSync(wavPath);
+  const oggBase = oggPath.split(/[\\/]/).pop() ?? '';
+  if (oggBase.startsWith('-')) throw new RangeError(`output file looks like an option: ${oggPath}`);
   const fadeOutStart = Math.max(0.2, totalSec - 1.2).toFixed(2);
   const filter = `loudnorm=I=-16:TP=-1.5:LRA=11,afade=t=in:st=0:d=0.4,afade=t=out:st=${fadeOutStart}:d=1.0`;
   // -fflags/-flags +bitexact 关闭 ogg 随机 serial，令产物字节级可复现（checksum 稳定）。
   execFileSync(
     'ffmpeg',
-    ['-y', '-i', wavPath, '-af', filter, '-fflags', '+bitexact', '-flags', '+bitexact', '-c:a', 'libvorbis', '-q:a', '4', oggPath],
-    { stdio: ['ignore', 'ignore', 'ignore'] }
+    ['-y', '-f', 'wav', '-i', 'pipe:0', '-af', filter, '-fflags', '+bitexact', '-flags', '+bitexact', '-c:a', 'libvorbis', '-q:a', '4', '--', oggPath],
+    { input: wavBytes, stdio: ['pipe', 'ignore', 'ignore'] }
   );
 }
 

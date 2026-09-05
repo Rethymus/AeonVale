@@ -63,15 +63,27 @@ def bake(stype, base):
         arr[:, :, c] = np.clip(col, 0, 255).astype(np.uint8)
     return arr
 
+import re
+
 import os
+from pathlib import Path
 os.makedirs('assets/tiles', exist_ok=True)
 rows = []
 for stype, base in SOIL.items():
+    # 路径穿越防护：stype 仅允许小写字母与下划线，拼进路径前先行校验。
+    if not re.fullmatch(r'[a-z_]+', stype):
+        raise SystemExit(f'unexpected soil type: {stype!r}')
     arr = bake(stype, base)
-    out = f'assets/tiles/{stype}.png'
+    out = Path('assets/tiles') / f'{stype}.png'
     Image.fromarray(arr, 'RGB').save(out)
-    sha = hashlib.sha256(open(out, 'rb').read()).hexdigest()
-    rows.append((f'tile.{stype}', f'tiles/{stype}.png', sha))
-    print(f'tile.{stype}|{sha[:16]}')
-json.dump(rows, open('/tmp/tile_manifest_rows.json', 'w'))
+    sha = hashlib.sha256(out.read_bytes()).hexdigest()
+    rows.append(('tile.' + stype, 'tiles/' + stype + '.png', sha))
+    print('tile.' + stype + '|' + sha[:16])
+# 行清单落盘到项目内暂存目录（该目录已被 git 忽略；避免使用系统级临时目录，
+# 后者在 Windows 不可用且位于项目之外）。
+staging_dir = Path('tmp')
+staging_dir.mkdir(exist_ok=True)
+manifest_path = staging_dir / 'tile_manifest_rows.json'
+with manifest_path.open('w') as fh:
+    json.dump(rows, fh)
 print(f'baked {len(rows)} tile textures (seamless {N}x{N})')

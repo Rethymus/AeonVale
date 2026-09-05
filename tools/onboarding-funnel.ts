@@ -184,14 +184,15 @@ function formatPct(x: number | null): string {
 function parseSeedCount(raw: string | undefined): number {
   if (!raw) return 10;
   const value = raw.slice('--seeds='.length);
-  const range = /^(\d+)\.\.(\d+)$/.exec(value);
+  const range = value.match(/^(\d+)\.\.(\d+)$/);
   if (range) {
     const from = Number(range[1]);
     const to = Number(range[2]);
-    if (Number.isFinite(from) && Number.isFinite(to) && to >= from) return to - from + 1;
+    if (Number.isFinite(from) && Number.isFinite(to) && to >= from) return Math.min(to - from + 1, 10_000);
   }
   const n = Number(value);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 10;
+  // CLI 数值直接决定会话循环规模：限制量级并对非有限输入回退默认值。
+  return Number.isFinite(n) && n > 0 ? Math.min(Math.floor(n), 10_000) : 10;
 }
 
 function main(): void {
