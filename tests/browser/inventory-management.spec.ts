@@ -3,7 +3,7 @@ import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE, placeGroundItem } from '@sim';
 import { saveGame } from '@sim/serialize';
 import { mutateItem } from '@sim/world/player';
-import { clearIntroDialogue, continueToWorld, gameDebugSnapshot, gameEntryPath, waitForInitialSurface } from './openGame';
+import { clearIntroDialogue, continueToLoadedWorld, gameDebugSnapshot, gameEntryPath, waitForInitialSurface } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
 
@@ -136,7 +136,7 @@ async function expectWorldSurfaceRestored(page: Page): Promise<void> {
 async function openInventoryOverlay(page: Page): Promise<Locator> {
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await page.keyboard.press('b');
   const inventorySurface = page.locator('[data-app-surface="inventory"]');
@@ -433,7 +433,7 @@ test('ground pickup keeps loot in scene when a full bag cannot open a new slot',
   );
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await expectWorldSurfaceRestored(page);
 
@@ -464,7 +464,7 @@ test('ground pickup only fills available stack room when the bag is full', async
   );
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await expectWorldSurfaceRestored(page);
 
@@ -495,7 +495,7 @@ test('ground pickup keeps same-item loot in scene when the existing stack is ful
   );
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await expectWorldSurfaceRestored(page);
 
@@ -570,7 +570,7 @@ test('inventory slot order survives reload and restores the visible grid order',
 
   await page.reload();
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await page.keyboard.press('b');
   inventorySurface = page.locator('[data-app-surface="inventory"]');
@@ -606,7 +606,7 @@ test('inventory page, search, and sort preferences survive reload', async ({ pag
 
   await page.reload();
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await page.keyboard.press('b');
   inventorySurface = page.locator('[data-app-surface="inventory"]');
@@ -633,7 +633,7 @@ test('inventory page, search, and sort preferences survive reload', async ({ pag
 
   await page.reload();
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await page.keyboard.press('b');
   inventorySurface = page.locator('[data-app-surface="inventory"]');

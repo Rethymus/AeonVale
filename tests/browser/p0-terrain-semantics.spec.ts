@@ -37,7 +37,8 @@ const TILE = 42;
 const LOGICAL_LAYOUT = computeViewportLayout({ ...LOGICAL_CANVAS, touchCapable: false });
 if (!LOGICAL_LAYOUT.regions) throw new Error('P0 terrain screenshots require the 960×540 landscape layout.');
 const TILE_ORIGIN = {
-  x: Math.round(LOGICAL_LAYOUT.regions.world.x + (LOGICAL_LAYOUT.regions.world.width - 14 * TILE) / 2),
+  // 与 renderer.ts 的 OX/OY 同源：水平锚定 content 区居中，垂直锚定 world 区顶部。
+  x: Math.round(LOGICAL_LAYOUT.regions.content.x + (LOGICAL_LAYOUT.regions.content.width - 14 * TILE) / 2),
   y: Math.round(LOGICAL_LAYOUT.regions.world.y)
 };
 

@@ -3,7 +3,7 @@ import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
 import { saveGame } from '@sim/serialize';
 import { mutateItem } from '@sim/world/player';
-import { clearIntroDialogue, continueToWorld, gameEntryPath, waitForInitialSurface } from './openGame';
+import { clearIntroDialogue, continueToLoadedWorld, gameEntryPath, waitForInitialSurface } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
 
@@ -37,7 +37,7 @@ test('inventory overlay loads manifest-backed card icons for current items', asy
 
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
   await clearIntroDialogue(page);
   await page.keyboard.press('b');
 

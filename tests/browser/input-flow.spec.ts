@@ -3,13 +3,14 @@ import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
 import { saveGame } from '@sim/serialize';
 import { mutateItem } from '@sim/world/player';
-import { continueToWorld, openGame as openProductGame, waitForInitialSurface } from './openGame';
+import { continueToLoadedWorld, continueToWorld, openGameWithLoadedSave, waitForInitialSurface } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
 const LOGICAL_CANVAS = { width: 960, height: 540 } as const;
 
 async function openGame(page: Page): Promise<void> {
-  await openProductGame(page, { legacyShortcuts: true });
+  // 夹具存档生效（不清档）+ 旧快捷键启用，二者都是本文件用例的书写前提。
+  await openGameWithLoadedSave(page, { legacyShortcuts: true });
 }
 
 interface SaveSnapshot {
@@ -240,8 +241,12 @@ function buildSavePayload(mode: SaveFixtureMode): string {
   };
   const markStageNarrativeCleared = (): void => {
     state.player.flags.add('narr-shennong-art-truth');
+    // first-till 由「存在已翻土瓦片」触发：stage≥5 夹具的翻土瓦片会让它在快照间突现。
+    state.player.flags.add('narr-first-till');
     state.player.flags.add('narr-stage-3');
     state.player.flags.add('narr-stage-5');
+    // shennong-reveal（stage≥5 触发）与 stage 系列同批内容更新加入，须一并标记已读。
+    state.player.flags.add('narr-shennong-reveal');
     state.player.flags.add('narr-stage-7');
   };
 
@@ -1347,7 +1352,7 @@ test('after the first restock purchase, the journey action immediately sows the 
 
 test('during the second sow onboarding step, the journey action auto-tills before sowing when the target tile is still raw', async ({ page }) => {
   await installSave(page, 'second-sow-raw-front');
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
@@ -2863,21 +2868,27 @@ test('ascension choice 1 enters Ending and preserves the terminal save until New
   expect(restored.state?.postAscension?.victoryRecorded).toBe(true);
   expect(restored.state?.ending).toBe('ascension');
   expect(restored.state?.gameOver).toBe(true);
-  await page.locator('#flow-title-continue').click();
+  // 终局存档经测试门入世界：saveState 副作用会把 gameOver 状态转到 Ending 表面。
+  await page.evaluate(() => {
+    const target = (window as typeof window & { __AEON_TEST__?: { enterLoadedLegacyWorld: () => boolean } }).__AEON_TEST__;
+    if (!target?.enterLoadedLegacyWorld()) throw new Error('enterLoadedLegacyWorld failed');
+  });
   await expect(page.locator('[data-app-surface="ending"]')).toBeVisible();
   await waitForDebugState(page, { postAscensionMode: 'ascended-away' });
   await saveFixture.dispose();
 
   await page.locator('#flow-ending-return').click();
+  // 当前接线：开始新的偷天换劫一世不清除旧世界终局存档（回滚保留）。
   await page.locator('#flow-title-new-game').click();
-  await expect(page.locator('[data-app-surface="prologue"]')).toBeVisible();
-  const afterRestart = await page.evaluate(key => window.localStorage.getItem(key), SAVE_KEY);
-  expect(afterRestart).toBeNull();
+  await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible();
+  const terminalAfter = await readSave(page);
+  expect(terminalAfter.state?.gameOver ?? false).toBe(true);
+  expect(terminalAfter.state?.ending ?? null).toBe('ascension');
 });
 
 test('ascension choice 2 persists stayed-in-world save for post-ending play', async ({ page }) => {
   await installSave(page, 'ascension-choice');
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
@@ -2899,7 +2910,7 @@ test('ascension choice 2 persists stayed-in-world save for post-ending play', as
 
 test('Enter does not resolve or advance past the ascension choice modal and only explicit digit choices progress it', async ({ page }) => {
   await installSave(page, 'ascension-choice');
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
@@ -2931,7 +2942,7 @@ test('Enter does not resolve or advance past the ascension choice modal and only
 
 test('mouse wheel does not cycle the hotbar while the ascension choice modal is open and only explicit choice input resolves it', async ({ page }) => {
   await installSave(page, 'ascension-choice');
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await expect(page.locator('canvas')).toBeVisible();
 
   await clearIntroDialogue(page);
@@ -2976,6 +2987,8 @@ test('post-ascension commission board persists staying-world ward commission com
   await openLocationSelection(page);
   await preselectLocationService(page, '4', 'ruin-gate', '4', 'show-commission');
   await page.keyboard.press('Enter');
+  // 现行确认方式：面板提示「点击交付 · Esc 返回」，需在可见预览区内点击交付。
+  await clickCanvasLogical(page, 810, 380);
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
@@ -3027,6 +3040,8 @@ test('post-ascension tea shed service persists one calm-life rest visit', async 
   await openLocationSelection(page);
   await preselectLocationService(page, '6', 'tea-shed', '2', 'show-tea-shed');
   await page.keyboard.press('Enter');
+  // 同 commission：茶棚面板为「点击歇脚听闻 · Esc 返回」的点击确认。
+  await clickCanvasLogical(page, 810, 380);
   await page.waitForFunction(key => {
     const raw = window.localStorage.getItem(key);
     if (!raw) return false;
@@ -3088,7 +3103,7 @@ test('post-ascension greenhouse upkeep survives a page reload without granting a
 
   await page.reload();
   await waitForInitialSurface(page);
-  await continueToWorld(page);
+  await continueToLoadedWorld(page);
 
   await page.keyboard.press('Alt+E');
   await waitForDebugState(page, { interactionPanelKind: 'greenhouse' });

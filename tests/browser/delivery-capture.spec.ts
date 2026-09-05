@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { mkdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { clearIntroDialogue, gameEntryPath, openGame, waitForInitialSurface } from './openGame';
+import { clearIntroDialogue, continueToLoadedWorld, continueToWorld, gameEntryPath, openGameWithLoadedSave, waitForInitialSurface } from './openGame';
 import { installShowcaseSave } from './showcaseSave';
 
 // 全界面截图交付：驱动本地预览构建（与线上同代码、同 build revision）遍历每个主要界面，
@@ -56,9 +56,12 @@ test('capture new-game flow surfaces for delivery', async ({ page }) => {
 
   await page.locator('#flow-title-new-game').click();
   await page.waitForTimeout(600);
-  await shoot(page, '02-prologue.png');
+  await shoot(page, '02-roguelite-opening.png');
 
-  await page.locator('#flow-prologue-skip').click();
+  // 旧世界仍可达（测试门），后续面板/暂停截图沿用农庄世界 UI。
+  await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
+  await continueToWorld(page);
   await page.waitForFunction(
     () => {
       const d = (window as typeof window & { __AEON_DEBUG__?: { appSurface?: string; flowScreen?: string } }).__AEON_DEBUG__ ?? {};
@@ -84,7 +87,7 @@ test('capture showcase (developed) surfaces for delivery', async ({ page }) => {
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 1280, height: 720 });
   await installShowcaseSave(page);
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await clearIntroDialogue(page);
   await shoot(page, '06-showcase-farm.png');
 

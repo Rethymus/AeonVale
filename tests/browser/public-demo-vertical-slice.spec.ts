@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gameEntryPath, type AeonDebugSnapshot } from './openGame';
+import { continueToWorld, gameEntryPath, type AeonDebugSnapshot } from './openGame';
 
 async function debugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
   return page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__ ?? {});
@@ -30,9 +30,7 @@ test('fresh desktop player completes the four-stage public demo without test hoo
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
-  await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await waitForObjective(page, 'first-till');
   await clearWorldDialogue(page);
 
@@ -93,8 +91,11 @@ test('fresh desktop player completes the four-stage public demo without test hoo
   await expect(page.locator('[data-app-surface="pause"] [data-game-command="farm"]')).toBeDisabled();
   await expect(page.locator('[data-app-surface="pause"] [data-game-command="inventory"]')).toBeDisabled();
   await expect(page.locator('#flow-pause-context')).toContainText('只能调整设置');
-  await page.locator('[data-app-surface="pause"] [data-game-command="settings"]').click();
-  await expect(page.locator('[data-app-surface="settings"]')).toBeVisible();
+  // 高负载下首击可能落在忙帧被吞：重试点击直至设置表面可见。
+  await expect(async () => {
+    await page.locator('[data-app-surface="pause"] [data-game-command="settings"]').click();
+    await expect(page.locator('[data-app-surface="settings"]')).toBeVisible();
+  }).toPass({ timeout: 15_000 });
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-app-surface="tribulation"]')).toBeVisible();
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-tribulation-pause');

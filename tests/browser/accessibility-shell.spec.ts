@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gameEntryPath, type AeonDebugSnapshot } from './openGame';
+import { continueToWorld, gameEntryPath, type AeonDebugSnapshot } from './openGame';
 
 async function debugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
   return page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__ ?? {});
@@ -27,9 +27,7 @@ async function waitForObjective(page: Page, objective: string): Promise<void> {
 async function startFreshWorld(page: Page): Promise<void> {
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
-  await page.waitForSelector('#game-canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await waitForObjective(page, 'first-till');
   await clearWorldDialogue(page);
 }

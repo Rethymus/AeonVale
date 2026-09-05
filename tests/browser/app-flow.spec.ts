@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { gameEntryPath, type AeonDebugSnapshot, waitForInitialSurface } from './openGame';
+import { continueToWorld, gameEntryPath, type AeonDebugSnapshot, waitForInitialSurface } from './openGame';
 
 async function debugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
   return page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__ ?? {});
@@ -29,7 +29,7 @@ async function openFurnaceFromPause(page: Page): Promise<void> {
   await expect(page.locator('[data-inventory-tab="player"]')).toHaveCount(0);
 }
 
-test('title and prologue are real focusable surfaces before the world becomes interactive', async ({ page }) => {
+test('title leads to the roguelite opening while the legacy world stays reachable through the test gate', async ({ page }) => {
   await page.goto(gameEntryPath());
   const initial = await waitForInitialSurface(page);
   expect(initial.appSurface).toBe('title');
@@ -40,12 +40,20 @@ test('title and prologue are real focusable surfaces before the world becomes in
   await expect(page.locator('canvas')).toBeHidden();
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-title-new-game');
 
+  // D27 起主路径：开始游戏进入「偷天换劫」开场（不再经过旧世界序章）。
   await newGame.click();
-  await expect(page.locator('[data-app-surface="prologue"]')).toBeVisible();
-  await expect(page.locator('#flow-prologue-heading')).toContainText('从一块空地开始');
-  expect(await page.evaluate(() => document.activeElement?.id)).toBe('prologue-vn-stage');
+  await expect(page.locator('[data-app-surface="roguelite-proto"]')).toBeVisible();
+  await expect(page.locator('[data-app-surface="title"]')).toBeHidden();
+  expect(await page.evaluate(() => document.activeElement?.id)).toBe('cr-opening-heading');
 
-  await page.locator('#flow-prologue-skip').click();
+  // 旧世界（序章 → 农庄）仍必须可达：测试门走 start-new-game → skip-prologue。
+  await page.goto(gameEntryPath());
+  await waitForInitialSurface(page);
+  const entered = await page.evaluate(() => {
+    const target = (window as typeof window & { __AEON_TEST__?: { enterLegacyWorld: () => boolean } }).__AEON_TEST__;
+    return target ? target.enterLegacyWorld() : false;
+  });
+  expect(entered).toBe(true);
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page.locator('[data-app-surface="title"]')).toBeHidden();
   expect((await debugSnapshot(page)).appSurface).toBe('world');
@@ -64,8 +72,7 @@ test('settings and pause close with Escape and restore their trigger focus', asy
   await expect(page.locator('[data-app-surface="title"]')).toBeVisible();
   expect(await page.evaluate(() => document.activeElement?.id)).toBe('flow-title-settings');
 
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await page.keyboard.press('Escape');
   await expect(page.locator('[data-app-surface="pause"]')).toBeVisible();
   expect((await debugSnapshot(page)).flowOverlay).toBe('pause');
@@ -80,8 +87,7 @@ test('settings and pause close with Escape and restore their trigger focus', asy
 test('world command bar and product keyboard shortcuts use the same flow surfaces without legacy leakage', async ({ page }) => {
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
 
   const commandBar = page.locator('#world-command-bar');
   await expect(commandBar).toBeVisible();
@@ -148,8 +154,7 @@ test('world command bar and product keyboard shortcuts use the same flow surface
 test('default product input ignores legacy action keys and keeps B/Escape as the inventory loop', async ({ page }) => {
   await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await clearWorldDialogue(page);
 
   const before = await debugSnapshot(page);
@@ -186,12 +191,11 @@ test('screen-reader semantics follow the active page instead of leaking the worl
   await expect(page.locator('#flow-title-new-game')).toBeVisible();
   await expect(surface).toHaveText('当前页面：标题。');
   await expect(objective).toHaveText('当前目标：开始一段本地旅程。');
-  await expect(actions).toContainText('新游戏');
+  await expect(actions).toContainText('开始游戏');
   await expect(actions).not.toContainText('开始翻地');
   await expect(panel).toHaveText('当前没有打开面板。');
 
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await expect(surface).toHaveText('当前页面：农庄世界。');
   await expect(objective).toContainText('面对空地翻出第一块灵田');
   await expect(actions).toContainText('开始翻地');

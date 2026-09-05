@@ -2,9 +2,10 @@ import { expect, test } from '@playwright/test';
 import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
 import { saveGame } from '@sim/serialize';
-import { gameEntryPath } from './openGame';
+import { continueToWorld, gameEntryPath } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
+const JOURNEY_KEY = 'aeonvale-cultivation-journey-v1';
 const registry = buildRegistry();
 
 function corruptNestedInventoryPayload(): string {
@@ -79,15 +80,19 @@ test('an unavailable Storage reader keeps the app usable and reports the limitat
 });
 
 test('a successful first write is required before a fresh journey becomes continuable', async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.clear());
   await page.goto(gameEntryPath());
 
   const continueButton = page.locator('#flow-title-continue');
   await expect(continueButton).toBeDisabled();
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
 
-  await expect.poll(async () => page.evaluate(key => window.localStorage.getItem(key) !== null, SAVE_KEY)).toBe(true);
+  // 「继续旅程」由偷天换劫入世录驱动：开场第一拍成功持久化之前不可用。
+  await page.locator('#flow-title-new-game').click();
+  await expect(page.getByRole('heading', { name: '这个世界的雷，先落在凡人屋顶' })).toBeVisible();
+  await page.locator('.cr-opening__button[data-primary="true"]').click();
+
+  await expect.poll(async () => page.evaluate(key => window.localStorage.getItem(key) !== null, JOURNEY_KEY)).toBe(true);
+
+  await page.reload();
   await expect(continueButton).toBeEnabled();
 });
 
@@ -99,11 +104,11 @@ test('a failed first write never claims safety in Pause, Settings, or the portra
     };
   });
   await page.goto(gameEntryPath());
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
 
   await expect(page.locator('#flow-title-continue')).toBeDisabled();
-  await page.locator('#world-command-bar [data-game-command="pause"]').click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-app-surface="pause"]')).toBeVisible();
   await expect(page.locator('#flow-pause-save-status')).toContainText('当前进度未保存');
   await expect(page.locator('#flow-pause-save-status')).not.toContainText('已保留');
 
@@ -118,24 +123,35 @@ test('a failed first write never claims safety in Pause, Settings, or the portra
   await expect(page.locator('#orientation-save-status')).not.toContainText('安全保留');
 });
 
-test('a later write failure keeps the previous snapshot continuable but marks current progress unsaved', async ({ page }) => {
-  await page.addInitScript(() => window.localStorage.clear());
+test('a later write failure keeps the previous journey snapshot continuable', async ({ page }) => {
   await page.goto(gameEntryPath());
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
 
   const continueButton = page.locator('#flow-title-continue');
+  await expect(continueButton).toBeDisabled();
+
+  // 建立一次成功写入（开场第一拍持久化入世录）。
+  await page.locator('#flow-title-new-game').click();
+  await expect(page.getByRole('heading', { name: '这个世界的雷，先落在凡人屋顶' })).toBeVisible();
+  await page.locator('.cr-opening__button[data-primary="true"]').click();
+
+  await page.reload();
   await expect(continueButton).toBeEnabled();
+
+  // 之后入世录槽位写入失败：既有快照不被破坏，仍可继续；新进度不会顶掉旧档。
   await page.evaluate(key => {
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function (candidate: string, value: string): void {
       if (candidate === key) throw new DOMException('quota exceeded', 'QuotaExceededError');
       original.call(this, candidate, value);
     };
-  }, SAVE_KEY);
+  }, JOURNEY_KEY);
 
-  await page.locator('#world-command-bar [data-game-command="pause"]').click();
-  await expect(page.locator('[data-app-surface="pause"]')).toBeVisible();
+  await continueButton.click();
+  await expect(page.getByRole('heading', { name: '测灵石上，你的答案是零' })).toBeVisible();
+  await page.locator('.cr-opening__button[data-primary="true"]').click();
+
+  await page.reload();
   await expect(continueButton).toBeEnabled();
-  await expect(page.locator('#flow-pause-save-status')).toContainText('关闭或刷新后将回到上次成功存档');
+  await continueButton.click();
+  await expect(page.getByRole('heading', { name: '测灵石上，你的答案是零' })).toBeVisible();
 });

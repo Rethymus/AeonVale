@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { gameEntryPath, type AeonDebugSnapshot } from './openGame';
+import { continueToWorld, gameEntryPath, type AeonDebugSnapshot } from './openGame';
 
 test.use({ viewport: { width: 736, height: 414 }, hasTouch: true, isMobile: true });
 
@@ -198,8 +198,7 @@ test('landscape touch HUD keeps the journey rail clear of the command bar', asyn
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.onboardingObjectiveId === 'first-till');
   await clearIntroByTouch(page);
 
@@ -212,8 +211,7 @@ test('landscape touch more commands open as a side flyout without resizing the m
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.onboardingObjectiveId === 'first-till');
   await clearIntroByTouch(page);
 
@@ -271,8 +269,7 @@ test('landscape touch more command opens and closes the map overlay without losi
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.onboardingObjectiveId === 'first-till');
   await clearIntroByTouch(page);
 
@@ -342,8 +339,7 @@ test('fresh touch player can till from the journey button without virtual moveme
   test.setTimeout(60_000);
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.onboardingObjectiveId === 'first-till');
 
   await expect(page.locator('#touch-controls')).toBeHidden();
@@ -400,8 +396,7 @@ test('landscape touch canvas tap walks beside a farm tile and performs the conte
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.appSurface === 'world');
   await clearIntroByTouch(page);
 
@@ -425,8 +420,7 @@ test('landscape touch canvas tap opens npc and location previews without keyboar
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.appSurface === 'world');
   await clearIntroByTouch(page);
 
@@ -557,8 +551,7 @@ for (const expectation of touchFarmsteadObjectExpectations) {
     await page.addInitScript(() => localStorage.clear());
     await page.goto(gameEntryPath());
     await page.waitForSelector('canvas', { state: 'attached' });
-    await page.locator('#flow-title-new-game').tap();
-    await page.locator('#flow-prologue-skip').tap();
+    await continueToWorld(page);
     await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.appSurface === 'world');
     await clearIntroByTouch(page);
 
@@ -574,8 +567,7 @@ test('landscape touch can tap array-shed then tap a field tile to place an array
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.appSurface === 'world');
   await clearIntroByTouch(page);
 
@@ -605,8 +597,7 @@ test('fresh landscape touch player completes the public demo without keyboard or
   await page.addInitScript(() => localStorage.clear());
   await page.goto(gameEntryPath());
   await page.waitForSelector('canvas', { state: 'attached' });
-  await page.locator('#flow-title-new-game').tap();
-  await page.locator('#flow-prologue-skip').tap();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.onboardingObjectiveId === 'first-till');
   await clearIntroByTouch(page);
 

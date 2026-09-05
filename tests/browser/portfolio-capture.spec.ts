@@ -7,7 +7,7 @@ import { placeFacility } from '@sim/buildings/facilities';
 import { saveGame } from '@sim/serialize';
 import { mutateItem } from '@sim/world/player';
 import { tileAt } from '@sim/world/state';
-import { paintStatsFromDataUrl, gameDebugSnapshot, openGame, renderedCanvasPngSnapshot, type AeonDebugSnapshot, type CanvasPaintStats } from './openGame';
+import { paintStatsFromDataUrl, gameDebugSnapshot, openGameWithLoadedSave, renderedCanvasPngSnapshot, type AeonDebugSnapshot, type CanvasPaintStats } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
 const PORTFOLIO_EVIDENCE_PATH = 'test-results/portfolio/portfolio-mvp-evidence.json';
@@ -167,7 +167,12 @@ async function waitForDebugState(page: Page, expected: Record<string, unknown>):
 }
 
 async function openFarmActionPanelForCapture(page: Page): Promise<void> {
-  await page.locator('#world-command-bar [data-game-command="farm"]').click();
+  // 固定视口重构后「农务」可能收进「更多」飞出菜单：不可见时先展开。
+  const farmButton = page.locator('#world-command-bar [data-game-command="farm"]');
+  if (!(await farmButton.isVisible().catch(() => false))) {
+    await page.locator('#world-command-more > summary').click();
+  }
+  await farmButton.click();
   await waitForDebugState(page, { interactionPanelKind: 'farm-action' });
 }
 
@@ -302,7 +307,7 @@ test('captures deterministic review screenshots for public demo validation', asy
   test.setTimeout(180_000);
   await page.setViewportSize({ width: 1440, height: 900 });
   await installShowcaseSave(page);
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await dismissIntroIfPresent(page);
   await expect(page.locator('canvas')).toBeVisible();
   await expectPortfolioFarmLoopState(page);
@@ -334,7 +339,7 @@ test('captures a small-viewport landscape keyboard-first screen for GitHub Pages
   test.setTimeout(60_000);
   await page.setViewportSize({ width: 736, height: 414 });
   await installShowcaseSave(page);
-  await openGame(page);
+  await openGameWithLoadedSave(page);
   await dismissIntroIfPresent(page);
   await expect(page.locator('canvas')).toBeVisible();
   await expectCanvasFitsViewport(page);

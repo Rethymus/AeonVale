@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { clearIntroDialogue, gameEntryPath, type AeonDebugSnapshot } from './openGame';
+import { clearIntroDialogue, continueToWorld, gameEntryPath, type AeonDebugSnapshot } from './openGame';
 
 async function openResponsiveGame(page: Page): Promise<void> {
   await page.goto(gameEntryPath());
@@ -9,8 +9,7 @@ async function openResponsiveGame(page: Page): Promise<void> {
 
 async function openWorldHud(page: Page): Promise<void> {
   await openResponsiveGame(page);
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.appSurface === 'world');
   await clearIntroDialogue(page);
   await expect(page.locator('#objective-rail')).toBeVisible();
@@ -85,8 +84,7 @@ async function hudSeparation(page: Page): Promise<HudSeparationReport> {
 test('desktop canvas fills the available 16:9 viewport instead of stopping at 960 CSS pixels', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openResponsiveGame(page);
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: { appSurface?: string } }).__AEON_DEBUG__?.appSurface === 'world');
 
   const canvas = page.locator('canvas');
@@ -114,8 +112,7 @@ test('portrait viewport shows the orientation gate instead of a compressed playa
 test('same-orientation resize refreshes canvas and debug layout bounds immediately', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openResponsiveGame(page);
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await page.waitForFunction(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.canvasBounds?.width === 1440);
 
   await page.setViewportSize({ width: 960, height: 540 });
@@ -185,8 +182,7 @@ test('landscape world HUD keeps journey, fate summary, and command bar separated
 test('desktop world and inventory furnace surfaces do not overflow or cross-intersect panels', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openResponsiveGame(page);
-  await page.locator('#flow-title-new-game').click();
-  await page.locator('#flow-prologue-skip').click();
+  await continueToWorld(page);
   await page.waitForFunction(
     () => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__?.appSurface === 'world'
   );
