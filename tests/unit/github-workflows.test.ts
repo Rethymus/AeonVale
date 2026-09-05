@@ -53,7 +53,7 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(ciWorkflow).toContain('pnpm --dir .public-tree governance:dist');
     expect(ciWorkflow).toContain('aeonvale-pages-dist-${{ github.sha }}');
     expect(ciWorkflow).toContain('include-hidden-files: true');
-    expect(ciWorkflow).toContain('uses: gitleaks/gitleaks-action@v2');
+    expect(ciWorkflow).toContain('uses: gitleaks/gitleaks-action@v3');
     expect(ciWorkflow).toContain('PLAYWRIGHT_APP_DIR: .public-tree');
     expect(ciWorkflow).toContain('PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/');
     expect(ciWorkflow).toContain('PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/');
