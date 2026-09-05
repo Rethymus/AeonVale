@@ -50,6 +50,7 @@
 | 26 | `26-roguelite-sokoban-container.md` | 布阵导流 Sokoban 原型规格 | 当前降为天劫特殊玩法规格 |
 | 27 | `27-cultivation-schedule-container.md` | **日程养成主容器定稿** | 当前主模式循环、耦合契约与垂直切片权威入口 |
 | 28 | `28-chinese-parents-benchmark.md` | **《中国式家长》设计与玩家体验对标** | 桌面工作台、叙事/生态闭环、代际警示与验收证据 |
+| 29 | `29-apple-motion-material-research.md` | Apple 动效与材质细节研究 | 弹簧/阻尼参数、按压反馈、滚动物理、毛玻璃机制与本项目映射 |
 
 **最小阅读路径**（赶时间）：`BRIEF → README(本文件) → 27 → 02 → 05/06/07 → 10 → 14 → 17 → 18`。
 
