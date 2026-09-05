@@ -93,8 +93,8 @@ def add_ink_outline(img: Image.Image) -> Image.Image:
     return Image.fromarray(rgba, "RGBA")
 
 
-def process_one(src: Path, dst: Path) -> dict[str, object]:
-    img = Image.open(src).convert("RGBA")
+def process_image(img: Image.Image) -> Image.Image:
+    """纯内存处理：接收已加载图像，返回排版完成的 96x96 画布（不做任何文件 IO）。"""
     img = remove_background(img)
     img = trim_to_alpha(img)
 
@@ -116,34 +116,43 @@ def process_one(src: Path, dst: Path) -> dict[str, object]:
     canvas.alpha_composite(resized, (x, y))
     canvas = harden_alpha(canvas)
     canvas = add_ink_outline(canvas)
-
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    canvas.save(dst, "PNG", optimize=True)
-    data = dst.read_bytes()
-    canvas_rgba = np.asarray(canvas)
-    alpha = canvas_rgba[:, :, 3]
-    return {
-        "src": str(src),
-        "out": str(dst),
-        "w": CANVAS,
-        "h": CANVAS,
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "opaque_ratio": round(float((alpha > 0).sum()) / (CANVAS * CANVAS), 3),
-        "unique_rgba": int(np.unique(canvas_rgba.reshape(-1, 4), axis=0).shape[0]),
-    }
+    return canvas
 
 
 def main() -> int:
     if len(sys.argv) != 3:
         print(__doc__)
         return 1
-    src = Path(sys.argv[1])
-    dst = Path(sys.argv[2])
+    src = Path(sys.argv[1]).resolve()
+    dst = Path(sys.argv[2]).resolve()
+    # 路径穿越防护：规范化后限制在项目根目录内（is_relative_to 排除 .. 逃逸）。
+    root = Path(__file__).resolve().parent.parent
+    if not (src.is_relative_to(root) and dst.is_relative_to(root)):
+        raise SystemExit(f"path escapes project root: {src} -> {dst}")
+
+    # 批处理循环直接内联在入口（路径已校验）；process_image 只做纯内存处理。
+    results: list[dict[str, object]] = []
+    img_paths = sorted(src.glob("*.png")) if src.is_dir() else [src]
+    for img_path in img_paths:
+        out_path = dst / img_path.name if src.is_dir() else dst
+        img = Image.open(img_path).convert("RGBA")
+        canvas = process_image(img)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        canvas.save(out_path, "PNG", optimize=True)
+        data = out_path.read_bytes()
+        canvas_rgba = np.asarray(canvas)
+        alpha = canvas_rgba[:, :, 3]
+        results.append({
+            "src": str(img_path),
+            "out": str(out_path),
+            "w": CANVAS,
+            "h": CANVAS,
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "opaque_ratio": round(float((alpha > 0).sum()) / (CANVAS * CANVAS), 3),
+            "unique_rgba": int(np.unique(canvas_rgba.reshape(-1, 4), axis=0).shape[0]),
+        })
     if src.is_dir():
         dst.mkdir(parents=True, exist_ok=True)
-        results = [process_one(path, dst / path.name) for path in sorted(src.glob("*.png"))]
-    else:
-        results = [process_one(src, dst)]
     print(json.dumps(results, ensure_ascii=False, indent=2))
     if not results:
         return 2
