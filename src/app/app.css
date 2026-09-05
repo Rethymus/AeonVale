@@ -3390,6 +3390,9 @@ button {
   letter-spacing: 0.04em;
   line-height: 1.35;
 }
+.flow-button-narration .flow-subtitle-seg {
+  white-space: nowrap;
+}
 .flow-button-narration:hover {
   border-color: color-mix(in srgb, var(--color-dangerUi) 70%, var(--color-giltUi));
   background: color-mix(in srgb, var(--color-shell) 78%, var(--color-giltUi));

@@ -194,7 +194,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   let lastSettlement: CultivationTribulationSettlement | null = null;
   let tribulationFeedback: string | null = null;
   let browserKeypointSolutionMoves: readonly Dir[] = [];
-  let agendaFeedback = '先选中一格，再把活动写入竹简。活动会按从左到右的顺序结算。';
+  let agendaFeedback = '活动会写入选中的一格，再自动移向下一空格；竹简按从左到右的顺序结算。';
   let agendaFeedbackTone: 'neutral' | 'success' | 'error' = 'neutral';
   let meta: SokobanMeta = loadMeta();
   let lastScroll: ScrollPage | null = null;
@@ -281,10 +281,12 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-hud{grid-area:hud;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:3px;background:${P.boardBorder};font-size:13px;font-variant-numeric:tabular-nums;box-shadow:0 10px 28px rgba(0,0,0,.22);}`,
     `.rp-hud-item{min-width:0;padding:8px 10px;background:linear-gradient(145deg,${P.btnBg},${P.boardBg});color:${P.text};line-height:1.45;}`,
     `.rp-hud-stage{grid-column:1/-1;color:${P.accent};font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:18px;font-weight:700;letter-spacing:.08em;border-block-end:1px solid ${P.primaryBorder};}`,
-    `.rp-hud-preparation{grid-column:1/-1;border-inline-start:3px solid ${P.boltBlue};font-size:13px;}`,
+    `.rp-hud-preparation{grid-column:1/-1;border-inline-start:3px solid ${P.boltBlue};font-size:13px;line-height:1.6;}`,
+    '.rp-hud-seg{white-space:nowrap;}',
     `.rp-hud-meta{grid-column:1/-1;color:${P.helpText};font-size:13px;}`,
     '.rp-hud-outcome:empty{display:none;}',
-    `.rp-canvas{grid-area:canvas;display:block;width:min(100%,650px);height:auto;max-width:100%;max-height:100%;align-self:center;justify-self:center;background:${P.boardBg};border:1px solid ${P.accent};border-radius:12px;box-shadow:0 0 0 4px rgba(0,0,0,.32),0 18px 50px rgba(0,0,0,.38),inset 0 0 40px ${P.primaryBg};touch-action:none;}`,
+    `.rp-canvas-slot{grid-area:canvas;position:relative;width:100%;height:100%;min-width:0;min-height:0;display:grid;place-items:center;}`,
+    `.rp-canvas{display:block;max-width:100%;max-height:100%;background:${P.boardBg};border:1px solid ${P.accent};border-radius:12px;box-shadow:0 0 0 4px rgba(0,0,0,.32),0 18px 50px rgba(0,0,0,.38),inset 0 0 40px ${P.primaryBg};touch-action:none;}`,
     `.rp-help{grid-area:help;min-width:0;display:grid;gap:8px;font-size:13px;color:${P.helpText};max-width:480px;text-align:left;line-height:1.5;}`,
     `.rp-help__diagram{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;align-items:stretch;padding:8px;border:1px solid ${P.primaryBorder};background:linear-gradient(145deg,${P.btnBg},${P.boardBg});font-style:normal;}`,
     `.rp-help__diagram i,.rp-help__diagram b,.rp-help__diagram em,.rp-help__diagram strong{display:grid;place-items:center;min-height:28px;padding:3px 6px;border:1px solid ${P.btnBorder};font-style:normal;font-size:10px;text-align:center;}`,
@@ -304,9 +306,10 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-outcome.bad{background:${P.badBg};color:${P.badText};}`,
     '@media(max-height:760px){.rp-plan-lede{font-size:11px}.rp-character{flex-basis:150px}.rp-causal-chain li:nth-child(n+4){display:none}.rp-plan-help{display:none}.rp-btn{min-block-size:44px;padding:7px 10px}.rp-hud-item{padding:6px 8px;font-size:12px}.rp-help{font-size:11px;line-height:1.4}}',
     '@media(max-width:1120px){.rp-planning-body{grid-template-columns:minmax(200px,.72fr) minmax(440px,1.6fr)}.rp-causal-panel{grid-column:1/-1;display:grid;grid-template-columns:minmax(200px,.72fr) minmax(0,1.6fr) auto;grid-template-rows:auto auto;gap:5px 10px;padding:8px 10px}.rp-causal-panel>.rp-panel-kicker,.rp-causal-panel>.rp-causal-title{grid-column:1}.rp-causal-safe,.rp-breakthrough{grid-column:2;margin:0}.rp-causal-heading,.rp-causal-chain{display:none}.rp-plan-actions{grid-column:3;grid-row:1/3;border:0;padding:0}.rp-plan-help{display:none}.rp-plan-buttons{grid-template-columns:1fr}}',
-    '@media(max-width:760px){.rp-wrap{padding:4px}.rp-planning{gap:5px;padding:6px}.rp-plan-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px}.rp-plan-title{font-size:20px}.rp-plan-lede{display:none}.rp-round-seal{font-size:10px;padding:5px 7px}.rp-planning-body{grid-template-columns:1fr;grid-template-rows:126px minmax(0,1fr) 86px;gap:5px}.rp-status-panel{display:grid;grid-template-columns:94px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:8px;padding:6px}.rp-status-panel>.rp-panel-kicker{grid-column:2;margin:0}.rp-identity-name,.rp-identity-stage{grid-column:2}.rp-character{grid-column:1;grid-row:1/4;min-height:0;margin:0}.rp-character__seal{inset-inline:5px;font-size:8px}.rp-character__seal strong{font-size:11px}.rp-retention{grid-column:2;margin:0}.rp-run-stats{grid-column:2;grid-template-columns:repeat(4,1fr);align-self:end}.rp-run-stat{padding:3px 2px}.rp-run-stat dt{font-size:8px}.rp-run-stat dd{font-size:10px}.rp-schedule-panel{gap:4px;padding:5px 6px}.rp-agenda-meta{font-size:10px}.rp-agenda-scroll{grid-template-columns:repeat(6,1fr);gap:3px;padding:2px 0}.rp-agenda-scroll::before,.rp-agenda-scroll::after{display:none}.rp-agenda-slot{min-height:58px;padding:3px 2px}.rp-slot-index,.rp-slot-time{font-size:8px}.rp-slot-label,.rp-slot-label.is-empty{font-size:11px;letter-spacing:0}.rp-activity-fieldset{padding-top:4px}.rp-activity-fieldset legend{font-size:12px}.rp-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--activity-rows,2),minmax(48px,1fr));grid-auto-rows:minmax(48px,1fr);gap:4px}.rp-activity-btn{min-block-size:48px;padding:4px 5px}.rp-activity-key{inline-size:20px;block-size:20px}.rp-activity-name{font-size:11px}.rp-activity-note{font-size:9px;line-height:1.15}.rp-plan-feedback{min-height:0;margin:0;padding:4px 6px;font-size:9px;line-height:1.25}.rp-causal-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;padding:5px 6px;gap:3px 6px}.rp-causal-panel>.rp-panel-kicker{display:none}.rp-causal-title{grid-column:1;font-size:13px}.rp-causal-safe{grid-column:1;font-size:9px;padding:4px 6px}.rp-breakthrough{display:none}.rp-plan-actions{grid-column:2;grid-row:1/3}.rp-plan-buttons{display:grid;grid-template-columns:1fr}.rp-plan-buttons .rp-btn:not(.rp-btn-primary){display:none}.rp-btn{min-block-size:44px;padding:6px 8px;font-size:11px}.rp-tribulation{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto;grid-template-areas:"canvas" "hud" "actions";gap:4px;padding:5px}.rp-canvas{max-height:100%;max-width:100%}.rp-hud{grid-template-columns:repeat(3,minmax(0,1fr));font-size:10px}.rp-hud-preparation,.rp-hud-meta{grid-column:1/-1}.rp-help,.rp-dpad{display:none}.rp-actions{justify-content:center}}',
+    '@media(max-width:760px),((max-width:1120px) and (max-height:620px)){.rp-wrap{padding:4px}.rp-planning{gap:5px;padding:6px}.rp-plan-head{display:grid;grid-template-columns:1fr auto;align-items:center;gap:5px}.rp-plan-title{font-size:20px}.rp-plan-lede{display:none}.rp-round-seal{font-size:10px;padding:5px 7px}.rp-planning-body{grid-template-columns:1fr;grid-template-rows:126px minmax(0,1fr) 86px;gap:5px}.rp-status-panel{display:grid;grid-template-columns:94px minmax(0,1fr);grid-template-rows:auto auto 1fr;column-gap:8px;padding:6px}.rp-status-panel>.rp-panel-kicker{grid-column:2;margin:0}.rp-identity-name,.rp-identity-stage{grid-column:2}.rp-character{grid-column:1;grid-row:1/4;min-height:0;margin:0}.rp-character__seal{inset-inline:5px;font-size:8px}.rp-character__seal strong{font-size:11px}.rp-retention{grid-column:2;margin:0}.rp-run-stats{grid-column:2;grid-template-columns:repeat(4,1fr);align-self:end}.rp-run-stat{padding:3px 2px}.rp-run-stat dt{font-size:8px}.rp-run-stat dd{font-size:10px}.rp-schedule-panel{gap:4px;padding:5px 6px}.rp-agenda-meta{font-size:10px}.rp-agenda-scroll{grid-template-columns:repeat(6,1fr);gap:3px;padding:2px 0}.rp-agenda-scroll::before,.rp-agenda-scroll::after{display:none}.rp-agenda-slot{min-height:58px;padding:3px 2px}.rp-slot-index,.rp-slot-time{font-size:8px}.rp-slot-label,.rp-slot-label.is-empty{font-size:11px;letter-spacing:0}.rp-activity-fieldset{padding-top:4px}.rp-activity-fieldset legend{font-size:12px}.rp-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--activity-rows,2),minmax(48px,1fr));grid-auto-rows:minmax(48px,1fr);gap:4px}.rp-activity-btn{min-block-size:48px;padding:4px 5px}.rp-activity-key{inline-size:20px;block-size:20px}.rp-activity-name{font-size:11px}.rp-activity-note{font-size:9px;line-height:1.15}.rp-plan-feedback{min-height:0;margin:0;padding:4px 6px;font-size:9px;line-height:1.25}.rp-causal-panel{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;padding:5px 6px;gap:3px 6px}.rp-causal-panel>.rp-panel-kicker{display:none}.rp-causal-title{grid-column:1;font-size:13px}.rp-causal-safe{grid-column:1;font-size:9px;padding:4px 6px}.rp-breakthrough{display:none}.rp-plan-actions{grid-column:2;grid-row:1/3}.rp-plan-buttons{display:grid;grid-template-columns:1fr}.rp-plan-buttons .rp-btn:not(.rp-btn-primary){display:none}.rp-btn{min-block-size:44px;padding:6px 8px;font-size:11px}.rp-tribulation{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto auto;grid-template-areas:"canvas" "hud" "actions";gap:4px;padding:5px}.rp-canvas{max-height:100%;max-width:100%}.rp-hud{grid-template-columns:repeat(3,minmax(0,1fr));font-size:10px}.rp-hud-preparation,.rp-hud-meta{grid-column:1/-1}.rp-help,.rp-dpad{display:none}.rp-actions{justify-content:center}}',
     '@media(max-width:760px){.rp-tribulation{grid-template-rows:minmax(0,1fr) auto auto auto auto;grid-template-areas:"canvas" "hud" "help" "dpad" "actions"}.rp-help{display:grid;gap:3px;max-width:none;font-size:9px;line-height:1.25}.rp-help__diagram{grid-template-columns:repeat(7,minmax(0,auto));justify-content:center;gap:2px;padding:4px}.rp-help__diagram i,.rp-help__diagram b,.rp-help__diagram strong{min-height:22px;padding:2px 3px;font-size:8px}.rp-help__copy{max-height:2.6em;overflow:hidden}.rp-dpad{display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:3px;justify-content:center}.rp-dpad .rp-btn{min-width:44px;min-block-size:44px;padding:4px}.rp-actions{justify-content:center}}',
     '@media(max-width:460px){.rp-plan-title{font-size:18px}.rp-planning-body{grid-template-rows:118px minmax(0,1fr) 78px}.rp-run-stats .rp-run-stat:nth-child(n+5){display:none}.rp-agenda-scroll{grid-template-columns:repeat(3,1fr)}.rp-agenda-slot{min-height:44px;grid-template-columns:auto 1fr auto;grid-template-rows:1fr;gap:2px}.rp-slot-label{font-size:10px}.rp-slot-index{display:none}.rp-activity-note{display:none}.rp-activity-btn{grid-template-areas:"key name";grid-template-columns:auto minmax(0,1fr)}.rp-plan-feedback{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}',
+    '@media(max-width:1120px) and (max-height:520px){.rp-planning-body{grid-template-rows:100px minmax(0,1fr) 64px}.rp-agenda-slot{min-height:46px}.rp-slot-label,.rp-slot-label.is-empty{font-size:11px}.rp-status-panel>.rp-panel-kicker{display:none}.rp-identity-name{font-size:16px;margin:0}.rp-identity-stage{margin:2px 0 5px}.rp-retention{margin:0 0 5px}.rp-run-stats{grid-template-columns:repeat(4,1fr)}.rp-run-stats .rp-run-stat:nth-child(n+5){display:none}.rp-causal-title{font-size:12px}.rp-causal-safe{font-size:8px;padding:3px 5px}.rp-plan-feedback{padding:2px 6px;font-size:8px}}',
     '@media(prefers-reduced-motion:reduce){.rp-agenda-slot{transition:none}.rp-agenda-slot[aria-pressed="true"]{transform:none}}',
     '.rp-reduce-motion .rp-agenda-slot{transition:none}.rp-reduce-motion .rp-agenda-slot[aria-pressed="true"]{transform:none}'
   ].join('\n');
@@ -587,7 +590,12 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   canvas.tabIndex = 0;
   canvas.setAttribute('role', 'application');
   canvas.setAttribute('aria-label', '布阵导流灵田：推阵石把雷光折射进身体');
-  tribulation.appendChild(canvas);
+  // 棋盘画布按位图宽高比 contain 适配网格区；此前显式 width + max-height 会把正方形
+  // 位图横向拉宽（820×430 下畸变 2.46 倍，桌面也有 7%）。slot 铺满网格区提供可测空间。
+  const canvasSlot = document.createElement('div');
+  canvasSlot.className = 'rp-canvas-slot';
+  canvasSlot.appendChild(canvas);
+  tribulation.appendChild(canvasSlot);
   const ctx = canvas.getContext('2d');
 
   const help = document.createElement('div');
@@ -1284,7 +1292,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     agendaCycleStartIndex = runState.agendaIndex;
     agendaTargetIndex = agendaCycleStartIndex + CULTIVATION_AGENDAS_BEFORE_TRIBULATION;
     machineState = { ...machineState, tribulationAgendaTarget: agendaTargetIndex };
-    agendaFeedback = '先选中一格，再把活动写入竹简。活动会按从左到右的顺序结算。';
+    agendaFeedback = '活动会写入选中的一格，再自动移向下一空格；竹简按从左到右的顺序结算。';
     agendaFeedbackTone = 'neutral';
     deadRun = false;
     lastScroll = null;
@@ -1338,7 +1346,21 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   function resizeCanvasForState(): void {
     canvas.width = state.board.width * TILE;
     canvas.height = state.board.height * TILE;
+    fitCanvasCss();
   }
+
+  /** 画布 CSS 尺寸 contain 适配 slot 可用空间，保持与位图一致的宽高比。 */
+  function fitCanvasCss(): void {
+    const availW = canvasSlot.clientWidth;
+    const availH = canvasSlot.clientHeight;
+    if (availW < 1 || availH < 1 || canvas.width < 1 || canvas.height < 1) return;
+    const scale = Math.min(availW / canvas.width, availH / canvas.height);
+    canvas.style.width = `${Math.max(1, Math.round(canvas.width * scale))}px`;
+    canvas.style.height = `${Math.max(1, Math.round(canvas.height * scale))}px`;
+  }
+
+  const canvasSlotObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(() => fitCanvasCss());
+  canvasSlotObserver?.observe(canvasSlot);
 
   function oneMoveOverloadPuzzle(): SokobanState {
     const width = 5;
@@ -2102,7 +2124,15 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     const intel = preparation.previewLevel <= 0 ? '劫兆未明' : preparation.previewLevel === 1 ? `存活上限 ≤${preparation.maxSurvivablePower}` : preparation.previewLevel === 2 ? `安全雷威 ${preparation.minTemperingPower}–${preparation.maxSurvivablePower}` : `甜蜜雷威 ${preparation.sweetSpotMinPower}–${preparation.sweetSpotMaxPower}`;
     const required = state.challenge?.requiredBlockKinds.map(blockKindLabel).join(' · ') ?? '金石·折雷';
     const certificate = state.challenge ? `认证 ${state.challenge.certifiedMoves} 步 · 余量 ${state.challenge.budgetSlack}` : '已验可解';
-    preparationEl.textContent = `${required} ｜ ${certificate} ｜ ${intel} · 预见 ${preparation.previewLevel} ｜ 护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`;
+    const preparationSegments = [required, certificate, `${intel} · 预见 ${preparation.previewLevel}`, `护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`];
+    preparationEl.replaceChildren();
+    preparationSegments.forEach((segment, index) => {
+      if (index > 0) preparationEl.append(' ｜ ');
+      const seg = document.createElement('span');
+      seg.className = 'rp-hud-seg';
+      seg.textContent = segment;
+      preparationEl.appendChild(seg);
+    });
     metaEl.textContent = `残卷 ${meta.unlockedScrolls.length}/${SCROLL_TOTAL} · 灰烬 ${meta.deathCount} · 突破 ${meta.breakthroughs}`;
     const outcomeLabel = lastSettlement?.kind === 'ascended' ? { label: '归一飞升', cls: 'ok' } : tribulationOutcome?.deathPrevented ? { label: '护脉保命', cls: 'ok' } : tribulationOutcome?.result === 'perfect' ? { label: '完美淬体', cls: 'ok' } : tribulationOutcome?.result === 'survived' ? { label: '带伤突破', cls: 'ok' } : tribulationOutcome?.result === 'insufficient' ? { label: '劫力不足', cls: 'bad' } : tribulationOutcome?.result === 'overload' ? { label: '雷威过载', cls: 'bad' } : tribulationOutcome?.result === 'timeout' ? { label: '步数耗尽', cls: 'bad' } : null;
     if (!outcomeLabel && state.status === 'playing') {
@@ -2551,6 +2581,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     if (effectsRaf) window.cancelAnimationFrame(effectsRaf);
     effectsRaf = 0;
     destroyPhaseSurfaces();
+    canvasSlotObserver?.disconnect();
     canvas.removeEventListener('keydown', onKeyDown);
     planning.removeEventListener('keydown', onPlanningKeyDown);
     uninstallCultivationBrowserTestHooks();

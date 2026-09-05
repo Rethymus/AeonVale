@@ -72,7 +72,7 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
     '.cr-event__title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:clamp(24px,5vw,38px);font-weight:600;text-wrap:balance;}',
     '.cr-event__detail{margin:0;color:var(--color-paperUi);line-height:1.75;text-wrap:pretty;}',
     '.cr-event__resources{display:flex;flex-wrap:wrap;gap:6px 12px;margin:0;color:var(--color-paperMuted);font-size:13px;font-variant-numeric:tabular-nums;}',
-    '.cr-event__choices{min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;list-style:none;margin:0;padding:1px 4px 1px 1px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;}',
+    '.cr-event__choices{min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;list-style:none;margin:0;padding:1px 4px 1px 1px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;}',
     '.cr-event__choice{min-width:0;}',
     '.cr-event__button{width:100%;min-height:100%;display:grid;gap:8px;align-content:start;text-align:left;padding:14px;border:1px solid rgb(var(--rgb-paperBorder) / .55);border-radius:4px;background:rgb(var(--rgb-shellPine) / .72);color:var(--color-paperBright);cursor:pointer;touch-action:manipulation;}',
     '.cr-event__button:hover{border-color:var(--color-giltUi);background:rgb(var(--rgb-shellPine) / .9);}',
@@ -87,6 +87,7 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
     '.cr-event__choice-effect{color:var(--color-paperMuted);}',
     '.cr-event__choice-warning{color:var(--color-dangerUi);font-weight:700;}',
     '.cr-event__feedback{min-height:1.5em;margin:0;padding:8px 10px;border-inline-start:3px solid var(--color-paperBorder);color:var(--color-paperMuted);line-height:1.5;}',
+    '.cr-event__feedback:empty{display:none;}',
     '.cr-event__feedback[data-tone="success"]{border-color:var(--color-giltUi);color:var(--color-giltPale);}',
     '.cr-event__feedback[data-tone="error"]{border-color:var(--color-dangerUi);color:var(--color-dangerUi);}',
     '@media(max-width:620px){.cr-event{gap:6px;padding:7px}.cr-event__header{gap:3px}.cr-event__title{font-size:22px}.cr-event__detail{font-size:12px;line-height:1.4}.cr-event__instruction{font-size:11px;padding:5px 7px}.cr-event__choices{grid-template-columns:1fr}.cr-event__button{min-height:auto;padding:9px;gap:4px}.cr-event__feedback{font-size:11px;padding:5px 7px}}'
