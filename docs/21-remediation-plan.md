@@ -302,3 +302,319 @@ R1 + R1.5 已完成。下一步不建议马上扩新系统，优先做 **R2：�
 - **修仙生态玩法重构**：未完成，应在地图与操作逻辑稳定后分期推进。
 - **真人可玩性验证**：未完成。
 - **发布上线**：未完成。
+
+---
+
+## 8. 视觉与细节审计轮（2026-09）
+
+方法：以实机截图走查双模式全部关键界面（1280×720 桌面、820×430 与 1024×500 短横屏、竖屏），
+逐张审读并放大可疑区域，再用几何探针定位根因。发现的问题均为既有自动化测试未覆盖的
+"看得见、代码读不出"类缺陷。
+
+### 8.1 本轮已修复
+
+1. **短横屏视口修途日程不可用（P1）**：紧凑布局原先只按宽度断点切换（≤1120px 两栏 /
+   ≤760px 堆叠），820×430 这类"宽度走两栏、高度不够"的窗口会裁切状态面板、压没活动
+   选择区，且反馈段拦截活动按钮点击。现增加高度感知断点
+   `@media (max-width:1120px) and (max-height:620px)` 复用堆叠布局，并以
+   `@media (max-width:1120px) and (max-height:520px)` 再压一档（状态面板单行统计、
+   隐藏 kicker）；天劫棋盘保留双栏布局（在 `max-height:760px` 辅助规则下恰好放入 430px）。
+   新增 `tests/browser/roguelite-compact-viewport.spec.ts` 锁定：短横屏下活动可点、
+   统计不裁切、可完整走到天劫棋盘。
+2. **事件界面空反馈段渲染孤立竖条**：`.cr-event__feedback` 内容为空时左边框 +
+   min-height 仍渲染出 3×21px 亮条。已按项目既有 `:empty` 惯例隐藏。
+3. **过场画面 CG 图注对比度不足**：劫兆 / 引劫之问图注为白色 12px 直接压在浅色雷光画上。
+   加深 `.cr-interlude__art::after` 底部渐变并给图注加 text-shadow。
+4. **天劫 HUD 筹备行换行难看**：`护持 0 · 撤步 0` 等成对词被折行拆散。改为 nowrap
+   分段（`.rp-hud-seg`），换行只发生在 `｜` 分隔处。
+5. **修途日程初始文案过度约束**：原"先选中一格，再把活动写入竹简"暗示必须先选格；
+   实际默认已选中第 1 格，直接点活动即写入并自动前移。文案已改为描述真实行为。
+
+### 8.2 审计后保留的创作决定（不改）
+
+- **开发者自白**（含 MuseFlow 提及与颜文字）是 docs/22 §2.2 明文设计的元叙事，
+  只在头尾各出现一次，进入序章后完全让位给人物与处境。尊重原设计。
+- **棋盘空格角标**是刻意的"黑玉命盘"雷篆美学（`surface.ts` 注释明确），非噪点。
+- **"认证步数 / 余量"**术语是 README 公示的可复现性设计支柱，不视为内部术语泄漏。
+
+### 8.3 专业视角的后续改进空间（记录，不在本轮实施）
+
+- **信息揭示节奏（行为经济学）**：预见 0 时玩家在信息最少的第 1 劫做最不可逆的决定；
+  可考虑首劫结算后赠予一次基础预见，降低首轮挫败而不破坏"劫兆需参悟"的核心循环。
+- **双词表并存（信息一致性）**：旧世界模式 8 阶词表（`ui.hud.stages`）与修途 6 境
+  （`CULTIVATION_REALMS`）并存；应随旧模式退役统一，避免翻译与文案双份维护。
+- **i18n 卫生**：约 20 个无引用键（旧版标题 / 菜单 / HUD 残留）；动态键
+  （`ending.*`、`narration.ending.*`）使"死键"判定需谨慎，建议在内容 lint 中
+  增加动态键白名单机制后再清理。
+- **过场竖向留白**：桌面 720p 下结算 / 事件 / 引劫之问下方约有 25–40% 空置区；
+  当前留白符合"竹简"克制美学，若后续要加"上轮回顾"或活动详情，空间已预留。
+- **短横屏天劫棋盘尺寸**：820×430 下棋盘画布约 650×188，可玩但偏扁；后续可为
+  短横屏提供棋盘专用的紧凑 tile 尺寸，进一步提升可读性。
+- **本机浏览器套件既有失败（本轮审计新发现）**：在本机（Windows + swiftshader 软渲染）
+  完整运行浏览器套件时，`input-flow` / `touch-flow` / `inventory-management` 等
+  旧世界模式用例存在 113 个确定性失败（应用启动 / 画布可交互 30s 超时为主）。
+  已用 `git stash` 在干净 HEAD 上复跑对比子集，失败清单逐条一致，确认与本轮改动无关，
+  属既有环境 / 回归问题；涉及旧世界模式在新主模式重构后的输入流维护，建议单独立案。
+
+### 8.4 第二轮（同月续）：叙事模式深审与棋盘保真
+
+方法：以 reducedMotion 预置 + 舞台推进脚本走通灵韵叙录全链（自白 → 序章双分支 →
+E0 结局卡 → 叙录图鉴锁定/解锁态），补齐竖屏与短横屏叙事截图；并以宽高比探针
+核查天劫棋盘画布。
+
+#### 已修复
+
+1. **天劫棋盘画布纵横比畸变（P1 视觉保真）**：画布位图为棋盘正方形（280×280），
+   但 CSS 显式 `width:min(100%,650px)` + `max-height` 组合不会反推宽度——820×430 下
+   被拉成 650×188（横向畸变 2.46 倍），桌面 1280×720 也有 7% 拉伸。现把画布包进
+   铺满网格区的 `.rp-canvas-slot`，`fitCanvasCss()` 按 contain 公式写入 CSS 尺寸，
+   ResizeObserver 响应容器变化；三档视口探针畸变全部归零（820×430 → 188×188，
+   1280×720 → 606×606 且更清晰）。
+2. **i18n 死键治理机制**：`tools/content-lint.ts` 新增词典键校验段——死键（词典有、
+   剥离注释后的 src 无字符串引用、且不匹配 5 组动态前缀）、缺键（静态引用但词典
+   缺失）、未登记动态前缀三向拦截；数组键视作叶节点。本轮共清理 30 个死键
+   （旧版标题/菜单/行动/事件残留 + 叙录硬编码标签残留），`ui.hud.day/year` 保留为
+   插值测试锚点并在工具内注明。
+3. **标题屏「灵韵叙录」副标题孤行**：窄按钮下"时辰"两字孤行。改为按间隔号
+   不可断行分段，断点稳定落在"第一人称叙事 ·"之后。
+
+#### 审计结论（保留）
+
+灵韵叙录的视觉品质过关：场景 CG、选择列表、结局卡、叙录图鉴（防剧透问号墙 +
+已解锁卡）在桌面/短横屏/竖屏三档下均无发现需修复的缺陷；竖屏可读性声明成立。
+
+#### 环境备注
+
+本轮复跑确认 §8.3 末条：`app-flow` 5 例失败在干净 HEAD 上逐条复现，与本轮改动无关。
+
+### 8.5 第三轮（同月）：旧世界 E2E 失败家族立案与修复
+
+背景：§8.3 末条记录的 113 个本机浏览器失败，本轮完成根因家族分类并修复其中
+可无歧义修复的部分。
+
+#### 根因家族（对 216 用例全量运行的失败签名分类 + 单测隔离 + HEAD 对照）
+
+1. **流程腐化（约 35 例）**：D27 主模式重构后，`#flow-title-new-game` 直达
+   「偷天换劫」，但这批用例仍点击它并等待 `#flow-prologue-skip`（旧序章）。
+   修复方式按测试意图分两档：
+   - 世界语义用例（命令栏/键盘纪律/读屏/暂停焦点/触屏 HUD/响应式画布）改走
+     `continueToWorld` 测试门（`enterLegacyWorld`），恢复其书写时的前置状态；
+   - 断言"标题→序章"链本身的用例（app-flow）按现行产品契约重写：标题 →
+     roguelite 开场 + 焦点落 `cr-opening-heading`，另以测试门断言旧世界仍可达。
+2. **真 bug：Storage 被禁时启动中断（1 例 src 修复）**：
+   `rogueliteProto/runSave.ts` 的 `hasCultivationJourney/loadCultivationJourney`
+   在 try/catch 之外调用 `storage.getItem`（`storageOrNull` 只保护属性访问）。
+   `Storage.prototype.getItem` 被禁时 boot 抛错 → 标题永不出现。已加
+   `safeGetItem` 守卫；save-health「Storage 不可用」用例由失败转为通过。
+3. **入口竞态加固**：`continueToWorld` 原以 `isVisible()` 瞬时判断标题按钮，
+   早于 boot 完成时误判跳过测试门。现已先等按钮可见（20s 上限）再探测。
+4. **夹具/经济漂移（约 78 例，未修复，已归档）**：`input-flow`(64)、
+   `inventory-management`(12) 等使用种子存档夹具 + 旧经济算术（如种子数量
+   期望 2、实际 5），以及 public-demo 的炼丹结果断言。逐条修复需按现行内容表
+   重定契约，属下一轮专项。
+5. **疑似世界渲染回归（2 例，未修复，已归档）**：`p0-terrain-semantics` 的
+   月白选中蒙版亮度断言失败（选中格 meanLuma 90.7 < 裸土 103.9+2，但冷色
+   边缘像素 12 > 8 说明蒙版边缘已绘制）。实拍与像素剖面已归档
+   `.omc/artifacts/p0-2-terrain-semantics-*.png`，需对照 tileVisuals 选区
+   渲染历史专项排查。本轮改动从未触及世界渲染器（归属既有）。
+
+#### 本轮已修复明细
+
+- `src/app/rogueliteProto/runSave.ts`：safeGetItem 守卫（真 bug）。
+- `tests/browser/openGame.ts`：continueToWorld 等待标题就绪。
+- `tests/browser/app-flow.spec.ts`：5 例全部修复（含 1 例按新契约重写）。
+- `tests/browser/accessibility-shell.spec.ts`：startFreshWorld 改走门（2 例修复）。
+- `tests/browser/save-health.spec.ts`：3 例按现行「继续旅程=入世录」契约重写
+  /入口修复（4 例全部通过）。
+- `tests/browser/touch-flow.spec.ts`（9 例）、`responsive-layout.spec.ts`
+  （4 例）、`delivery-capture.spec.ts`（2 例，02 截图更名
+  02-roguelite-opening）、`public-demo-vertical-slice.spec.ts`（入口修复；
+  深处炼丹断言归入第 4 类）。
+
+#### 负载敏感性实测（本机）
+
+同机对照显示失败集合随负载漂移：touch-flow 单 worker 隔离运行 9/9 通过，
+并入全量套件（workers=2）后 13 例超时；smoke / 视觉软门 / qi-flow /
+keypoint-playability 在全量运行中出现、单独运行全数通过。旧世界用例的
+30s 超时上限对本机并行负载高度敏感；CI（workers=1、干净 runner）与本机
+全量运行的失败集合不可直接互推。后续专项应以「单 worker 隔离 + 全量
+workers=1」两档结果为准。
+
+### 8.6 第四轮（同月）：夹具失败族根因与测试门扩展
+
+#### 根因
+
+input-flow(64) / inventory-management(12) / inventory-icons(1) 的失败同源：
+这些用例先向 localStorage 注入种子存档再进入旧世界，但旧世界入口
+`start-new-game` 会无条件 `clearSave()` + `createFreshState()`——**种子存档
+从未生效**，全部用例实际运行在全新初始世界上（例：期望苔藓种 2 颗、实际
+5 颗 = 初始套件授予量）。世界渲染的 p0-terrain 月白蒙版断言失败则是
+`TILE_ORIGIN` 陈旧：重构后网格水平锚定改为 content 区居中
+（`renderer.ts` 的 OX），p0-terrain 仍按 world 区居中采样，偏差约 4 列
+（qi-flow 同文件族已同步过、本文件漏改）。
+
+#### 本轮修复
+
+1. **测试门扩展**：appFlowMachine 新增 `enter-loaded-world` 事件（title→world、
+   不清档），main.ts 测试门新增 `enterLoadedLegacyWorld()`（仅当 boot 已成功
+   加载存档），openGame 新增 `continueToLoadedWorld` / `openGameWithLoadedSave`。
+2. **p0-terrain-semantics**：TILE_ORIGIN 改为与 renderer OX 同源（content 区
+   居中 + world 区顶部），2 例由失败转通过——世界渲染器本身从未损坏。
+3. **inventory-management**（13 例全过）与 **inventory-icons**（1 例通过）
+   迁移至 `continueToLoadedWorld`，种子存档生效。
+
+#### 明确回退与归档
+
+- **input-flow 维持 fresh 入口（openGame）**：实测迁移至种子存档入口后失败
+  反而 64→74——其断言是按全新世界行为调校的，夹具状态会触发另一批不一致。
+  该文件 94 用例的修复需逐条按现行内容表重写夹具与断言（下一轮专项），
+  强行迁移只会把失败换个形态。
+- **ending-flow（1 例）归档**：整例建立在旧「继续旅程=加载旧世界存档」接线
+  上（现继续旅程=入世录）；需要产品决策后重写。
+- **portfolio-capture（2 例）归档**：showcase 存档推进断言停在 first-till，
+  同属夹具漂移族。
+
+### 8.7 第五轮（同月）：input-flow 基线分类与数据驱动精确迁移
+
+#### 方法
+
+同机同参对 input-flow 全量 107 用例做「fresh 入口 vs 夹具入口」双档运行
+（workers=1），提取逐用例失败差集：
+
+- fresh 入口：90 败 / 17 过；夹具入口：74 败 / 33 过。
+- 差集显示迁移并非一刀切：5 例仅夹具入口通过（second-sow-raw-front、
+  hotbar-primary、ascension-choice×3），2 例仅 fresh 入口通过（875/898），
+  其余在两种入口下皆败（断言与现行规则漂移，需逐条重写）。
+
+#### 本轮修复
+
+1. **input-flow 选择性迁移**：仅将 5 例夹具获益用例切至
+   `openGameWithLoadedSave`（数据驱动，逐用例验证 4 稳过 + 1 例双档不稳定）；
+   其余维持 fresh 入口。
+2. **劫灰碑记 CG 图注对比度**：与 §8.2 interlude 同类的浅色水墨画白字问题——
+   `.cr-legacy__art` 渐变加深（42%/72%/92% 三段）并补 text-shadow。
+   实拍复查可读性达标。
+3. **视觉审计扩区**：劫灰碑记与继承者新世（承火者·1）两界面实拍审读，
+   除图注外无新增缺陷；归一飞升终局实拍留待下轮（需第六境 keypoint 链路）。
+
+#### 量化快照（本机，workers=1，input-flow 全量）
+
+| 入口 | 败 | 过 |
+|---|---|---|
+| fresh（现状基线） | 90 | 17 |
+| 夹具（全量迁移，§8.6 实验） | 74 | 33 |
+| 选择性迁移（本轮落地） | 预期 ≈85 | ≈22 |
+
+input-flow 的根治仍需按现行内容表逐条重写夹具与断言（§8.5 第 4 类专项）。
+
+### 8.8 第六轮（同月）：终局链路实拍与 ending-flow 重写
+
+1. **归一终局实拍审计**：经第六境 keypoint 链路（ArrowRight 一行触发）实拍
+   归一飞升棋盘、归一境成 aftermath、终局表面三屏。图注已受 §8.2 共享修复
+   覆盖（ending/aftermath 均走 interludeSurfaceShared），无新增缺陷。
+2. **ending-flow 按现行接线重写（1 例由失败转通过）**：终局存档经
+   `enterLoadedLegacyWorld` 入世界；入世界副作用 `saveState` 内的
+   `enterEndingIfNeeded` 会把终局状态转到 Ending 表面——接线已验证。
+   相应放宽测试门返回判定（world 或 ending 均算成功），并按现行行为锁定
+   「开始偷天换劫不清除旧世界存档（保留回滚）」的断言。
+
+### 8.9 第七轮（同月）：input-flow 主导根因突破——legacyShortcuts 丢失
+
+#### 主导根因
+
+第四轮批量迁移时把 input-flow 的本地包装器 `openGame()`（其职责正是
+`openProductGame(page, { legacyShortcuts: true })`）绕掉了——94 处用例改为
+直接调用无 legacyShortcuts 的入口。而 storage/shop/farm-action 家族的
+核心交互键（数字预选、Enter 确认、逗号、Shift+M 等）全部属于旧快捷键
+体系：快捷键禁用 → 按键无效果 → waitForDebugState 30s 超时。
+这解释了第五轮基线中 90 败的超时主导分布。
+
+#### 修复
+
+1. **input-flow 包装器恢复并升级**：本地 `openGame()` 统一改为
+   `openGameWithLoadedSave(page, { legacyShortcuts: true })`——夹具存档生效
+   （§8.6 的清档问题同解）+ 旧快捷键启用。94 处调用点全部归一到该包装器。
+2. **post-ascension 三例**：reload 后重入改用 `continueToLoadedWorld`
+   （greenhouse upkeep 由失败转通过）；ascension choice 1 的终局重入改走
+   `enterLoadedLegacyWorld`（入世界副作用 `saveState` → `enterEndingIfNeeded`
+   自动转到 Ending 表面），尾部断言按现行接线锁定「开始新一世不清除
+   旧世界终局存档」。
+3. **遗留**：commission board / tea shed 两例等待委托完成状态超时，
+   属 §8.5 第 4 类（断言与现行规则漂移）的收尾工作。
+
+#### 实测（workers=1，input-flow 全量 107）
+
+- 第五轮基线（快捷键禁用 + 夹具失效）：17 过 / 90 败。
+- 本轮（包装器恢复：夹具生效 + 旧快捷键启用 + 3 处定点修复）：**92 过 / 2 败**。
+  余 2 例为 post-ascension commission / tea shed 的委托完成状态漂移，归档待重写。
+
+### 8.10 第八轮（同月）：种子存档家族清尾与交付媒体修正
+
+1. **portfolio-capture（2 例由失败转通过）**：showcase 存档同样被 fresh 入口
+   清档丢弃——组合页截图实际拍的是新手农田（first-till）而非发达农庄
+   （first-loop-complete）。迁移至 `openGameWithLoadedSave` 后 showcase 状态
+   真正生效；「农务」按钮不可见时先展开「更多」飞出菜单（两种命令栏布局均健壮）。
+2. **delivery-capture showcase 捕获修正**：同因迁移，交付截图现拍到真实的
+   发达农庄状态（此前静默拍到新手态且无断言拦截）。
+3. **input-flow 余 2 例（commission / tea shed）归档**：对白标记
+   `narr-shennong-reveal`（stage≥5 新增节拍）补入夹具后，位置选择流程正常，
+   但委托完成状态仍不达——post-ascension 的委托入口已被产品重构
+   （快捷服务 `completeDailyCommissionWithToast` / 特殊委托面板），旧
+   「位置目录 → show-commission」脚本路径不成立。重写需按现行入口重新
+   编排（下一轮与 input-flow 断言重写专项合并）。
+
+#### 全量实测（workers=2，本机）
+
+216 用例：**211 过 / 4 败 / 1 跳过**。余 4 例全部属 §8.5 第 4 类
+（断言与现行规则漂移）：input-flow commission/tea shed 的 post-ascension
+委托状态、greenhouse nursery 扩建预选 deep-equality、public-demo 炼丹
+结果 toast。第七~八轮合计 input-flow 由 90 败修复至 4 败。
+
+### 8.11 第九轮（同月）：委托/茶棚面板确认机制迁移与叙事标记补全
+
+1. **greenhouse nursery（1 例由失败转通过）**：`first-till` 叙事节拍由
+   「存在已翻土瓦片」触发，post-ascension 夹具的翻土瓦片使该节拍在两次
+   快照之间被标记，破坏 deep-equality。`markStageNarrativeCleared` 补标
+   `narr-first-till`。
+2. **commission / tea shed（2 例由失败转通过）**：实拍委托面板发现现行
+   确认方式为「点击交付 · Esc 返回」（R1.5 指针解耦后的点击确认）——旧
+   测试按 Enter 已不交付。两例在预选服务后补
+   `clickCanvasLogical(page, 810, 380)`（可见预览区内点击交付）。
+   **input-flow 全量复跑：94 过 / 0 败（exit=0），该文件测试完全清零。**
+   全量套件干净复跑（workers=2）：**214 过 / 1 败 / 1 跳过**——余 1 例为
+   public-demo 炼丹结果 toast（§8.5 第 4 类漂移收尾）。
+3. **第九轮方法沉淀**：本轮 3 例的修复全部来自「实拍面板 + 读面板自述的
+   操作提示 + 按现行交互重写驱动步骤」，是视觉能力与真实代码核查结合的
+   直接范例。
+
+### 8.12 第十轮（同月）：public-demo 根因实锤与真产品 bug 修复
+
+public-demo 的失败经单跑复现与 CDP 探针定位，根因是**真产品 bug**：
+`openFlowOverlay` 硬编码 `flow.screen !== 'world'` 即拒绝——教学天劫
+（screen='tribulation'）暂停里的「设置」按钮点击被静默吞掉，而暂停
+上下文文案明确承诺「只能调整设置」。玩家在教学天劫期间无法打开设置。
+
+修复：`openFlowOverlay` 按 `canOpenOverlay` 的既有语义放行 tribulation 屏
+的 pause/settings（其余 overlay 仍限 world）。public-demo 由失败转通过；
+input-flow 暂停/Escape 相关 11 例与 app-flow/cultivation-keypoint 13 例
+回归全部通过（无副作用）。
+
+#### 全量收官实测（workers=2，本机）
+
+216 用例：**215 过 / 0 败 / 1 跳过（exit=0）——浏览器套件十轮以来首次完全清零。**
+
+#### 提交门阻塞现状（需维护者决策）
+
+Mimosa PreToolUse 提交门（本机 9/4 安装，晚于仓库末次提交）对以下 3 个
+既有开发工具高危强制拦截，且为**污点模型对工具设计模式的标记**，
+校验类加固无法消除：
+
+1. `bake-tile-textures.py:82` — 循环变量拼路径写 PNG 后 `open/read_bytes`
+   计算校验和（工具按 9 种 soilType 循环烘焙，变量路径是设计必然）。
+2. `postprocess-world-character-art.py:96/159` — process_one 以 argv 派生的
+   Path 为入口（CLI 批处理工具的设计形态）。
+
+已尝试且被模型拒绝的缓解：字符白名单校验、`..` 拒绝、resolve 规范化 +
+项目根包含检查、relative_to 惯用法、Path.read_bytes、with-statement。
+可选出路：(a) 调整 Mimosa 门对 tools/ 的启发式高危策略（基线/放行）；
+(b) 重构两工具消除该模式（会改变工具形态）。二选一后即可完成提交同步。
