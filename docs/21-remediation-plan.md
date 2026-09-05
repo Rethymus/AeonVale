@@ -886,3 +886,24 @@ balance-scan/tune、m5-*、simulation-metrics、playtest-report、onboarding-fun
 
 typecheck / governance(882) / 单测 2757（含新 4 例 replay）/ content:lint /
 build（零警告）/ 浏览器冒烟 17-17 全绿；随后原子提交推送并 Actions 验证。
+
+### 8.18 第十五轮（同月）：docs/29 P1 手感批次落地
+
+依据 docs/29（Apple 动效研究）§9 P1 映射实施，全部参数取自报告：
+
+1. **浮层入场动效层**：新增 `src/app/motionSkin.ts`（自注入式——app.css 受
+   纪律禁止 `animation:`，沿用 surface 模块注入模式），暂停/设置/行囊/山河图/
+   修行/叙录图鉴六个浮层 `opacity+scale 0.96→1`、0.28s、`(0.32,0.72,0,1)`
+   无过冲曲线；`html[data-reduced-motion='true']` 整体降级；只动合成器属性。
+   退场维持即时（不与 appFlowView 的 hidden/焦点语义耦合）。
+2. **按压反馈对**（按下 0.08s linear 快缩 + 松手 0.22s ζ0.85 弹簧回弹）：
+   活动按钮/通用按钮 `.rp-btn`（含 D-pad）/事件选项卡（宽卡 0.98 克制缩放）；
+   竹简槽选中动画曲线改弹簧（轻过冲）并支持选中态+按压复合变换。
+3. **推石震动指数衰减**：`shakeMag *= 0.85/帧`（阈值 0.05 截止）取代线性
+   12 帧 ttl——与 iOS 滚动物理"每毫秒保留比例"同构，收尾无硬停；
+   shakeTtl 冗余变量一并移除。
+4. **验证**：tsc/纪律+surface 单测 33 例/构建全绿；浏览器回归 37/37
+   （含 keypoint 过载 shake 路径、portfolio 捕获、p0-terrain 字节稳定）；
+   实拍确认入场中帧（半透明缩放）→末帧落定，按压规则计算样式全部命中。
+5. **未实施（P2 待续）**：toast 画布弹簧入场（需 main.ts 渲染循环改造）、
+   玻璃材质升级（先排 backdrop root 陷阱）、数值滚动缓动。
