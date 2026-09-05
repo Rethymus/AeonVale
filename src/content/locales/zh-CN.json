@@ -1,8 +1,5 @@
 {
-  "meta": { "locale": "zh-CN", "displayName": "简体中文" },
   "ui": {
-    "title": "永恒山谷：大道之歌",
-    "subtitle": "Aeon Vale: Song of the Dao",
     "help": {
       "default": "点击目标移动/互动·行囊常驻，丹炉/山河图/修行在更多中·B 行囊·Esc 暂停/返回",
       "inventory": "背包已开·B/Esc关闭·当前不会触发世界动作或过夜",
@@ -38,11 +35,6 @@
       "first-second-water": "当前目标：给刚补种的新苗浇上第一轮水，把第二轮药材真正接稳。",
       "first-loop-complete": "当前目标：第二轮药材动线已成立，继续照料新苗、卖余货，或再扩一小片田。"
     },
-    "tribulation": {
-      "countdown": "天劫倒计时",
-      "incoming": "天劫降临",
-      "waves": "第 {n} 波 / 共 {m} 波"
-    },
     "orientation": {
       "kicker": "横屏游玩",
       "heading": "请横置设备",
@@ -55,12 +47,25 @@
       "hp": "气血",
       "pillPoison": "丹毒",
       "cultivation": "体魄",
-      "qi": "灵气",
       "stamina": "体力",
       "day": "第 {n} 日",
       "year": "第 {n} 年",
-      "season": { "spring": "春", "summer": "夏", "autumn": "秋", "winter": "冬" },
-      "stages": ["凡骨", "淬皮", "锻骨", "通脉", "洗髓", "凝血", "雷骨", "飞升前夜"],
+      "season": {
+        "spring": "春",
+        "summer": "夏",
+        "autumn": "秋",
+        "winter": "冬"
+      },
+      "stages": [
+        "凡骨",
+        "淬皮",
+        "锻骨",
+        "通脉",
+        "洗髓",
+        "凝血",
+        "雷骨",
+        "飞升前夜"
+      ],
       "invTitle": "—— 背包 ——",
       "invEmpty": "（空）",
       "invSeed": "种子",
@@ -68,24 +73,7 @@
       "invPill": "丹药",
       "invMisc": "杂物",
       "invOther": "其他"
-    },
-    "menu": { "newGame": "新的旅程", "continue": "继续游戏", "settings": "设置", "quit": "退出" },
-    "action": {
-      "till": "翻地",
-      "sow": "播种",
-      "water": "浇水",
-      "channelQi": "供灵",
-      "harvest": "收获",
-      "rest": "静修",
-      "alchemy": "炼丹"
     }
-  },
-  "event": {
-    "crop-mature": "{name} 成熟了",
-    "crop-withered": "{name} 枯萎了",
-    "season-change": "入{season}",
-    "furnace-explosion": "炸炉！",
-    "lightning-strike": "劫雷落下"
   },
   "ending": {
     "ascension": "白日飞升\n凡骨碎裂，踏雷而起。天道，输了这一局。\n太一宗当年说我是废物——倒也没说错。废物，才捡得到别人不要的那条路。",
@@ -104,22 +92,11 @@
       "line6": "如果你愿意，就替他睁开眼吧。",
       "optTry": "那就试一试吧 (ﾉ>ω<)ﾉ",
       "optDecline": "今天还是算了 (｡•́︿•̀｡)",
-      "optDeclineFollowup": "唔，真的不看看吗…… (╥﹏╥) 好吧，我不拦你。「灵韵叙录」会一直留在这里；哪天想听了，再回来也不迟。",
-      "skipReadHint": "上次已读，可跳过这封信。"
-    },
-    "options": {
-      "history": "前文",
-      "auto": "连阅",
-      "skip": "略过",
-      "rollback": "回溯"
+      "optDeclineFollowup": "唔，真的不看看吗…… (╥﹏╥) 好吧，我不拦你。「灵韵叙录」会一直留在这里；哪天想听了，再回来也不迟。"
     },
     "codex": {
-      "title": "叙录",
       "chapterProgress": "已过 {x}/4 幕",
       "endingWall": "结局图鉴 {x}/8",
-      "locked": "未解",
-      "seen": "已历",
-      "close": "合上叙录",
       "regionTrack": "章节轨",
       "regionGraph": "节点图",
       "regionWall": "结局图鉴",
@@ -158,20 +135,38 @@
       }
     },
     "ending": {
-      "e0-mushroom": { "name": "林中第四日", "clue": "山林从未许诺答案" },
-      "ascension": { "name": "飞升", "clue": "我命由我" },
-      "poison-death": { "name": "丹毒亡", "clue": "贪婪的代价" },
-      "tribulation-death": { "name": "陨于天劫", "clue": "蝼蚁抗天，天不容" },
-      "madness": { "name": "走火入魔", "clue": "万不存一的灵力，反噬其主" },
-      "lifespan-death": { "name": "寿终·落叶异乡", "clue": "认命的凡人，终老何方？" },
-      "e6-sacrifice": { "name": "还汝自由", "clue": "当你听见他的心声" },
-      "e7-usurp": { "name": "新天", "clue": "控制者的终局" }
-    },
-    "quickMenu": {
-      "save": "封存",
-      "load": "续程",
-      "settings": "设置",
-      "history": "前文"
+      "e0-mushroom": {
+        "name": "林中第四日",
+        "clue": "山林从未许诺答案"
+      },
+      "ascension": {
+        "name": "飞升",
+        "clue": "我命由我"
+      },
+      "poison-death": {
+        "name": "丹毒亡",
+        "clue": "贪婪的代价"
+      },
+      "tribulation-death": {
+        "name": "陨于天劫",
+        "clue": "蝼蚁抗天，天不容"
+      },
+      "madness": {
+        "name": "走火入魔",
+        "clue": "万不存一的灵力，反噬其主"
+      },
+      "lifespan-death": {
+        "name": "寿终·落叶异乡",
+        "clue": "认命的凡人，终老何方？"
+      },
+      "e6-sacrifice": {
+        "name": "还汝自由",
+        "clue": "当你听见他的心声"
+      },
+      "e7-usurp": {
+        "name": "新天",
+        "clue": "控制者的终局"
+      }
     }
   }
 }

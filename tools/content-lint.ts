@@ -2,15 +2,18 @@
  * 内容数据完整性校验工具。
  *
  * 校验规则：
- * 灵草：tier ∈ {1,2,3,4}、growthThreshold > 0、rawPoisonValue ≥ 0、baseProperty 分量 ≥ 0
+ * 灵草：tier ∈ {1,2,3,4,5}、growthThreshold > 0、rawPoisonValue ≥ 0、baseProperty 分量 ≥ 0
  * seedId 对应物品存在、yield 物品 id 存在于物品表
  * 丹药：tier ∈ {1,2,3,4}、load ≥ 0、effects 中 power 合法
  * 配方：inputs 中所有 herbId 存在、outputPillId 存在、idealHeatRange[0] ≤ [1]
  * 天象：weight > 0、durationDays > 0、growthMod > 0、qiMod > 0
  * 阵法：modifier > 0、radius > 0
+ * i18n：词典死键（无静态引用且不匹配动态前缀）与缺键（静态引用但词典缺失）
  *
  * 用法：pnpm content:lint
  */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { buildRegistry } from '@content/registry';
 
 const reg = buildRegistry();
@@ -123,6 +126,75 @@ for (const [id, arr] of reg.arrays) {
   if (!known.includes(arr.type)) warn(`${id}: 未知阵法类型 type='${arr.type}'`);
 }
 ok(`${reg.arrays.size} 种阵法校验完成`);
+
+// ── i18n 词典键校验 ───────────────────────────────────────────────────────────
+// 运行时以 `t('字面量')`、`tList('字面量')` 或动态前缀（`t(\`ui.objective.${id}\`)`、
+// `t('ending.' + id)`）取词。词典里既无静态引用又不匹配任何动态前缀的键视为死键；
+// 静态引用但词典缺失的键视为缺键（t() 会把裸键渲染给玩家）。两向都算错误。
+{
+  console.log('\n── i18n 词典（zh-CN）──');
+  type Dict = Record<string, unknown>;
+  const dict = JSON.parse(readFileSync(new URL('../src/content/locales/zh-CN.json', import.meta.url), 'utf8')) as Dict;
+  const leaves: string[] = [];
+  (function walk(node: Dict, path: string) {
+    for (const [key, value] of Object.entries(node)) {
+      const full = path ? `${path}.${key}` : key;
+      if (value !== null && typeof value === 'object' && !Array.isArray(value)) walk(value as Dict, full);
+      else leaves.push(full);
+    }
+  })(dict, '');
+
+  // 动态前缀：这些键在运行时按前缀拼接，静态扫描无法穷举。
+  const dynamicPrefixes = ['ui.objective.', 'ui.hud.season.', 'ending.', 'narration.ending.', 'narration.heartPulse.'];
+  const isDynamic = (key: string) => dynamicPrefixes.some(prefix => key.startsWith(prefix));
+
+  const sources: string[] = [];
+  const collectTs = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) collectTs(full);
+      else if (entry.name.endsWith('.ts')) sources.push(readFileSync(full, 'utf8'));
+    }
+  };
+  collectTs('src');
+  // 只扫描 src/（玩家可见文本的生产引用）；剥离注释，避免把讲解文字里的 t('…') 当引用。
+  const stripped = sources.map(text =>
+    text
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+  );
+
+  const literalKeys = new Set<string>();
+  const keyLikeStrings = new Set<string>();
+  const dynamicSeen = new Set<string>();
+  for (const text of stripped) {
+    for (const match of text.matchAll(/\bt(?:List)?\(\s*['"]([^'"]+)['"]\s*[,)]/g)) literalKeys.add(match[1]!);
+    for (const match of text.matchAll(/['"]([a-z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9-]+)+)['"]/g)) keyLikeStrings.add(match[1]!);
+    for (const match of text.matchAll(/\bt(?:List)?\(\s*`([^`$]+)\$\{/g)) dynamicSeen.add(match[1]!);
+  }
+
+  // 插值测试锚点：仅由 i18n 插值单测使用的键（对应渲染文本尚未外部化，见 docs/21 §8.3）。
+  const testAnchorKeys = new Set(['ui.hud.day', 'ui.hud.year']);
+
+  let dead = 0;
+  for (const key of leaves) {
+    if (literalKeys.has(key) || keyLikeStrings.has(key) || isDynamic(key) || testAnchorKeys.has(key)) continue;
+    fail(`i18n 死键（词典有、代码无引用且非动态前缀）：${key}`);
+    dead++;
+  }
+  let missing = 0;
+  for (const key of literalKeys) {
+    if (leaves.includes(key)) continue;
+    fail(`i18n 缺键（代码引用、词典没有，玩家会看到裸键）：${key}`);
+    missing++;
+  }
+  for (const prefix of dynamicSeen) {
+    if (dynamicPrefixes.some(p => prefix.startsWith(p))) continue;
+    fail(`i18n 未登记的动态前缀（请把它加入 content-lint 的 dynamicPrefixes）：${prefix}`);
+    missing++;
+  }
+  if (dead === 0 && missing === 0) ok(`${leaves.length} 个词典键校验完成（动态前缀 ${dynamicPrefixes.length} 组）`);
+}
 
 // ── 汇总 ──────────────────────────────────────────────────────────────────────
 console.log(`\n── 汇总 ──`);
