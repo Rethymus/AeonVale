@@ -1,0 +1,11 @@
+# gitleaks 仓库配置：在默认规则之上精确放行应用本地存储槽名。
+# `aeonvale-*-v1` 是随客户端代码公开的 localStorage 键名（见 src/app/rogueliteProto/runSave.ts），
+# 不是凭据；不含此白名单时 generic-api-key 会把 `*_KEY = 'aeonvale-...-v1'` 误报为密钥。
+[extend]
+useDefault = true
+
+[allowlist]
+description = "应用本地存储槽名（localStorage 键，非凭据）"
+regexes = [
+  '''aeonvale-(save|cultivation-journey|sokoban-meta)-v[0-9]+''',
+]
