@@ -74,7 +74,9 @@ export function createCultivationEventSurface(options: CultivationEventSurfaceOp
     '.cr-event__resources{display:flex;flex-wrap:wrap;gap:6px 12px;margin:0;color:var(--color-paperMuted);font-size:13px;font-variant-numeric:tabular-nums;}',
     '.cr-event__choices{min-height:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;list-style:none;margin:0;padding:1px 4px 1px 1px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin;}',
     '.cr-event__choice{min-width:0;}',
-    '.cr-event__button{width:100%;min-height:100%;display:grid;gap:8px;align-content:start;text-align:left;padding:14px;border:1px solid rgb(var(--rgb-paperBorder) / .55);border-radius:4px;background:rgb(var(--rgb-shellPine) / .72);color:var(--color-paperBright);cursor:pointer;touch-action:manipulation;}',
+    '.cr-event__button{width:100%;min-height:100%;display:grid;gap:8px;align-content:start;text-align:left;padding:14px;border:1px solid rgb(var(--rgb-paperBorder) / .55);border-radius:4px;background:rgb(var(--rgb-shellPine) / .72);color:var(--color-paperBright);cursor:pointer;touch-action:manipulation;transition:transform .22s cubic-bezier(.34,1.56,.64,1),border-color .16s ease,background-color .16s ease;}',
+    // docs/29 §8.1 按压对：宽卡用更克制的 0.98 缩放。
+    '.cr-event__button:active:not(:disabled){transform:scale(.98);transition:transform .08s linear,border-color .08s linear,background-color .08s linear;}',
     '.cr-event__button:hover{border-color:var(--color-giltUi);background:rgb(var(--rgb-shellPine) / .9);}',
     '.cr-event__button:focus-visible{outline:3px solid var(--color-giltUi);outline-offset:3px;}',
     '.cr-event__button[data-affordable="false"]{border-style:dashed;}',

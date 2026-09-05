@@ -204,7 +204,6 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   // juice 效果状态（自有 rAF，仅效果期间跑）
   let particles: Particle[] = [];
   let shakeMag = 0;
-  let shakeTtl = 0;
   let effectsRaf = 0;
 
   root.innerHTML = '';
@@ -247,9 +246,12 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-agenda-scroll::before,.rp-agenda-scroll::after{content:"";position:absolute;left:0;right:0;height:4px;background:${P.btnBorder};z-index:-1;}`,
     '.rp-agenda-scroll::before{top:30px}.rp-agenda-scroll::after{bottom:30px}',
     '.rp-agenda-scroll>li{min-width:0;}',
-    `.rp-agenda-slot{min-width:0;width:100%;min-height:82px;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;gap:4px;padding:6px 4px;background:linear-gradient(90deg,${P.floor},${P.soilFill.loam} 48%,${P.floor});color:${P.text};border:1px solid ${P.btnBorder};border-radius:3px;box-shadow:inset 3px 0 rgba(0,0,0,.18),inset -3px 0 rgba(0,0,0,.18);cursor:pointer;transition:transform .16s ease,border-color .16s ease;}`,
+    `.rp-agenda-slot{min-width:0;width:100%;min-height:82px;display:grid;grid-template-rows:auto 1fr auto;justify-items:center;gap:4px;padding:6px 4px;background:linear-gradient(90deg,${P.floor},${P.soilFill.loam} 48%,${P.floor});color:${P.text};border:1px solid ${P.btnBorder};border-radius:3px;box-shadow:inset 3px 0 rgba(0,0,0,.18),inset -3px 0 rgba(0,0,0,.18);cursor:pointer;transition:transform .22s cubic-bezier(.34,1.56,.64,1),border-color .16s ease;}`,
     `.rp-agenda-slot:hover{border-color:${P.accent};}`,
     `.rp-agenda-slot[aria-pressed="true"]{transform:translateY(-5px);border-color:${P.accent};box-shadow:0 7px 0 rgba(0,0,0,.2),inset 3px 0 rgba(0,0,0,.18),inset -3px 0 rgba(0,0,0,.18);}`,
+    // docs/29 §8.1 按压对：按下当帧快缩，松手弹簧回弹（轻过冲 ζ≈0.8）。
+    '.rp-agenda-slot:active{transform:scale(.97);transition:transform .08s linear,border-color .08s linear;}',
+    '.rp-agenda-slot[aria-pressed="true"]:active{transform:translateY(-5px) scale(.97);}',
     `.rp-slot-index{color:${P.accent};font-size:12px;font-variant-numeric:tabular-nums;}`,
     '.rp-slot-label{align-self:center;text-align:center;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:16px;letter-spacing:.06em;writing-mode:horizontal-tb;}',
     `.rp-slot-label.is-empty{color:${P.helpText};font-size:14px;letter-spacing:.08em;}`,
@@ -257,7 +259,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-activity-fieldset{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px;border:0;border-block-start:1px solid ${P.boardBorder};margin:0;padding:7px 0 0;overflow:hidden;}`,
     `.rp-activity-fieldset legend{padding:0 10px 0 0;color:${P.text};font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:15px;}`,
     '.rp-activity-grid{min-width:0;min-height:0;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(var(--activity-rows,2),minmax(54px,1fr));grid-auto-rows:minmax(54px,1fr);align-content:stretch;gap:6px;overflow-y:auto;overscroll-behavior:contain;padding:1px 3px 1px 1px;scrollbar-width:thin;}',
-    `.rp-activity-btn{min-width:0;min-block-size:54px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"key name" "key note";column-gap:7px;align-content:center;text-align:left;padding:6px 8px;background:${P.btnBg};color:${P.text};border:1px solid ${P.btnBorder};border-radius:4px;cursor:pointer;touch-action:manipulation;}`,
+    `.rp-activity-btn{min-width:0;min-block-size:54px;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"key name" "key note";column-gap:7px;align-content:center;text-align:left;padding:6px 8px;background:${P.btnBg};color:${P.text};border:1px solid ${P.btnBorder};border-radius:4px;cursor:pointer;touch-action:manipulation;transition:transform .22s cubic-bezier(.34,1.56,.64,1),border-color .16s ease;}`,
+    '.rp-activity-btn:active{transform:scale(.97);transition:transform .08s linear,border-color .08s linear;}',
     '.rp-activity-btn[hidden]{display:none!important;}',
     `.rp-activity-btn:hover,.rp-activity-btn[data-selected="true"]{border-color:${P.accent};}`,
     `.rp-activity-key{grid-area:key;align-self:center;display:grid;place-items:center;inline-size:24px;block-size:24px;border:1px solid ${P.btnBorder};color:${P.accent};font:11px/1 system-ui,sans-serif;}`,
@@ -297,7 +300,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     '.rp-dpad{grid-area:dpad;display:grid;grid-template-columns:repeat(3,44px);grid-template-rows:repeat(2,44px);gap:6px;justify-content:start;}',
     '.rp-dpad .rp-btn{min-width:44px;padding:8px;}',
     '.rp-dpad-up{grid-column:2}.rp-dpad-left{grid-column:1;grid-row:2}.rp-dpad-down{grid-column:2;grid-row:2}.rp-dpad-right{grid-column:3;grid-row:2}',
-    `.rp-btn{min-inline-size:44px;min-block-size:44px;background:${P.btnBg};color:${P.text};border:1px solid ${P.btnBorder};border-radius:6px;padding:10px 14px;cursor:pointer;font-size:14px;line-height:1.2;touch-action:manipulation;}`,
+    `.rp-btn{min-inline-size:44px;min-block-size:44px;background:${P.btnBg};color:${P.text};border:1px solid ${P.btnBorder};border-radius:6px;padding:10px 14px;cursor:pointer;font-size:14px;line-height:1.2;touch-action:manipulation;transition:transform .22s cubic-bezier(.34,1.56,.64,1),border-color .16s ease;}`,
+    '.rp-btn:active:not(:disabled){transform:scale(.97);transition:transform .08s linear,border-color .08s linear;}',
     `.rp-btn-primary{background:${P.primaryBg};border-color:${P.primaryBorder};color:${P.accent};font-weight:700;}`,
     '.rp-btn:disabled{opacity:.4;cursor:default;}',
     `.rp-btn:focus-visible,.rp-agenda-slot:focus-visible,.rp-activity-btn:focus-visible{outline:3px solid ${P.accent};outline-offset:3px;}`,
@@ -1300,7 +1304,6 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     pendingLegacyCandidates = null;
     particles = [];
     shakeMag = 0;
-    shakeTtl = 0;
     resizeCanvasForState();
     if (generation === 1) showOpening();
     else showLifeIntro();
@@ -1762,7 +1765,6 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   function triggerShake(mag: number): void {
     if (reduceFx) return;
     shakeMag = Math.max(shakeMag, mag);
-    shakeTtl = Math.max(shakeTtl, 12);
     ensureEffectsRaf();
   }
 
@@ -1780,12 +1782,13 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       p.ttl -= 1;
     }
     particles = particles.filter(p => p.ttl > 0);
-    if (shakeTtl > 0) {
-      shakeTtl -= 1;
-      if (shakeTtl === 0) shakeMag = 0;
+    if (shakeMag > 0) {
+      // docs/29 §8.4：指数衰减（每帧保留 85%）取代线性 ttl——阻尼感与滚动物理的"每毫秒保留比例"同构，收尾无硬停。
+      shakeMag *= 0.85;
+      if (shakeMag < 0.05) shakeMag = 0;
     }
     draw();
-    if (particles.length > 0 || shakeTtl > 0) ensureEffectsRaf();
+    if (particles.length > 0 || shakeMag > 0) ensureEffectsRaf();
   }
 
   function draw(): void {
@@ -1793,7 +1796,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     ctx.fillStyle = P.boardBg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.save();
-    if (shakeTtl > 0 && shakeMag > 0) {
+    if (shakeMag > 0) {
       ctx.translate((Math.random() - 0.5) * shakeMag, (Math.random() - 0.5) * shakeMag);
     }
     const b = state.board;
