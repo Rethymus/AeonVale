@@ -1,7 +1,9 @@
 import type { AssetId } from '@io/assets';
+import { deriveTribulationPreparation } from '@sim/cultivation-run/preparation';
+import { interpretCultivationTribulationTags } from '@sim/cultivation-run/tribulation-effects';
 import type { CultivationRunMachineState } from './machine';
 import { appendCultivationFacts, appendCultivationList, appendCultivationStatus, createCultivationInterludeFrame, type CultivationInterludeArtwork } from './interludeSurfaceShared';
-import { machineErrorMessage, type CultivationRunPhaseSurface, type CultivationRunSurfaceDispatch } from './surfaceShared';
+import { appendTextElement, machineErrorMessage, type CultivationRunPhaseSurface, type CultivationRunSurfaceDispatch } from './surfaceShared';
 
 export const CULTIVATION_TRIBULATION_CHOICE_ART_ASSET_ID: AssetId = 'cg.first-person.tribulation.purple-v2';
 
@@ -19,6 +21,21 @@ function preparationNotes(state: CultivationRunMachineState): string[] {
   if (state.insightEffectTags.length > 0) notes.push(`已参透 ${state.insightEffectTags.length} 项残卷批注。`);
   if (state.tribulationTags.length > 0) notes.push(`事件留下 ${state.tribulationTags.length} 项天劫影响。`);
   return notes;
+}
+
+/**
+ * 首劫（stage===0）且预见为 0 时，补一段承雷基本盘说明。
+ * docs/21 §8.3 归档的保守方案：只补信息，不赠任何预见数值。
+ */
+function firstTribulationGuidance(state: CultivationRunMachineState): readonly string[] | null {
+  if (state.runState.stage !== 0) return null;
+  const interpretation = interpretCultivationTribulationTags([...state.tribulationTags, ...state.insightEffectTags]);
+  const preparation = deriveTribulationPreparation(state.runState, interpretation.preparationModifiers);
+  if (preparation.previewLevel > 0) return null;
+  return [
+    '初劫劫兆未明，谨记承雷三途：雷威落在甜蜜区间，可完美淬体；未合火候而未越上限，只算带伤承雷；一旦超过肉身可承受的雷威上限，当场灰飞烟灭。',
+    '雷威越贴近而不超过肉身上限，淬体越厚；此劫无预见可凭，只能按肉身上限保守估量。'
+  ];
 }
 
 export function createCultivationTribulationChoiceSurface(options: CultivationTribulationChoiceSurfaceOptions): CultivationRunPhaseSurface {
@@ -53,9 +70,12 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
       '[data-cultivation-interlude-host] .cr-tribulation-choice__button:hover:not(:disabled){border-color:var(--color-giltUi);}',
       '[data-cultivation-interlude-host] .cr-tribulation-choice__button:focus-visible{outline:3px solid var(--color-giltUi);outline-offset:3px;}',
       '[data-cultivation-interlude-host] .cr-tribulation-choice__button:disabled{cursor:default;opacity:.58;}',
+      '[data-cultivation-interlude-host] .cr-tribulation-choice__guidance{display:grid;gap:3px;margin:0;padding:7px 10px;border:1px dashed rgb(var(--rgb-qiFlow) / .38);background:rgb(var(--rgb-qiFlow) / .06);color:var(--color-paperUi);font-size:12px;line-height:1.6;}',
+      '[data-cultivation-interlude-host] .cr-tribulation-choice__guidance[hidden]{display:none;}',
+      '[data-cultivation-interlude-host] .cr-tribulation-choice__guidance-line{display:block;max-width:72ch;}',
       '[data-cultivation-interlude-host] .cr-tribulation-choice__label{font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:21px;font-weight:700;}',
       '[data-cultivation-interlude-host] .cr-tribulation-choice__detail{color:var(--color-paperUi);font-size:14px;line-height:1.55;}',
-      '@container(max-width:520px){[data-cultivation-interlude-host] .cr-tribulation-choice__choices{grid-template-columns:1fr}[data-cultivation-interlude-host] .cr-tribulation-choice__button{min-block-size:auto}}'
+      '@container(max-width:520px){[data-cultivation-interlude-host] .cr-tribulation-choice__choices{grid-template-columns:1fr}[data-cultivation-interlude-host] .cr-tribulation-choice__button{min-block-size:auto}[data-cultivation-interlude-host] .cr-tribulation-choice__guidance{font-size:10px;line-height:1.4;}}'
     ]
   });
 
@@ -63,6 +83,9 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
   frame.copy.appendChild(factsHost);
   const notesHost = document.createElement('div');
   frame.copy.appendChild(notesHost);
+  const guidanceHost = document.createElement('p');
+  guidanceHost.className = 'cr-tribulation-choice__guidance';
+  frame.copy.appendChild(guidanceHost);
   const choices = document.createElement('div');
   choices.className = 'cr-tribulation-choice__choices';
   choices.setAttribute('role', 'group');
@@ -123,6 +146,11 @@ export function createCultivationTribulationChoiceSurface(options: CultivationTr
     ]);
     notesHost.replaceChildren();
     appendCultivationList(notesHost, preparationNotes(state), '尚无明确护持，天劫只会检验当前根底。').setAttribute('aria-label', '当前备劫结果');
+
+    const guidance = firstTribulationGuidance(state);
+    guidanceHost.replaceChildren();
+    for (const line of guidance ?? []) appendTextElement(guidanceHost, 'span', 'cr-tribulation-choice__guidance-line', line);
+    guidanceHost.hidden = guidance === null;
 
     prepareButton.disabled = !canPrepare;
     invokeButton.disabled = !canInvoke;
