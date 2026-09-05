@@ -78,7 +78,13 @@ test('capture new-game flow surfaces for delivery', async ({ page }) => {
     await shoot(page, `04-${name}.png`);
     await returnToWorld(page);
   }
-  await page.keyboard.press('p');
+  // Esc 打开真正的暂停表面（'p' 只软暂停不开菜单，拍到的是世界画面）。
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(
+    () => (window as typeof window & { __AEON_DEBUG__?: { flowOverlay?: string | null } }).__AEON_DEBUG__?.flowOverlay === 'pause',
+    undefined,
+    { timeout: 10_000 }
+  ).catch(() => undefined);
   await shoot(page, '05-pause.png');
   await returnToWorld(page);
 });
