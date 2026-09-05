@@ -83,8 +83,10 @@ import { DEFAULT_RUNTIME_SETTINGS, RUNTIME_SETTINGS_STORAGE_KEY, decodeRuntimeSe
 import { renderCultivationSurface, renderMapSurface } from './surfacePanels';
 import { applyColorPaletteCssVariables, ColorPalette, cssColor } from '@render/ColorPalette';
 import { locationWorldPreviewPlacementAt, locationWorldPreviewPlacements, npcWorldPreviewPlacementAt, npcWorldPreviewPlacements, type LocationWorldPreviewPlacement, type NpcWorldPreviewPlacement } from '@render/npcWorldPreview';
+import { installMotionSkin } from './motionSkin';
 
 applyColorPaletteCssVariables(document.documentElement);
+installMotionSkin();
 document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', cssColor('shellPine'));
 
 type DirectFarmActionKind = Exclude<FarmActionFeedbackKind, 'sow' | 'fertilize'>;
