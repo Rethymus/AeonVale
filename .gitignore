@@ -52,3 +52,10 @@ assets/audio/bgm/
 # README 预告素材的中间帧序列（pnpm readme:capture 生成，由 readme:gif 编码为成品 GIF，可复现，不入库）
 # 成品截图/GIF（assets/screenshots/*.png、*.gif）需入库供 README 与 Pages 展示。
 assets/screenshots/_frames/
+
+# 本地 Agent 安全扫描状态（不入库，见 CONTRIBUTING「不得提交 Agent 状态」）
+.mimosa/
+
+# Python 工具字节码缓存
+__pycache__/
+*.pyc
