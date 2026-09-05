@@ -988,6 +988,10 @@ async function main(): Promise<void> {
     return { x: p.position.x + dx, y: p.position.y + dy };
   }
 
+  // docs/29 §8/§9：toast 入场滑升+淡入（0.28s smoothstep，无过冲）。
+  // 状态挂在 main 闭包；调度器经 flashActive 通道在动画期间保持连续帧。
+  const TOAST_ENTER_MS = 280;
+  let toastEnterStart: number | null = null;
   function toast(msg: string, assetId?: string): void {
     const profile = computeViewportLayout({
       width: Math.max(1, window.innerWidth),
@@ -995,6 +999,7 @@ async function main(): Promise<void> {
       touchCapable: navigator.maxTouchPoints > 0 || window.matchMedia('(pointer: coarse)').matches
     }).profile;
     setToast(layers, msg, resolvePreviewTexture(renderAssets, assetId), profile === 'portrait-blocked' ? 'compact-landscape' : profile);
+    toastEnterStart = runtimeSettings.reducedMotion ? null : -1; // -1 = 待首个渲染帧钉起点
     requestRender?.();
   }
 
@@ -6807,6 +6812,19 @@ async function main(): Promise<void> {
   function renderFrame(timestamp: number): void {
     const worldSurfaceActive = flowAllowsWorldInput();
     layers.ambientTimeMs = worldSurfaceActive ? (playwrightAmbientTimeMs ?? timestamp) : 0;
+    if (toastEnterStart !== null) {
+      // docs/29 §8.2：滑升 10px + 淡入，smoothstep（无过冲入场族）。
+      if (toastEnterStart === -1) toastEnterStart = timestamp;
+      const p = Math.min(1, (timestamp - toastEnterStart) / TOAST_ENTER_MS);
+      const eased = p * p * (3 - 2 * p);
+      layers.toastRoot.alpha = eased;
+      layers.toastRoot.y = (1 - eased) * 10;
+      if (p >= 1) {
+        toastEnterStart = null;
+        layers.toastRoot.alpha = 1;
+        layers.toastRoot.y = 0;
+      }
+    }
     if (worldSurfaceActive && !paused && !dialogueBeat && !blockingOverlayActive()) advanceWorldMovement(timestamp);
     drawWorld(layers, state, reg, ctx, renderAssets, {
       pointerTile,
@@ -6889,7 +6907,7 @@ async function main(): Promise<void> {
       const worldSurfaceActive = flowAllowsWorldInput();
       return {
         particlesActive: worldSurfaceActive || layers.particleList.length > 0 || layers.floatTexts.length > 0,
-        flashActive: layers.tribFlashTtl > 0 || layers.tribBoltTtl > 0 || layers.shakeTtl > 0
+        flashActive: layers.tribFlashTtl > 0 || layers.tribBoltTtl > 0 || layers.shakeTtl > 0 || toastEnterStart !== null
       };
     }
   });
