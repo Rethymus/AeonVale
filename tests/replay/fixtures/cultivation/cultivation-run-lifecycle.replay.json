@@ -1,0 +1,689 @@
+{
+  "schemaVersion": 1,
+  "id": "cultivation-run-lifecycle-v1",
+  "description": "修途主模式（偷天换劫）纯 sim 全生命周期：三轮六格日程（含参悟效果标签反馈）→ 事件选择 ×2 → 参悟解锁 ×2 → 引劫准备/生成/落位 → 第一次渡劫（烘焙解 + 撤步）结算 → 第二次渡劫（闲置超时）身死 → 劫灰碑记/传承候选/换代。哈希 = canonicalSerialize 后 sha256；本链路无环境噪声，无需 celestial 清零。",
+  "params": {
+    "bodyCultivation": {
+      "foundationCap": [
+        100000,
+        200000,
+        400000,
+        700000,
+        1100000,
+        1600000,
+        2200000
+      ],
+      "pushUpGain": 1200,
+      "sitUpGain": 1000,
+      "squatGain": 1400,
+      "longRunGain": 2600,
+      "pushUpStaminaCost": 8,
+      "sitUpStaminaCost": 8,
+      "squatStaminaCost": 10,
+      "longRunStaminaCost": 25,
+      "endurancePerSet": 700,
+      "willpowerPerSet": 400,
+      "tribulationWillpowerDivisor": 12,
+      "heavenDebtPerInvoke": 3000,
+      "daoAttentionPerInvoke": 5000,
+      "lifespanStartDays": 840,
+      "lifespanDailyLoss": 1,
+      "lifespanBreakthroughGain": 180
+    },
+    "cultivationRun": {
+      "slotsPerAgenda": 6,
+      "pressureCap": 100,
+      "mortalHeartCap": 100,
+      "injuryCap": 100,
+      "startPressure": 20,
+      "startMortalHeart": 50,
+      "startFood": 4,
+      "repeatSecondEfficiencyMilli": 850,
+      "repeatLaterEfficiencyMilli": 700,
+      "repeatPressureStep": 2,
+      "repeatInjuryStep": 2,
+      "pressurePenaltyThreshold": 80,
+      "pressurePenaltyEfficiencyMilli": 750,
+      "mortalHeartPressureDivisor": 25,
+      "tribulation": {
+        "baseMinTemperingPower": 50,
+        "stageMinTemperingPower": 10,
+        "willpowerPerMinPower": 1000,
+        "baseMaxSurvivablePower": 85,
+        "stageMaxSurvivablePower": 5,
+        "bodyFoundationPerMaxPower": 200,
+        "endurancePerMaxPower": 350,
+        "injuryPerMaxPowerPenalty": 2,
+        "pressurePenaltyThreshold": 80,
+        "pressurePerMaxPowerPenalty": 2,
+        "minimumSafeWidth": 5,
+        "sweetSpotInsetMilli": 250,
+        "insightPerPreviewLevel": 4,
+        "maxPreviewLevel": 3,
+        "mortalHeartPerMoveBudgetBonus": 25,
+        "pillsPerUndoCharge": 2,
+        "maxUndoCharges": 2,
+        "maxWardCharges": 2,
+        "maxPreparedHerbs": 3,
+        "baseSourcePower": 100,
+        "pathCellLossMilli": 15,
+        "minimumPathConductivityMilli": 700,
+        "mirrorModifierMilli": 960,
+        "conductorModifierMilli": 1080,
+        "herbHitModifierMilli": 950,
+        "timeoutBodyDamage": 10,
+        "perfectTemperingGainMultiplier": 10,
+        "survivedTemperingGainMultiplier": 6,
+        "insufficientTemperingGainMultiplier": 2
+      },
+      "activities": {
+        "training": {
+          "timeCostDays": 12,
+          "foodCost": 1,
+          "bodyFoundationGain": 1600,
+          "enduranceGain": 700,
+          "willpowerGain": 400,
+          "pressureGain": 14,
+          "injuryGain": 6
+        },
+        "farming": {
+          "timeCostDays": 10,
+          "herbGain": 3,
+          "foodGain": 2,
+          "pressureRelief": 2,
+          "mortalHeartGain": 4
+        },
+        "alchemy": {
+          "timeCostDays": 8,
+          "herbCost": 2,
+          "pillGain": 1,
+          "insightGain": 1,
+          "poisonGain": 6000,
+          "pressureGain": 8
+        },
+        "livelihood": {
+          "timeCostDays": 14,
+          "spiritStoneGain": 5,
+          "pressureGain": 12,
+          "mortalHeartLoss": 2
+        },
+        "insight": {
+          "timeCostDays": 10,
+          "spiritStoneCost": 1,
+          "insightGain": 4,
+          "willpowerGain": 300,
+          "pressureGain": 10
+        },
+        "rest": {
+          "timeCostDays": 7,
+          "foodCost": 1,
+          "pressureRelief": 20,
+          "mortalHeartGain": 8,
+          "injuryRelief": 12,
+          "poisonRelief": 2000
+        },
+        "meridian": {
+          "timeCostDays": 12,
+          "foodCost": 1,
+          "bodyFoundationGain": 3200,
+          "enduranceGain": 1400,
+          "willpowerGain": 900,
+          "pressureGain": 16,
+          "injuryGain": 8
+        },
+        "arrayStudy": {
+          "timeCostDays": 10,
+          "spiritStoneCost": 2,
+          "insightGain": 7,
+          "willpowerGain": 1000,
+          "pressureGain": 12,
+          "mortalHeartGain": 2
+        },
+        "lightningBath": {
+          "timeCostDays": 9,
+          "herbCost": 3,
+          "bodyFoundationGain": 5000,
+          "enduranceGain": 1800,
+          "willpowerGain": 1200,
+          "poisonGain": 2000,
+          "pressureGain": 16,
+          "injuryGain": 10,
+          "heavenDebtGain": 500,
+          "daoAttentionGain": 800
+        },
+        "heavenTheft": {
+          "timeCostDays": 8,
+          "spiritStoneCost": 3,
+          "bodyFoundationGain": 7000,
+          "willpowerGain": 1800,
+          "insightGain": 10,
+          "pressureGain": 20,
+          "injuryGain": 6,
+          "heavenDebtGain": 1200,
+          "daoAttentionGain": 1800
+        }
+      }
+    },
+    "pillPoison": {
+      "cap": 100,
+      "softCapThreshold": 0.7,
+      "decayBase": 2,
+      "detoxPillBonusMax": 2,
+      "restBonusMax": 1,
+      "rawEatMultBase": 0.8,
+      "rawEatMultStageSlope": 0.4,
+      "poisonResistCap": 0.3
+    }
+  },
+  "plan": {
+    "seed": 20260905,
+    "heirSeed": 20260907,
+    "lifeIdentity": {
+      "name": "回放前世",
+      "portraitId": "portrait:replay-life"
+    },
+    "heirIdentity": {
+      "name": "回放后来人",
+      "portraitId": "portrait:replay-heir"
+    },
+    "initialOverrides": {
+      "stage": 2,
+      "lifespanRemainingDays": 640,
+      "bodyFoundation": 2000,
+      "endurance": 1400,
+      "willpower": 1000,
+      "pillPoison": 5000,
+      "heavenDebt": 1200,
+      "daoAttention": 900,
+      "injury": 20,
+      "herbs": 10,
+      "food": 20,
+      "spiritStones": 10,
+      "pills": 4,
+      "insight": 3
+    },
+    "agendas": [
+      [
+        "farming",
+        "farming",
+        "alchemy",
+        "livelihood",
+        "insight",
+        "rest"
+      ],
+      [
+        "training",
+        "farming",
+        "livelihood",
+        "insight",
+        "rest",
+        "rest"
+      ],
+      [
+        "farming",
+        "farming",
+        "farming",
+        "rest",
+        "livelihood",
+        "rest"
+      ]
+    ],
+    "eventChoices": [
+      {
+        "ordinal": 5,
+        "choiceIndex": 1
+      },
+      {
+        "ordinal": 5,
+        "choiceIndex": 1
+      }
+    ],
+    "insightTargets": [
+      "foundation-rhythm",
+      "field-breathing"
+    ],
+    "legacySelection": {
+      "knowledgeId": "knowledge:foundation-rhythm",
+      "relicId": "relic:annotated-notebook"
+    },
+    "puzzleSalts": [
+      11,
+      29
+    ],
+    "tribulationOneActions": [
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "undo"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "right"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "left"
+      },
+      {
+        "type": "move",
+        "dir": "up"
+      },
+      {
+        "type": "move",
+        "dir": "right"
+      },
+      {
+        "type": "move",
+        "dir": "up"
+      },
+      {
+        "type": "move",
+        "dir": "left"
+      },
+      {
+        "type": "move",
+        "dir": "up"
+      },
+      {
+        "type": "move",
+        "dir": "up"
+      },
+      {
+        "type": "move",
+        "dir": "right"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "down"
+      },
+      {
+        "type": "move",
+        "dir": "right"
+      },
+      {
+        "type": "move",
+        "dir": "right"
+      },
+      {
+        "type": "move",
+        "dir": "up"
+      },
+      {
+        "type": "move",
+        "dir": "left"
+      }
+    ],
+    "idleActionLimit": 512
+  },
+  "facts": {
+    "firstTribulationResult": "perfect",
+    "firstSettlementKind": "breakthrough",
+    "stageAfterFirstSettlement": 3,
+    "secondTribulationResult": "timeout",
+    "secondSettlementKind": "death",
+    "finalStatus": "tribulation-ended",
+    "finalStage": 3,
+    "heirStage": 0,
+    "eventIds": [
+      "purple-cloud-over-fields",
+      "distant-breakthrough-afterglow"
+    ],
+    "unlockedNodeIds": [
+      "foundation-rhythm",
+      "field-breathing"
+    ]
+  },
+  "steps": [
+    {
+      "phase": "create-run",
+      "label": "create-run",
+      "expected": "8d7d728898bfaad8b8216853f69ff3a073d509b290535c922910a3b15b1e1659"
+    },
+    {
+      "phase": "agenda",
+      "label": "agenda-1",
+      "expected": "59b018a4793ba7dd6dac5fff6b5c9cab2dffeeeadb65a44235b6b5b8675edb81"
+    },
+    {
+      "phase": "event",
+      "label": "event-1:purple-cloud-over-fields:watch-thunder-plot",
+      "expected": "7adbdac4bd154fdb7f3877e791440c1d663551e4879d144f4e24b0431f0eebfb"
+    },
+    {
+      "phase": "insight",
+      "label": "insight-1:foundation-rhythm",
+      "expected": "0682f28ac0865034d8cc1bfd51b01f83d70521bad09807b340481e85b7dd3d7e"
+    },
+    {
+      "phase": "agenda",
+      "label": "agenda-2",
+      "expected": "147f15637fecfa3cec1790f136a8a6318e2f2599d9e9d0944dac9c6ce2e9d35a"
+    },
+    {
+      "phase": "event",
+      "label": "event-2:distant-breakthrough-afterglow:copy-sky-pattern",
+      "expected": "d3c3dacb79d9e69623e82b799525ee496928c44084dabafa6e7ba404c5881f83"
+    },
+    {
+      "phase": "insight",
+      "label": "insight-2:field-breathing",
+      "expected": "8dd4a67de9d07068dc1ea62b3e48fb4e04f2d970620ae66c4740b6774745f52c"
+    },
+    {
+      "phase": "agenda",
+      "label": "agenda-3",
+      "expected": "1a5a731500c932eb6d4946bea269d9484fb075edb1c9cf6012547f9b865e7f44"
+    },
+    {
+      "phase": "derive-preparation",
+      "label": "tribulation-1:derive-preparation",
+      "expected": "751631b671d08dbc6716e53a58cea0fcb638c2600a4f528dcb42d8a3dabf4185"
+    },
+    {
+      "phase": "create-puzzle",
+      "label": "tribulation-1:create-puzzle:stage-2:salt-11",
+      "expected": "422fc021b5333d6eb0262e7339b389a6202ff4f9a22bd5ff1379988dd16e416f"
+    },
+    {
+      "phase": "apply-preparation",
+      "label": "tribulation-1:apply-preparation",
+      "expected": "00bfbc03b5c137878eb3805d42922f82dd2cbeabcd3479f4d4bda3f4048d79f5"
+    },
+    {
+      "phase": "create-session",
+      "label": "tribulation-1:create-session",
+      "expected": "35d952b1648bad124d67476ec7f4ef7228678e24d273b23125cd9ce9e74147a7"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-1:move:down:ok",
+      "expected": "af5cbf33e2350ff72079363000a03ea448f2a4d66d7234aa5de1a03d7c3497dd"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-2:undo:ok",
+      "expected": "5b4fd02edf899d1f415fc7891a5d805a9b42ae4958675bff576d0a0b5e9c7b3f"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-3:move:down:ok",
+      "expected": "9ce0f9393df3caf1d07e281becde541b4e443ed61b2d5836c2ee6234586711a4"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-4:move:down:ok",
+      "expected": "79b83412f0bbb05388a8be8d3d5c4d35d5c100e941aff8a74a7ae7f3e5ade6a8"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-5:move:right:ok",
+      "expected": "6043833df9159dc139307bbd807eba0626d58d00d5fd5c704148ba24244fa819"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-6:move:down:ok",
+      "expected": "57e34466514c9c708df1b184a28231fd6382e9f73077a9eaf17820b2b7f18802"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-7:move:down:ok",
+      "expected": "62aa2f94beafc8347d596202245d109dadadbdcf696ac6e4a643f982bb45d547"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-8:move:left:ok",
+      "expected": "64ed61f377fca5a7f18806c4b890ae9507734d34ef48bcb1564ad18f0f1319fc"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-9:move:up:ok",
+      "expected": "e5571ef55307d343bb04efd8b302a68d81213fc6376b42628eeaf25685f32411"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-10:move:right:ok",
+      "expected": "7aa6783c1e5883bc22177eed906f5616457b6e7267be4bebb58667351e81b451"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-11:move:up:ok",
+      "expected": "4eef681f92db268edf37d89355bb2473c82cd5f7ede48e7cd33a84134234651f"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-12:move:left:ok",
+      "expected": "6a9257387cccda634d395b332d78e5b13eb2dc59ca47ac990997b2a55f8d14d3"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-13:move:up:ok",
+      "expected": "402caa8974129bed9aa1cb4ebb6ecc67dcdf5cca903f8130201c3e8e49536e52"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-14:move:up:ok",
+      "expected": "023ebf43efe753ed6898fed6796e60bfc640d500361e0d4c6e32baa9886997ed"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-15:move:right:ok",
+      "expected": "a619d8f5a83e06bc62325d816913c49eaec7802641f0b708dcfa34f96f162c25"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-16:move:down:ok",
+      "expected": "cd7a1adfd39400ec32ad12aba8c79b746fb0415c0fda71f1d0e70b709843ba01"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-17:move:down:ok",
+      "expected": "1f7d7e3b5e119495e6c8f492de3c998c906fe273d9d4185abad42730d4012260"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-18:move:down:ok",
+      "expected": "6284823cb3260ab7f6fb0af8a00df26b73f1495d47a922f7f76ef458d4590310"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-19:move:right:ok",
+      "expected": "88ae4d031584c8e6668bdb519c0daff1c50df947de509651e85a4cc2b4442291"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-20:move:right:ok",
+      "expected": "f388e458258a455bb8a292ac941f40c2d891f9c3e058f0ed3faa2065ed082303"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-21:move:up:ok",
+      "expected": "a077c4a21e3053b8f749673a2bbb0bcb1afbd117fc7288ea457ba1223b9c9037"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-1:action-22:move:left:ok",
+      "expected": "cc4ad53d4cfe133f3edef23067f0ca03a994faab72601eb19566b09f50a8129d"
+    },
+    {
+      "phase": "settlement",
+      "label": "tribulation-1:settlement:breakthrough",
+      "expected": "ffa50c72da7071c537167a2b005891b170efd02cb63c28480b009901b2573897"
+    },
+    {
+      "phase": "derive-preparation",
+      "label": "tribulation-2:derive-preparation",
+      "expected": "df15d563008b95e1d8992ca6518c0dd8d4880e2bc1b28d182ab76327f1376b7e"
+    },
+    {
+      "phase": "create-puzzle",
+      "label": "tribulation-2:create-puzzle:stage-3:salt-29",
+      "expected": "ef0fe84585fb5f1fdd79775310a74213cf87e1bb3a84faf830ec07dd950ff6b2"
+    },
+    {
+      "phase": "apply-preparation",
+      "label": "tribulation-2:apply-preparation",
+      "expected": "ff8559bcffcba1fe049922ffdb1d8501fbf38a855edf85dcdfb8ebe4beb62162"
+    },
+    {
+      "phase": "create-session",
+      "label": "tribulation-2:create-session",
+      "expected": "9d91d08f5e465e84e960e0b18936973116b9a19802ef4347b9f300b1a435918d"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-1:move:up:ok",
+      "expected": "187175ce0bb0237d7794d259c1c4091d5de02543f169e1cff60b63ae155e8d4a"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-2:move:right:ok",
+      "expected": "4b3ab1464891cc97ee4c557b64a696948f094419d361c14dc902c5ba30a4606d"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-3:move:down:ok",
+      "expected": "0d7790ea9e9dc939b78f212b551a0cbb0fbff08f9577107131d92a922f8b7462"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-4:move:left:ok",
+      "expected": "7b936974b66cf101499c4231587cdb9a394a1e1b234e1112436aad6eed936d7a"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-5:move:up:ok",
+      "expected": "c6e86a29460f101eed9fa4ef082edbba4c226ea8a267df0f57745f13b8c0fbb8"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-6:move:right:ok",
+      "expected": "6267e582100e54c5a5783db53536286852ea31c93522431f8a40830fb4084531"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-7:move:down:ok",
+      "expected": "e2e8dea90845ff12a191c16d8bb7dc28fd0290f3d9e18f8647723d18a6df46d1"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-8:move:left:ok",
+      "expected": "fc0a907c36306cfffb7780e3ccfdc90096de791990e807b360db1cf64c28445f"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-9:move:up:ok",
+      "expected": "9410c17236db20f93aa4a252dc3ab3ae3b23da0db2618d225935665e1e91e977"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-10:move:right:ok",
+      "expected": "15de4f393f4b3b141cb6ff92138652632ca3eac8dc9dc763dde7dcd2f08d5546"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-11:move:down:ok",
+      "expected": "18d808470915111429081e569a37c6ab98a7ed69c2569be7de7db7c52adcb7c8"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-12:move:left:ok",
+      "expected": "12183e3568390497a418ab0221d7f4aae20fade580f1d8eea0ccb0d675fa9c02"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-13:move:up:ok",
+      "expected": "dc324261fdba5bf14c5ee962672f3ad3fb2efb47cd78efcaef55967f992f54f2"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-14:move:right:ok",
+      "expected": "6833dc83718eaae3d624387281b4827b6510dd1173c755b0e09ccfc8a714bef7"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-15:move:down:ok",
+      "expected": "5533811dd27fe72e13fe4af590d43cdfd2d35f5d5caf5b8f6a71ed7099c079ca"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-16:move:left:ok",
+      "expected": "5f312076adfbb6afcfb8523e82760313da92e820698ff87a0659d981979d4c39"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-17:move:up:ok",
+      "expected": "83fba8fe5fcc061e5fc96b55cca39425207dac3b3ee80a57b48768b2e256a738"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-18:move:right:ok",
+      "expected": "26223247ae29650b789c0b67f153562e14d14385bde9ac41a625a4b3b1621769"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-19:move:down:ok",
+      "expected": "aca74b20d1efebe48bf6e72ce38024602f938fd8fb914140d958bd024c33998f"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-20:move:left:ok",
+      "expected": "8f26d412b2421469b15bea7c39ee26cc60ee4a07048655a87dfc41634feb473f"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-21:move:up:ok",
+      "expected": "b56e8bca23c35a2aab1cfe4d3402f08a7c9fbc5dd7c6db2fbcd3816cb81f2d85"
+    },
+    {
+      "phase": "session-action",
+      "label": "tribulation-2:action-22:move:right:ok",
+      "expected": "09cf25003eb967e6cbcfe9b5ed8cb4968e17de983005460cc939777af52e5c36"
+    },
+    {
+      "phase": "settlement",
+      "label": "tribulation-2:settlement:death",
+      "expected": "5da1d41588673dba6441a7496ee1f04ee9de2b1216c1e8f63554d716589f75c5"
+    },
+    {
+      "phase": "epitaph",
+      "label": "epitaph",
+      "expected": "abee38b6a3c1d699c3ad3fd01e49b3d214fb0bbbac242f0a1dff03ef8ffa5bb3"
+    },
+    {
+      "phase": "legacy-candidates",
+      "label": "legacy-candidates",
+      "expected": "ff5cce513dc5b4fc15b23bf0d43f355898d085bf284c3401f5b9332151c83204"
+    },
+    {
+      "phase": "heir",
+      "label": "heir",
+      "expected": "e4a5dff4087697d523e0f4b0726cfcf99771692c737eb6364be0c8ab02c0fbd2"
+    }
+  ]
+}

@@ -32,6 +32,7 @@
     "test:fast": "node node_modules/vitest/vitest.mjs run tests/unit tests/property",
     "test:replay": "node node_modules/vitest/vitest.mjs run tests/replay",
     "replay:update": "node node_modules/tsx/dist/cli.mjs tools/update-golden-replay.ts",
+    "replay:cultivation:update": "node node_modules/tsx/dist/cli.mjs tools/update-cultivation-replay.ts",
     "coverage": "node node_modules/vitest/vitest.mjs run --coverage",
     "headless": "node node_modules/tsx/dist/cli.mjs tools/headless-run.ts",
     "render:bgm": "node node_modules/tsx/dist/cli.mjs tools/render-bgm.ts",
