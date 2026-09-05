@@ -289,7 +289,7 @@ requireIncludes('README.md', 'GitHub Pages 构建不泄露设计资料', 'README
 requireIncludes('CONTRIBUTING.md', 'pnpm prepare:public-tree <目标目录>', 'CONTRIBUTING.md must require public-tree based publication');
 requireIncludes('CONTRIBUTING.md', '创作设定、玩法细案、路线规划、美术状态等设计资料不得进入公开仓库、Pages 或 Release 产物', 'CONTRIBUTING.md must document private design-document boundaries');
 
-requireIncludes('.github/workflows/ci.yml', 'uses: gitleaks/gitleaks-action@v2', 'CI must include secret scanning');
+requireIncludes('.github/workflows/ci.yml', 'uses: gitleaks/gitleaks-action@v3', 'CI must include secret scanning');
 requireIncludes('.github/workflows/ci.yml', 'pnpm governance:readiness', 'CI must run private-tree readiness checks');
 requireIncludes('.github/workflows/ci.yml', 'pnpm prepare:public-tree .public-tree', 'CI must prepare the public tree');
 requireIncludes('.github/workflows/ci.yml', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'CI must install public-tree dependencies without lifecycle scripts');

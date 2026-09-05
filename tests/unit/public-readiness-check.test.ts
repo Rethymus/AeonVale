@@ -40,7 +40,7 @@ function makeReadyRepo(): string {
   write(dir, 'tools/portfolio-release-checklist.mjs', "process.argv.includes('--json')\nrequiredEvidence\nauthorizationRequired\nrequires re-verification after every deployment and before Public/Release operations\n不提交、不推送、不部署、不修改 GitHub 设置\npnpm portfolio:mvp-preflight -- --keep-public-tree\npnpm portfolio:pages-diagnose\npnpm test:browser:pages\nREADME.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md\n不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md\nSettings -> Pages 的 Source 设为 GitHub Actions\nENABLE_PAGES=true 闸门保护\n确认仓库 Homepage 指向\n《星露谷物语》对照验收\n低门槛日循环：至少能完成翻地、播种、浇水、过夜、收获、出货、补种\n差异化内核：炼丹、阵法、淬体、主动引劫\nGo / No-Go 证据\n4 张 test-results/portfolio/*.png 截图为本次生成\ntest-results/portfolio/portfolio-mvp-evidence.json 由本次 portfolio:capture 生成\nruntimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10\n01/03 桌面 CSS 渲染截图为 1440x810，02 叠层背景截图为 1440x825，1 张横屏小视口 keyboard-first 截图为 736x414\npaintedRatio 达到阈值，colors 达到阈值\n该文件仍是生成物，不进入公开树\n每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成\n对标范围与优先级复核\nP0 只要求公开试玩版与 GitHub Pages 部署闭环成立\nP1 再推进独立游戏首版的可持续循环\nP2 才以 Patch / DLC 方式补人物、节日、地点、作物、收藏和长期叙事\n《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》\n");
   write(dir, 'tools/publication-check.mjs', 'console.log("public");\n');
   write(dir, 'tools/public-dist-check.mjs', 'console.log("dist");\n');
-  write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v2', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm test:browser:public-tree', 'pnpm test:browser:public-tree:keypoint', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'aeonvale-pages-dist-${{ github.sha }}', 'include-hidden-files: true'].join('\n'));
+  write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v3', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm test:browser:public-tree', 'pnpm test:browser:public-tree:keypoint', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'aeonvale-pages-dist-${{ github.sha }}', 'include-hidden-files: true'].join('\n'));
   write(dir, '.github/workflows/pages.yml', ["vars.ENABLE_PAGES == 'true'", "github.event_name == 'workflow_dispatch' &&", "github.ref == 'refs/heads/main'", 'actions: read', 'ref: ${{ github.event.workflow_run.head_sha || github.sha }}', 'VITE_BASE_PATH: /AeonVale/', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'actions/download-artifact@v4', 'aeonvale-pages-dist-${{ github.event.workflow_run.head_sha }}', 'run-id: ${{ github.event.workflow_run.id }}', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm --dir .public-tree governance:dist', 'pnpm test:browser:public-tree', 'run: pnpm governance:dist', 'path: dist', 'Install Chromium for deployed Pages smoke', 'pnpm test:browser:pages', 'pnpm test:browser:pages-playable', 'PLAYWRIGHT_EXPECTED_BUILD_REVISION: ${{ github.event.workflow_run.head_sha || github.sha }}'].join('\n'));
   write(dir, '.github/workflows/release.yml', ['workflow_dispatch:', "if: github.ref == 'refs/heads/main'", 'pnpm governance:readiness', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm --dir .public-tree governance:public', 'pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'cd .public-tree/dist && zip'].join('\n'));
   write(dir, '.gitignore', ['.public-tree/', 'dist/', 'playwright-report/', 'test-results/', '.claude/', '.omc/', '.codex/', '.agents/'].join('\n'));
@@ -101,35 +101,35 @@ describe('公开发布 readiness 检查', () => {
 
   it('拒绝没有 Pages 子路径 smoke 覆盖的 CI', () => {
     const dir = makeReadyRepo();
-    write(dir, '.github/workflows/ci.yml', 'uses: gitleaks/gitleaks-action@v2\npnpm governance:readiness\npnpm prepare:public-tree .public-tree\npnpm --dir .public-tree install --frozen-lockfile --ignore-scripts\npnpm --dir .public-tree governance:readiness\nPLAYWRIGHT_APP_DIR: .public-tree\nVITE_BASE_PATH: /AeonVale/\n');
+    write(dir, '.github/workflows/ci.yml', 'uses: gitleaks/gitleaks-action@v3\npnpm governance:readiness\npnpm prepare:public-tree .public-tree\npnpm --dir .public-tree install --frozen-lockfile --ignore-scripts\npnpm --dir .public-tree governance:readiness\nPLAYWRIGHT_APP_DIR: .public-tree\nVITE_BASE_PATH: /AeonVale/\n');
 
     expect(() => runReadinessCheck(dir)).toThrow(/CI browser smoke must cover the GitHub Pages route/);
   });
 
   it('拒绝 CI 公开树构建偏离 GitHub Pages 子路径', () => {
     const dir = makeReadyRepo();
-    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v2', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: ./'].join('\n'));
+    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v3', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: ./'].join('\n'));
 
     expect(() => runReadinessCheck(dir)).toThrow(/CI public-tree build must use the GitHub Pages base path/);
   });
 
   it('拒绝 CI Pages dist 构建缺少可信 commit revision', () => {
     const dir = makeReadyRepo();
-    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v2', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm test:browser:public-tree', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/', 'aeonvale-pages-dist-${{ github.sha }}', 'include-hidden-files: true'].join('\n'));
+    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v3', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm test:browser:public-tree', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/', 'aeonvale-pages-dist-${{ github.sha }}', 'include-hidden-files: true'].join('\n'));
 
     expect(() => runReadinessCheck(dir)).toThrow(/CI Pages dist build must embed the checked-out commit SHA/);
   });
 
   it('拒绝 CI 浏览器 smoke 未复用 public-tree 部署 smoke 脚本', () => {
     const dir = makeReadyRepo();
-    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v2', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/'].join('\n'));
+    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v3', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/'].join('\n'));
 
     expect(() => runReadinessCheck(dir)).toThrow(/CI browser smoke must reuse the public-tree deployment smoke script/);
   });
 
   it('拒绝 CI 缺少 public-tree keypoint 可玩性门', () => {
     const dir = makeReadyRepo();
-    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v2', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm test:browser:public-tree', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'aeonvale-pages-dist-${{ github.sha }}', 'include-hidden-files: true'].join('\n'));
+    write(dir, '.github/workflows/ci.yml', ['uses: gitleaks/gitleaks-action@v3', 'pnpm governance:readiness', 'pnpm prepare:public-tree .public-tree', 'pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts', 'pnpm --dir .public-tree governance:readiness', 'pnpm test:browser:public-tree', 'PLAYWRIGHT_APP_DIR: .public-tree', 'PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/', 'VITE_BASE_PATH: /AeonVale/', 'VITE_BUILD_REVISION: ${{ github.sha }}', 'aeonvale-pages-dist-${{ github.sha }}', 'include-hidden-files: true'].join('\n'));
 
     expect(() => runReadinessCheck(dir)).toThrow(/CI must run the public-tree CDP keypoint playability gate/);
   });
