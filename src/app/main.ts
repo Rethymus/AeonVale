@@ -2322,7 +2322,13 @@ async function main(): Promise<void> {
   function openFlowOverlay(overlay: AppOverlay, returnFocus: AppFocusSelector = APP_FLOW_FOCUS_TARGETS.world): boolean {
     if (!flowView) return false;
     const flow = flowView.getState();
-    if (flow.screen !== 'world' || flow.overlay !== null) return false;
+    if (flow.overlay !== null) return false;
+    // 教学天劫（tribulation）屏允许暂停/设置——与 canOpenOverlay 的 GAMEPLAY_OVERLAYS 一致；
+    // 否则天劫暂停里「只能调整设置」的设置按钮会静默失效。
+    const screenAllowed =
+      flow.screen === 'world' ||
+      (flow.screen === 'tribulation' && (overlay === 'pause' || overlay === 'settings'));
+    if (!screenAllowed) return false;
     cancelWorldMovementForSurfaceTransition();
     flowView.dispatch({ type: 'open-overlay', overlay, returnFocus });
     return true;
