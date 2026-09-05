@@ -921,6 +921,11 @@ async function main(): Promise<void> {
       for (const beatId of prologueBeatIds) markSeen(state, beatId);
       dialogueBeat = null;
       saveState(state);
+    } else if (event.type === 'enter-loaded-world') {
+      // 测试门：以 boot 已加载的存档状态入世界（等价 skip-prologue 的副作用，不清档）。
+      for (const beatId of prologueBeatIds) markSeen(state, beatId);
+      dialogueBeat = null;
+      saveState(state);
     } else if (event.type === 'continue-aftermath') {
       applyAction(state, { kind: 'acknowledge-tutorial-aftermath' }, ctx);
       // V1-L01：战后回世界清教学对白队列，避免残留翻地提示
@@ -1423,6 +1428,7 @@ async function main(): Promise<void> {
       };
       __AEON_TEST__?: {
         enterLegacyWorld: () => boolean;
+        enterLoadedLegacyWorld: () => boolean;
         configureSowKeypoint: () => boolean;
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
@@ -1609,6 +1615,7 @@ async function main(): Promise<void> {
       __AEON_TEST__?: {
         enterLegacyWorld: () => boolean;
         configureSowKeypoint: () => boolean;
+        enterLoadedLegacyWorld: () => boolean;
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
         configureFarmsteadObjectKeypoint: (kind?: FarmsteadSceneObjectKind) => boolean;
@@ -1684,6 +1691,14 @@ async function main(): Promise<void> {
         flowView.dispatch({ type: 'start-new-game' });
         flowView.dispatch({ type: 'skip-prologue' });
         return flowView.getState().screen === 'world';
+      },
+      enterLoadedLegacyWorld: () => {
+        if (flowView?.getState().screen !== 'title') return false;
+        if (loaded.state == null) return false;
+        flowView.dispatch({ type: 'enter-loaded-world' });
+        // 终局存档会在入世界副作用里被 enterEndingIfNeeded 转到 ending 表面。
+        const screen = flowView.getState().screen;
+        return screen === 'world' || screen === 'ending';
       },
       configureSowKeypoint: () => {
         const targetPoint = firstFarmsteadFarmPlotTile(state);

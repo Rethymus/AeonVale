@@ -40,7 +40,7 @@ export interface AppFlowState {
   focus: AppFlowFocus;
 }
 
-export type AppFlowEvent = { type: 'boot-ready' } | { type: 'boot-error' } | { type: 'start-new-game' } | { type: 'continue-game' } | { type: 'finish-prologue' } | { type: 'skip-prologue' } | { type: 'start-tribulation' } | { type: 'finish-tribulation' } | { type: 'continue-aftermath' } | { type: 'show-ending' } | { type: 'return-title' } | { type: 'start-narration' } | { type: 'return-title-from-narration' } | { type: 'start-roguelite-proto' } | { type: 'return-title-from-roguelite-proto' } | { type: 'open-overlay'; overlay: AppOverlay; returnFocus?: AppFocusSelector } | { type: 'close-overlay' };
+export type AppFlowEvent = { type: 'boot-ready' } | { type: 'boot-error' } | { type: 'start-new-game' } | { type: 'continue-game' } | { type: 'finish-prologue' } | { type: 'skip-prologue' } | { type: 'enter-loaded-world' } | { type: 'start-tribulation' } | { type: 'finish-tribulation' } | { type: 'continue-aftermath' } | { type: 'show-ending' } | { type: 'return-title' } | { type: 'start-narration' } | { type: 'return-title-from-narration' } | { type: 'start-roguelite-proto' } | { type: 'return-title-from-roguelite-proto' } | { type: 'open-overlay'; overlay: AppOverlay; returnFocus?: AppFocusSelector } | { type: 'close-overlay' };
 
 const WORLD_OVERLAYS: readonly AppOverlay[] = ['inventory', 'cultivation', 'map', 'pause', 'settings'];
 const GAMEPLAY_OVERLAYS: readonly AppOverlay[] = ['pause', 'settings'];
@@ -142,6 +142,9 @@ export function transitionAppFlow(state: AppFlowState, event: AppFlowEvent): App
     case 'finish-prologue':
     case 'skip-prologue':
       return state.screen === 'prologue' ? moveTo('world') : state;
+    case 'enter-loaded-world':
+      // 测试门专用：boot 已加载存档时跳过序章直接入世界（不触发 start-new-game 的清档）。
+      return state.screen === 'title' ? moveTo('world') : state;
     case 'start-tribulation':
       return state.screen === 'world' ? moveTo('tribulation') : state;
     case 'finish-tribulation':

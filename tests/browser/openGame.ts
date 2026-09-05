@@ -147,6 +147,9 @@ export async function continueToWorld(page: Page): Promise<void> {
   const canvas = page.locator('canvas');
 
   const newGameButton = page.locator('#flow-title-new-game');
+  // 标题按钮由 app 状态揭示；调用方可能早于 boot 完成（静态 HTML 里按钮 disabled+hidden），
+  // 先等它可见再探测测试门，避免 isVisible 瞬时误判跳过门进入等待 world 的死等。
+  await newGameButton.waitFor({ state: 'visible', timeout: 20000 }).catch(() => undefined);
   if (await newGameButton.isVisible()) {
     const enteredThroughTestGate = await page.evaluate(() => {
       const target = window as typeof window & { __AEON_TEST__?: { enterLegacyWorld?: () => boolean } };
@@ -176,6 +179,36 @@ export async function openGame(page: Page, options: GameEntryOptions = {}): Prom
   await page.goto(gameEntryPath(options));
   await waitForInitialSurface(page);
   await continueToWorld(page);
+}
+
+/**
+ * 以 boot 已加载的存档状态进入旧世界（不清档）。
+ * 供种子存档类用例使用；boot 未能加载存档时回退全新世界并返回 false。
+ */
+export async function continueToLoadedWorld(page: Page): Promise<boolean> {
+  const entered = await page.evaluate(() => {
+    const target = (window as typeof window & { __AEON_TEST__?: { enterLoadedLegacyWorld: () => boolean } }).__AEON_TEST__;
+    return target ? target.enterLoadedLegacyWorld() : false;
+  });
+  if (!entered) {
+    await continueToWorld(page);
+    return false;
+  }
+  const canvas = page.locator('canvas');
+  await canvas.waitFor({ state: 'visible' });
+  const box = await canvas.boundingBox();
+  const viewport = page.viewportSize();
+  if (!box || !viewport || box.y < 0 || box.y >= viewport.height) {
+    throw new Error(`Game canvas starts outside the initial viewport: box=${JSON.stringify(box)}, viewport=${JSON.stringify(viewport)}`);
+  }
+  await canvas.focus();
+  return true;
+}
+
+export async function openGameWithLoadedSave(page: Page, options: GameEntryOptions = {}): Promise<void> {
+  await page.goto(gameEntryPath(options));
+  await waitForInitialSurface(page);
+  await continueToLoadedWorld(page);
 }
 
 export async function gameDebugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
