@@ -689,3 +689,200 @@ roguelite，旧 world 仅 `__AEON_TEST__.enterLegacyWorld` 测试钩子可达）
 - README 实机 GIF 再生成依赖 PATH 上的 ffmpeg（tools/readme-gif.mjs
   spawnSync），本机未安装——README 媒体刷新需在带 ffmpeg 的环境或 CI 侧
   执行（`pnpm readme:media`）。
+
+### 8.16 旧世界模式退役分期草案（P2 规划，未实施）
+
+> 本节把 §8.15 挂到「旧世界退役」epic 的词表工单展开成分期草案。定位是规划文档：
+> 依赖面与行号按 2026-09 当前工作区核实，但不代表已获授权动代码；「启动前置条件」
+> 满足前，任何阶段都不得启动。
+
+#### 出发点：旧世界已无玩家可达入口（已核实）
+
+1. 标题屏全部入口均不入旧 world：「开始游戏」→ `start-roguelite-proto`
+   （`index.html:122` 的 `data-flow-action`，`src/app/main.ts:5986` 注释确认主入口），
+   「继续旅程」→ `continue-game`（恢复修途旅程，`index.html:123`），「灵韵叙录」→
+   `start-narration`（`src/app/main.ts:5970`）。
+2. 入 world 的 `start-new-game` / `enter-loaded-world` 两个事件仅由测试门
+   `__AEON_TEST__.enterLegacyWorld` / `enterLoadedLegacyWorld` 派发
+   （`src/app/main.ts:1688-1706`）；`tests/browser/readme-capture.spec.ts:4-6` 注释
+   已明言旧 world「仅 `__AEON_TEST__.enterLegacyWorld` 可达，玩家不可达」。
+3. 旧世界留存的明文依据是 docs/27 的对照承诺——「旧世界与旧规则模块仍保留用于对照与
+   回退」（`docs/27:7`、`docs/27 §12.3`），`src/sim/roguelite` 半实时对照同此
+   （`docs/27:621`）。退役的第一前置就是维护者显式撤销该承诺。
+
+#### 阶段 0：事实基线（零代码改动）
+
+**动机**：删除面横跨 sim、渲染、引导与三套测试资产，没有核实过的依赖清单就动手等于盲删。
+本草案的盘点结果即为阶段 0 的预填答案，启动时只需复核而非重查。
+
+**依赖面清单（本轮 grep/读码核实）**：
+
+1. **E2E**：`tests/browser/` 共 29 个 spec，其中 12 个实际经测试门进入旧世界，合计约
+   143 处用例调用点，约占 §8.12 全量套件（216 用例）的三分之二。按入口分两族：
+   - fresh 入口（`continueToWorld` / `openGameWithLoadedSave` / `enterLegacyWorld`）9 个：
+     input-flow（94 处，§8.7 曾按展开 107 用例计）、app-flow（6）、touch-flow（9）、
+     responsive-layout（5）、save-health（5）、accessibility-shell（3）、
+     delivery-capture（2）、portfolio-capture（2）、public-demo-vertical-slice（1）；
+   - 读档入口（`continueToLoadedWorld` / `enterLoadedLegacyWorld`）3 个：
+     inventory-management（14）、inventory-icons（1）、ending-flow（1）。
+   其中 input-flow 两族并用（主体走 fresh，post-ascension 三例走读档门，§8.9）。
+   公共封装在 `tests/browser/openGame.ts`；截图夹具 `tests/browser/showcaseSave.ts`
+   构造 stage 3 发展态旧世界存档供 delivery/portfolio 捕获。readme-capture 仅在注释中
+   声明不可达，不进入（其本身是退休范本：只拍玩家真实可达表面）。
+2. **Golden replay**：唯一 fixture `tests/replay/fixtures/core-farm-save-resume.replay.json`
+   （旧农务动作 + 中途存档/续跑边界），由 `tests/replay/golden.replay.test.ts` +
+   `harness.ts` + `schema.ts` 消费，`pnpm replay:update`（`tools/update-golden-replay.ts`）
+   更新。注意 runner 有「至少一条 fixture」断言（golden.replay.test.ts:9-11）。
+3. **存档链**：`src/sim/serialize.ts`（394 行，GameState↔JSON、stateHash、saveGame/
+   loadSave + schemaHash），槽位 `aeonvale-save-v1`（`src/app/main.ts:235`）；新主模式
+   存档独立在 `aeonvale-cultivation-journey-v1`（`src/app/rogueliteProto/runSave.ts:1`）。
+4. **sim 旧系统**：`src/sim/` 下 farm(5 文件)/alchemy(4)/celestial(2)/economy(4)/
+   progression(7)/social(6)/exploration(2)/story(2)/tribulation(5)，加 world/inventory/
+   buildings/collection/processing/storage 支撑层与 `index.ts` 出口（simulateDay/
+   advanceDay/applyAction）。新主模式仅依赖 cultivation-run、roguelite、sokoban、params。
+5. **渲染**：`src/render/renderer.ts`（2830 行）仅 `main.ts` 与 `previewTexture.ts`
+   （仅类型引用）使用；ColorPalette/sprites/guardBeastPreview/tileAsset/arrayPreview/
+   tutorialWarningZone/viewportLayout/renderScheduler 有旧世界应用层模块引用，
+   其中 ColorPalette 被新主模式实引（`rogueliteProto/surface.ts:33`）。
+6. **引导**：`main.ts`（6938 行）双模式引导，含 `LEGACY_SHORTCUTS_ENABLED`
+   （`main.ts:239-240`，环境变量 + URL 参数，§8.9 的 input-flow 依赖它）。
+7. **词表**：`ui.hud.stages` 旧 8 档（凡骨…飞升前夜）在 `main.ts:1228`、
+   `surfacePanels.ts:230`、`renderer.ts:1846`、`renderer.ts:2523` 四处消费；
+   新词表 `CULTIVATION_REALMS`（`cultivation-run/progression.ts:23`）。
+8. **单测/性质测试**：`tests/unit` 189 个文件中 93 个 import 旧 sim 路径；
+   `tests/property` 19 个文件引用 `@sim`（含 cultivation-run 自身）。
+9. **平衡工具链**：`tools/headless-run.ts`、`balance-scan.ts`、`m5-certify.ts` 直接依赖
+   旧 sim API（simulateDay/createWorld/DEFAULT_BALANCE，headless-run.ts:7、244）——
+   m5 认证链跑在旧 sim 上，`DEFAULT_BALANCE.cultivationRun` 段（params.ts:373）除外。
+10. **其它残留**：`.gitleaks.toml` 白名单正则含 `aeonvale-save-v1` 槽名分支；`.gitignore`
+    本轮核实无旧世界专属条目。
+
+**动作清单**：把上述清单固化为退役 epic 下的工单树（每个资产一条）；复核一轮行号与计数
+是否有漂移（近期待办：main.ts 与 renderer 仍在活跃编辑）。
+
+**完成判据**：`git grep -n "start-new-game" -- src/` 仅命中 appFlowMachine 定义与
+main.ts 测试门；以第 1 条的五个钩子名做 `git grep -l`（范围 `tests/browser/`），
+输出与该条清单一致；工单树建好并与本节互相链接。
+
+**风险与回滚**：纯文档阶段，无代码风险；唯一风险是清单过期，靠完成判据的 grep 复核拦截。
+
+#### 阶段 1：预退役（E2E 处置与词表冻结）
+
+**动机**：退役最大的直接风险是测试覆盖塌方——三分之二浏览器用例挂在旧世界上。先用
+skip 冻结而不是直接删除，保留逐条迁移的余地，也让套件从此不再掩盖旧世界的行为变化。
+
+**动作清单**：
+
+1. 逐 spec 判定用例归属：「世界通用语义」（键盘纪律、读屏、暂停焦点、触屏 HUD、响应式）
+   → 迁移到 roguelite/叙录 surface 写等价断言（已有覆盖的注明后退役）；「旧世界专属」
+   （农务流程、旧经济算术、终局存档迁移、showcase 截图）→ 按套件既有 skip 惯例标注
+   skipped-with-reason（引用本节与工单号），保留代码待阶段 2 一并移除。
+2. delivery-capture / portfolio-capture 的旧世界截图先做产品决策：交付媒体是否仍需要
+   旧农庄画面；不需要则整族 skip，需要则并入上一档迁移。
+3. 词表解耦点冻结：`ui.hud.stages` 四个消费点（见阶段 0 第 7 条）不得新增消费；
+   i18n 死键清理（§8.4）继续推进但不动 `ui.hud.stages` 家族，避免退役时一次性爆量死键。
+4. showcaseSave.ts 与读档入口封装标记 `@deprecated legacy-world`，注释指向本节。
+
+**完成判据**：`pnpm test:browser` 全绿（或维持 §8.12 的既有基线），skip 计数与登记表
+一致；`git grep -n "ui.hud.stages" -- src/` 仍为 4 处；每个 skip 均带工单引用。
+
+**风险与回滚**：迁移用例可能语义漂移（在旧世界上调校的断言搬到新表面未必成立）——
+逐条实跑验证，不迁移存疑者；skip 是纯标注，删除标注即回滚。
+
+#### 阶段 2：代码退役（应用层 → 渲染 → sim）
+
+**动机**：不可达入口 + skip 冻结后，代码本身只剩维护成本（双模式引导、双词表、三套测试
+资产、每轮回归都要绕开）。分三步删是为了每步都能独立过全量质量门、独立提交、独立回退。
+
+**动作清单（按序，每步一个独立提交）**：
+
+1. **应用层**：拆 main.ts 双模式引导——移除 `__AEON_TEST__` 两个测试门
+   （main.ts:1688-1706）、world/prologue/tribulation/aftermath 屏接线与
+   `start-new-game` / `enter-loaded-world` 事件（appFlowMachine.ts:1、43、144-157
+   收敛）、`LEGACY_SHORTCUTS_ENABLED`（main.ts:239-240）、旧存档链
+   （`aeonvale-save-v1`，main.ts:235）；旧世界专属面板模块（inventoryUI、
+   surfacePanels 旧段、farmsteadScene 等）与 openGame.ts 旧入口封装、被 skip 的用例
+   一并移除。
+2. **渲染**：移除 `renderer.ts` 与仅旧世界引用的渲染件（tileVisuals、worldDecor、
+   npcWorldPreview、characterPresence 等）；保留面按「新主模式仍有引用」重算——
+   已确认 ColorPalette 必留（rogueliteProto/surface.ts:33），其余届时以 import 图为准。
+3. **sim 与词表统一**：整目录移除阶段 0 第 4 条所列旧系统 + `serialize.ts` +
+   `index.ts` 出口收敛到 cultivation-run/roguelite/sokoban；params.ts 清理
+   DEFAULT_BALANCE 旧段（保留 `cultivationRun` 段）；`ui.hud.stages` 词表随 renderer/
+   surfacePanels 消费点消亡而退役，§8.15 词表统一工单在此落地（单表 =
+   `CULTIVATION_REALMS`）。93 个旧 sim 单测与旧 property 套件同步移除。
+4. **golden fixture 归档（建议）**：**随 sim 一并移除，以 git 历史为归档**。理由：
+   (a) fixture 锁的是旧 sim 确定性哈希，sim 删除后永远不可能再通过，保留只会制造
+   「看似可跑、实则必红」的僵尸资产；(b) runner 的「至少一条 fixture」断言
+   （golden.replay.test.ts:9-11）使「留文件不跑」仍需改代码，并不更省；(c) 删除前
+   末次通过绿线的 commit hash 在本节与退役提交信息中锚定，需要对照时 checkout 即得。
+   `tests/replay/` 三件套与 `pnpm replay:update`、`tools/update-golden-replay.ts`
+   同步移除；若未来 cultivation-run 需要 golden replay，以本套 harness/schema 方法论
+   为模板重建（golden-replay-update skill 的适用对象随之转移）。
+
+**完成判据**：三步各自通过全量四门（§2.5 的 governance/typecheck/test/build）；
+应用层步后 `git grep "enterLegacyWorld" -- src/ tests/` 与
+`git grep "aeonvale-save-v1" -- src/` 均为空；sim 步后 `src/sim/` 仅剩
+cultivation-run、roguelite、sokoban（+ params 与新出口），
+`git grep "ui.hud.stages" -- src/` 为空；浏览器套件用例数与迁移登记表一致且全绿。
+
+**风险与回滚**：删除面大，靠三步切分与逐提交 `git revert` 回滚；sim 步是不可逆点——
+docs/27 的回退承诺自该提交起失效，旧世界只能从 git 历史重建，因此 sim 步前必须取得
+维护者第二个签字（见启动前置条件）。词表统一出现文案争议时，先合 sim 删除、词表工单
+单独走，不互相阻塞。
+
+#### 阶段 3：清理收尾
+
+**动机**：主体删除后，残留引用会让 grep 治理与后续贡献者持续付认知税。
+
+**动作清单**：复核 `.gitignore`（本轮已核实无旧世界条目，预期只需确认）；收窄
+`.gitleaks.toml` 正则（去掉 `save|` 分支）；清理 package.json 死脚本（`replay:update`
+等）与 playwright/vitest 配置的旧排除项；`tools/` 旧 sim 工具（headless-run、
+balance-scan/tune、m5-*、simulation-metrics、playtest-report、onboarding-funnel）按
+阶段 2 前置决策退役或重定向到 cultivation-run；docs/08、16 等旧世界设计文档头部加
+「已随旧世界退役归档」状态注记（不删内容）；README 与交付媒体复核无旧世界入口表述
+（本轮已核实 README 无命中）。
+
+**完成判据**：对 `src/ tools/ tests/ .github/ package.json` 范围做
+`git grep -iE "legacyworld|legacy-world|旧世界"`，仅剩刻意保留的迁移注记；
+全量四门 + 浏览器套件绿；`.gitleaks.toml` 正则不再匹配已删槽名。
+
+**风险与回滚**：低；工具脚本退役若误删仍在用者，由 typecheck 与 governance 门拦截，
+按提交回退。
+
+#### 启动前置条件（何时可以启动）
+
+1. **阶段 1 门槛**：主模式通过 §4.5 的真人可玩性验证且 docs/27 §12.3 的真人 Go/No-Go
+   样本给出 Go——「保留作对照与回退」的对照价值先衰减，退役才有正当性。
+2. **维护者签字（两道）**：第一道撤销 docs/27 对照承诺、授权阶段 0-1；第二道在阶段 2
+   sim 删除前（不可逆点）单独授权。未经当次明确授权不执行，与 AGENTS.md 的 Git 授权
+   规则同口径。
+3. **阶段 2 附加前置**：§8.15 词表统一工单与 m5 认证链去向（随旧 sim 退役，还是重定向
+   到 `DEFAULT_BALANCE.cultivationRun`）已定案排期；AGENTS.md 技能清单中
+   balance-sweep-tune / sim-invariant / golden-replay-update / content-add 的适用对象
+   重定向方案已评审（AGENTS.md 是模型缓存断点，调整须一次到位）。
+4. **全程质量门**：每阶段收口跑全量四门；阶段 2 每步另跑 `pnpm test:browser`，并以
+   §8.5 的「单 worker 隔离 + 全量 workers=1」两档口径为准。
+
+### 8.17 第十四轮（同月）：子代理批次二（P1 安全网 + P2×2）
+
+1. **[P1] 修途主模式 golden 回放 fixture**（新增，非行为变更）：纯 sim 层
+   驱动完整一世 65 步（三轮议程→事件×2→参悟×2→引劫→22 步渡劫含 undo→
+   perfect 突破→二次渡劫 timeout 身亡→劫灰换代），canonicalSerialize+sha256
+   逐步哈希；四次再生成字节级幂等。新 fixture 置于 fixtures/cultivation/
+   子目录（旧 golden 测试按非递归 glob 扫描，互不可见）。src 零改动。
+2. **[fix] 附带发现的存量 bug**：`tools/update-golden-replay.ts` 尾部
+   `main;`（裸引用）——`pnpm replay:update` 自入库起一直是 no-op。修复为
+   `main();` 并实跑验证：旧 fixture 再生成 JSON 规范化完全相等（差异仅为
+   缩进格式规范化，语义零变化），二次运行字节稳定。
+3. **[P2] 构建分包优化**：vite manualChunks 按 src 顶层领域重分组
+   （app-sim/app-roguelite-proto/app-narration/app-render/app-content/
+   app-io），主 chunk 1341kB→462kB，>650kB 警告消除，JS 总量 +0.04%，
+   全静态 import 不改加载时序；分块构建下浏览器冒烟 17/17（smoke/
+   narration/roguelite/app-flow，覆盖两个新应用 chunk）。
+4. **[P2] §8.16 退役草案**：见上节（子代理产出，含 12 spec 依赖面修正）。
+
+#### 本批中央验证
+
+typecheck / governance(882) / 单测 2757（含新 4 例 replay）/ content:lint /
+build（零警告）/ 浏览器冒烟 17-17 全绿；随后原子提交推送并 Actions 验证。
