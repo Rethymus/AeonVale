@@ -553,7 +553,9 @@ export function createNarrationVN(options: NarrationVNOptions): NarrationVNContr
       line.className = 'narration-backlog-line';
       const speaker: Speaker = typeof entry.origin === 'string' && isSpeaker(entry.origin) ? entry.origin : 'narrator';
       line.dataset.speaker = speaker;
-      line.style.color = SPEAKER_COLOR[speaker];
+      // 说话人色只作左侧竖线标识：部分说话人色（如 inkUi）为亮纸底设计，
+      // 直接作正文色压在深色回看底上不可读。正文沿用容器的纸色。
+      line.style.borderLeftColor = SPEAKER_COLOR[speaker];
       line.textContent = entry.text;
       backlogList.appendChild(line);
     }
