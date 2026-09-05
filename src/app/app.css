@@ -4285,6 +4285,16 @@ button {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas: "track" "wall" "graph";
   }
+  /* 紧凑单列下三区可高于一屏：关闭入口吸底常驻，免去下滚寻找。 */
+  .flow-codex-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    justify-content: center;
+    margin: 0.6em calc(-1 * clamp(14px, 2vw, 28px)) calc(-1 * clamp(14px, 2vw, 28px));
+    padding: 0.55em clamp(14px, 2vw, 28px);
+    background: rgb(var(--rgb-shell) / 0.94);
+  }
 }
 
 /* —— 顶栏章节轨 —— */
