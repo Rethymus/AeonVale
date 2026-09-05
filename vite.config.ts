@@ -39,12 +39,33 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) return undefined;
-          // Pixi root entry pulls tightly-coupled subsystems together. Keeping it in one
-          // vendor chunk avoids Rollup circular chunk warnings while still shrinking app entry size.
-          if (id.includes('/pixi.js/')) return 'vendor-pixi';
-          if (id.includes('/zod/')) return 'vendor-zod';
-          return 'vendor';
+          if (id.includes('node_modules')) {
+            // Pixi root entry pulls tightly-coupled subsystems together. Keeping it in one
+            // vendor chunk avoids Rollup circular chunk warnings while still shrinking app entry size.
+            if (id.includes('/pixi.js/')) return 'vendor-pixi';
+            if (id.includes('/zod/')) return 'vendor-zod';
+            return 'vendor';
+          }
+          // First-party regrouping only: these chunks are still statically imported, so
+          // module evaluation order and runtime behavior are unchanged (the module graph
+          // is acyclic; Rollup preserves order across chunk boundaries).
+          // - app-sim: pure simulation core (src/sim, no IO/render deps).
+          if (id.includes('/src/sim/')) return 'app-sim';
+          // - app-render: Pixi rendering layer (src/render).
+          if (id.includes('/src/render/')) return 'app-render';
+          // - app-io / app-content: audio & asset adapters; content registry, i18n, scenes.
+          if (id.includes('/src/io/')) return 'app-io';
+          if (id.includes('/src/content/')) return 'app-content';
+          // - app-narration: narration-mode cluster (narration* + firstPersonView, which is
+          //   referenced only by narration surfaces).
+          if (id.includes('/src/app/narration') || id.includes('/src/app/firstPersonView')) return 'app-narration';
+          // - app-roguelite-proto: the roguelite-proto mode surface tree (rogueliteProto plus
+          //   its exclusive cultivationRun surfaces).
+          if (id.includes('/src/app/rogueliteProto/') || id.includes('/src/app/cultivationRun/')) {
+            return 'app-roguelite-proto';
+          }
+          // Everything else (src/app shell + entry) stays in the index chunk.
+          return undefined;
         }
       }
     }
