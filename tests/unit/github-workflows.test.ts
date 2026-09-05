@@ -10,7 +10,7 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(ciWorkflow).toContain('on:\n  push:\n    branches: [main]\n  pull_request:');
     expect(ciWorkflow).toContain('permissions:\n  contents: read\n  pull-requests: read');
     expect(ciWorkflow).toContain('jobs:\n  governance:\n    name: Governance and repository hygiene');
-    expect(ciWorkflow).toContain('    steps:\n      - uses: actions/checkout@v4\n        with:\n          fetch-depth: 0');
+    expect(ciWorkflow).toContain('    steps:\n      - uses: actions/checkout@v5\n        with:\n          fetch-depth: 0');
     expect(ciWorkflow).toContain('      - run: pnpm prepare:public-tree .public-tree\n      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts\n      - run: pnpm --dir .public-tree governance:readiness\n      - run: pnpm --dir .public-tree governance:public\n      - run: pnpm --dir .public-tree governance:check');
     expect(ciWorkflow).toContain("      - run: pnpm --dir .public-tree build\n        env:\n          PUBLIC_BUILD: 'true'\n          VITE_BASE_PATH: /AeonVale/\n          VITE_BUILD_REVISION: ${{ github.sha }}");
     expect(ciWorkflow).toContain('      - run: pnpm test:browser:public-tree\n        env:\n          PLAYWRIGHT_APP_DIR: .public-tree');
