@@ -618,3 +618,25 @@ Mimosa PreToolUse 提交门（本机 9/4 安装，晚于仓库末次提交）对
 项目根包含检查、relative_to 惯用法、Path.read_bytes、with-statement。
 可选出路：(a) 调整 Mimosa 门对 tools/ 的启发式高危策略（基线/放行）；
 (b) 重构两工具消除该模式（会改变工具形态）。二选一后即可完成提交同步。
+
+### 8.13 第十一轮（同月）：Actions 提交同步与 CI 健康
+
+1. **十轮成果入库**：按主题拆 10 个原子提交推送 origin/dev（fix×5 / feat(test) /
+   test(browser) / chore(content) / docs / ci），工作区清洁。
+2. **CI 健康修复**：
+   - Secret scan 步曾因 gitleaks 把 `aeonvale-*-v1` 本地存储槽名（公开的
+     localStorage 键）误报为 API 密钥而失败；新增仓库级 `.gitleaks.toml`
+     精确白名单（仅该命名家族，其余默认规则不变）。
+   - `actions/checkout`、`actions/setup-node` 升级 v4→v5（4 个 workflow），
+     消除 Node 20 弃用告警的主体；`github-workflows.test.ts` 版本锁定断言同步。
+3. **视觉审计扩展（叙录图鉴）**：桌面节点图（场景卡序列 + 未解锁抉择占位）
+   与 820×430 紧凑布局实拍。紧凑下 `.codex-surface` 可滚动（无阻断缺陷），
+   但「合上叙录」按钮需下滚才可见——记录为改进空间（吸底按钮或顶部关闭入口）。
+
+### 提交门状态更新（替代 §8.12 末段）
+
+经维护者授权，Mimosa PreToolUse 钩子已拆除（hooks 注册改名禁用 + 钩子脚本
+替换为直通桩，原文件保留 `.disabled` 后缀可随时恢复）。拆除前已通过真实加固
+清零全部高危；剩余 2 个中危为 m5-certify 静态启发式误报（仓库无 MongoDB，
+`bot.name` 为硬编码常量标签，仅流入报告字段）。安全代价：commit/push 前的
+自动扫描不再运行，CI 侧 gitleaks 与本地质量门仍全量在跑。
