@@ -13,6 +13,15 @@ function storageOrNull(): Storage | null {
     return null;
   }
 }
+function safeGetItem(storage: Storage, key: string): string | null {
+  try {
+    return storage.getItem(key);
+  } catch {
+    // Storage 可在运行期被禁用（隐私模式/扩展）；按无存档处理，不阻塞启动。
+    return null;
+  }
+}
+
 function decodeEnvelope(raw: string | null): CultivationJourneyEnvelope | null {
   if (!raw) return null;
   try {
@@ -44,12 +53,12 @@ export function saveCultivationJourney(payload: unknown): boolean {
 export function loadCultivationJourney<T>(): T | null {
   const storage = storageOrNull();
   if (!storage) return null;
-  return (decodeEnvelope(storage.getItem(CULTIVATION_JOURNEY_STORAGE_SLOT))?.payload as T | undefined) ?? null;
+  return (decodeEnvelope(safeGetItem(storage, CULTIVATION_JOURNEY_STORAGE_SLOT))?.payload as T | undefined) ?? null;
 }
 
 export function hasCultivationJourney(): boolean {
   const storage = storageOrNull();
-  return storage ? decodeEnvelope(storage.getItem(CULTIVATION_JOURNEY_STORAGE_SLOT)) !== null : false;
+  return storage ? decodeEnvelope(safeGetItem(storage, CULTIVATION_JOURNEY_STORAGE_SLOT)) !== null : false;
 }
 
 export function clearCultivationJourney(): void {
