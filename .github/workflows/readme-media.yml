@@ -2,10 +2,20 @@ name: README media refresh
 
 # README 实机媒体再生成（docs/21 §8.15 环境受限项的解法）：
 # 本地无 ffmpeg，ubuntu runner 预装——在 CI 侧跑 readme:capture + readme:gif 并回提交。
-# 手动触发（workflow_dispatch），仅在有视觉产出变化时才产生提交。
+# 触发：影响视觉的源码推送到 dev 时自动刷新（workflow_dispatch 需默认分支注册，
+# 当前 main 无此文件；push 事件使用被推分支的工作流定义）。
+# 回提交只动 assets/screenshots，不在路径过滤内——无自触发循环。
 
 on:
   workflow_dispatch:
+  push:
+    branches: [dev]
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'tests/browser/readme-capture.spec.ts'
+      - 'tools/readme-gif.mjs'
+      - '.github/workflows/readme-media.yml'
 
 permissions:
   contents: write
@@ -40,4 +50,5 @@ jobs:
             exit 0
           fi
           git commit -m 'chore(media): CI 再生成 README 实机截图与 GIF'
+          git pull --rebase origin dev
           git push
