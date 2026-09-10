@@ -227,6 +227,7 @@ function nextCultivationActions(state: GameState, ctx: SimContext): string[] {
 
 export function renderCultivationSurface(state: GameState, ctx: SimContext, assets: SurfaceAssetUrls = {}): string {
   const p = state.player;
+  // 退役冻结点：随旧世界退役一并移除，勿新增依赖（docs/21 §8.16/§8.19）。
   const stageNames = tList('ui.hud.stages');
   const stageName = stageNames[p.stage] ?? `${p.stage}`;
   const cap = p.stage <= 6 ? bodyFoundationCap(p.stage, ctx.params) : null;

@@ -1843,6 +1843,7 @@ export function renderPostAscensionGoals(state: GameState): string {
 
 export function renderCultivationOverview(state: GameState, ctx: SimContext): string {
   const p = state.player;
+  // 退役冻结点：随旧世界退役一并移除，勿新增依赖（docs/21 §8.16/§8.19）。
   const stageNames = tList('ui.hud.stages');
   const stageName = stageNames[p.stage] ?? `${p.stage}`;
   const frozen = state.postAscension.mode === 'stayed-in-world';
@@ -2520,6 +2521,7 @@ export function drawWorld(layers: RenderLayers, state: GameState, content: Conte
   const poisonPct = Math.min(1, p.pillPoison / (poisonCap * MILLI));
   const staCap = DEFAULT_BALANCE.player.staminaCap * MILLI;
   const staPct = Math.max(0, Math.min(1, p.stamina / staCap));
+  // 退役冻结点：随旧世界退役一并移除，勿新增依赖（docs/21 §8.16/§8.19）。
   const stageNames = tList('ui.hud.stages');
   // 体魄进度：当前阶段体魄根基 / 该阶段体魄上限（stage≥7 飞升前夜无后续突破→满条）
   const bodyFoundation = p.bodyFoundation ?? p.cultivation;

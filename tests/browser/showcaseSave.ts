@@ -1,3 +1,8 @@
+/**
+ * 旧世界退役冻结件：构造的是旧世界（aeonvale-save-v1）发展态展示存档，
+ * 随旧世界退役（docs/21 §8.16 阶段 2）一并移除，勿新增消费方。
+ * @deprecated 旧世界退役冻结件，详见 docs/21 §8.16/§8.19。
+ */
 import { expect, type Page } from '@playwright/test';
 import { buildRegistry } from '@content/registry';
 import { applyAction, createSimContext, createWorld, DEFAULT_BALANCE, placeArray } from '@sim';

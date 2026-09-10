@@ -1232,6 +1232,7 @@ async function main(): Promise<void> {
     const vitalStrip = document.querySelector<HTMLElement>('#world-vital-strip');
     if (vitalStrip) vitalStrip.hidden = !(worldHudVisible || locationHudVisible);
     if (worldHudVisible || locationHudVisible) {
+      // 退役冻结点：随旧世界退役一并移除，勿新增依赖（docs/21 §8.16/§8.19）。
       const stageNames = tList('ui.hud.stages');
       const hpPct = Math.max(0, Math.min(100, Math.round((state.player.hp / state.player.maxHp) * 100)));
       const staminaCap = DEFAULT_BALANCE.player.staminaCap * 1_000;

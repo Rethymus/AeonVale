@@ -907,3 +907,122 @@ build（零警告）/ 浏览器冒烟 17-17 全绿；随后原子提交推送并
    实拍确认入场中帧（半透明缩放）→末帧落定，按压规则计算样式全部命中。
 5. **未实施（P2 待续）**：toast 画布弹簧入场（需 main.ts 渲染循环改造）、
    玻璃材质升级（先排 backdrop root 陷阱）、数值滚动缓动。
+
+### 8.19 退役阶段 1 执行记录（旧世界预退役，维护者已签字启动）
+
+> 执行 docs/21 §8.16 阶段 1（预退役）。原草案的「skip 冻结」路径因治理禁
+> 裸调用 test 与 describe 的 .skip 方法（tools/governance-check.mjs:46-47）
+> 不可行，改为三选一处置：**迁移**（低风险改走新模式等价路径）/ **删除**（整文件
+> 100% 旧世界专属，git 历史即归档）/ **暂缓**（判定不明或需产品决策，不动）。
+> 浏览器实跑回归由主会话统一执行，本阶段只保证静态全绿（单测 + tsc）。
+
+#### 依赖面复核修正（对 §8.16 阶段 0 清单的一处实证修正）
+
+- 五钩子名 grep（`enterLegacyWorld|continueToWorld|openGameWithLoadedSave|
+  enterLoadedLegacyWorld|continueToLoadedWorld`，范围 `tests/browser/`）复核
+  §8.16 第 1 条的 12 个 spec：**一致，无漂移**（readme-capture 仅注释命中、
+  openGame.ts 为公共封装，均不计入）。
+- **新增发现 7 个间接入口 spec**：`openGame.ts` 导出的 `openGame()` 内部调用
+  `continueToWorld()`（openGame.ts:178-182），因此下列 spec 虽不含五钩子名，
+  实际同样经测试门进入旧世界：farmstead-scene、keypoint-playability、
+  first-loop.regression（本地包装 `openProductGame(page, { legacyShortcuts: true })`）、
+  p0-qi-flow、p0-real-newgame-capture、p0-terrain-semantics、
+  visual-snapshot-soft-gate。**经测试门进旧世界的 spec 实为 19 个，不是 12 个**；
+  阶段 2 删除 openGame 旧入口封装时须以 19 个为依赖面基数。
+
+#### 逐 spec 判定表（19 项）
+
+| spec | 进入旧世界方式 | 判定 | 一句话理由 | 动作状态 |
+| --- | --- | --- | --- | --- |
+| input-flow | `openGameWithLoadedSave`（94 例全走旧档门 + legacyShortcuts） | 删除 | 整文件为旧世界键盘纪律/F 键兼容矩阵（§8.7/§8.9 主体），新模式键盘语义已由 roguelite-proto / cultivation-keypoint / cultivation-schedule-accessibility 覆盖 | 已删除 |
+| inventory-management | `continueToLoadedWorld`（15 例） | 删除 | 测的全是 inventoryUI.ts（§8.16 阶段 2 明列的旧世界专属面板）的行囊/仓库/出货/丹炉交互与旧档持久化，新模式无该表面 | 已删除 |
+| inventory-icons | `continueToLoadedWorld`（1 例） | 删除 | 旧世界行囊 overlay 的图标加载；资产存在性与 URL 映射已由单测 inventory-icon-asset / inventory-ui 覆盖，新模式图标消费（rogueliteProto/surface.ts:2565）不受影响 | 已删除 |
+| touch-flow | `continueToWorld`（10 例） | 删除 | 旧世界触屏 HUD/农庄物件/阵法/演示全链；新模式无触屏语义（roguelite-compact-viewport 为键鼠小视口），无等价面可迁移 | 已删除 |
+| public-demo-vertical-slice | `continueToWorld`（1 例） | 删除 | 旧世界四段教学演示（翻地→炼丹→教学天劫→余波），公开入口自 D27 起走 roguelite，垂直切片已换轨 | 已删除 |
+| ending-flow | `enterLoadedLegacyWorld`（1 例） | 删除 | 旧世界终局存档→Ending 表面；Ending 仅由旧 sim gameOver 触达（阶段 2 随应用层退役），跨档「新旅程不清旧档」断言本身即旧档专属 | 已删除 |
+| app-flow | `continueToWorld`/`enterLegacyWorld`（5/6 例涉旧） | 暂缓 | 混合文件：标题→roguelite、boot-error 恢复为现行语义需保留，暂停/命令栏/读屏段落挂旧世界；拆分属阶段 2 随 main.ts 接线一并处理 | 未动 |
+| accessibility-shell | `continueToWorld`（2/3 例） | 暂缓 | 标题键盘纪律例为现行语义且不进旧世界；canvas 可访问名与炼丹引导例为旧世界引导链，迁移需新模式等价引导链先存在 | 未动 |
+| save-health | `continueToWorld`（1/9 例） | 暂缓 | 8 例已是现行标题/新档语义；仅「首写失败不上报安全」1 例经旧世界暂停面断言，其文案语义与旧档槽耦合，待阶段 2 处置 | 未动 |
+| responsive-layout | `continueToWorld`（4/5 例） | 暂缓 | 竖屏 orientation gate 例为共享外壳语义需留；桌面铺满/HUD 间距/丹炉布局例全为旧世界 HUD，新模式布局由 roguelite-compact-viewport 覆盖 | 未动 |
+| delivery-capture | `continueToWorld` + `openGameWithLoadedSave`（2 例） | 暂缓 | 混合捕获（01-title/02-roguelite-opening 为新模式）；旧农庄截图去留是 §8.16 阶段 1 第 2 条的待决产品决策 | 未动 |
+| portfolio-capture | `openGameWithLoadedSave`（2 例，内联 showcase 副本） | 暂缓 | 100% 旧世界内容，但产出 portfolio MVP 验收证据，被 package.json `portfolio:capture` 与 public-readiness 预检链引用，须等产品决策后整族处置 | 未动 |
+| farmstead-scene | `openGame()` 间接（17 例） | 暂缓 | 旧世界场景/寻路/指针语义全链；renderer.ts 同批退役，且不在 §8.16 原审计清单内，按保守原则留待阶段 2 | 未动 |
+| keypoint-playability | `openGame()` 间接 | 暂缓 | CDP 关键点门（AGENTS playbook §B 的范式用例）跑在旧农务上；模式迁移需新表面关键点 API，非低风险 | 未动 |
+| first-loop.regression | `openProductGame({legacyShortcuts:true})` 间接 | 暂缓 | 旧世界首轮农务经济回归（§8.12 基线件），删除属阶段 2 资产批次 | 未动 |
+| p0-qi-flow | `openGame()` 间接（2 例） | 暂缓 | P0-3 灵气密度/减动效断言跑在旧世界上；不在 §8.16 原清单内，留待阶段 2 与渲染批次同步处置 | 未动 |
+| p0-terrain-semantics | `openGame()` 间接（2 例） | 暂缓 | P0-2 地块语义读性跑在旧世界上；同上，保守暂缓 | 未动 |
+| p0-real-newgame-capture | `openGame()` 间接（1 例） | 暂缓 | 旧世界真实新局首播实拍（人工复核件）；产物去留随交付媒体产品决策 | 未动 |
+| visual-snapshot-soft-gate | `openGame()` 间接（1 例） | 暂缓 | 旧世界视觉基线软门（__visual-baselines__）；基线资产随渲染退役一并清理，单独删会留死夹具 | 未动 |
+
+判定统计：删除 6 / 迁移 0 / 暂缓 13。迁移为 0 的原因：候选迁移段（app-flow
+标题语义、save-health 新档语义等）本身已走现行路径无需迁移，涉旧段均需
+浏览器实跑校验（主会话职责）或新产品决策，无「低风险纯改写」项。
+
+#### 本阶段代码动作清单
+
+1. **删除 6 个 spec 文件**（判定表「已删除」行；git 历史即归档，本节为索引）：
+   tests/browser/input-flow.spec.ts（94 例）、inventory-management.spec.ts
+   （15 例）、inventory-icons.spec.ts（1 例）、touch-flow.spec.ts（10 例）、
+   public-demo-vertical-slice.spec.ts（1 例）、ending-flow.spec.ts（1 例）——
+   合计约 122 例旧世界浏览器用例退出套件。删除前逐文件 grep 全仓引用：
+   仅 docs 历史记述命中（docs/21、docs/superpowers/plans 旧计划），无代码/
+   配置/CI 依赖；package.json、tools/、.github/ 均无显式引用。
+2. **词表冻结注记**（纯注释，零行为变更）：`ui.hud.stages` 四个消费点各加
+   一行「退役冻结点：随旧世界退役一并移除，勿新增依赖」——src/render/
+   renderer.ts（renderCultivationOverview 与 vital strip 两处）、src/app/
+   main.ts（world HUD vital 段）、src/app/surfacePanels.ts
+   （renderCultivationSurface）。
+3. **@deprecated 标注**：tests/browser/showcaseSave.ts 顶部 JSDoc 声明
+   「旧世界退役冻结件」（唯一消费方 delivery-capture 已暂缓待产品决策）。
+
+#### 阶段 1 完成判据修订与遗留
+
+- `git grep -n "ui.hud.stages" -- src/` 仍为 4 处（本节已核实，仅加注释）。
+- skip 计数判据随 skip 路径一并作废，改以本判定表为登记表。
+- 遗留给阶段 2：13 个暂缓 spec 的批量处置、openGame.ts 旧入口封装
+  （continueToWorld/continueToLoadedWorld/openGameWithLoadedSave，含
+  `openGame()` 间接面）、showcaseSave.ts 与 __visual-baselines__ 夹具、
+  delivery/portfolio 的产品决策（§8.16 阶段 1 第 2 条）。
+- 本阶段验证：`vitest run tests/unit`（含 browser-test-discipline 扫描）与
+  `tsc --noEmit` 全绿；浏览器回归（剩余 spec 实跑）由主会话统一执行。
+
+
+### 8.20 第十六轮（2026-09-10）：四授权项执行（试玩/媒体/数值揭示/退役启动）
+
+#### ① LLM 试玩代理（judge 模式）
+bot 模式因 API 配额未执行；按技能 judge 模式由主代理亲自执行：以再生后的
+修途 golden 轨迹（65 步完整一世）为素材评分四维并回答四问——报告
+`docs/30-llm-playtest-round1.md`（含真人试玩 6 项观察清单与三大问题：
+首劫盲验证缺口 / 事件采样连续同型待查 / 步数压力可读性待验）。
+
+#### ② README 媒体 CI 工作流（环境受限项解除）
+新增 `.github/workflows/readme-media.yml`：dev 推送触发（路径过滤排除产物
+防回提交循环），ubuntu runner 捕获+ffmpeg 编码+bot 回提交。四次迭代修复：
+workflow_dispatch 默认分支注册限制→改 push 触发；pnpm v6 需显式版本；
+runner 实测无 ffmpeg→显式 apt 安装；bot 提交信息以 "CI" 开头触发
+subject-case→改中文开头。**bot 提交 a75eb7e 已落远程**——README 两个实机
+GIF 与截图以当前棋盘比例再生成（旧 GIF 比例失真消除）。
+
+#### ③ 信息揭示数值版（维护者授权的平衡改动）
+- `types.ts` 新增 `tribulationsSettled`（结算计数，换代归 0）；
+  `tribulation-settlement.ts` 任何已判定结局 +1。
+- `preparation.ts` 新增 `basePreviewLevelFloor`：**首劫保持盲；首劫结算后
+  本世预见下限 1**；残卷/参悟高等级不降（floor 不越上限）。
+- 测试：默认态 18 键同步 + 专项四断言（盲/底1/高不降/换代重盲）；
+  golden 夹具再生（双跑字节幂等 239a6cf8…），replay+property 82/82。
+
+#### ④ 旧世界退役阶段 1（§8.19 判定表）
+删除 6 个 100% 旧世界专属 spec（input-flow 94 例/inventory-management 15/
+inventory-icons 1/touch-flow 10/public-demo 1/ending-flow 1，约 122 例退出）、
+暂缓 13、迁移 0；依赖面基数修正为 **19**（新发现 7 个经 openGame→
+continueToWorld 间接入口）；词表四消费点冻结注记；showcaseSave @deprecated。
+
+#### 事故与处置记录
+- **6521636 事故**：④代理以 `git rm` 暂存的 6 个删除被并行会话的
+  ffmpeg 修复提交连带收录推送（代理未 commit，暂存区被卷入）。处置：
+  内容经判定表确认正确（6 spec 确为 100% 旧世界专属），保留不回滚；
+  后续提交全部执行"先 `git restore --staged .` 再加指定文件"防再发；
+  教训已入档——**多代理并行期间禁用裸 `git commit`**。
+- 子代理①③因 API 五小时限额中断：③ 的 sim 半成品（字段+递增+调用点）
+  由主代理验证后续写完成（缺的 floor 函数+测试+夹具）；① 转主代理
+  judge 模式执行。限额 14:52 重置。
