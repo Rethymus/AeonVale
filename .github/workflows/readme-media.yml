@@ -40,6 +40,8 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Capture README stills and frames
         run: pnpm readme:capture
+      - name: Ensure ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Encode GIFs
         run: pnpm readme:gif
       - name: Commit refreshed media if changed
