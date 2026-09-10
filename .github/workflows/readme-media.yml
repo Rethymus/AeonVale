@@ -1,0 +1,43 @@
+name: README media refresh
+
+# README 实机媒体再生成（docs/21 §8.15 环境受限项的解法）：
+# 本地无 ffmpeg，ubuntu runner 预装——在 CI 侧跑 readme:capture + readme:gif 并回提交。
+# 手动触发（workflow_dispatch），仅在有视觉产出变化时才产生提交。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme-media-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Capture README stills and frames
+        run: pnpm readme:capture
+      - name: Encode GIFs
+        run: pnpm readme:gif
+      - name: Commit refreshed media if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/screenshots
+          if git diff --cached --quiet; then
+            echo 'README media unchanged — no commit.'
+            exit 0
+          fi
+          git commit -m 'chore(media): CI 再生成 README 实机截图与 GIF'
+          git push
