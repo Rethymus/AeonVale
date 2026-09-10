@@ -13,6 +13,7 @@ import type {
 
 const NON_NEGATIVE_KEYS = [
   'agendaIndex',
+  'tribulationsSettled',
   'lifespanRemainingDays',
   'bodyFoundation',
   'endurance',
@@ -43,6 +44,7 @@ export function createCultivationRunState(options: CreateCultivationRunOptions =
     seed: options.seed ?? 1,
     stage: 0,
     agendaIndex: 0,
+    tribulationsSettled: 0,
     status: 'active',
     lifespanRemainingDays: params.bodyCultivation.lifespanStartDays,
     bodyFoundation: 0,

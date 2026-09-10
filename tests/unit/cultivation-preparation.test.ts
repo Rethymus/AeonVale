@@ -154,4 +154,25 @@ describe('D27-d · 雷威结果谱系', () => {
     expect(surge.beamPower).toBeGreaterThan(normal.beamPower);
     expect(state).toEqual(original);
   });
+
+  test('基础预见赠予：首劫保持盲，首劫结算后预见下限 1，高等级不降', () => {
+    const firstLife = createCultivationRunState();
+    // 第 1 劫（未结算过）：无残卷/参悟时 preview 仍为 0（保留"劫兆需参悟"的首劫循环）。
+    expect(deriveTribulationPreparation(firstLife).previewLevel).toBe(0);
+
+    // 首劫结算一次后：基础预见 floor 1（tribulationsSettled ≥ 1）。
+    const afterFirst = { ...createCultivationRunState(), tribulationsSettled: 1 };
+    expect(deriveTribulationPreparation(afterFirst).previewLevel).toBe(1);
+
+    // 残卷/参悟已解锁更高等级时不因 floor 降低；floor 也不越上限。
+    const ascetic = { ...afterFirst, insight: 100_000 };
+    const viaInsight = deriveTribulationPreparation(ascetic).previewLevel;
+    expect(viaInsight).toBeGreaterThan(1);
+    expect(viaInsight).toBe(deriveTribulationPreparation({ ...ascetic, tribulationsSettled: 0 }).previewLevel);
+
+    // 换代重置计数：新一世首劫重新盲。
+    const heir = createCultivationRunState();
+    expect(heir.tribulationsSettled).toBe(0);
+    expect(deriveTribulationPreparation(heir).previewLevel).toBe(0);
+  });
 });

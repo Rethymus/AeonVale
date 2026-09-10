@@ -68,6 +68,8 @@ export interface CultivationRunState {
   readonly seed: number;
   stage: number;
   agendaIndex: number;
+  /** 本世已完成结算的天劫次数；首劫结算后用于解锁基础预见赠予（换代从 0 重开）。 */
+  tribulationsSettled: number;
   status: CultivationRunStatus;
   lifespanRemainingDays: number;
   bodyFoundation: number;

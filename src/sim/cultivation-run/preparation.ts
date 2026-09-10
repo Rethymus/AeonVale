@@ -57,6 +57,15 @@ function uniqueBlockKinds(kinds: readonly Exclude<BlockKind, 'none'>[] | undefin
   return allowed.filter(kind => kinds.includes(kind));
 }
 
+/**
+ * 基础预见赠予（docs/21 §8.3 数值版，维护者授权）：第 1 劫保持盲
+ * （preview 由残卷/参悟决定），首劫结算后本世预见下限为 1；
+ * 残卷/参悟已解锁的更高等级不降。换代（tribulationsSettled 重置 0）重新经历盲劫。
+ */
+function basePreviewLevelFloor(state: CultivationRunState, maxPreviewLevel: number): number {
+  return state.tribulationsSettled >= 1 ? Math.min(1, maxPreviewLevel) : 0;
+}
+
 export function deriveTribulationPreparation(
   state: CultivationRunState,
   modifiers: TribulationPreparationModifiers = {},
@@ -84,7 +93,10 @@ export function deriveTribulationPreparation(
   const sweetSpotMinPower = minTemperingPower + sweetInset;
   const sweetSpotMaxPower = maxSurvivablePower - sweetInset;
   const previewLevel = clampInt(
-    Math.floor(state.insight / resolved.insightPerPreviewLevel) + finiteFloor(modifiers.previewLevelBonus),
+    Math.max(
+      basePreviewLevelFloor(state, resolved.maxPreviewLevel),
+      Math.floor(state.insight / resolved.insightPerPreviewLevel) + finiteFloor(modifiers.previewLevelBonus)
+    ),
     0,
     resolved.maxPreviewLevel
   );

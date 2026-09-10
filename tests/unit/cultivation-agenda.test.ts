@@ -22,6 +22,7 @@ describe('D27-b 修仙日程 · 状态与六格契约', () => {
       seed: 1,
       stage: 0,
       agendaIndex: 0,
+      tribulationsSettled: 0,
       status: 'active',
       lifespanRemainingDays: DEFAULT_BALANCE.bodyCultivation.lifespanStartDays,
       bodyFoundation: 0,

@@ -110,6 +110,8 @@ export function applyCultivationTribulationOutcome(
   const herbsLost = requestedHerbLoss;
   const injuryBefore = next.injury;
   const bodyFoundationBefore = next.bodyFoundation;
+  // 任何已判定的结局（含护持拦下与身死）都算一次“经历过的天劫”，驱动后续基础预见赠予。
+  next.tribulationsSettled += 1;
   next.herbs -= herbsLost;
   next.pills -= pillConsumption;
   next.injury = clampInt(
