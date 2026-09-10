@@ -32,11 +32,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm governance:check
       - run: pnpm governance:readiness
-      - run: pnpm prepare:public-tree .public-tree
-      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
-      - run: pnpm --dir .public-tree governance:readiness
-      - run: pnpm --dir .public-tree governance:public
-      - run: pnpm --dir .public-tree governance:check
+      - run: pnpm governance:public
       - name: Validate PR title
         if: github.event_name == 'pull_request'
         run: printf '%s\n' "$PR_TITLE" | pnpm commitlint
@@ -69,21 +65,18 @@ jobs:
       - run: pnpm test
       - run: pnpm test:replay
       - run: pnpm m5:check
-      - run: pnpm prepare:public-tree .public-tree
-      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
-      - run: pnpm --dir .public-tree governance:readiness
-      - run: pnpm --dir .public-tree governance:public
-      - run: pnpm --dir .public-tree build
+      # 单分支模型：根树即发布源，直接按 Pages 参数构建并校验产物。
+      - run: pnpm build
         env:
           PUBLIC_BUILD: 'true'
           VITE_BASE_PATH: /AeonVale/
           VITE_BUILD_REVISION: ${{ github.sha }}
-      - run: pnpm --dir .public-tree governance:dist
+      - run: pnpm governance:dist
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
         with:
           name: aeonvale-pages-dist-${{ github.sha }}
-          path: .public-tree/dist
+          path: dist
           include-hidden-files: true
           retention-days: 10
 
@@ -100,23 +93,19 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm prepare:public-tree .public-tree
-      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
-      - run: pnpm --dir .public-tree governance:readiness
-      - run: pnpm --dir .public-tree governance:public
+      # 单分支模型：根树即发布源，烟测直接按 Pages 站点参数跑本仓库。
+      - run: pnpm governance:readiness
+      - run: pnpm governance:public
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:browser:public-tree
+      - run: pnpm test:browser:smoke
         env:
-          PLAYWRIGHT_APP_DIR: .public-tree
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
           PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
-      - run: pnpm test:browser:public-tree:keypoint
+      - run: pnpm test:browser:keypoint
         env:
-          PLAYWRIGHT_APP_DIR: .public-tree
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
           PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
-      - run: pnpm test:browser:public-tree:r1-input
+      - run: pnpm test:browser:r1-input
         env:
-          PLAYWRIGHT_APP_DIR: .public-tree
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
           PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/

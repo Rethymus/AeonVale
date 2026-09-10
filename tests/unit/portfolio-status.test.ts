@@ -18,13 +18,13 @@ describe('公开试玩状态矩阵', () => {
 
     expect(output).toContain('不提交、不推送、不部署、不修改 GitHub 设置');
     expect(output).toContain('P0-A 本地可审版本');
-    expect(output).toContain('pnpm portfolio:mvp-preflight -- --keep-public-tree');
+    expect(output).toContain('pnpm portfolio:mvp-preflight');
     expect(output).toContain('P0-B GitHub Pages 公开展示');
     expect(output).toContain('维护者当次明确授权');
     expect(output).toContain('pnpm portfolio:pages-watch -- --wait --json');
     expect(output).toContain('pnpm portfolio:pages-diagnose -- --json');
     expect(output).toContain('pnpm test:browser:pages');
-    expect(output).toContain('pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages');
+    expect(output).toContain('pnpm portfolio:mvp-preflight -- --include-live-pages');
     expect(output).toContain('https://Rethymus.github.io/AeonVale/');
     expect(output).toContain('P1 独立游戏首版循环');
     expect(output).toContain('P2 Patch / DLC 内容厚度');
@@ -45,7 +45,7 @@ describe('公开试玩状态矩阵', () => {
     expect(output).toContain('P0-B live-pages-smoke');
     expect(output).toContain('PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL');
     expect(output).toContain('每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成');
-    expect(output).toContain('docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入公开树、Pages 或 Release 产物');
+    expect(output).toContain('docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入发布产物、Pages 或 Release 产物');
   });
 
   it('可输出机器可读 JSON，供发布前对标检查复用', () => {
@@ -70,7 +70,7 @@ describe('公开试玩状态矩阵', () => {
         path: string;
         generatedBy: string;
         requiredSignals: string[];
-        publicTreePolicy: string;
+        artifactsPolicy: string;
         reviewCommand: string;
       }>;
     };
@@ -86,7 +86,7 @@ describe('公开试玩状态矩阵', () => {
         priority: 'P0',
         stardewReference: expect.stringContaining('翻地、播种、浇水、过夜、收获、出货和补种'),
         xianxiaReference: expect.stringContaining('炼丹、阵法与引劫准备'),
-        evidence: 'pnpm portfolio:mvp-preflight -- --keep-public-tree',
+        evidence: 'pnpm portfolio:mvp-preflight',
         status: 'local-review-ready'
       })
     );
@@ -94,7 +94,7 @@ describe('公开试玩状态矩阵', () => {
       expect.objectContaining({
         id: 'publishability',
         priority: 'P0',
-        evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages',
+        evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --include-live-pages',
         status: 'pages-redeploy-required'
       })
     );
@@ -111,9 +111,9 @@ describe('公开试玩状态矩阵', () => {
         priority: 'P0-A',
         path: 'test-results/portfolio/portfolio-mvp-evidence.json',
         generatedBy: 'pnpm portfolio:capture',
-        reviewCommand: 'pnpm portfolio:mvp-preflight -- --keep-public-tree',
+        reviewCommand: 'pnpm portfolio:mvp-preflight',
         requiredSignals: expect.arrayContaining(['first-loop-complete onboarding objective', '10/10 first-loop progress', 'today briefing proof includes farm, alchemy, tribulation, and 10/10 progress cues', 'remote-action authorization boundary']),
-        publicTreePolicy: expect.stringContaining('must not enter the public tree')
+        artifactsPolicy: expect.stringContaining('must not enter the release artifact')
       })
     );
     expect(status.evidenceArtifacts).toContainEqual(
@@ -131,7 +131,7 @@ describe('公开试玩状态矩阵', () => {
         path: 'https://Rethymus.github.io/AeonVale/',
         generatedBy: 'maintainer-authorized GitHub Pages deployment',
         reviewCommand: 'pnpm portfolio:pages-watch -- --wait --json && pnpm portfolio:pages-diagnose -- --json && pnpm test:browser:pages',
-        publicTreePolicy: expect.stringContaining('verified for private Pages')
+        artifactsPolicy: expect.stringContaining('verified for private Pages')
       })
     );
     expect(status.noGo).toContain('每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。');

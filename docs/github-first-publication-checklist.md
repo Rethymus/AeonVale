@@ -1,3 +1,5 @@
+> **归档注记**：本文档描述的双分支 prepare:public-tree 发布流已于 2026-09-10 退役；现行模型见 CONTRIBUTING.md「分支与 PR」（单分支，main 即发布源）。本文仅作历史决策记录保留。
+
 # GitHub 首次公开与发布检查
 
 ## Private 初始化

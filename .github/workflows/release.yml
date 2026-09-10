@@ -35,22 +35,18 @@ jobs:
           test "$(git tag -l "v${INPUT_VERSION}")" = ""
       - run: pnpm governance:check
       - run: pnpm governance:readiness
+      - run: pnpm governance:public
       - run: pnpm typecheck
       - run: pnpm content:lint
       - run: pnpm test
-      - run: pnpm prepare:public-tree .public-tree
-      - run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
-      - run: pnpm --dir .public-tree governance:readiness
-      - run: pnpm --dir .public-tree governance:public
-      - run: pnpm --dir .public-tree governance:check
-      - run: pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts
-      - run: pnpm --dir .public-tree build
+      # 单分支模型：根树即发布源，直接按 Release 参数构建并校验产物。
+      - run: pnpm build
         env:
           PUBLIC_BUILD: 'true'
           VITE_BASE_PATH: ./
           VITE_BUILD_REVISION: ${{ github.sha }}
-      - run: pnpm --dir .public-tree governance:dist
-      - run: cd .public-tree/dist && zip -r "../../AeonVale-v${{ inputs.version }}-web.zip" .
+      - run: pnpm governance:dist
+      - run: cd dist && zip -r "../AeonVale-v${{ inputs.version }}-web.zip" .
       - name: Create tag and release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

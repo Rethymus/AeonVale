@@ -7,15 +7,15 @@ const generatedAt = 'static-public-status';
 const rows = [
   {
     scope: 'P0-A 本地可审版本',
-    status: '已达公开前本地验收门槛：本地构建、测试、截图、公开树与泄露检查已有自动化路径',
-    evidence: 'pnpm portfolio:mvp-preflight -- --keep-public-tree',
+    status: '已达公开前本地验收门槛：本地构建、测试、截图、发布产物与泄露检查已有自动化路径',
+    evidence: 'pnpm portfolio:mvp-preflight',
     next: '继续人工试玩首轮 3-5 分钟，并复核 test-results/portfolio/ 截图可读性'
   },
   {
     scope: 'P0-B GitHub Pages 公开展示',
-    status: '待复验：本地公开树 smoke 已通过；当前真实 Pages URL 必须在重新部署后再次通过 smoke 才能宣称闭环完成',
+    status: '待复验：本地发布产物 smoke 已通过；当前真实 Pages URL 必须在重新部署后再次通过 smoke 才能宣称闭环完成',
     evidence: 'pnpm portfolio:pages-watch -- --wait --json && pnpm portfolio:pages-diagnose -- --json && pnpm test:browser:pages',
-    next: `每次维护者授权的新部署后，复跑 pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages；若失败先用 pnpm portfolio:pages-diagnose -- --json 归因，再复核 ${pagesUrl}`
+    next: `每次维护者授权的新部署后，复跑 pnpm portfolio:mvp-preflight -- --include-live-pages；若失败先用 pnpm portfolio:pages-diagnose -- --json 归因，再复核 ${pagesUrl}`
   },
   {
     scope: 'P1 独立游戏首版循环',
@@ -40,9 +40,9 @@ const dimensions = [
     dimension: '日循环',
     stardewReference: '强：低门槛翻地、播种、浇水、过夜、收获、出货和补种必须在首次试玩中成立',
     xianxiaReference: '把农务收益导向炼丹、阵法与引劫准备，避免只是换皮农场',
-    current: '纵切片已能展示基础农务与经济闭环，本地公开树可试玩',
+    current: '纵切片已能展示基础农务与经济闭环，本地发布产物可试玩',
     next: '继续试玩 3-5 分钟，确认玩家不用读文档也知道今天先做什么',
-    evidence: 'pnpm portfolio:mvp-preflight -- --keep-public-tree',
+    evidence: 'pnpm portfolio:mvp-preflight',
     status: 'local-review-ready'
   },
   {
@@ -118,13 +118,13 @@ const dimensions = [
     stardewReference: '间接：公开试玩链接必须像产品一样可访问、可试玩、可验证',
     xianxiaReference: '公开产物只展示可试玩表层，不泄露私有设定、剧情细案或长期路线图',
     current: 'P0-A 本地检查链与 P0-B 只读远端复验链已建立；真实 Pages 闭环仍须在每次部署后用 --include-live-pages 复验',
-    next: '转 Public、创建 Release、修改远端设置或重新部署前，重新取得维护者授权；部署后用 --include-live-pages 复跑本地公开树、Pages watcher 和真实 URL smoke，失败时先跑 pnpm portfolio:pages-diagnose -- --json 归因',
-    evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --keep-public-tree --include-live-pages',
+    next: '转 Public、创建 Release、修改远端设置或重新部署前，重新取得维护者授权；部署后用 --include-live-pages 复跑本地发布产物、Pages watcher 和真实 URL smoke，失败时先跑 pnpm portfolio:pages-diagnose -- --json 归因',
+    evidence: 'pnpm governance:readiness && pnpm portfolio:mvp-preflight -- --include-live-pages',
     status: 'pages-redeploy-required'
   }
 ];
 
-const noGo = ['未获维护者当次明确授权前，不转为 Public、不创建 tag 或 Release、不修改远端设置。', '每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。', 'docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入公开树、Pages 或 Release 产物。'];
+const noGo = ['未获维护者当次明确授权前，不转为 Public、不创建 tag 或 Release、不修改远端设置。', '每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。', 'docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入发布产物、Pages 或 Release 产物。'];
 
 const evidenceArtifacts = [
   {
@@ -133,8 +133,8 @@ const evidenceArtifacts = [
     path: 'test-results/portfolio/portfolio-mvp-evidence.json',
     generatedBy: 'pnpm portfolio:capture',
     requiredSignals: ['first-loop-complete onboarding objective', '10/10 first-loop progress', 'farmstead + show-farm-work selection', 'shipping bin review output', 'today briefing visible with asset', 'today briefing proof includes farm, alchemy, tribulation, and 10/10 progress cues', 'Stardew low-friction loop text', 'xianxia differentiation text', 'remote-action authorization boundary'],
-    publicTreePolicy: 'generated-only; must not enter the public tree, Pages, or Release artifacts',
-    reviewCommand: 'pnpm portfolio:mvp-preflight -- --keep-public-tree'
+    artifactsPolicy: 'generated-only; must not enter the release artifact, Pages, or Release artifacts',
+    reviewCommand: 'pnpm portfolio:mvp-preflight'
   },
   {
     id: 'public-demo-screenshot-set',
@@ -142,8 +142,8 @@ const evidenceArtifacts = [
     path: 'test-results/portfolio/*.png',
     generatedBy: 'pnpm portfolio:capture',
     requiredSignals: ['01-farm-loop.png 1440x810 CSS-rendered readable PNG', '02-location-routing.png 1440x825 CSS-rendered backdrop PNG', '03-farm-actions.png 1440x810 CSS-rendered readable PNG', '04-mobile-farm-loop.png 736x414 CSS-rendered small-viewport landscape keyboard-first PNG (compatibility filename)', 'screenshotEvidence paintedRatio and colors meet thresholds'],
-    publicTreePolicy: 'generated-only; review evidence only, do not publish screenshots directly from test-results',
-    reviewCommand: 'pnpm portfolio:mvp-preflight -- --keep-public-tree'
+    artifactsPolicy: 'generated-only; review evidence only, do not publish screenshots directly from test-results',
+    reviewCommand: 'pnpm portfolio:mvp-preflight'
   },
   {
     id: 'live-pages-smoke',
@@ -151,7 +151,7 @@ const evidenceArtifacts = [
     path: pagesUrl,
     generatedBy: 'maintainer-authorized GitHub Pages deployment',
     requiredSignals: ['pnpm portfolio:pages-diagnose separates deployment drift, stale bundle, Action status, and live viewport failures without deploying', 'PLAYWRIGHT_SKIP_WEBSERVER=true smoke test hits the deployed URL', 'PLAYWRIGHT_GAME_BASE_PATH=/AeonVale/ route works on GitHub Pages', 'public dist has no production sourcemap or private design material'],
-    publicTreePolicy: 'verified for private Pages; required after each deployment and before any Public/Release claim',
+    artifactsPolicy: 'verified for private Pages; required after each deployment and before any Public/Release claim',
     reviewCommand: 'pnpm portfolio:pages-watch -- --wait --json && pnpm portfolio:pages-diagnose -- --json && pnpm test:browser:pages'
   }
 ];
@@ -208,7 +208,7 @@ for (const item of status.evidenceArtifacts) {
   console.log(`  路径：${item.path}`);
   console.log(`  生成：${item.generatedBy}`);
   console.log(`  复核命令：${item.reviewCommand}`);
-  console.log(`  公开边界：${item.publicTreePolicy}`);
+  console.log(`  公开边界：${item.artifactsPolicy}`);
   console.log(`  必备信号：${item.requiredSignals.join('；')}`);
 }
 console.log('');

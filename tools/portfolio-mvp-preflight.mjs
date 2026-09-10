@@ -2,29 +2,18 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
 
-const keepPublicTree = process.argv.includes('--keep-public-tree');
 const includeLivePages = process.argv.includes('--include-live-pages');
 
 const steps = [
-  {
-    label: 'Audit working tree for secret-risk paths',
-    command: 'pnpm',
-    args: ['audit:public-worktree', '--', '--fail-on-secret-risk']
-  },
-  {
-    label: 'Audit public candidate content for high-risk leaks',
-    command: 'pnpm',
-    args: ['audit:public-content', '--', '--fail-on-high-risk']
-  },
   {
     label: 'Capture public demo review screenshots and viewport checks',
     command: 'pnpm',
     args: ['portfolio:capture']
   },
   {
-    label: 'Verify checked public tree for GitHub Pages',
+    label: 'Verify release readiness of the repository root',
     command: 'pnpm',
-    args: ['verify:public-tree']
+    args: ['governance:readiness']
   },
   {
     label: 'Print non-deploying portfolio status matrix',
@@ -235,11 +224,6 @@ console.log(`\n[portfolio:mvp-preflight] Verified ${portfolioScreenshots.length}
 
 verifyPortfolioEvidence();
 console.log(`\n[portfolio:mvp-preflight] Verified generated public demo evidence: ${portfolioEvidencePath}.`);
-
-if (!keepPublicTree) {
-  rmSync('.public-tree', { recursive: true, force: true });
-  console.log('\n[portfolio:mvp-preflight] Removed generated .public-tree. Use --keep-public-tree to inspect it after a successful run.');
-}
 
 if (includeLivePages) {
   console.log('\n[portfolio:mvp-preflight] Verified current GitHub Pages chain and deployed URL smoke.');

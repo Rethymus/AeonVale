@@ -12,15 +12,11 @@ function indexOfRequired(text: string): number {
 
 describe('可试玩 Demo 本地预检', () => {
   it('按公开发布风险顺序运行并以非部署清单收尾', () => {
-    const worktreeAudit = indexOfRequired("args: ['audit:public-worktree', '--', '--fail-on-secret-risk']");
-    const contentAudit = indexOfRequired("args: ['audit:public-content', '--', '--fail-on-high-risk']");
     const capture = indexOfRequired("args: ['portfolio:capture']");
-    const publicTreeVerify = indexOfRequired("args: ['verify:public-tree']");
+    const publicTreeVerify = indexOfRequired("args: ['governance:readiness']");
     const statusMatrix = indexOfRequired("args: ['portfolio:status']");
     const releaseChecklist = indexOfRequired("args: ['portfolio:release-checklist']");
 
-    expect(worktreeAudit).toBeLessThan(contentAudit);
-    expect(contentAudit).toBeLessThan(capture);
     expect(capture).toBeLessThan(publicTreeVerify);
     expect(publicTreeVerify).toBeLessThan(statusMatrix);
     expect(statusMatrix).toBeLessThan(releaseChecklist);
@@ -64,8 +60,7 @@ describe('可试玩 Demo 本地预检', () => {
     expect(script).toContain('remote-action authorization boundary');
     expect(script).toContain('Verified generated public demo evidence');
     expect(script).toContain('public demo review screenshots');
-    expect(script).toContain("rmSync('.public-tree', { recursive: true, force: true })");
-    expect(script).toContain('--keep-public-tree');
+    expect(script).toContain('rmSync(\'test-results/portfolio\', { recursive: true, force: true })');
   });
 
   it('保留非发布契约，不执行 commit、push、deploy 或 release 命令', () => {

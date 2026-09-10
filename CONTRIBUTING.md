@@ -40,21 +40,20 @@ docs(readme): 更新本地开发说明
 
 ## 分支与 PR
 
-- `main` 是远程展示与公开发布分支，只保留可公开的必要内容；不得包含创作设定、玩法细案、路线规划、美术状态、参考图、Agent 状态或其它本地资料。
-- `dev` 是远程开发与备份分支，用于同步日常开发、设定文档和可复现资产来源；仍不得提交 `.env*`、密钥、真实邮箱、Agent 状态、存档、构建产物、覆盖率或 sourcemap。
-- 从 `dev` 发布到 `main` 时，必须使用 `pnpm prepare:public-tree <目标目录>` 生成并检查公开树，或只挑选已确认可公开的必要路径；禁止把 `dev` 整体合并到 `main`。
-- 临时功能改动可从 `dev` 新建 `feat/*`、`fix/*`、`docs/*`、`chore/*` 等短期分支提交 PR。
+- 本仓库采用**单分支模型**：`main` 是唯一长期分支，同时承担开发与公开发布；仓库内容即发布内容。
+- 不得提交 `.env*`、密钥、真实邮箱、Agent 状态、存档、构建产物、覆盖率或 sourcemap（`.gitignore` 已拦截）。
+- 临时功能改动可从 `main` 新建 `feat/*`、`fix/*`、`docs/*`、`chore/*` 等短期分支提交 PR。
 - 仅使用 Squash merge；PR 标题必须满足上述 Commit 格式，并成为最终提交标题。
 - 合并前必须解决对话、更新到最新 `main` 并通过全部 Required Status Checks。
-- 禁止直接推送、强制推送或删除 `main`。紧急绕过必须留下可审计说明。
+- 禁止强制推送或删除 `main`。紧急绕过必须留下可审计说明。
 
 ## 发布
 
-- Private 仓库完成 README、CI、规则集和首次发布检查后才转 Public。
-- 公开仓库、Pages 与 Release 产物只使用 `pnpm prepare:public-tree <目标目录>` 生成并通过检查的公开树。
-- README、贡献、安全、许可证、变更记录和 GitHub 模板属于可公开治理文档；创作设定、玩法细案、路线规划、美术状态等设计资料不得进入公开仓库、Pages 或 Release 产物。
+- 仓库已转 Public；`main` 即公开仓库本体，GitHub Pages 由 CI 全绿后自动部署 CI 产物。
+- README、贡献、安全、许可证、变更记录和 GitHub 模板属于治理文档，保持齐备（`pnpm governance:readiness` 校验）。
+- 创作设定等设计文档随仓库以 CC BY-NC 4.0 公开（见 CONTENT-LICENSE.md）；但 Pages 与 Release 产物只包含构建出的 dist，不得混入设计文档、Agent 状态或 sourcemap。
 - Public 后启用 GitHub Pages；生产构建必须关闭 sourcemap。
-- Release 只从受保护的 `main` 手动触发，版本、`package.json` 与 `v*` 标签必须一致。
+- Release 只从 `main` 手动触发，版本、`package.json` 与 `v*` 标签必须一致。
 - 未经用户明确授权，Agent 不得发布版本。
 
 ## 授权

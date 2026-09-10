@@ -206,7 +206,7 @@ pnpm readme:media       # 用 Playwright + ffmpeg 重生成 README 截图与 GIF
 - 提交、分支、PR 与发布规则见 [`CONTRIBUTING.md`](CONTRIBUTING.md)。
 - 安全问题请按 [`SECURITY.md`](SECURITY.md) 私下报告。
 - **源代码**使用 [MIT License](LICENSE)；**原创叙事、数据与美术**使用 [CC BY-NC 4.0](CONTENT-LICENSE.md)，二次使用请分别遵守对应条款。
-- 公开发布只使用经过检查的公开树，不上传私有设计资料、Agent 状态、密钥或生产 sourcemap。
+- 公开发布即推送 main（CI 全绿后 Pages 自动部署），不上传私有设计资料、Agent 状态、密钥或生产 sourcemap。
 
 <details>
 <summary><strong>维护者：公开发布与验收</strong></summary>
@@ -217,7 +217,7 @@ pnpm readme:media       # 用 Playwright + ffmpeg 重生成 README 截图与 GIF
 
 ### 当前进度快照
 
-- **P0-A 本地可审版本**：只有在全量测试、构建、治理审查与公开树验证通过后才视为就绪。
+- **P0-A 本地可审版本**：只有在全量测试、构建、治理审查与发布就绪检查通过后才视为就绪。
 - **P0-B GitHub Pages 公开展示**：与本地就绪分开判定；**真实 Pages URL 必须在重新部署后通过 `pnpm test:browser:pages`**，才可确认线上闭环。
 - **后续若转为 Public、创建 Release 或修改远端设置，仍需要维护者当次明确授权**。
 
@@ -227,17 +227,14 @@ pnpm readme:media       # 用 Playwright + ffmpeg 重生成 README 截图与 GIF
 - 桌面端与小横屏视口的核心画布完整可见，关键输入有独立浏览器烟测。
 - GitHub Pages 构建不泄露设计资料、Agent 状态、密钥、真实邮箱、未筛选生成物或生产 sourcemap。
 
-### 公开树与本地证据
+### 本地发布前证据
 
 ```bash
-pnpm audit:public-worktree
-pnpm audit:public-content
-pnpm prepare:public-tree <目标目录>
-pnpm verify:public-tree
-pnpm portfolio:mvp-preflight -- --keep-public-tree
+pnpm governance:readiness
+pnpm portfolio:mvp-preflight
 ```
 
-`portfolio:mvp-preflight` 会重新捕获证据、验证公开树、输出状态矩阵，并**打印非部署发布清单**；“**维护者发布清单回显**”是本地 MVP 预检证据的一部分。这些命令本身不提交、不推送、不部署。
+`portfolio:mvp-preflight` 会重新捕获证据、验证发布就绪、输出状态矩阵，并**打印非部署发布清单**；“**维护者发布清单回显**”是本地 MVP 预检证据的一部分。这些命令本身不提交、不推送、不部署。
 
 ```bash
 pnpm portfolio:capture
@@ -249,7 +246,7 @@ pnpm portfolio:release-checklist
 pnpm portfolio:release-checklist -- --json
 ```
 
-机读状态的 `evidenceArtifacts` 包含 `public-demo-evidence-json`、`public-demo-screenshot-set` 和 `live-pages-smoke`；机读发布清单用 `requiredEvidence` 列出证据，用 `authorizationRequired` 标明远端授权闸门。审查截图生成在 `test-results/portfolio/`，证据 JSON 为 `test-results/portfolio/portfolio-mvp-evidence.json`；审查时检查 `runtimeSignals.todayBriefingProof`，以及截图的**非空绘制比例、颜色数**。**该目录属于生成物，不进入公开树**。
+机读状态的 `evidenceArtifacts` 包含 `public-demo-evidence-json`、`public-demo-screenshot-set` 和 `live-pages-smoke`；机读发布清单用 `requiredEvidence` 列出证据，用 `authorizationRequired` 标明远端授权闸门。审查截图生成在 `test-results/portfolio/`，证据 JSON 为 `test-results/portfolio/portfolio-mvp-evidence.json`；审查时检查 `runtimeSignals.todayBriefingProof`，以及截图的**非空绘制比例、颜色数**。**该目录属于生成物，不入库**。
 
 ### Pages 发布后复验
 

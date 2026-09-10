@@ -17,13 +17,13 @@ describe('公开试玩发布清单', () => {
     const output = runChecklist();
 
     expect(output).toContain('不提交、不推送、不部署、不修改 GitHub 设置');
-    expect(output).toContain('pnpm portfolio:mvp-preflight -- --keep-public-tree');
+    expect(output).toContain('pnpm portfolio:mvp-preflight');
     expect(output).toContain('pnpm portfolio:pages-diagnose');
     expect(output).toContain('pnpm test:browser:pages');
-    expect(output).toContain('禁止直接上传当前完整仓库');
-    expect(output).toContain('README.md、CONTRIBUTING.md、SECURITY.md、LICENSE、CONTENT-LICENSE.md、CHANGELOG.md');
-    expect(output).toContain('不得上传设计类文档、docs/、AGENTS.md、CLAUDE.md、assets/ART-ASSETS-STATUS.md');
-    expect(output).toContain('在公开树内复查 docs/、AGENTS.md、CLAUDE.md、.omc/、.agents/、.codex/、.claude/ 均不存在');
+    expect(output).toContain('发布内容就是仓库本身；推送前必须通过全部本地质量门与 CI');
+    expect(output).toContain('治理文档（README/CONTRIBUTING/SECURITY/LICENSE/CONTENT-LICENSE/CHANGELOG/模板/workflow）保持齐备');
+    expect(output).toContain('不得提交 .env*、密钥、真实邮箱、Agent 状态、存档、构建产物、覆盖率或 sourcemap');
+    expect(output).toContain('复查工作树无 .omc/、.agents/、.codex/、.claude/ 等本地状态入库');
     expect(output).toContain('Settings -> Pages 的 Source 设为 GitHub Actions');
     expect(output).toContain('ENABLE_PAGES=true 闸门保护');
     expect(output).toContain('确认仓库 Homepage 指向 https://Rethymus.github.io/AeonVale/');
@@ -37,7 +37,7 @@ describe('公开试玩发布清单', () => {
     expect(output).toContain('runtimeSignals.todayBriefingProof 包含农庄、炼丹、引劫、首轮进度：10/10');
     expect(output).toContain('screenshotEvidence：01/03 桌面 CSS 渲染截图为 1440x810，02 叠层背景截图为 1440x825，1 张横屏小视口 keyboard-first 截图为 736x414');
     expect(output).toContain('paintedRatio 达到阈值，colors 达到阈值');
-    expect(output).toContain('该文件仍是生成物，不进入公开树');
+    expect(output).toContain('该文件仍是生成物，不进入发布产物');
     expect(output).toContain('每次重新部署后，真实 Pages URL 尚未通过 pnpm test:browser:pages 前，不得宣称 GitHub Pages 闭环完成');
     expect(output).toContain('对标范围与优先级复核');
     expect(output).toContain('以《星露谷物语》作为长期生活感参照');
@@ -70,12 +70,12 @@ describe('公开试玩发布清单', () => {
     expect(JSON.stringify(checklist.sections)).toContain('《鬼谷八荒》《觅长生》《了不起的修仙模拟器》《太吾绘卷》');
 
     const evidenceById = new Map(checklist.requiredEvidence.map(evidence => [evidence.id, evidence]));
-    expect(evidenceById.get('portfolio-mvp-preflight')?.command).toBe('pnpm portfolio:mvp-preflight -- --keep-public-tree');
+    expect(evidenceById.get('portfolio-mvp-preflight')?.command).toBe('pnpm portfolio:mvp-preflight');
     expect(evidenceById.get('public-demo-evidence-json')?.requiredSignals.join('\n')).toContain('runtimeSignals.todayBriefingProof');
     expect(evidenceById.get('public-demo-screenshot-set')?.requiredSignals.join('\n')).toContain('screenshotEvidence');
     expect(evidenceById.get('live-pages-smoke')?.command).toBe('pnpm portfolio:pages-diagnose && pnpm test:browser:pages');
     expect(evidenceById.get('live-pages-smoke')?.blocker).toBe('requires re-verification after every deployment and before Public/Release operations');
-    expect(checklist.authorizationRequired).toContain('重新推送公开树、调整 Pages 设置或修改 ENABLE_PAGES 闸门');
+    expect(checklist.authorizationRequired).toContain('调整 Pages 设置或修改 ENABLE_PAGES 闸门');
     expect(checklist.noGo.join('\n')).toContain('真实 Pages URL 尚未通过 pnpm test:browser:pages');
   });
 });

@@ -58,43 +58,38 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: dist
-      - name: Rebuild checked public tree for manual dispatch
+      # 手动触发路径（单分支模型）：根树即发布源，直接全检 + 构建。
+      - name: Manual readiness
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm prepare:public-tree .public-tree
-      - name: Install manual public tree dependencies
+        run: pnpm governance:readiness
+      - name: Manual publication check
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree install --frozen-lockfile --ignore-scripts
-      - name: Manual public tree readiness
+        run: pnpm governance:public
+      - name: Manual governance
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree governance:readiness
-      - name: Manual public tree publication check
+        run: pnpm governance:check
+      - name: Manual typecheck
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree governance:public
-      - name: Manual public tree governance
+        run: pnpm typecheck
+      - name: Manual guardrail tests
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree governance:check
-      - name: Manual public tree typecheck
-        if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree typecheck
-      - name: Manual public tree guardrail tests
-        if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/prepare-public-tree.test.ts tests/unit/public-dist-check.test.ts tests/unit/public-content-audit.test.ts
-      - name: Install Chromium for manual public tree smoke
+        run: pnpm test tests/unit/github-workflows.test.ts tests/unit/public-readiness-check.test.ts tests/unit/publication-check.test.ts tests/unit/public-dist-check.test.ts
+      - name: Install Chromium for manual smoke
         if: github.event_name == 'workflow_dispatch'
         run: pnpm exec playwright install --with-deps chromium
-      - name: Manual public tree browser smoke
+      - name: Manual browser smoke
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm test:browser:public-tree
-      - name: Manual public tree build
+        run: pnpm test:browser:smoke
+        env:
+          PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
+          PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
+      - name: Manual Pages build
         if: github.event_name == 'workflow_dispatch'
-        run: pnpm --dir .public-tree build
+        run: pnpm build
         env:
           PUBLIC_BUILD: 'true'
           VITE_BASE_PATH: /AeonVale/
           VITE_BUILD_REVISION: ${{ github.sha }}
-      - name: Copy manual public dist for deploy
-        if: github.event_name == 'workflow_dispatch'
-        run: rm -rf dist && cp -R .public-tree/dist dist
       - name: Verify deployment dist
         run: pnpm governance:dist
       - uses: actions/configure-pages@v5
