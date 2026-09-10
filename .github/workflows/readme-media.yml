@@ -53,6 +53,6 @@ jobs:
             echo 'README media unchanged — no commit.'
             exit 0
           fi
-          git commit -m 'chore(media): CI 再生成 README 实机截图与 GIF'
+          git commit -m 'chore(media): 由流水线再生成实机截图与 GIF'
           git pull --rebase origin dev
           git push
