@@ -15,7 +15,6 @@ export interface CanvasPngSnapshot {
 export interface AeonDebugSnapshot {
   debugSchemaVersion?: number;
   buildRevision?: string;
-  legacyShortcutsEnabled?: boolean;
   flowScreen?: string;
   flowOverlay?: string | null;
   uiMode?: string;
@@ -117,14 +116,16 @@ export interface AeonDebugSnapshot {
   shippingBinItemCount?: number;
 }
 
-export interface GameEntryOptions {
-  readonly legacyShortcuts?: boolean;
-}
+// 旧世界退役（docs/21 §8.16 阶段 2 第一步）：continueToWorld / openGame /
+// clearIntroDialogue / canvasPaintStats / canvasPngSnapshot 及 ?legacyShortcuts
+// 入口参数随 enterLegacyWorld 测试门退役（判定表见 docs/21 §8.21）。
+// continueToLoadedWorld / openGameWithLoadedSave 保留：portfolio-capture
+// （package.json portfolio:capture + tools/portfolio-mvp-preflight 链）仍
+// 经 enterLoadedLegacyWorld 进入旧世界展示存档，待产品决策后整族处置。
 
-export function gameEntryPath(options: GameEntryOptions = {}): string {
+export function gameEntryPath(): string {
   const basePath = process.env.PLAYWRIGHT_GAME_BASE_PATH ?? '/';
-  const normalized = basePath.endsWith('/') ? basePath : `${basePath}/`;
-  return options.legacyShortcuts ? `${normalized}?legacyShortcuts=1` : normalized;
+  return basePath.endsWith('/') ? basePath : `${basePath}/`;
 }
 
 export async function waitForInitialSurface(page: Page): Promise<AeonDebugSnapshot> {
@@ -143,56 +144,18 @@ export async function waitForInitialSurface(page: Page): Promise<AeonDebugSnapsh
   return gameDebugSnapshot(page);
 }
 
-export async function continueToWorld(page: Page): Promise<void> {
-  const canvas = page.locator('canvas');
-
-  const newGameButton = page.locator('#flow-title-new-game');
-  // 标题按钮由 app 状态揭示；调用方可能早于 boot 完成（静态 HTML 里按钮 disabled+hidden），
-  // 先等它可见再探测测试门，避免 isVisible 瞬时误判跳过门进入等待 world 的死等。
-  await newGameButton.waitFor({ state: 'visible', timeout: 20000 }).catch(() => undefined);
-  if (await newGameButton.isVisible()) {
-    const enteredThroughTestGate = await page.evaluate(() => {
-      const target = window as typeof window & { __AEON_TEST__?: { enterLegacyWorld?: () => boolean } };
-      return target.__AEON_TEST__?.enterLegacyWorld?.() ?? false;
-    });
-    if (!enteredThroughTestGate) {
-      await newGameButton.click();
-      const skip = page.locator('#flow-prologue-skip');
-      if (await skip.isVisible().catch(() => false)) await skip.click();
-    }
-  }
-
-  await page.waitForFunction(() => {
-    const debug = (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__;
-    return debug?.appSurface === 'world' || (debug != null && debug.appSurface == null);
-  });
-  await canvas.waitFor({ state: 'visible' });
-  const box = await canvas.boundingBox();
-  const viewport = page.viewportSize();
-  if (!box || !viewport || box.y < 0 || box.y >= viewport.height) {
-    throw new Error(`Game canvas starts outside the initial viewport: box=${JSON.stringify(box)}, viewport=${JSON.stringify(viewport)}`);
-  }
-  await canvas.focus();
-}
-
-export async function openGame(page: Page, options: GameEntryOptions = {}): Promise<void> {
-  await page.goto(gameEntryPath(options));
-  await waitForInitialSurface(page);
-  await continueToWorld(page);
-}
-
 /**
  * 以 boot 已加载的存档状态进入旧世界（不清档）。
- * 供种子存档类用例使用；boot 未能加载存档时回退全新世界并返回 false。
+ * 供 portfolio-capture 种子存档用例使用；测试门不可用或 boot 未加载出
+ * 有效存档时直接抛错（旧 fresh 入口已随 enterLegacyWorld 退役）。
  */
 export async function continueToLoadedWorld(page: Page): Promise<boolean> {
   const entered = await page.evaluate(() => {
-    const target = (window as typeof window & { __AEON_TEST__?: { enterLoadedLegacyWorld: () => boolean } }).__AEON_TEST__;
-    return target ? target.enterLoadedLegacyWorld() : false;
+    const target = (window as typeof window & { __AEON_TEST__?: { enterLoadedLegacyWorld?: () => boolean } }).__AEON_TEST__;
+    return target?.enterLoadedLegacyWorld?.() ?? false;
   });
   if (!entered) {
-    await continueToWorld(page);
-    return false;
+    throw new Error('enterLoadedLegacyWorld test gate unavailable or no valid save loaded at boot');
   }
   const canvas = page.locator('canvas');
   await canvas.waitFor({ state: 'visible' });
@@ -205,68 +168,14 @@ export async function continueToLoadedWorld(page: Page): Promise<boolean> {
   return true;
 }
 
-export async function openGameWithLoadedSave(page: Page, options: GameEntryOptions = {}): Promise<void> {
-  await page.goto(gameEntryPath(options));
+export async function openGameWithLoadedSave(page: Page): Promise<void> {
+  await page.goto(gameEntryPath());
   await waitForInitialSurface(page);
   await continueToLoadedWorld(page);
 }
 
 export async function gameDebugSnapshot(page: Page): Promise<AeonDebugSnapshot> {
   return page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__ ?? {});
-}
-
-export async function clearIntroDialogue(page: Page): Promise<void> {
-  await page.waitForTimeout(80);
-  for (let i = 0; i < 6; i += 1) {
-    const debug = await gameDebugSnapshot(page);
-    if (debug.dialogueBeatId == null) return;
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(60);
-  }
-  await page.waitForFunction(() => {
-    const debug = (window as typeof window & { __AEON_DEBUG__?: AeonDebugSnapshot }).__AEON_DEBUG__;
-    return debug?.dialogueBeatId == null;
-  });
-}
-
-export async function canvasPaintStats(page: Page): Promise<CanvasPaintStats> {
-  const snapshot = await canvasPngSnapshot(page);
-  if (!snapshot) return { sampled: 0, painted: 0, colors: 0 };
-  return paintStatsFromDataUrl(page, snapshot.dataUrl);
-}
-
-export async function canvasPngSnapshot(page: Page): Promise<CanvasPngSnapshot | null> {
-  const direct = await page.evaluate((): CanvasPngSnapshot | null => {
-    const canvas = document.querySelector('canvas');
-    if (!(canvas instanceof HTMLCanvasElement) || canvas.width <= 0 || canvas.height <= 0) return null;
-    try {
-      return {
-        dataUrl: canvas.toDataURL('image/png'),
-        width: canvas.width,
-        height: canvas.height
-      };
-    } catch {
-      return null;
-    }
-  });
-  if (direct?.dataUrl.startsWith('data:image/png;base64,')) {
-    const directStats = await paintStatsFromDataUrl(page, direct.dataUrl);
-    if (directStats.colors > 16) return direct;
-  }
-
-  const box = await page.evaluate(() => {
-    const canvas = document.querySelector('canvas');
-    if (!(canvas instanceof HTMLCanvasElement) || canvas.width <= 0 || canvas.height <= 0) return null;
-    const rect = canvas.getBoundingClientRect();
-    return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
-  });
-  if (!box) return null;
-  const screenshot = await page.locator('canvas').screenshot({ animations: 'disabled' });
-  return {
-    dataUrl: `data:image/png;base64,${screenshot.toString('base64')}`,
-    width: Math.round(box.width),
-    height: Math.round(box.height)
-  };
 }
 
 export async function renderedCanvasPngSnapshot(page: Page): Promise<CanvasPngSnapshot | null> {

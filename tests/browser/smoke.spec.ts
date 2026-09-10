@@ -40,7 +40,7 @@ test('loads the current journey and reaches its desktop workbench without page e
 
   const entryDebug = await gameDebugSnapshot(page);
   expect(entryDebug.debugSchemaVersion).toBe(2);
-  expect(entryDebug.legacyShortcutsEnabled).toBe(false);
+  // 旧世界快捷键开关已随 legacyShortcuts 退役（docs/21 §8.21），此处不再上报。
   const expectedBuildRevision = process.env.PLAYWRIGHT_EXPECTED_BUILD_REVISION?.trim() || (process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? null : 'playwright-test');
   if (expectedBuildRevision) expect(entryDebug.buildRevision).toBe(expectedBuildRevision);
   else {

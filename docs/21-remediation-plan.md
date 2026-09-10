@@ -1026,3 +1026,41 @@ continueToWorld 间接入口）；词表四消费点冻结注记；showcaseSave 
 - 子代理①③因 API 五小时限额中断：③ 的 sim 半成品（字段+递增+调用点）
   由主代理验证后续写完成（缺的 floor 函数+测试+夹具）；① 转主代理
   judge 模式执行。限额 14:52 重置。
+
+### 8.21 第十七轮（2026-09-10）：退役阶段 2 第一步执行记录（main.ts 解绑）
+
+> 本轮由子代理启动后撞 API 限额，主会话接管收口（3 处悬空引用修复 + 601 行
+> 死块物理删除 + 本记录）。
+
+#### 判定表（§8.19 的 13 暂缓 spec 重新判定）
+
+| 判定 | 名单 | 动作 |
+|---|---|---|
+| 删除（8） | farmstead-scene、first-loop.regression、keypoint-playability、p0-qi-flow、p0-terrain-semantics、p0-real-newgame-capture、visual-snapshot-soft-gate（含 baseline json 与 visualDrift.ts + 单测 visual-drift.test.ts）、responsive-layout 的 4 条旧世界用例 | 语义 100% 依赖旧世界画布/门进入；新模式布局已由 roguelite-compact-viewport 覆盖 |
+| 迁移（6） | smoke（标题/新游戏路径重写，不再 enterLegacyWorld）、app-flow（75 行精简）、accessibility-shell、save-health（132 行，保留 orientation gate 共享语义）、delivery-capture、portfolio-capture（改用 openGameWithLoadedSave） | 走主模式等价路径 |
+| 保留 | shared 外壳语义（orientation gate、标题屏焦点、boot 冒烟） | 不进旧世界，本就共享 |
+
+#### main.ts 接线拆除
+
+1. `LEGACY_SHORTCUTS_ENABLED` 常量及其启用路径（env + `?legacyShortcuts=1` +
+   `dataset.legacyShortcuts`）整体移除；
+2. 滚轮循环热栏监听（旧快捷键专属）删除；command cycle 的 legacy 分支删除；
+3. **旧世界快捷键解析块 601 行物理删除**（keydown 监听内 `frontTile` 起至
+   switch 尾：resolveFarmActionShortcut/LocationService/LegacyConfirm/Quick/
+   Primary 系列及 worldActionShortcut switch），产品键路成为唯一路径；
+4. 画布底部 HUD（气血条/热栏/帮助行）随启用路径退役（恒 hidden；图层本体
+   随 renderer 阶段整删）；
+5. 测试门：`enterLegacyWorld` 删除；`enterLoadedLegacyWorld` 保留
+   （portfolio-capture/ending-flow 存档链仍依赖，标注于 main.ts:861-863）。
+
+#### 本轮验证
+
+tsc 全绿；单测 2567/2567（-146 为删除的 visual-drift 等配套单测）；浏览器
+回归与全门验证见提交前中央批次。
+
+#### 遗留（阶段 2 第二步）
+
+- renderer 旧世界渲染层（2830 行）+ 画布 HUD 图层本体；
+- main.ts 其余旧世界函数（farm/economy/beast 等的 UI 编排，现为无调用死码
+  或被旧档槽使用——随旧档槽 `aeonvale-save-v1` 决策一并处理）；
+- golden fixture core-farm-save-resume 与 serialize 链（阶段 2 第三步）。

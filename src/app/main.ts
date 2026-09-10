@@ -66,7 +66,6 @@ import { buildJourneyGuide, formatJourneyGuideBody, isJourneyTeachingActive, isJ
 import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
 import { APP_FLOW_FOCUS_TARGETS, type AppFlowEvent, type AppFlowState, type AppFocusSelector, type AppOverlay } from './appFlowMachine';
 import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
-import { createPrologueVN, type PrologueVNController } from './prologueVN';
 import { createNarrationIntro, type NarrationIntroController } from './narrationIntro';
 import { createNarrationSurface, NARRATION_E7_FLAG_KEY, type NarrationSurfaceController } from './narrationSurface';
 import { createRogueliteProtoSurface, type RogueliteProtoSurface } from './rogueliteProto/surface';
@@ -238,8 +237,8 @@ async function main(): Promise<void> {
   const BUILD_REVISION = import.meta.env.VITE_BUILD_REVISION ?? 'dev';
   const BUILD_LABEL = BUILD_REVISION === 'dev' ? '版本 0.1.0 · 本地试玩' : '版本 0.1.0 · 试玩构建';
   const BUILD_TITLE = BUILD_REVISION === 'dev' ? '' : `构建 ${BUILD_REVISION}`;
-  const LEGACY_SHORTCUTS_ENABLED = import.meta.env.VITE_ENABLE_LEGACY_SHORTCUTS === 'true' || new URLSearchParams(window.location.search).get('legacyShortcuts') === '1';
-  document.documentElement.dataset.legacyShortcuts = String(LEGACY_SHORTCUTS_ENABLED);
+  // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：LEGACY_SHORTCUTS_ENABLED 启用路径
+  // （环境变量 + ?legacyShortcuts=1 查询参数 + dataset.legacyShortcuts）整体拆除。
   let requestRender: (() => void) | null = null;
   let renderScheduler: RenderScheduler | null = null;
   let publicDemoPanels: PublicDemoPanelsController | null = null;
@@ -275,19 +274,8 @@ async function main(): Promise<void> {
     requestRender?.();
     return succeeded;
   };
-  const clearSave = (): boolean => {
-    let succeeded = false;
-    try {
-      localStorage.removeItem(SAVE_KEY);
-      succeeded = true;
-    } catch {
-      /* ignore */
-    }
-    saveHealth = saveHealthAfterClear(succeeded);
-    updateSaveHealthUi();
-    return succeeded;
-  };
-
+  // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：clearSave 仅由 start-new-game
+  // 应用层副作用调用，随该接线一并移除（旧档清除语义归 boot 读档/健康链）。
   const loadRuntimeSettings = (): { readonly settings: RuntimeSettings; readonly persistenceAvailable: boolean } => {
     try {
       return { settings: decodeRuntimeSettings(localStorage.getItem(RUNTIME_SETTINGS_STORAGE_KEY)), persistenceAvailable: true };
@@ -398,7 +386,6 @@ async function main(): Promise<void> {
   let paused = false;
   let responsiveShell: ResponsiveShellController | null = null;
   let flowView: AppFlowViewController | null = null;
-  let prologueVN: PrologueVNController | null = null;
   let narrationIntro: NarrationIntroController | null = null;
   let narrationSurface: NarrationSurfaceController | null = null;
   let rogueliteProtoSurface: RogueliteProtoSurface | null = null;
@@ -512,32 +499,8 @@ async function main(): Promise<void> {
     hideTodayBriefing(layers);
   }
 
-  function resetRuntimeState(nextState: GameState): void {
-    state = nextState;
-    ctx = createSimContextFromState(state, reg, DEFAULT_BALANCE);
-    npcNameToId = new Map(getNpcList(state).map(npc => [npc.displayName, npc.id] as const));
-    hotbarIdx = 0;
-    tradeIdx = 0;
-    shopIdx = 0;
-    npcIdx = 0;
-    shipIdx = 0;
-    qualityShipIdx = 0;
-    storageDepositIdx = 0;
-    storageWithdrawIdx = 0;
-    processingIdx = 0;
-    facilityCollectIdx = 0;
-    farmActionIdx = 0;
-    locationIdx = 0;
-    locationServiceIdx = 0;
-    locationEncounterIdx = 0;
-    npcActionIdx = 0;
-    facilityBuildIdx = 0;
-    dialogueBeat = null;
-    clearLegacyAttentionSurfaces();
-    refreshHotbarHint();
-    refreshHelpHint();
-    publicDemoPanels?.render(state, ctx);
-  }
+  // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：resetRuntimeState 仅由
+  // start-new-game 应用层副作用调用，随该接线一并移除。
 
   function flowAllowsWorldInput(): boolean {
     return flowView == null || flowView.getPresentation().surface === 'world';
@@ -767,31 +730,9 @@ async function main(): Promise<void> {
     }
   }
 
-  function startPrologueVN(): void {
-    destroyPrologueVN();
-    const root = document.querySelector<HTMLElement>('#prologue-vn');
-    if (!root) return;
-    // 序章视觉小说自管控件：完成 → finish-prologue，跳过 → skip-prologue。
-    // 既有 finish/skip 处理（标记节拍已见 + 存档）保持不变，这里只负责派发事件。
-    prologueVN = createPrologueVN({
-      root,
-      reducedMotion: runtimeSettings.reducedMotion,
-      onFinish: () => {
-        flowView?.dispatch({ type: 'finish-prologue' });
-      },
-      onSkip: () => {
-        flowView?.dispatch({ type: 'skip-prologue' });
-      },
-      assetUrlForId: id => assetUrlForId(assetStore, id)
-    });
-    // VN 挂载后其首控件才存在，补一次焦点让 appFlowView 的焦点兜底命中舞台。
-    flowView?.refocusCurrentSurface();
-  }
-
-  function destroyPrologueVN(): void {
-    prologueVN?.destroy();
-    prologueVN = null;
-  }
+  // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：序章 VN（startPrologueVN/
+  // destroyPrologueVN 及其挂载块）随 start-new-game 接线拆除——序章屏已无
+  // 玩家或测试可达入口（prologue 的 finish/skip 事件派发者即 VN 自身）。
 
   function startNarrationSurface(): void {
     destroyNarrationSurface();
@@ -916,14 +857,11 @@ async function main(): Promise<void> {
     if (previous.screen === 'world' && (next.screen !== 'world' || next.overlay != null)) {
       cancelWorldMovementForSurfaceTransition();
     }
-    if (event.type === 'start-new-game') {
-      clearSave();
-      resetRuntimeState(createFreshState());
-    } else if (event.type === 'finish-prologue' || event.type === 'skip-prologue') {
-      for (const beatId of prologueBeatIds) markSeen(state, beatId);
-      dialogueBeat = null;
-      saveState(state);
-    } else if (event.type === 'enter-loaded-world') {
+    // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：start-new-game（清档+重置）与
+    // finish-prologue/skip-prologue（节拍已见+存档）两个应用层副作用随 enterLegacyWorld
+    // 测试门拆除——标题屏已无任何派发 start-new-game 的入口，序章不可达；
+    // enter-loaded-world 副作用保留（enterLoadedLegacyWorld 门仍为 portfolio-capture 服务）。
+    if (event.type === 'enter-loaded-world') {
       // 测试门：以 boot 已加载的存档状态入世界（等价 skip-prologue 的副作用，不清档）。
       for (const beatId of prologueBeatIds) markSeen(state, beatId);
       dialogueBeat = null;
@@ -963,13 +901,6 @@ async function main(): Promise<void> {
     refreshAppPresentation();
     // E7 改写标题屏：每次流程变更后同步诅咒层（idempotent，docs/22 §2.5）。
     applyE7TitleCurse();
-
-    // 序章视觉小说：进入序章即挂载（每次新进都全新开演），离开即拆除监听。
-    if (next.screen === 'prologue' && previous.screen !== 'prologue') {
-      startPrologueVN();
-    } else if (next.screen !== 'prologue' && previous.screen === 'prologue') {
-      destroyPrologueVN();
-    }
   }
 
   function openDialogueBeat(beat: NarrativeBeat, assetId?: string): void {
@@ -1333,7 +1264,6 @@ async function main(): Promise<void> {
       __AEON_DEBUG__?: {
         debugSchemaVersion: number;
         buildRevision: string;
-        legacyShortcutsEnabled: boolean;
         flowScreen: string;
         flowOverlay: string | null;
         uiMode: string;
@@ -1434,32 +1364,11 @@ async function main(): Promise<void> {
         shippingItemId: string | null;
         shippingBinItemCount: number;
       };
+      // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：__AEON_TEST__ 门仅保留
+      // enterLoadedLegacyWorld（portfolio-capture 展示存档链）；enterLegacyWorld
+      // 与农庄/地形/灵气关键点族随消费 spec 一并退役（判定表见 docs/21 §8.21）。
       __AEON_TEST__?: {
-        enterLegacyWorld: () => boolean;
         enterLoadedLegacyWorld: () => boolean;
-        configureSowKeypoint: () => boolean;
-        configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
-        configureQiFlowKeypoint: () => QiFlowKeypoint | null;
-        configureFarmsteadObjectKeypoint: (kind?: FarmsteadSceneObjectKind) => boolean;
-        configureFarmsteadNonPlotKeypoint: () => boolean;
-        configureFarmsteadClickFarmKeypoint: () => { targetX: number; targetY: number; frontX: number; frontY: number } | null;
-        configureJourneyReachableFarmTargetKeypoint: () => { nearX: number; nearY: number; farX: number; farY: number } | null;
-        configureBuildArrayKeypoint: (kind?: 'lightning-rod' | 'insulation', preservePanel?: boolean) => BuildArrayKeypoint | null;
-        configureBuiltFacilityClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number } | null;
-        configureGroundItemClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number } | null;
-        configureNpcPreviewClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number; npcId: string; locationId: string } | null;
-        configureLocationPreviewClickKeypoint: () => { targetX: number; targetY: number; playerX: number; playerY: number; locationId: string } | null;
-        showLongLocationPreviewForTest: (withTexture?: boolean) => { textBottom: number; panelBottom: number; maxTextBottom: number; text: string } | null;
-        canvasPointForTile: (x: number, y: number) => { x: number; y: number } | null;
-        farmsteadObjectTile: (kind?: FarmsteadSceneObjectKind) => { x: number; y: number } | null;
-        tileSnapshot: (x: number, y: number) => { tilled: boolean; cropId: number | null; blockType: string; playerX: number; playerY: number } | null;
-        arraySnapshot: (x: number, y: number) => ArraySnapshot | null;
-        groundItemSnapshot: (x: number, y: number) => { itemId: string; count: number } | null;
-        matureFrontCrop: () => boolean;
-        waterFrontCrop: () => boolean;
-        buyMosslingSeed: () => boolean;
-        closePanels: () => void;
-        advanceOneDay: () => void;
       };
     };
     const locations = getActiveLocationDirectory(state);
@@ -1488,7 +1397,6 @@ async function main(): Promise<void> {
     target.__AEON_DEBUG__ = {
       debugSchemaVersion: 2,
       buildRevision: BUILD_REVISION,
-      legacyShortcutsEnabled: LEGACY_SHORTCUTS_ENABLED,
       flowScreen: flow?.screen ?? 'boot',
       flowOverlay: flow?.overlay ?? null,
       uiMode: presentation?.mode ?? 'loading',
@@ -5740,7 +5648,6 @@ async function main(): Promise<void> {
       case 'cycle':
         if (interactionPanelActive(interactionPanel)) cycleActiveInteractionPanel(command.direction === 'previous');
         else if (locationSelectionActive) cycleLocation(command.direction === 'previous');
-        else if (LEGACY_SHORTCUTS_ENABLED && !hotbarWheelBlocked()) cycleHotbar(command.direction === 'previous' ? -1 : 1, true);
         break;
       case 'hotbar':
         if (!hotbarWheelBlocked()) setHotbarIndex(command.index, true);
@@ -6007,19 +5914,7 @@ async function main(): Promise<void> {
   refreshHelpHint();
   refreshAppPresentation();
 
-  window.addEventListener(
-    'wheel',
-    ev => {
-      if (!LEGACY_SHORTCUTS_ENABLED) return;
-      if (!flowAllowsWorldInput()) return;
-      if (state.gameOver || dialogueBeat || state.postAscension.mode === 'choice-pending' || hotbarWheelBlocked()) return;
-      const delta = hotbarWheelDelta(ev.deltaY);
-      if (delta === 0) return;
-      cycleHotbar(delta, true);
-      ev.preventDefault();
-    },
-    { passive: false }
-  );
+  // 旧世界退役（§8.16 阶段 2 第一步）：滚轮循环热栏是旧快捷键专属交互，随启用路径一并移除。
 
   app.canvas.addEventListener('contextmenu', ev => {
     ev.preventDefault();
@@ -6203,611 +6098,10 @@ async function main(): Promise<void> {
       }
       return;
     }
-    if (!LEGACY_SHORTCUTS_ENABLED) {
-      if (handleProductKeydown(ev)) ev.preventDefault();
-      return;
-    }
-    const f = frontTile();
-    const farmActionShortcut = resolveFarmActionShortcut(ev.key, Boolean(ev.shiftKey));
-    const locationShortcut = resolveLocationServiceShortcut(ev.key, Boolean(state.activeEvent));
-    const legacyConfirmShortcut = resolveLegacyConfirmShortcut(ev.key, Boolean(ev.ctrlKey));
-    const quickLocationShortcut = resolveQuickLocationShortcut(ev.key, Boolean(ev.altKey));
-    const primaryInteractionShortcut = resolvePrimaryInteractionShortcut({
-      key: ev.key,
-      shiftKey: Boolean(ev.shiftKey),
-      quickLocationShortcut
-    });
-    const enterShortcut =
-      ev.key === 'Enter'
-        ? resolveEnterShortcut({
-            ctrlKey: Boolean(ev.ctrlKey),
-            interactionPanelActive: interactionPanelActive(interactionPanel),
-            locationSelectionActive
-          })
-        : null;
-    const digitShortcut = resolveDigitShortcut({
-      key: ev.key,
-      code: ev.code,
-      shiftKey: Boolean(ev.shiftKey),
-      farmActionPanelActive: interactionPanel.kind === 'farm-action',
-      locationSelectionActive
-    });
-    const farmMenuShortcut = resolveFarmMenuShortcut(ev.key, Boolean(ev.shiftKey));
-    const pageUpShortcut = resolvePageUpShortcut(ev.key, Boolean(ev.shiftKey));
-    const pageDownShortcut = resolvePageDownShortcut({
-      key: ev.key,
-      shiftKey: Boolean(ev.shiftKey),
-      interactionPanelKind: interactionPanel.kind,
-      interactionPanelActive: interactionPanelActive(interactionPanel)
-    });
-    const commandShortcut = resolveCommandShortcut(ev.key, Boolean(ev.shiftKey));
-    const explorationKey = ev.code === 'Semicolon' ? 'Semicolon' : ev.key;
-    const explorationLocationShortcut = resolveExplorationLocationShortcut(explorationKey, Boolean(ev.shiftKey));
-    const worldActionShortcut = resolveWorldActionShortcut(ev.key, Boolean(ev.shiftKey));
-    const legacyBuildShortcut = resolveLegacyBuildShortcut(ev.key, Boolean(ev.shiftKey));
-    const tabShortcut =
-      ev.key === 'Tab'
-        ? resolveTabShortcut({
-            interactionPanelActive: interactionPanelActive(interactionPanel),
-            locationSelectionActive,
-            shiftKey: Boolean(ev.shiftKey)
-          })
-        : null;
-    const escapeShortcut =
-      ev.key === 'Escape'
-        ? resolveEscapeShortcut({
-            interactionPanelActive: interactionPanelActive(interactionPanel),
-            inventoryVisible: layers.showInv,
-            cultivationPanelVisible,
-            locationSelectionActive
-          })
-        : null;
-    const qShortcut =
-      ev.key === 'q' || ev.key === 'Q'
-        ? resolveQShortcut({
-            ctrlKey: Boolean(ev.ctrlKey),
-            shiftKey: Boolean(ev.shiftKey),
-            quickLocationShortcut
-          })
-        : null;
-    if (blockingOverlayActive()) {
-      switch (ev.key) {
-        case 'Tab':
-          if (tabShortcut === 'toggle-inventory') toggleInventoryVisibility();
-          break;
-        case 'Escape':
-          if (escapeShortcut != null) performEscapeShortcutAction(escapeShortcut);
-          break;
-        case 'c':
-        case 'C':
-          if (worldActionShortcut === 'toggle-cultivation-panel') toggleCultivationPanel();
-          break;
-        case 'i':
-          if (worldActionShortcut === 'toggle-inventory') toggleInventoryVisibility();
-          break;
-        case 'p':
-        case 'P':
-          if (commandShortcut === 'toggle-pause') performCommandShortcut(commandShortcut);
-          break;
-        default:
-          ev.preventDefault();
-          refreshAppPresentation();
-          return;
-      }
-      ev.preventDefault();
-      saveState(state);
-      refreshAppPresentation();
-      return;
-    }
-    const farmActionDigit = interactionPanel.kind === 'farm-action' ? farmActionIndexFromDigitKey(ev.key) : null;
-    const npcActionDigit = interactionPanel.kind === 'npc-action' ? npcActionIndexFromDigitKey(ev.key) : null;
-    const locationDigit = locationSelectionActive ? locationIndexFromDigitCode(ev.code) : null;
-    const locationServiceDigit = locationSelectionActive ? locationServiceIndexFromDigitKey(ev.key) : null;
-    const shouldDismissInteractionPanel =
-      interactionPanelActive(interactionPanel) &&
-      !shouldPreserveInteractionPanelForKey({
-        key: ev.key,
-        isModifierOnly: isModifierOnlyKey(ev.key),
-        farmActionDigitActive: farmActionDigit != null,
-        npcActionDigitActive: npcActionDigit != null,
-        primaryInteractionShortcut,
-        enterShortcut,
-        escapeShortcut,
-        tabShortcut,
-        pageDownShortcut,
-        commandShortcut,
-        farmMenuShortcut,
-        quickLocationShortcut
-      });
-    if (shouldDismissInteractionPanel) {
-      clearInteractionPanel(false);
-      ev.preventDefault();
-      refreshAppPresentation();
-      saveState(state);
-      return;
-    }
-    const shouldDismissLocationSelection =
-      locationSelectionActive &&
-      !shouldPreserveLocationSelectionForKey({
-        key: ev.key,
-        isModifierOnly: isModifierOnlyKey(ev.key),
-        locationDigitActive: locationDigit != null,
-        locationServiceDigitActive: locationServiceDigit != null,
-        primaryInteractionShortcut,
-        enterShortcut,
-        escapeShortcut,
-        tabShortcut,
-        commandShortcut,
-        quickLocationShortcut
-      });
-    if (shouldDismissLocationSelection) {
-      clearLocationSelection(false);
-      ev.preventDefault();
-      refreshAppPresentation();
-      saveState(state);
-      return;
-    }
-    if (ev.code === 'Semicolon' && explorationLocationShortcut) {
-      if (!focusLocationService(explorationLocationShortcut.locationId, explorationLocationShortcut.command)) {
-        const presentation = locationShortcutFailureToastPresentation(explorationLocationShortcut.locationId, state, explorationLocationShortcut.command);
-        toast(presentation.message, presentation.assetId);
-      }
-      ev.preventDefault();
-      saveState(state);
-      refreshAppPresentation();
-      return;
-    }
-    switch (ev.key) {
-      case 'ArrowUp':
-      case 'w':
-      case 'W':
-        if ((ev.key === 'w' || ev.key === 'W') && quickLocationShortcut === 'tea-shed') {
-          if (!openQuickLocationService(quickLocationShortcut)) {
-            const presentation = quickServiceUnavailableToastPresentation('tea-shed', false, state);
-            toast(presentation.message, presentation.assetId);
-          }
-          break;
-        }
-        move('up');
-        break;
-      case 'ArrowDown':
-      case 's':
-      case 'S':
-        move('down');
-        break;
-      case 'ArrowLeft':
-      case 'a':
-      case 'A':
-        move('left');
-        break;
-      case 'ArrowRight':
-      case 'd':
-      case 'D':
-        move('right');
-        break;
-      case ' ':
-      case 'e':
-      case 'E':
-        switch (primaryInteractionShortcut) {
-          case 'quick-greenhouse':
-            if (!openQuickLocationService('greenhouse')) {
-              const presentation = quickServiceUnavailableToastPresentation('greenhouse', false, state);
-              toast(presentation.message, presentation.assetId);
-            }
-            break;
-          case 'ascend-pill':
-            eatById('pill.ascend', '飞升丹'); // 飞升前夜（stage7）服用通关；未达则拒服不消耗
-            break;
-          case 'default-confirm':
-            performDefaultConfirm();
-            break;
-        }
-        break;
-      case 'z':
-      case 'Z': {
-        // 播种
-        if (worldActionShortcut === 'seed-from-hotbar') sowFromHotbarSelection(false);
-        break;
-      }
-      case 'x':
-      case 'X': // 浇水
-        if (worldActionShortcut === 'water-front-tile') {
-          performFarmAction('water', f);
-        }
-        break;
-      case 'Home': {
-        // 施肥
-        if (worldActionShortcut === 'fertilize-front-tile') {
-          performFertilizeAction(f, 'item.spirit-compost');
-        }
-        break;
-      }
-      case 'c':
-      case 'C':
-        if (worldActionShortcut === 'toggle-cultivation-panel') toggleCultivationPanel();
-        break;
-      case 'v':
-      case 'V': // 收获
-        if (worldActionShortcut === 'harvest-front-tile') {
-          performFarmAction('harvest', f);
-        }
-        break;
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9': {
-        if (interactionPanel.kind === 'npc-action') {
-          const actionIdx = npcActionIndexFromDigitKey(ev.key);
-          if (actionIdx == null) break;
-          npcActionIdx = normalizeSelection(actionIdx, NPC_ACTION_ORDER.length);
-          const mode = NPC_ACTION_ORDER[npcActionIdx] ?? NPC_ACTION_ORDER[0];
-          openNpcPanel(mode);
-          break;
-        }
-        switch (digitShortcut) {
-          case 'farm-action-select': {
-            const actionIdx = farmActionIndexFromDigitKey(ev.key);
-            if (actionIdx == null) break;
-            farmActionIdx = normalizeSelection(actionIdx, FARM_ACTION_ORDER.length);
-            openFarmActionPanel();
-            break;
-          }
-          case 'location-select': {
-            if (locationDigit == null) break;
-            selectLocationByDigit(locationDigit);
-            break;
-          }
-          case 'location-service-select': {
-            const serviceIdx = locationServiceIndexFromDigitKey(ev.key);
-            if (serviceIdx == null) break;
-            const locations = getActiveLocationDirectory(state);
-            if (locations.length === 0) {
-              const presentation = locationDirectoryEmptyToastPresentation(locationSelectionContextAssetId() ?? farmsteadRootContextAssetId(state));
-              toast(presentation.message, presentation.assetId);
-              break;
-            }
-            const location = locations[locationIdx % locations.length]!;
-            const services = getLocationServiceOptions(state, location.id);
-            if (services.length === 0) {
-              const presentation = locationServiceUnavailableToastPresentation(location, state);
-              toast(presentation.message, presentation.assetId);
-              break;
-            }
-            locationServiceIdx = normalizeSelection(serviceIdx, services.length);
-            activateLocationSelection('服务');
-            break;
-          }
-          case 'hotbar-select': {
-            const idx = hotbarIndexFromDigitKey(ev.key);
-            if (idx == null) break;
-            setHotbarIndex(idx, true);
-            break;
-          }
-        }
-        break;
-      }
-      case '$':
-      case '%':
-      case '^':
-      case '&':
-      case '*':
-      case '(': {
-        if (digitShortcut === 'location-select' && locationDigit != null) selectLocationByDigit(locationDigit);
-        break;
-      }
-      case 'Enter':
-        switch (enterShortcut) {
-          case 'confirm-location-service':
-            performDefaultConfirm();
-            break;
-          case 'confirm-interaction-panel':
-            confirmInteractionPanel();
-            break;
-          case 'end-day':
-            endDay();
-            break;
-        }
-        break;
-      case 't':
-        if (worldActionShortcut === 'tribulation') tryTribulation();
-        break;
-      case 'g': {
-        if (worldActionShortcut === 'feed-guard-beast') {
-          const choices = guardFeedChoices();
-          if (state.guardBeasts.length === 0) {
-            const presentation = guardBeastFeedFailureToastPresentation('no-guard-beast');
-            toast(presentation.message, presentation.assetId);
-            break;
-          }
-          if (choices.length === 0) {
-            const presentation = guardBeastFeedFailureToastPresentation('no-herb');
-            toast(presentation.message, presentation.assetId);
-            break;
-          }
-          const choice = choices[0]!;
-          const eventStart = state.events.length;
-          applyAction(state, { kind: 'feed-guard-beast', herbItemId: choice.itemId }, ctx);
-          const fed = state.events.slice(eventStart).find(e => e.type === 'guard-beast-fed');
-          if (fed) {
-            const payload = fed.payload as { id?: number; vigor?: number; bond?: number };
-            const presentation = guardBeastFeedResultToastPresentation({ ...choice, count: 1 }, { beastId: payload.id, vigor: payload.vigor, bond: payload.bond }, reg);
-            audio.playSfx('ui');
-            toast(presentation.message, presentation.assetId);
-          } else {
-            const presentation = guardBeastFeedFailureToastPresentation('failed');
-            toast(presentation.message, presentation.assetId);
-          }
-          break;
-        }
-        if (worldActionShortcut === 'hunt-beast') {
-          const beastsBefore = state.beastSurge?.beastsRemaining ?? 0;
-          const eventStart = state.events.length;
-          applyAction(state, { kind: 'hunt-beast' }, ctx);
-          if (beastsBefore === 0) {
-            const presentation = beastHuntUnavailableToastPresentation();
-            toast(presentation.message, presentation.assetId);
-            break;
-          }
-          const actionEvents = state.events.slice(eventStart);
-          for (const sfxId of actionSfxQueue(actionEvents)) audio.playSfx(sfxId);
-          const presentation = beastHuntResultToastPresentation(actionEvents, reg);
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      }
-      case '!':
-        if (digitShortcut === 'location-select' && locationDigit != null) {
-          selectLocationByDigit(locationDigit);
-          break;
-        }
-        if (worldActionShortcut === 'train-push-up') {
-          applyAction(state, { kind: 'train', method: 'push-up' }, ctx);
-          const presentation = bodyTrainingToastPresentation('push-up');
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      case '@':
-        if (digitShortcut === 'location-select' && locationDigit != null) {
-          selectLocationByDigit(locationDigit);
-          break;
-        }
-        if (worldActionShortcut === 'train-sit-up') {
-          applyAction(state, { kind: 'train', method: 'sit-up' }, ctx);
-          const presentation = bodyTrainingToastPresentation('sit-up');
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      case '#':
-        if (digitShortcut === 'location-select' && locationDigit != null) {
-          selectLocationByDigit(locationDigit);
-          break;
-        }
-        if (worldActionShortcut === 'train-squat') {
-          applyAction(state, { kind: 'train', method: 'squat' }, ctx);
-          const presentation = bodyTrainingToastPresentation('squat');
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      case ')':
-        if (digitShortcut === 'location-select' && locationDigit != null) {
-          selectLocationByDigit(locationDigit);
-          break;
-        }
-        if (worldActionShortcut === 'train-long-run') {
-          applyAction(state, { kind: 'train', method: 'long-run' }, ctx);
-          const presentation = bodyTrainingToastPresentation('long-run');
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      case 'b':
-      case 'B': {
-        if (worldActionShortcut === 'toggle-inventory') toggleInventoryVisibility();
-        break;
-      }
-      case 'n':
-        if (worldActionShortcut === 'brew-bone-pill') openFurnaceInventory(APP_FLOW_FOCUS_TARGETS.world, 'recipe.bone-pill');
-        break;
-      case 'm':
-        if (worldActionShortcut === 'brew-detox-pill') openFurnaceInventory(APP_FLOW_FOCUS_TARGETS.world, 'recipe.detox-pill');
-        break;
-      case 'h':
-        if (worldActionShortcut === 'eat-ward-pill') eatById('pill.ward-basic', '承雷丹');
-        break;
-      case 'j':
-        if (worldActionShortcut === 'eat-bone-pill') eatById('pill.bone-basic', '生骨丹');
-        break;
-      case 'k':
-        if (worldActionShortcut === 'eat-detox-pill') eatById('pill.detox', '净毒丹');
-        break;
-      case 'r': {
-        if (worldActionShortcut === 'place-lightning-rod-array') {
-          const ft = frontTile();
-          const r = placeArray(state, 'array.lightning-rod', ft.x, ft.y, ctx);
-          const presentation = arrayPlacementToastPresentation('lightning-rod', {
-            placed: r.placed,
-            reason: r.reason,
-            costText: describeArrayBuildCost('array.lightning-rod')
-          });
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      }
-      case 'f': {
-        if (worldActionShortcut === 'place-insulation-array') {
-          const ft = frontTile();
-          const r = placeArray(state, 'array.insulation', ft.x, ft.y, ctx);
-          const presentation = arrayPlacementToastPresentation('insulation', {
-            placed: r.placed,
-            reason: r.reason,
-            costText: describeArrayBuildCost('array.insulation')
-          });
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      }
-      case 'i':
-        if (worldActionShortcut === 'toggle-inventory') toggleInventoryVisibility();
-        break;
-      case 'M': {
-        if (farmMenuShortcut === 'open-farm-menu') openFarmActionPanel();
-        break;
-      }
-      case 'F5': {
-        switch (legacyBuildShortcut) {
-          case 'open-furnace-build-menu':
-            farmActionIdx = FARM_ACTION_ORDER.indexOf('build');
-            {
-              const furnaceBuildIdx = buildChoices.findIndex(choice => choice.kind === 'facility' && choice.facilityKind === 'talisman-furnace');
-              facilityBuildIdx = furnaceBuildIdx >= 0 ? furnaceBuildIdx : 0;
-            }
-            openFarmActionPanel();
-            break;
-          case 'preselect-build':
-            preselectFarmActionKind('build');
-            break;
-        }
-        break;
-      }
-      case 'F1':
-      case 'F2':
-      case 'F3':
-      case 'F4':
-      case 'F6':
-      case 'F7':
-      case 'F8':
-      case 'F9':
-      case 'F10':
-      case 'F11':
-      case 'F12':
-      case 'Insert':
-      case 'Delete': {
-        if (!farmActionShortcut) break;
-        preselectFarmActionKind(farmActionShortcut.kind);
-        break;
-      }
-      case 'o':
-      case 'O':
-      case ',': {
-        if (!locationShortcut) break;
-        if (!focusLocationService(locationShortcut.locationId, locationShortcut.command)) {
-          const presentation = locationShortcutFailureToastPresentation(locationShortcut.locationId, state, locationShortcut.command);
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      }
-      case 'p': {
-        if (commandShortcut === 'toggle-pause') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case 'P':
-      case '.': {
-        if (commandShortcut === 'toggle-pause') {
-          performCommandShortcut(commandShortcut);
-          break;
-        }
-        if (commandShortcut === 'legacy-confirm' && legacyConfirmShortcut === 'period') performLegacyConfirmShortcut();
-        break;
-      }
-      case ';':
-      case 'Semicolon':
-      case 'l': {
-        if (!explorationLocationShortcut) break;
-        if (!focusLocationService(explorationLocationShortcut.locationId, explorationLocationShortcut.command)) {
-          const presentation = locationShortcutFailureToastPresentation(explorationLocationShortcut.locationId, state, explorationLocationShortcut.command);
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      }
-      case '/': {
-        if (!explorationLocationShortcut) break;
-        if (!focusLocationService(explorationLocationShortcut.locationId, explorationLocationShortcut.command)) {
-          const presentation = locationShortcutFailureToastPresentation(explorationLocationShortcut.locationId, state, explorationLocationShortcut.command);
-          toast(presentation.message, presentation.assetId);
-        }
-        break;
-      }
-      case '=': {
-        if (commandShortcut === 'open-upgrade-panel') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case '-': {
-        if (commandShortcut === 'open-npc-browse') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case '\\': {
-        if (commandShortcut === 'open-npc-gift') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case '|': {
-        if (commandShortcut === 'open-npc-quest') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case 'PageUp': {
-        if (pageUpShortcut) performPageUpShortcut(pageUpShortcut);
-        break;
-      }
-      case 'PageDown': {
-        if (pageDownShortcut) performPageDownShortcut(pageDownShortcut);
-        break;
-      }
-      case 'End': {
-        if (commandShortcut === 'open-festival-panel') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case '?': {
-        if (commandShortcut === 'show-calendar-summary') performCommandShortcut(commandShortcut);
-        break;
-      }
-      case 'Tab': {
-        switch (tabShortcut) {
-          case 'cycle-interaction-panel':
-            cycleActiveInteractionPanel(Boolean(ev.shiftKey));
-            break;
-          case 'cycle-location':
-            cycleLocation(false);
-            break;
-          case 'cycle-location-service':
-            cycleLocationService();
-            break;
-          case 'toggle-inventory':
-            toggleInventoryVisibility();
-            break;
-        }
-        break;
-      }
-      case 'Escape': {
-        if (escapeShortcut != null) performEscapeShortcutAction(escapeShortcut);
-        break;
-      }
-      case 'u':
-        if (worldActionShortcut === 'toggle-furnace') openFurnaceInventory();
-        break;
-      case 'y': {
-        if (worldActionShortcut === 'cycle-recipe') openFurnaceInventory();
-        break;
-      }
-      case 'q':
-      case 'Q':
-        if (qShortcut) performQShortcut(qShortcut);
-        break;
-      case '[':
-        if (worldActionShortcut === 'decrease-furnace-heat') openFurnaceInventory();
-        break;
-      case ']':
-        if (worldActionShortcut === 'increase-furnace-heat') openFurnaceInventory();
-        break;
-      default:
-        return;
-    }
-    ev.preventDefault();
-    saveState(state);
-    refreshAppPresentation();
+    // 旧世界退役（§8.16 阶段 2 第一步）：旧快捷键启用路径已拆除，产品键路成为唯一路径；
+    // 其后的旧世界快捷键解析块自此不可达，物理删除随阶段 2 第二步（renderer 退役）一并处理。
+    if (handleProductKeydown(ev)) ev.preventDefault();
+    return;
   });
 
   function renderFrame(timestamp: number): void {
@@ -6835,7 +6129,9 @@ async function main(): Promise<void> {
     const hotbarSlot = HOTBAR_SLOTS[hotbarIdx] ?? HOTBAR_SLOTS[0]!;
     drawHotbarIcon(layers, renderAssets.hotbarIcons[hotbarSlotAssetId(hotbarSlot) ?? '']);
     refreshHelpHint();
-    const canvasBottomHudVisible = LEGACY_SHORTCUTS_ENABLED;
+    // 旧世界退役（§8.16 阶段 2 第一步）：画布底部 HUD（气血条/热栏/帮助行）为旧快捷键
+    // 启用时的专属呈现，随启用路径一并退役；图层本体随 renderer 阶段整删。
+    const canvasBottomHudVisible = false;
     layers.hud.visible = canvasBottomHudVisible;
     layers.bars.visible = canvasBottomHudVisible;
     for (const label of layers.barLabels) label.visible = canvasBottomHudVisible;

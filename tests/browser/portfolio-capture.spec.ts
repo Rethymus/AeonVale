@@ -1,3 +1,9 @@
+// 旧世界退役（docs/21 §8.16 阶段 2 第一步）唯一整族保留的旧世界 spec：
+// 100% 经 enterLoadedLegacyWorld 展示存档门进入旧世界，但被 package.json
+// `portfolio:capture` 与 tools/portfolio-mvp-preflight.mjs 验收链硬依赖，
+// 该两文件不在本批允许改动集内——待交付媒体产品决策落地后与
+// enterLoadedLegacyWorld 门、showcaseSave.ts、openGameWithLoadedSave 一并
+// 整族处置（判定与遗留见 docs/21 §8.21）。
 import { expect, test, type Page } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';

@@ -2,10 +2,12 @@ import { expect, test } from '@playwright/test';
 import { buildRegistry } from '@content/registry';
 import { createWorld, DEFAULT_BALANCE } from '@sim';
 import { saveGame } from '@sim/serialize';
-import { continueToWorld, gameEntryPath } from './openGame';
+import { gameEntryPath } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
 const JOURNEY_KEY = 'aeonvale-cultivation-journey-v1';
+// 旧世界退役（docs/21 §8.16 阶段 2 第一步）：「首写失败不上报安全」用例经
+// continueToWorld 断言旧世界暂停面文案，与旧档槽耦合，随测试门退役（判定表见 docs/21 §8.21）。
 const registry = buildRegistry();
 
 function corruptNestedInventoryPayload(): string {
@@ -94,33 +96,6 @@ test('a successful first write is required before a fresh journey becomes contin
 
   await page.reload();
   await expect(continueButton).toBeEnabled();
-});
-
-test('a failed first write never claims safety in Pause, Settings, or the portrait gate', async ({ page }) => {
-  await page.addInitScript(() => {
-    window.localStorage.clear();
-    Storage.prototype.setItem = () => {
-      throw new DOMException('quota exceeded', 'QuotaExceededError');
-    };
-  });
-  await page.goto(gameEntryPath());
-  await continueToWorld(page);
-
-  await expect(page.locator('#flow-title-continue')).toBeDisabled();
-  await page.keyboard.press('Escape');
-  await expect(page.locator('[data-app-surface="pause"]')).toBeVisible();
-  await expect(page.locator('#flow-pause-save-status')).toContainText('当前进度未保存');
-  await expect(page.locator('#flow-pause-save-status')).not.toContainText('已保留');
-
-  await page.locator('[data-app-surface="pause"] [data-game-command="settings"]').click();
-  await expect(page.locator('#flow-settings-save-status')).toContainText('最近一次写入失败');
-  await expect(page.locator('#flow-settings-save-status')).toContainText('尚无可继续的本地存档');
-  await page.keyboard.press('Escape');
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('#orientation-gate')).toBeVisible();
-  await expect(page.locator('#orientation-save-status')).toContainText('当前进度未保存');
-  await expect(page.locator('#orientation-save-status')).not.toContainText('安全保留');
 });
 
 test('a later write failure keeps the previous journey snapshot continuable', async ({ page }) => {
