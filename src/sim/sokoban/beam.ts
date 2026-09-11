@@ -3,7 +3,7 @@
  * 纯函数、确定性、零随机（仅依赖板面状态）。步数上限防 mirror 成环死循环。
  */
 import type { Vec2 } from '@sim/world/types';
-import { DIR_VECTORS, rotateCW, type BeamTrace, type SokobanBoard } from './types';
+import { DIR_VECTORS, rotateCCW, rotateCW, type BeamTrace, type BlockModifier, type SokobanBoard } from './types';
 
 const MAX_BEAM_STEPS_MULT = 4;
 
@@ -13,6 +13,11 @@ export function idx(board: { readonly width: number }, x: number, y: number): nu
 
 export function inBounds(board: { readonly width: number; readonly height: number }, x: number, y: number): boolean {
   return x >= 0 && y >= 0 && x < board.width && y < board.height;
+}
+
+/** 读取格位修饰；blockModifiers 缺省（旧档/模板）视为全 'none'。 */
+export function modifierAt(board: { readonly blockModifiers?: readonly BlockModifier[] }, i: number): BlockModifier {
+  return board.blockModifiers?.[i] ?? 'none';
 }
 
 export function traceBeam(board: SokobanBoard): BeamTrace {
@@ -39,7 +44,10 @@ export function traceBeam(board: SokobanBoard): BeamTrace {
       break;
     }
     if (terrain === 'herb') herbsHit.push({ x, y });
-    if (block === 'mirror') dir = rotateCW(dir); // 金阵石：折射后按新方向继续
+    if (block === 'mirror') {
+      // 逆折镜（mirror-ccw 修饰）折向逆时针，基型金阵石折向顺时针（docs/31 §3.3）。
+      dir = modifierAt(board, i) === 'mirror-ccw' ? rotateCCW(dir) : rotateCW(dir);
+    }
     const step2 = DIR_VECTORS[dir];
     x += step2.x;
     y += step2.y;

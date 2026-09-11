@@ -8,7 +8,7 @@
 import { Rng } from '@sim/world/rng';
 import type { Vec2 } from '@sim/world/types';
 import { idx, inBounds, traceBeam } from './beam';
-import { generateBoard, solveBoard, type GenerateBoardOptions } from './generator';
+import { generateBoard, deriveFlavorTag, solveBoard, type GenerateBoardOptions } from './generator';
 import {
   DIR_VECTORS,
   type BlockKind,
@@ -126,12 +126,22 @@ export function createPuzzle(
   const { board } = buildBoard(tpl);
   const solution = solveBoard(board, tpl.player, { maxMoves: tpl.moveBudget });
   const certifiedMoves = solution?.moves.length ?? tpl.moveBudget;
+  const budgetSlack = Math.max(0, tpl.moveBudget - certifiedMoves);
+  const preserveHerbsTarget = board.terrain.filter(terrain => terrain === 'herb').length;
   return makeState(safeStage, board, tpl.player, Math.max(tpl.moveBudget, certifiedMoves + 8), {
     archetype: 'turning-rune',
     requiredBlockKinds: ['mirror'],
     certifiedMoves,
-    budgetSlack: Math.max(0, tpl.moveBudget - certifiedMoves),
-    preserveHerbsTarget: board.terrain.filter(terrain => terrain === 'herb').length
+    budgetSlack,
+    preserveHerbsTarget,
+    solverNodes: solution?.exploredNodes ?? 0,
+    firstMoveFanout: 0, // 手作模板不参与扇出统计（生成器专属信号）
+    flavorTag: deriveFlavorTag({
+      certifiedMoves,
+      budgetSlack,
+      requiredBlockKinds: ['mirror'],
+      board
+    })
   });
 }
 
@@ -175,6 +185,11 @@ export function applyMove(state: SokobanState, action: SokobanAction): SokobanAc
     if ((board.blocks[bi] ?? 'none') !== 'none') return { ok: false, reason: 'push-into-block' };
     board.blocks[bi] = targetBlock;
     board.blocks[ti] = 'none';
+    // 修饰随阵石一起移动（缺省数组视为无修饰）。
+    if (board.blockModifiers) {
+      board.blockModifiers[bi] = board.blockModifiers[ti] ?? 'none';
+      board.blockModifiers[ti] = 'none';
+    }
   }
   state.player = { x: tx, y: ty };
   state.movesUsed += 1;

@@ -6,6 +6,7 @@
 import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@sim/params';
 import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
 import { applyMove } from './logic';
+import { solveBoard } from './generator';
 import { evaluateTribulation, type TribulationOutcome } from './power';
 import type { Dir, SokobanState } from './types';
 
@@ -36,6 +37,10 @@ export interface TribulationSessionState {
   /** 逐枚记录已消费丹药；撤步按 P100 枚数展开。 */
   readonly pillsConsumed: readonly TribulationSessionPillId[];
   readonly outcome: TribulationSessionOutcome | null;
+  /** 死局面哨兵（docs/31 §1.3）：剩余预算内有界重解失败 ⇒ 当前板面已无解，建议撤步。 */
+  readonly deadlocked: boolean;
+  /** 余步紧张度门（docs/31 §2.3）：剩余步 ≤ 该阈值时 HUD 进入强调态。 */
+  readonly pressureThreshold: number;
 }
 
 export type TribulationSessionAction =
@@ -75,6 +80,7 @@ export function cloneSokobanState(state: SokobanState): SokobanState {
       ...state.board,
       terrain: [...state.board.terrain],
       blocks: [...state.board.blocks],
+      ...(state.board.blockModifiers ? { blockModifiers: [...state.board.blockModifiers] } : {}),
       sourcePos: { ...state.board.sourcePos }
     },
     player: { ...state.player },
@@ -149,12 +155,26 @@ function resolveTerminalOutcome(
   };
 }
 
+/** 死局面哨兵求解上限（docs/31 §1.3：每步后毫秒级有界重解）。 */
+const SENTINEL_MAX_NODES = 4000;
+
+function sentinelCheck(puzzle: SokobanState): boolean {
+  if (puzzle.status !== 'playing') return false;
+  const remaining = Math.max(0, puzzle.moveBudget - puzzle.movesUsed);
+  const stillSolvable = solveBoard(puzzle.board, puzzle.player, {
+    maxNodes: SENTINEL_MAX_NODES,
+    maxMoves: remaining
+  });
+  return stillSolvable === null;
+}
+
 export function createTribulationSession(
   puzzle: SokobanState,
   preparation: TribulationPreparation,
   params: BalanceParams = DEFAULT_BALANCE
 ): TribulationSessionState {
   const clonedPreparation = clonePreparation(preparation);
+  const slack = puzzle.challenge?.budgetSlack ?? 0;
   const initial: TribulationSessionState = {
     puzzle: cloneSokobanState(puzzle),
     preparation: clonedPreparation,
@@ -163,7 +183,9 @@ export function createTribulationSession(
     wardEnabled: false,
     undoSnapshots: [],
     pillsConsumed: [],
-    outcome: null
+    outcome: null,
+    deadlocked: false,
+    pressureThreshold: Math.ceil(slack * 0.5)
   };
   return initial.puzzle.status === 'playing' ? initial : resolveTerminalOutcome(initial, params);
 }
@@ -201,12 +223,16 @@ function transitionMove(
   if (!move.ok) return reject(state, action, 'move-rejected', move.reason);
   const moved: TribulationSessionState = {
     ...next,
-    undoSnapshots: [...next.undoSnapshots, snapshot]
+    undoSnapshots: [...next.undoSnapshots, snapshot],
+    deadlocked: false
   };
+  const afterMove: TribulationSessionState = moved.puzzle.status === 'playing'
+    ? { ...moved, deadlocked: sentinelCheck(moved.puzzle) }
+    : moved;
   return accept(
-    moved.puzzle.status === 'playing'
-      ? moved
-      : resolveTerminalOutcome(moved, params)
+    afterMove.puzzle.status === 'playing'
+      ? afterMove
+      : resolveTerminalOutcome(afterMove, params)
   );
 }
 
@@ -233,7 +259,8 @@ function transitionUndo(
     undoChargesRemaining: next.undoChargesRemaining - 1,
     undoSnapshots: next.undoSnapshots.slice(0, -1),
     pillsConsumed: [...next.pillsConsumed, ...undoPills],
-    outcome: null
+    outcome: null,
+    deadlocked: false
   });
 }
 

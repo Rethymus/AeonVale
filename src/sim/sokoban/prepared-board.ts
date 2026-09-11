@@ -7,7 +7,7 @@
  */
 import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
 import { idx, traceBeam } from './beam';
-import { solveBoard } from './generator';
+import { deriveFlavorTag, solveBoard } from './generator';
 import type { BlockKind, SokobanState, Terrain } from './types';
 
 export interface PreparedPuzzlePlacement {
@@ -239,7 +239,16 @@ export function applyPreparationToPuzzle(
         requiredBlockKinds,
         certifiedMoves: certified.moves.length,
         budgetSlack: Math.max(0, state.moveBudget - certified.moves.length),
-        preserveHerbsTarget: state.board.terrain.filter(terrain => terrain === 'herb').length
+        preserveHerbsTarget: state.board.terrain.filter(terrain => terrain === 'herb').length,
+        // docs/31 §1.3：落位重认证沿用本次求解的歧义度；扇出沿用原认证（板面仅块位微调）。
+        solverNodes: certified.exploredNodes,
+        firstMoveFanout: state.challenge?.firstMoveFanout ?? 0,
+        flavorTag: deriveFlavorTag({
+          certifiedMoves: certified.moves.length,
+          budgetSlack: Math.max(0, state.moveBudget - certified.moves.length),
+          requiredBlockKinds,
+          board: state.board
+        })
       }
     : state.challenge;
   return {

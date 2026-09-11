@@ -11,15 +11,19 @@
  */
 import type { Rng } from '@sim/world/rng';
 import type { Vec2 } from '@sim/world/types';
-import { idx, inBounds, traceBeam } from './beam';
+import { idx, inBounds, modifierAt, traceBeam } from './beam';
 import {
   DIR_VECTORS,
+  rotateCCW,
   rotateCW,
+  type BeamTrace,
   type BlockKind,
+  type BlockModifier,
   type Dir,
   type SokobanArchetype,
   type SokobanBoard,
   type SokobanChallenge,
+  type SokobanFlavorTag,
   type Terrain
 } from './types';
 
@@ -37,8 +41,16 @@ export interface GenResult {
 interface SearchNode {
   readonly player: Vec2;
   readonly blocks: BlockKind[];
+  /** 与 blocks 平行；仅当板面存在非 none 修饰时才参与节点键。 */
+  readonly modifiers: BlockModifier[];
   readonly depth: number;
   readonly movedBlockMask: number;
+}
+
+export interface GenerateBoardOptions {
+  readonly requiredBlockKinds?: readonly Exclude<BlockKind, 'none'>[];
+  /** 测试与教学场景用：跳过修饰阵石附着（docs/31 §3.3），保持旧种子行为。 */
+  readonly disableModifiers?: boolean;
 }
 
 export interface SolveOptions {
@@ -99,9 +111,14 @@ function simulateMove(board: SokobanBoard, node: SearchNode, dir: Dir): SearchNo
     const blocks = node.blocks.slice();
     blocks[bi] = targetBlock;
     blocks[ti] = 'none';
+    // 修饰随阵石移动（与 logic.applyMove 同语义）。
+    const modifiers = node.modifiers.slice();
+    modifiers[bi] = modifiers[ti] ?? 'none';
+    modifiers[ti] = 'none';
     return {
       player: { x: tx, y: ty },
       blocks,
+      modifiers,
       depth: node.depth + 1,
       movedBlockMask: node.movedBlockMask | blockKindBit(targetBlock)
     };
@@ -109,22 +126,27 @@ function simulateMove(board: SokobanBoard, node: SearchNode, dir: Dir): SearchNo
   return {
     player: { x: tx, y: ty },
     blocks: node.blocks,
+    modifiers: node.modifiers,
     depth: node.depth + 1,
     movedBlockMask: node.movedBlockMask
   };
 }
 
-function beamReachesBody(board: SokobanBoard, blocks: BlockKind[]): boolean {
-  return traceBeam({ width: board.width, height: board.height, terrain: board.terrain, blocks, sourcePos: board.sourcePos, sourceDir: board.sourceDir }).reachedBody;
+function beamReachesBody(board: SokobanBoard, blocks: BlockKind[], modifiers?: readonly BlockModifier[]): boolean {
+  return traceBeam({ width: board.width, height: board.height, terrain: board.terrain, blocks, blockModifiers: modifiers as BlockModifier[] | undefined, sourcePos: board.sourcePos, sourceDir: board.sourceDir }).reachedBody;
 }
 
 function nodeKey(board: SokobanBoard, node: SearchNode): string {
   let k = `${node.player.x},${node.player.y}|`;
+  let hasModifiers = false;
   for (let i = 0; i < node.blocks.length; i++) {
     const b = node.blocks[i];
-    if (b !== 'none') k += `${i}:${b};`;
+    const m = node.modifiers[i] ?? 'none';
+    if (b === 'none') continue;
+    if (m !== 'none') hasModifiers = true;
+    k += `${i}:${b}${m === 'none' ? '' : `:${m}`};`;
   }
-  return k;
+  return hasModifiers ? `M|${k}` : k;
 }
 
 /** 有界 BFS 最短路求解器；maxMoves 用来认证“倒计时内必解”。 */
@@ -134,10 +156,11 @@ export function solveBoard(board: SokobanBoard, player: Vec2, options: SolveOpti
   const initial: SearchNode = {
     player: { ...player },
     blocks: [...board.blocks],
+    modifiers: [...(board.blockModifiers ?? new Array(board.blocks.length).fill('none') as BlockModifier[])],
     depth: 0,
     movedBlockMask: 0
   };
-  if (beamReachesBody(board, initial.blocks)) {
+  if (beamReachesBody(board, initial.blocks, initial.modifiers)) {
     return { moves: [], movedBlockKinds: [], exploredNodes: 0 };
   }
   const visited = new Set<string>([nodeKey(board, initial)]);
@@ -156,7 +179,7 @@ export function solveBoard(board: SokobanBoard, player: Vec2, options: SolveOpti
       const key = nodeKey(board, next);
       if (visited.has(key)) continue;
       parents.set(key, { previous: currentKey, dir });
-      if (beamReachesBody(board, next.blocks)) {
+      if (beamReachesBody(board, next.blocks, next.modifiers)) {
         const moves: Dir[] = [];
         let cursor = key;
         while (parents.has(cursor)) {
@@ -242,10 +265,6 @@ function buildPath(n: number, bends: number, rng: Rng): BuiltPath | null {
   const body: Vec2 = { ...pos };
   if (body.x === source.x && body.y === source.y) return null;
   return { path, bendCells, incomingDir, body, source, dir };
-}
-
-export interface GenerateBoardOptions {
-  readonly requiredBlockKinds?: readonly Exclude<BlockKind, 'none'>[];
 }
 
 interface GenCandidate {
@@ -419,19 +438,142 @@ function tryGenerate(stage: number, rng: Rng, options: GenerateBoardOptions): Ge
   return { board, player, requiredBlockKinds, archetype: archetypeFor(requiredBlockKinds) };
 }
 
-/** 生成一颗可解且初始未解的棋盘；耗尽尝试返回 null（调用方走模板兜底）。 */
+/**
+ * 劫式三型标签（docs/31 §4.3）：生成期确定性判定，多命中取 快>缠>势。
+ * 快=余量极紧或含绝缘石；缠=保草目标 ≥2 且初始光路距任一灵草曼哈顿 ≤1；势=其余（折点多的默认势型）。
+ */
+export function deriveFlavorTag(input: {
+  readonly certifiedMoves: number;
+  readonly budgetSlack: number;
+  readonly requiredBlockKinds: readonly Exclude<BlockKind, 'none'>[];
+  readonly board: SokobanBoard;
+  readonly bendCount?: number;
+  readonly archetype?: SokobanArchetype;
+}): SokobanFlavorTag {
+  const slackRatio = input.certifiedMoves > 0 ? input.budgetSlack / input.certifiedMoves : 1;
+  if (slackRatio <= 0.35 || input.requiredBlockKinds.includes('insulator')) return 'swift';
+  const herbs: Vec2[] = [];
+  for (let i = 0; i < input.board.terrain.length; i++) {
+    if (input.board.terrain[i] === 'herb') {
+      herbs.push({ x: i % input.board.width, y: Math.floor(i / input.board.width) });
+    }
+  }
+  if (herbs.length >= 2) {
+    const beam = traceBeam(input.board);
+    const nearBeam = herbs.some(herb =>
+      beam.cells.some(cell => Math.abs(cell.x - herb.x) + Math.abs(cell.y - herb.y) <= 1)
+    );
+    if (nearBeam) return 'entangling';
+  }
+  return 'momentum';
+}
+
+/** 修饰阵石附着（docs/31 §3.3 首批）：stage≥4 起对 mirror 以 p 附 mirror-ccw；在认证前完成。 */
+function attachModifiers(stage: number, rng: Rng, board: SokobanBoard, options: GenerateBoardOptions): void {
+  if (options.disableModifiers || stage < 4) return;
+  const p = Math.min(0.1 + 0.02 * stage, 0.25);
+  if (board.blockModifiers && board.blockModifiers.some(m => m !== 'none')) return; // 已附着（重试候选复用板面时不重复）
+  const modifiers = board.blockModifiers ?? (new Array(board.blocks.length).fill('none') as BlockModifier[]);
+  for (let i = 0; i < board.blocks.length; i++) {
+    if (board.blocks[i] === 'mirror' && rng.intRange(1, 100) <= Math.round(p * 100)) {
+      modifiers[i] = 'mirror-ccw';
+    }
+  }
+  board.blockModifiers = modifiers;
+}
+
+/** 剥离全部修饰（保留 blockModifiers 数组以维持形状，全部置回 'none'）。 */
+function stripModifiers(board: SokobanBoard): void {
+  if (!board.blockModifiers) return;
+  for (let i = 0; i < board.blockModifiers.length; i++) board.blockModifiers[i] = 'none';
+}
+
+/** 首步扇出（docs/31 §1.3）：对采纳候选的 4 个首步各有界重解，数仍在预算内得解的方向数。 */
+function countFirstMoveFanout(
+  board: SokobanBoard,
+  player: Vec2,
+  certifiedMoves: number,
+  budget: number
+): number {
+  let fanout = 0;
+  for (const dir of ALL_DIRS) {
+    const probe: SearchNode = {
+      player: { ...player },
+      blocks: [...board.blocks],
+      modifiers: [...(board.blockModifiers ?? (new Array(board.blocks.length).fill('none') as BlockModifier[]))],
+      depth: 0,
+      movedBlockMask: 0
+    };
+    const first = simulateMove(board, probe, dir);
+    if (!first) continue;
+    if (beamReachesBody(board, first.blocks, first.modifiers)) {
+      fanout += 1;
+      continue;
+    }
+    const rest = solveBoard(
+      { ...board, blocks: first.blocks, blockModifiers: first.modifiers },
+      first.player,
+      { maxNodes: 4000, maxMoves: Math.max(0, budget - 1) }
+    );
+    if (rest) fanout += 1;
+  }
+  return Math.min(fanout, 4);
+}
+
+/**
+ * 生成一颗可解且初始未解的棋盘；耗尽尝试返回 null（调用方走模板兜底）。
+ * docs/31 §1.3：32 次重试升级为「难度带定向」——目标带 center=10+6·stage、半径 4；
+ * 带内候选即刻采纳，全程未中带则取离 center 最近者（消除同 stage 步数方差）。
+ */
 export function generateBoard(stage: number, rng: Rng, options: GenerateBoardOptions = {}): GenResult | null {
+  const bandCenter = 10 + 6 * stage;
+  const bandRadius = 4;
+  interface ScoredCandidate {
+    readonly result: GenResult;
+    readonly solverNodes: number;
+    readonly fanout: number;
+    readonly distance: number;
+  }
+  let fallback: ScoredCandidate | null = null;
   for (let attempt = 0; attempt < 32; attempt++) {
     const r = tryGenerate(stage, rng, options);
     if (!r) continue;
-    const initialReaches = beamReachesBody(r.board, r.board.blocks);
-    if (initialReaches) continue; // 初始已解 → 重排（至少要推一步）
-    const solution = solveBoard(r.board, r.player, { maxMoves: MAX_GENERATED_SOLUTION_MOVES });
-    if (!solution) continue;
-    if (r.requiredBlockKinds.some(kind => !solution.movedBlockKinds.includes(kind))) continue;
+    if (!r.board.blockModifiers) {
+      r.board.blockModifiers = new Array(r.board.blocks.length).fill('none') as BlockModifier[];
+    }
+    attachModifiers(stage, rng, r.board, options);
+    const initialReaches = beamReachesBody(r.board, r.board.blocks, r.board.blockModifiers);
+    if (initialReaches) {
+      // 修饰版初始即解：剥离修饰按无修饰板复检（保证生成成功率不因修饰下降）。
+      stripModifiers(r.board);
+      if (beamReachesBody(r.board, r.board.blocks, r.board.blockModifiers)) continue;
+    }
+    let solution: ReturnType<typeof solveBoard> = solveBoard(r.board, r.player, { maxMoves: MAX_GENERATED_SOLUTION_MOVES });
+    {
+      const solved = solution;
+      if (solved !== null && r.requiredBlockKinds.some(kind => !solved.movedBlockKinds.includes(kind))) {
+        solution = null;
+      }
+    }
+    if (!solution) {
+      if (r.board.blockModifiers?.some(m => m !== 'none')) {
+        stripModifiers(r.board);
+        const stripped = solveBoard(r.board, r.player, { maxMoves: MAX_GENERATED_SOLUTION_MOVES });
+        if (stripped && r.requiredBlockKinds.some(kind => !stripped.movedBlockKinds.includes(kind))) {
+          continue;
+        }
+        if (stripped) {
+          solution = stripped;
+        } else {
+          continue;
+        }
+      } else {
+        continue;
+      }
+    }
     const budgetSlack = clamp(8 + stage * 2 + rng.intRange(0, 5), 8, 24);
     const moveBudget = solution.moves.length + budgetSlack;
-    return {
+    const candidate: GenResult = {
       ...r,
       moveBudget,
       challenge: {
@@ -439,9 +581,52 @@ export function generateBoard(stage: number, rng: Rng, options: GenerateBoardOpt
         requiredBlockKinds: r.requiredBlockKinds,
         certifiedMoves: solution.moves.length,
         budgetSlack,
-        preserveHerbsTarget: r.board.terrain.filter(terrain => terrain === 'herb').length
+        preserveHerbsTarget: r.board.terrain.filter(terrain => terrain === 'herb').length,
+        solverNodes: solution.exploredNodes,
+        firstMoveFanout: 0,
+        flavorTag: 'momentum'
       }
     };
+    const distance = Math.abs(solution.moves.length - bandCenter);
+    if (distance > bandRadius) {
+      // 带外：留作保底，继续重试找更近的。
+      if (!fallback || distance < fallback.distance) {
+        fallback = { result: candidate, solverNodes: solution.exploredNodes, fanout: 0, distance };
+      }
+      continue;
+    }
+    const fanout = countFirstMoveFanout(r.board, r.player, solution.moves.length, moveBudget);
+    const flavorTag = deriveFlavorTag({
+      certifiedMoves: solution.moves.length,
+      budgetSlack,
+      requiredBlockKinds: r.requiredBlockKinds,
+      board: r.board,
+      bendCount: countMirrors(r.board),
+      archetype: r.archetype
+    });
+    return { ...candidate, challenge: { ...candidate.challenge, firstMoveFanout: fanout, flavorTag } };
+  }
+  if (fallback) {
+    // 保底：带外最近候选补全扇出与标签（有界求解，成本可控）。
+    const board = fallback.result.board;
+    const fanout = countFirstMoveFanout(board, fallback.result.player, fallback.result.challenge.certifiedMoves, fallback.result.moveBudget);
+    const flavorTag = deriveFlavorTag({
+      certifiedMoves: fallback.result.challenge.certifiedMoves,
+      budgetSlack: fallback.result.challenge.budgetSlack,
+      requiredBlockKinds: fallback.result.challenge.requiredBlockKinds,
+      board,
+      bendCount: countMirrors(board),
+      archetype: fallback.result.challenge.archetype
+    });
+    return { ...fallback.result, challenge: { ...fallback.result.challenge, firstMoveFanout: fanout, flavorTag } };
   }
   return null;
+}
+
+function countMirrors(board: SokobanBoard): number {
+  let n = 0;
+  for (const block of board.blocks) {
+    if (block === 'mirror') n += 1;
+  }
+  return n;
 }

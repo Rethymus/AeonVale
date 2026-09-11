@@ -283,6 +283,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-tribulation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(390px,1.45fr) minmax(300px,.78fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:12px;padding:clamp(8px,1.4vw,16px);overflow:hidden;background:radial-gradient(circle at 28% 48%,${P.primaryBg} 0,${P.boardBg} 46%,${P.boardBg} 130%);border:1px solid ${P.primaryBorder};color:${P.text};}`,
     `.rp-hud{grid-area:hud;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:3px;background:${P.boardBorder};font-size:13px;font-variant-numeric:tabular-nums;box-shadow:0 10px 28px rgba(0,0,0,.22);}`,
     `.rp-hud-item{min-width:0;padding:8px 10px;background:linear-gradient(145deg,${P.btnBg},${P.boardBg});color:${P.text};line-height:1.45;}`,
+    // 余步紧张度门（docs/31 §2.3）：强调态走字重/下划线（动效纪律：非配色变化）。
+    `.rp-hud-item[data-pressure='high']{font-weight:800;text-decoration:underline;text-underline-offset:4px;}`,
     `.rp-hud-stage{grid-column:1/-1;color:${P.accent};font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:18px;font-weight:700;letter-spacing:.08em;border-block-end:1px solid ${P.primaryBorder};}`,
     `.rp-hud-preparation{grid-column:1/-1;border-inline-start:3px solid ${P.boltBlue};font-size:13px;line-height:1.6;}`,
     '.rp-hud-seg{white-space:nowrap;}',
@@ -2120,10 +2122,20 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   let lastOutcomeResult: TribulationSessionOutcome['result'] | null = null;
   function syncHud(): void {
     const challenge = challengePresentation();
-    stageEl.textContent = `劫式 · ${challenge.title}　${cultivationStageLabel(stage)}`;
+    const flavorLabel = state.challenge
+      ? state.challenge.flavorTag === 'swift' ? '快' : state.challenge.flavorTag === 'entangling' ? '缠' : '势'
+      : null;
+    stageEl.textContent = `劫式 · ${challenge.title}${flavorLabel ? `「${flavorLabel}」` : ''}　${cultivationStageLabel(stage)}`;
     movesEl.textContent = `余步 ${Math.max(0, state.moveBudget - state.movesUsed)} / ${state.moveBudget}`;
-    herbsEl.textContent = `灵草 ${herbsAliveOf(state)}/${state.herbsTotal}`;
+    // 余步紧张度门（docs/31 §2.3）：进入阈值区加强调态；死局哨兵触发时撤步建议置顶。
     const session = tribulationSession;
+    const remainingMoves = Math.max(0, state.moveBudget - state.movesUsed);
+    const underPressure = session !== null && remainingMoves <= session.pressureThreshold && !session.outcome;
+    movesEl.dataset.pressure = underPressure ? 'high' : 'normal';
+    if (session?.deadlocked && !session.outcome) {
+      movesEl.textContent = `此局已无解 · 建议撤步（余 ${remainingMoves}）`;
+    }
+    herbsEl.textContent = `灵草 ${herbsAliveOf(state)}/${state.herbsTotal}`;
     const intel = preparation.previewLevel <= 0 ? '劫兆未明' : preparation.previewLevel === 1 ? `存活上限 ≤${preparation.maxSurvivablePower}` : preparation.previewLevel === 2 ? `安全雷威 ${preparation.minTemperingPower}–${preparation.maxSurvivablePower}` : `甜蜜雷威 ${preparation.sweetSpotMinPower}–${preparation.sweetSpotMaxPower}`;
     const required = state.challenge?.requiredBlockKinds.map(blockKindLabel).join(' · ') ?? '金石·折雷';
     const certificate = state.challenge ? `认证 ${state.challenge.certifiedMoves} 步 · 余量 ${state.challenge.budgetSlack}` : '已验可解';
