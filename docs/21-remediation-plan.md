@@ -1093,3 +1093,33 @@ golden 夹具 `--init` 重新授权（130 步，确定性自检通过）；构�
 **未实施（迭代 2 待续，docs/31 §5 矩阵）**：焚绝缘/宽脉桥（需有状态光路
 设计）、灵草 kind 扩展（雷引草/护脉草）、首步提示 token（消耗预见的
 准备态改造）、ghost 预览、配方图鉴。
+
+### 8.23 第十九轮（2026-09-11）：docs/31 迭代 2 实施包（有状态光路 + 灵草 kind + 提示 token）
+
+承接 §8.22 的迭代 2 待续清单，docs/31 §3.3/§2.3 P2 项落地：
+
+1. **焚绝缘（burning-insulator）**：`BlockModifier` 扩 `'burning'`；stage≥4 起与
+   逆折镜同概率附着于绝缘石。有状态光路经 `consumeOneShotGuard`（beam.ts）单一
+   迁移点实现：光路被截断且末格为焚绝缘 ⇒ 自毁为空 + 重追光路。
+   applyMove 与求解器共用同一守卫；**求解器侧在克隆上探测**（查询语义纯化——
+   曾因就地耗尽破 BFS 节点 key 一致性致 parents 链成环，已修复并有测试锁定）。
+2. **灵草 kind 扩展**：`PreparedHerbKind` 扩 `'thunder-draw'`（雷引草）与
+   `'vein-shield'`（护脉草），经新地形 `herb-thunder`/`herb-shield` 落位。
+   - 雷引草：光路命中 = 雷威 **增益** +15%/株（`thunderDrawHerbModifierMilli=1150`，
+     与基型 950 降益对称）——灵草首次从"保"变"用"（风险换收益）。
+   - 护脉草：替身体挡一次雷（光路命中即截断该次，随后耗尽为空地）；
+     **落位限定在认证光路之外**（保险语义，不堵死认证路径）。
+3. **首步提示 token**：session 新 action `'hint'`——消耗 1 层预告（要求
+   previewLevel ≥1），有界重解给出最优首步方向；每次天劫限 1 次；无可解路径时
+   不消耗并亮死局标记。UI：天劫中按 <kbd>H</kbd>，帮助文案同步。
+4. **夹具 schema**：pin 参数 schema 补 `thunderDrawHerbModifierMilli`
+   （default 1150，旧夹具免再生成即可解析）。
+
+验证：tsc 零错；单测+property+replay **2669/2669**（新 6 例：焚绝缘截断/耗尽/
+基型不受扰/applyMove 有状态生效、雷引草增益>基型、护脉草截断+耗尽贯通、
+提示 token 消耗/限次/预见不足拒绝）；golden 夹具 `--init` 再授权（确定性自检通过）；
+构建/治理/content:lint 全绿；浏览器回归 **22/22**（roguelite 全家/compact/
+keypoint/可达性/叙事/smoke）。
+
+**迭代 2 遗留（§5 矩阵行 3）**：宽脉桥（conductor 跨 2 格 rift）、配方图鉴、
+ghost 预览；残卷门控（新节点 cost 4-5）待灵草/修饰池经济联调。
