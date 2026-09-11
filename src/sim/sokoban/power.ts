@@ -55,9 +55,12 @@ export function calculateBeamPower(
   }
   let herbModifierMilli = 1000;
   // scorched 表示本次雷威结算前已经烧毁的灵草；只有当前光路上的新鲜灵草参与本次倍率。
+  // docs/31 §3.3：雷引草（herb-thunder）命中=雷威增益 +15%/株（风险换收益），基型灵草仍降益。
   for (const herb of state.beam.herbsHit) {
     if (state.scorched[idx(state.board, herb.x, herb.y)]) continue;
-    herbModifierMilli = multiplyMilli(herbModifierMilli, p.herbHitModifierMilli);
+    const terrain = state.board.terrain[idx(state.board, herb.x, herb.y)] ?? 'empty';
+    const modifier = terrain === 'herb-thunder' ? p.thunderDrawHerbModifierMilli : p.herbHitModifierMilli;
+    herbModifierMilli = multiplyMilli(herbModifierMilli, modifier);
   }
 
   const sourcePowerBonus = Number.isFinite(preparation.sourcePowerBonus)

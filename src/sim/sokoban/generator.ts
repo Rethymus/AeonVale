@@ -11,7 +11,7 @@
  */
 import type { Rng } from '@sim/world/rng';
 import type { Vec2 } from '@sim/world/types';
-import { idx, inBounds, modifierAt, traceBeam } from './beam';
+import { consumeOneShotGuard, idx, inBounds, modifierAt, traceBeam } from './beam';
 import {
   DIR_VECTORS,
   rotateCCW,
@@ -133,7 +133,16 @@ function simulateMove(board: SokobanBoard, node: SearchNode, dir: Dir): SearchNo
 }
 
 function beamReachesBody(board: SokobanBoard, blocks: BlockKind[], modifiers?: readonly BlockModifier[]): boolean {
-  return traceBeam({ width: board.width, height: board.height, terrain: board.terrain, blocks, blockModifiers: modifiers as BlockModifier[] | undefined, sourcePos: board.sourcePos, sourceDir: board.sourceDir }).reachedBody;
+  // 查询语义纯化：一次性守卫的耗尽在克隆上模拟，不改动调用方（BFS 节点）的数组，
+  // 否则节点 key 与实际状态漂移会破 parents 链（曾致求解回溯成环）。
+  const probeBlocks = [...blocks];
+  const probeModifiers = modifiers ? [...modifiers] : undefined;
+  const probe: SokobanBoard = { width: board.width, height: board.height, terrain: board.terrain, blocks: probeBlocks, blockModifiers: probeModifiers, sourcePos: board.sourcePos, sourceDir: board.sourceDir };
+  let beam = traceBeam(probe);
+  if (consumeOneShotGuard(probe, probeBlocks, probeModifiers, beam)) {
+    beam = traceBeam(probe);
+  }
+  return beam.reachedBody;
 }
 
 function nodeKey(board: SokobanBoard, node: SearchNode): string {
@@ -468,16 +477,16 @@ export function deriveFlavorTag(input: {
   return 'momentum';
 }
 
-/** 修饰阵石附着（docs/31 §3.3 首批）：stage≥4 起对 mirror 以 p 附 mirror-ccw；在认证前完成。 */
+/** 修饰阵石附着（docs/31 §3.3）：stage≥4 起对 mirror 附 mirror-ccw、对 insulator 附 burning；在认证前完成。 */
 function attachModifiers(stage: number, rng: Rng, board: SokobanBoard, options: GenerateBoardOptions): void {
   if (options.disableModifiers || stage < 4) return;
   const p = Math.min(0.1 + 0.02 * stage, 0.25);
   if (board.blockModifiers && board.blockModifiers.some(m => m !== 'none')) return; // 已附着（重试候选复用板面时不重复）
   const modifiers = board.blockModifiers ?? (new Array(board.blocks.length).fill('none') as BlockModifier[]);
   for (let i = 0; i < board.blocks.length; i++) {
-    if (board.blocks[i] === 'mirror' && rng.intRange(1, 100) <= Math.round(p * 100)) {
-      modifiers[i] = 'mirror-ccw';
-    }
+    if (rng.intRange(1, 100) > Math.round(p * 100)) continue;
+    if (board.blocks[i] === 'mirror') modifiers[i] = 'mirror-ccw';
+    else if (board.blocks[i] === 'insulator') modifiers[i] = 'burning';
   }
   board.blockModifiers = modifiers;
 }

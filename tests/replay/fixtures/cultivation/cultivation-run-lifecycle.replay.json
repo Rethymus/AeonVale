@@ -71,6 +71,7 @@
         "mirrorModifierMilli": 960,
         "conductorModifierMilli": 1080,
         "herbHitModifierMilli": 950,
+        "thunderDrawHerbModifierMilli": 1150,
         "timeoutBodyDamage": 10,
         "perfectTemperingGainMultiplier": 10,
         "survivedTemperingGainMultiplier": 6,
@@ -418,117 +419,117 @@
     {
       "phase": "create-session",
       "label": "tribulation-1:create-session",
-      "expected": "5a80f6af4c11596cab52ee0c4ff23aa0613340aad7f8b9c633f76cbea3a36377"
+      "expected": "d7136599604e766255376fadb93f90e0a72387aea36b3702611cf002e1302a8b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-1:move:down:ok",
-      "expected": "f0aecc69b55fa8ad27f33594c8ee74183c4cc6a15bada6ffe768fbd2039f8eff"
+      "expected": "8f1d4dca1e168ba218d355683b46ac0cacefb9945c7f61852d018438cdca5c4b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-2:undo:ok",
-      "expected": "a78a06ede4cb727cc25d898ef40a562141e5659e3075f16a80ee681388b7a0d1"
+      "expected": "56e78ea03f897320840eae00df2eefafe6ffc6ae0a8dfe9b0fb1cd5c062f6010"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-3:move:down:ok",
-      "expected": "08abde7b3ed1ed037f7f455941795e0c5aae0acdbe949a64a82dd058aa60df3e"
+      "expected": "ccb9259769dd3b0e089a5857b556ab58daca98655e66bc4e148e8fc9b9b93278"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-4:move:down:ok",
-      "expected": "7a6497843f67a14a5bae9ffee2a348fcb36f16be201b251431aa70c654ba8059"
+      "expected": "b6d49b389023d6eb7f4f25f15d87714d395abc947e9b1366981dd4fedd3c0d7e"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-5:move:right:ok",
-      "expected": "a49c6425f3858b52efbe141aa0b44abb828cd3895a85d13e2d19dc89ebdffbd3"
+      "expected": "cd436fb0df9d4f05a452de15e40bb4b23cb6e6c85edaf5a1cdd74da8adaa9217"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-6:move:down:ok",
-      "expected": "97ef308bc173b6a614fd0ad0efd3ec47565ee4ec8a2cd940e2f8b3173d351f58"
+      "expected": "966c18a9dacd6327d0065a855e72abd2aaf7921cc109287419f7033c04582292"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-7:move:down:ok",
-      "expected": "a50f1ea976406f66ba64761e949083cc0a5700bacc5e91c9b679e3558c6ea554"
+      "expected": "0cecd2b6059c65acd28bfdb81b6f0a341d6f670a9806ce73d2f03c1cca317148"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-8:move:left:ok",
-      "expected": "fc6b704f2649c78a06529778531059036909dfe3eb51a98aff55fb1813d4cf59"
+      "expected": "47ad324d1df56abee0093618c20b15f1ab45c211496ee16708acbd593c44df0a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-9:move:up:ok",
-      "expected": "8981a93da20279fbd8e8c9df0bcf4ffc88e03a759cb76d390ac375b0c8c30b7c"
+      "expected": "0c94030314de879c9da0cc1b450489dbb84c99c2ef549260ff04ae6f01d11314"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-10:move:right:ok",
-      "expected": "f85e001b37152a4764b92f391e0964250a2a4639c596bf1a4ec21e54690f0342"
+      "expected": "366ed316a7f72e1cc9437bed0908d94009c67201cfed90f3b7ddf2b74100fcfd"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-11:move:up:ok",
-      "expected": "16138ce6c8d7f3736d64f9c135105abc3099919f318c11c48617ae61de94286b"
+      "expected": "e1c3e72071eef0825cf5a832eb8635360fea640ccf7d36058bb1e4de0a713682"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-12:move:left:ok",
-      "expected": "3b16c7f9163710c7cf755b723a16b6f219404adb3eb16ea4039504e2db6b4065"
+      "expected": "4d2a975666ddac3118516a58deb19d1484d8b006e9234f9528a08f2b1478924f"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-13:move:up:ok",
-      "expected": "a34fae7a97c7dba95a7e53e986d12f31f99bb37409560901bbf4caa0c4b12e3e"
+      "expected": "897d2f327a615f1effe6bdee5a6e7870f189ea1bf4e99ff3e75fdcd73d5eacec"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-14:move:up:ok",
-      "expected": "0f4c60c93af324942df51dca4674b2d2cc4c5cc5074229854f962b9f88508bcc"
+      "expected": "aa378c44a582dfc5d2efcf07f9384b091db197be30c287862e332a6ed861862e"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-15:move:right:ok",
-      "expected": "116fe954c7744d6f790dc3416d80a4af972c6e7d93af53ec858ecdbda1b68363"
+      "expected": "6f57d0ccf4f2dfeac78c8b074ff642e9f4325acca27bd5c4ee8372deb88b4db8"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-16:move:down:ok",
-      "expected": "59012b7b92731470391563d041e8df30446cb0003a1fa4be5dc0dacf6d938771"
+      "expected": "98863fd2524f34e7fa1ed641444c8b61dfc75430d890f97564bd11bcb4d08281"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-17:move:down:ok",
-      "expected": "06b0ce166e5ee652a233daffc3c581ed8eb8dbe9910f0233180f194a81901ba3"
+      "expected": "efccefd4701645a3dd3b27babd9f8d2f44c51f99488382bc1afa1486eb33d538"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-18:move:down:ok",
-      "expected": "e8025e9efdce26a9e1cc73b715d54b7b9c3c14b9a791510b6cfcc62722953901"
+      "expected": "e4b21d9991fc6be4e6cc1957e178343265ad4478a7111f5adfcbe75e266e9b84"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-19:move:right:ok",
-      "expected": "7d037c37d9bd3fa94ef01d28b05a60271ca68b9c0ff1b3cd6afa8624620955ec"
+      "expected": "f0854cbc0b3a13634f2b48d0aafbdb91d2c9f1d437b4d754c7100eb3cc2d8628"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-20:move:right:ok",
-      "expected": "a77d57c8eed8f6e150a384fed9e77fe77726167d1e2db196c971980122110caf"
+      "expected": "fdcf23ca5e9a506d90cd308f9121b9fa520113af0f593b8e0db446aea5eff5b9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-21:move:up:ok",
-      "expected": "4622ea3c1c0228ca1d76b33f4d42df4239c84bf7d32d95f5f068dd096c3bb274"
+      "expected": "39149a74ebfb9a2a0987ceef3a84ebff237d49faed23ec30195b50a8a89c19c0"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-22:move:left:ok",
-      "expected": "905949863a543bca3126675ed1c730a85600e161d4c9693d2143a587cd86f2f5"
+      "expected": "bafcaabe0a01d16a4b9b6b7b9b40d790f3d656093460f63e0ee19811ff1958ad"
     },
     {
       "phase": "settlement",
@@ -553,442 +554,442 @@
     {
       "phase": "create-session",
       "label": "tribulation-2:create-session",
-      "expected": "db95a9ecd7beed2813c96dc6b4f2b8697a1226b1f045d8c394dc03fc1404325a"
+      "expected": "5d3c287a421da4db81357d974a4e364501a70762f8825c8b420161d482366783"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-1:move:up:rejected-move-rejected",
-      "expected": "e425993d56fc2ed26e57b1d50274613392c3e25c7e70c92f97e632758929c0c2"
+      "expected": "17cdf52694b6720f96160a9add9416c2b24a7cad0da174b11d1e78c9073d6fdc"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-2:move:right:rejected-move-rejected",
-      "expected": "6c3ae7c529b935c932688066109344f9f195bb22f1bf338fe509d3eabc4ce1cf"
+      "expected": "e27554a2d0e187158bac80a06d1328e49d45008424a73e9aa04408a57cd51f3d"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-3:move:down:ok",
-      "expected": "c67a02544d6204cc65bcf6cb08930ea2a3838d25cdc640706c9ee3c00cd76fcb"
+      "expected": "54e33a70b6e926c5de41655555c26c742ff526e65ece390f865140c0d9bac9d1"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-4:move:left:rejected-move-rejected",
-      "expected": "db72e2d1a5f9f779dc4ca4185559ca30abd72561c82972b6442b2a0832a7cdaf"
+      "expected": "a5dc4fbc7dc59da0781584bf0bb2830f2f94f9aef5e0257dd7c3954818b0f223"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-5:move:up:ok",
-      "expected": "13848d7ad9a1e66de418bbfedbdf94af3295a03c66299fe4db7e84c64d5b63e9"
+      "expected": "245e8609fbad746ea426ddfab5d263bd4772184beebc049b0db04ba75a72cbd6"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-6:move:right:rejected-move-rejected",
-      "expected": "5793ba34168097a118ff97dbf790131f46fec099a081923f88499a418e659722"
+      "expected": "a37cdec66777b7b6d3cae0d43fe7fb8438be788bc428fa4b8c089c58069aeda2"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-7:move:down:ok",
-      "expected": "05f8d60cfdac01ed49a00f335c3b61e7c38383a4ccf88e75739886aaa1ee9bdc"
+      "expected": "64f6aead20e3a65d6594cac6e9fd1c0805626af589828eb94be4e931b3180925"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-8:move:left:rejected-move-rejected",
-      "expected": "0d04f4450470c28ff42ba8e427a0eb355bb704c5b9de396c08e20326081d7ef6"
+      "expected": "1c1a27656a2c0f16110d4ba00e5e815b96df316f9b064512e0ea6aec17f31c50"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-9:move:up:ok",
-      "expected": "9f64446b7c94a7d9cfc49a95469edfc05617af86cd67097d36ba9922a9a35382"
+      "expected": "85ef0417dd240e117ff4beaa9afa984c06877fd2dfa0dca773df8f3ab200ec41"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-10:move:right:rejected-move-rejected",
-      "expected": "934aa93148257228054d0242d5fe3fe12e0ac1c1db7d9ae85c2a3e7b96d59dae"
+      "expected": "095b1033fcd8f39b82961a4fedb051c8ad2d3764002c742976eb681de6008afe"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-11:move:down:ok",
-      "expected": "795183b8d3381317b0db2b7b25cdd25fbaee0d7ab258f92e2048ca2a063bc003"
+      "expected": "b243e86f6b58cc5e72d639582f9ec19aeda0bb57929029adccd7872f6b8605df"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-12:move:left:rejected-move-rejected",
-      "expected": "53ee0925575579ab7cfe77282234784703b8863e7347707e70d629958e03699b"
+      "expected": "f0007bce549a98e0ed361b958ef6355ecfeafe9242fd1258845ae281cc237d2a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-13:move:up:ok",
-      "expected": "dd84ea17c11844b7f076f6799f0161b99ea250cf2a4699d756fec7e2a645d619"
+      "expected": "0b39e6b4fd4f106e2c0e2b15651eae552d9bc5139c68e5a71d068a3e41a0cd0b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-14:move:right:rejected-move-rejected",
-      "expected": "4ae963a741f714010faf264a0407d16aaf85635b5783b3ae62a47bb12dfdc7b0"
+      "expected": "39940cef1556ebf0bc99f3d601db3800a404a3dace6f3b13ccb4af62b2cd2c38"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-15:move:down:ok",
-      "expected": "632919b37dde12a5c397542c5bb233b1064b7c6c42e861c3826985c8507d1578"
+      "expected": "971c48c9fae766745e803aa43895152144ed062bb9cd25f816be55db01655fae"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-16:move:left:rejected-move-rejected",
-      "expected": "c23ddcb8d804e63dcabe134aa97f0f56bd12316955583a4fe734e9aa8ed76442"
+      "expected": "536ff5cff0881755754125683f8e4374fdb4313840e41d3e9c05c61dadbdb483"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-17:move:up:ok",
-      "expected": "a07b5da02f741c59656b548cc6df64fc3ab71d9ef466219e17dc7c6b843879c4"
+      "expected": "c6abc03f043a690c6f2c492ee2258cc0c6f4a970f69ed51f33c15142b4f8e88d"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-18:move:right:rejected-move-rejected",
-      "expected": "a3238f99ba5db1f193497985eb248140e3db10e2e5a5aa55d7ae82e8ae1c44e8"
+      "expected": "5148221cd70c6017dd00944cb59718aaa79151b5406ba2e5d4a84770f1730a16"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-19:move:down:ok",
-      "expected": "0e9f8ccd76cbacfe02fc3e4e52cbc99f047b45034eef7990b34fcfe69c255342"
+      "expected": "f981b81af9028dd7a1b67c5ef71c181fc53426cde1f705e423d1025acdda82ea"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-20:move:left:rejected-move-rejected",
-      "expected": "56c7a1eef178153caf71a755c8154b980cd36e033a3e69a5df0b2737595a308d"
+      "expected": "93eed12c86fd5d6bd3b495528b7fc0ad9ac4ce8356bc37a0acdf9f6f43f00461"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-21:move:up:ok",
-      "expected": "eaacee0e66e8284a13d1e4f739935db608a594326c9125a280ba4a001366f4cc"
+      "expected": "785a36efdc236cf4db25b84ff29439cae5e9f85f3204874f9118e1ec8547e108"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-22:move:right:rejected-move-rejected",
-      "expected": "8b3aafd9dfa46648dece0bd29e766bc64965c12844aed1e97728ad59e87ba649"
+      "expected": "4beaa9ff36b5d40b530b3cef2a48fdd4680dd2c3cb2dd4fd1a23c6ef39daa09b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-23:move:down:ok",
-      "expected": "d3a2f2b532b7a61d26c19bd3c46cb3acff5ed366843a91d7a73b8e2b547603f5"
+      "expected": "2593eb7ac704194e900c312a1064b04c5c8db81a893f3f100cb96128a7580664"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-24:move:left:rejected-move-rejected",
-      "expected": "a3912d389850902127ce73cddc74833fac0647af67597595ab1d6615dfe30879"
+      "expected": "56bbace71f831e7d5a8328186c953f045b9c67384c4ed581ba02869b30d475c9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-25:move:up:ok",
-      "expected": "6ba4646634cceaabb4b646f6fad8afee753eb93fbcbf76564270cdecc598104b"
+      "expected": "b8104c57688d2d2aa4a28147a4896511f23ba5ea79853301233d53145e680d34"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-26:move:right:rejected-move-rejected",
-      "expected": "0d6859fa791bea1648f3f190112b165a6b5ca15377d4bda623cf33b283214988"
+      "expected": "d07d52c6afa31b5b4fd891cd5e4bbad2aace2ed05302a18f5cd7a50f57eded76"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-27:move:down:ok",
-      "expected": "a02bb9eff6482c4c6905ed0b8dd76f7a7657b1b3d9771b2cb107b50a52bd275c"
+      "expected": "4c4e1c63bf6e0097f55fcdffb9535fd56137eaf7a247d94dc22f034f2d083214"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-28:move:left:rejected-move-rejected",
-      "expected": "9cb65af4080b24e0e169c0a2da7a6f2c56827fc2c84776fad99f9a0ae43e833f"
+      "expected": "077842213b064d66c08370e7929c638f70cc8e2cf588f4d6ae565d1a49be0107"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-29:move:up:ok",
-      "expected": "a3f853b4d8cbfa6acee8218f54e55b268e670cf2023094c4f163ee8b05a49803"
+      "expected": "311fcea4fcb63b3509f084bcfe11e3894f0e4262c1c6c1c22ee4b18933818997"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-30:move:right:rejected-move-rejected",
-      "expected": "fd7a84870c6433693b62a79469e671706a488a1896440159c10d6c02ecfb03e9"
+      "expected": "be023116aca0862064d997dccb1502bdcbef8ad5fdadeb4970fb4ddc276e8796"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-31:move:down:ok",
-      "expected": "3dd87ee7fa5a5a0fef63770ffd6e98a4360caa87eec1e22c857718e3b22bb9fd"
+      "expected": "5a82f2ae9f8b095e5ebe29df4b515b9ce1f8a26ae1ff3fc9b00760293544b0e4"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-32:move:left:rejected-move-rejected",
-      "expected": "164516c52149d8210b0939f5732a78ceba74d4720dc9b6f8c9286a9dcddd558b"
+      "expected": "dae723ececbc6bd9dda61e5f79fddaec26835f35a5f0e547d795617ff029f6da"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-33:move:up:ok",
-      "expected": "8e33e18f17db41ca3071782e4c512e2fd12337c8e8536852bf9d620d67400eef"
+      "expected": "8be4a4928d2300a5c37950753ab8289f349be4bcb36613694de7ab609ac3e045"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-34:move:right:rejected-move-rejected",
-      "expected": "696888aa2d52037a5ca9e0828d3be166a7e0c2dcb3c90facde1150fc734b8d2f"
+      "expected": "fdc57a35eca7dc5bd1980c0a1054e654f841547b238e57aae87d3704d8111b5a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-35:move:down:ok",
-      "expected": "36ca75602fe06a7488812bc9ddc38879eea567636c437806135b9aef7d657ba7"
+      "expected": "9e4abb54e40eaca8244e026b9b2a2f82b00935d96bfa95bf331c9a9bf3d69780"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-36:move:left:rejected-move-rejected",
-      "expected": "ef4641793a371fce67657f135dfb8456ebf44f1db967fa31e227d676e5116701"
+      "expected": "421a9589e1f8e32d9a264615ae5f341ac7e940da68228c933dd7a4d08cc8a7af"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-37:move:up:ok",
-      "expected": "1bd558010eab383266741204b28c0a10818add0b3c9ce1ddf5f3fb1f8fb145ff"
+      "expected": "d3d615953c8fb32fbd34670af4f4d3aa011d3977f2f28e5ecc21276b9dad4eb9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-38:move:right:rejected-move-rejected",
-      "expected": "481a32c33b07947cdec2cc2010b9ebc962acf14f58952aa46e3d5bafee03931b"
+      "expected": "fbb0b2764c26a60adb3affbd9db0b24d5a6a4cba581ac2e8862972ab36b7d22b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-39:move:down:ok",
-      "expected": "de3c2e15092ff241f9d3ab9a64bb937cea513ee6548a4457053d29f0389d0ead"
+      "expected": "589c75d0dd513564fc1116d5c17369b52186be45ed8598fd291743acb08f9725"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-40:move:left:rejected-move-rejected",
-      "expected": "763da8266dfdb63d9e8b76b2f58df06cfc1a05552d65b8b47c8431b5f7e14d05"
+      "expected": "74db936b2732085b6cde184b617d7308177325308709ce130d80867fe5fc4df7"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-41:move:up:ok",
-      "expected": "76c8c7fe736e6282177de164a1f816ef62b2f327f36396a476a577877cda9d44"
+      "expected": "b36efcc0bea75adf9987bbc389850e3daa77cf1f3024144d12f0d7d969039a18"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-42:move:right:rejected-move-rejected",
-      "expected": "47e4cd4525153d7f28eb11185ea0f75b5df66efb4d073278321aa7a48f3b7861"
+      "expected": "239d85f8fdd471d60b51799ef3895d104d9418dd5e8a1d66916d7b3d37225865"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-43:move:down:ok",
-      "expected": "23b3a399d0f557ac9fbde8a0cf61a50cad81d979b110d625b6e3f4fa8d1b96a5"
+      "expected": "2a9a7f6cb509bb21dfe3593b28c8fc6fb4b46e699af3ca7d19b763593503dfb5"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-44:move:left:rejected-move-rejected",
-      "expected": "87d8fb50b3315acdd44535866bc6497203dab9f0937c72708e211f04204df0d5"
+      "expected": "aec9d1e6599eeb968c1d9a6b4e1f9a970f0d0413e3b86dca2330d26d4c97eff5"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-45:move:up:ok",
-      "expected": "4db2b8fc9bd37d6954389d4bec76e67d29390c82b49949814ae974de1f560ddf"
+      "expected": "780b1836693b014522470d615d700506c1a60df179a36bd3f4badf713f8b26e9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-46:move:right:rejected-move-rejected",
-      "expected": "55a2bd277444266be088bf8609b3e71c74a63c37e25fff38cb6e460d820ad724"
+      "expected": "a0cb95c36c2ab0a6afc845345684e9d50e38430c4f740105b91e5985b5f8f0e9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-47:move:down:ok",
-      "expected": "5ba95793e88baab4c3775d953502a7181f347836582b11bd6fe204b3fc704e8c"
+      "expected": "3de1428beef132622a55b45c92c11acea99ae486b33d958d36718ffeeb289ab5"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-48:move:left:rejected-move-rejected",
-      "expected": "2f1063f99e60ad3003a3f9054f337378d836d54f813c0bb3221975d3b7d36b2b"
+      "expected": "9c97f2e1f52aff9d0d52a0e15751cdf3cebee84502a5b0ee279558fc6feacd98"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-49:move:up:ok",
-      "expected": "5014ffbeaeb76ed0eb819e1ab12df768a28ab99f43dbada955c11e68b548aca3"
+      "expected": "cfb6ade1a3f85f03157c2314601c8511c9a750aea7ef7611c5ad45baaeef76b7"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-50:move:right:rejected-move-rejected",
-      "expected": "7214e3ea0ae88487c9d46057259d042f7fe3c84fee80163a0ca4c0b1dc1d9edf"
+      "expected": "b32004b74e2a6fb890f54cca2bee222d7973fa176a99e4ede9064b181a0a20fa"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-51:move:down:ok",
-      "expected": "1912b20f6305c406b7f4e2768c1e097677af1331483176a057f38c013ecfe8c8"
+      "expected": "b0427af78ea19b640e05d26cde2a1a3140882f3323b778a9cd1e91490086c260"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-52:move:left:rejected-move-rejected",
-      "expected": "dc6d66afb83c387a611f2a75f949d38c66bda64c6e89afde8487e9bbe8d981af"
+      "expected": "2a712668f3305018acb1dcd5271cc0b83d57c5986b21eca2ff3533f58920c6f0"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-53:move:up:ok",
-      "expected": "31aab9782fb843679869be72176447c4acc1851020c5ee69bcaacd7a6a0e1803"
+      "expected": "36e1ff767688a8a9f47d6877be71324f5668f0707e21915f597ee8cf7197d351"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-54:move:right:rejected-move-rejected",
-      "expected": "cd82da9a8754aa805b41fdead98295112ea3b2ab6245b17ea05ecedf580a0748"
+      "expected": "789fcfc1b6b942a0e24e66dc67bd4d2fcc173d2f002586d9d95a9256ac01951b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-55:move:down:ok",
-      "expected": "03d004d0e3a97fb646c048d6cdcebf83415cc57ef18503197486a334ac3068ad"
+      "expected": "445be3bba186081f9047faf46facb9b4560ab25ec42ed275f3487bcccfa35aa9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-56:move:left:rejected-move-rejected",
-      "expected": "e45cf16a3ab1824ae98721e9d039cf40ae01d88caa32ba539a1a9605255e1f1c"
+      "expected": "c8b25a5e3f8db6e6c17fd34df0969186d966482d46d405578bd8db61e5eae9c3"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-57:move:up:ok",
-      "expected": "4aec61b1e9679e47118a5508b04fa8503cb949418395b5096abd59338da1736a"
+      "expected": "216eec186fa8929ff99341799aec08b6ea71299026d3ccba8a8d734505adb849"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-58:move:right:rejected-move-rejected",
-      "expected": "4a3feeacbb45e3417f49a381c701e2a6dcb84c7c3e867e3100fb32b3ab5ec0f6"
+      "expected": "4e21975c530b1d211387df1300f88209c64b85e4ddd13997ec1ea66d2334fe88"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-59:move:down:ok",
-      "expected": "7c14100fb4dae5bc529e8acd0291cdaea26ab926d9fbdaf89490d34030953975"
+      "expected": "931bb51eaeb664af6a13efa7b12b40dc2761d3fed0f3ae8a1c8dfdecd02c2c7c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-60:move:left:rejected-move-rejected",
-      "expected": "98522561b3b09ebee410e2c4d79585956fb5c6eb9809f963dfa2b06a63e16189"
+      "expected": "f3db351105ee491c6230ed402bce93c26671e3aff129503fc2157988ab2f47db"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-61:move:up:ok",
-      "expected": "48e77c6ec6f6842661b99ec12095f06edb333699be747d8736fa511b95e06d36"
+      "expected": "de27f43b27e90996f488285d598f29b093775c8ced9f7555a4bcc25a9178b03f"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-62:move:right:rejected-move-rejected",
-      "expected": "45d478fd22f9abde422e61068adb27ff36a956bb425cbd376b93d76ee0f953a4"
+      "expected": "a1104f44badacc7aced88d4ffb1cb94ef7880f261eb0f734643c06c4bff0ec34"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-63:move:down:ok",
-      "expected": "70a8e47301ee9229c4086b426cda96eb62e5c9f3a5165a5ba99b6a6fcbc5ac2b"
+      "expected": "92ab784bf42551347f70d7debb193c183f2e97260abde35388a90bbd870ef6ae"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-64:move:left:rejected-move-rejected",
-      "expected": "c20622e34020a0d40cc6db7b923505a21d98d2ad199c49cd067178d1cb30f34a"
+      "expected": "6ce1f87c3bb4a54ace8ced5a096446630b90dab1b7a2fc7023d5483a45dc7c7a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-65:move:up:ok",
-      "expected": "07942b0c8fae483e2729e37cc0344115c0e0793113304951e74dc73b4fd37c65"
+      "expected": "85dfa5dfc2f4f34348581cec3b5923b6b29d56ed2f0e162de3f8b88573fcc3d2"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-66:move:right:rejected-move-rejected",
-      "expected": "5b1b8cef0380de4fc95024b8bf9ee023511b41979970c414333fdee54dfb792c"
+      "expected": "19d98a9f7351caf8a10a726d31c83c53b2f4c2bb1c310de4a301c7e8f0ff9999"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-67:move:down:ok",
-      "expected": "95b66900ca74e80d112bcd7a99d9f79d929086b9c4660eaac3a68d508ab213c2"
+      "expected": "86ee8de231b1aaa0d28fd0c90a209fb727a9e5fdca6256fa54e1c050e1e3eb74"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-68:move:left:rejected-move-rejected",
-      "expected": "4db9b69882df280f95396ed81b8aa72b1184166da478ff1b04bb86e6c45924ae"
+      "expected": "937c93192a927add17b01ca9542283948487d255f71827632333501e180683af"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-69:move:up:ok",
-      "expected": "b7b9fd5bfa7d677c118d8ddcad82f9e24a6c6ae6f6f777b92156c067840e09a4"
+      "expected": "61fb0ee5fa6884d65dae82916b5643c49d5b53317d38066d1474b97d5b4615e0"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-70:move:right:rejected-move-rejected",
-      "expected": "acec90d2cb5c1bdb7f751b3fe64b1cf9f29800d13ea904cea1b95eaa8d2d46b4"
+      "expected": "2854c36fb931525518bd41c97b12392834172fbee6010f6e23a6e7e48ac3b94b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-71:move:down:ok",
-      "expected": "9cb10c9fc6608396bcf796d013e86616f444948a66649d04a5b319d9993d0a28"
+      "expected": "f28ae318c7e93d52ebeecab91c9050a4f8aafeef14a99b073ddb29be776a762d"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-72:move:left:rejected-move-rejected",
-      "expected": "4910b9dee274529bfa8dd915ac0ddc3ee6bdd669e8212c7afa6feab00e05691c"
+      "expected": "f6775bacf11aac7d37e42645e15a85cdbfbe0b8d09f4240e341e0e33d9c44954"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-73:move:up:ok",
-      "expected": "ed65870de658aee5d712b9cd9b1074549c5d72d3825b8617513e3d629e8615b9"
+      "expected": "d3b34647df0fcc434dec85bcdf57b1ccba22352df05ed2fdea1d193e55702994"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-74:move:right:rejected-move-rejected",
-      "expected": "1333e49c1af5c90c3226c9924c7856b2958bebcbea3cdcc6e25b7ce077d38073"
+      "expected": "93316f4dcef05a92d2cfad8043be504e2f0d1a65bf7107d9de05b60c633ae6d4"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-75:move:down:ok",
-      "expected": "6e82954bf831257b9b8b9d07899a5ff7b71d75fec0d7b59ba244e4a4c60e5a80"
+      "expected": "425ba3894a125b51f51f6b6882ec218a447ffead555d89d87e17d927bb82934b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-76:move:left:rejected-move-rejected",
-      "expected": "00342e76e103524aceb84046c5fa50863d0323ddfe115379ffac414d5cce124e"
+      "expected": "ad2746ab2d5a6708c74d826454e4c3acfd69358c644952e64ca05fad4a288651"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-77:move:up:ok",
-      "expected": "e687ad38a039cf89a92562bf100652ec3acb76e3f0fb2b993d6e43134e59fea6"
+      "expected": "1a721a56ec7843316e741af9c68435d561b8327989b0afeb66a81e00d748427e"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-78:move:right:rejected-move-rejected",
-      "expected": "d1c9c110179c5dae34ffb1c03e9c026bf695ccddae085b1c4c6e1287966b350a"
+      "expected": "d3361a4740a27c2326281304e558b7ef4deb71a876d0a6551eab245923fe64c9"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-79:move:down:ok",
-      "expected": "5aafc878dc33fd3a4e846a11a8258689b7465395a23f7ea79fc295684f9d990a"
+      "expected": "3b131966e8abad8bc652fc8bb39df28d9b29759fa48f7a8fce738f876025bb47"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-80:move:left:rejected-move-rejected",
-      "expected": "0fbf670196781c28a745051a8d4ad1b7d5a5de62d593831a73b9be9ea7b22716"
+      "expected": "1282fd993391ca10ad21844bf58aab136402636b165bcf800487ae297faf9600"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-81:move:up:ok",
-      "expected": "71d35575c8cbab7791f5aef9a08a64b83b044b41358bc5662f53e6c1afc4b605"
+      "expected": "cc51a2898e2c4bc619396c9397dac1177d36e49235a2f7cd59bb70b29b0dbc6a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-82:move:right:rejected-move-rejected",
-      "expected": "df170ccc074f8601d83c402d683a8067515202c683be7526a0d81d433218049c"
+      "expected": "e0a2d8da15dcf55f52aebc27113f4111faec365e7c1a651eae0906aca961e810"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-83:move:down:ok",
-      "expected": "7f8c235e7bc7966a6503e594238aac56bd55e35c364195d7dab3fb20b2cf16bf"
+      "expected": "b3feaf51ed2f1ed23200b0d2f3f14e21924154a2304072e1081a38af330cbee0"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-84:move:left:rejected-move-rejected",
-      "expected": "77aabb9e4b69d4f54c98953db45f0943db94800968c3e091015155432a1568ba"
+      "expected": "72252e8fc2fbd99d25c6df0ba2d7b3b8a65c74c57ff78f408492370b66fe8d62"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-85:move:up:ok",
-      "expected": "929cee15058ac8c179a680a9242495325804aaab6c636812c8e46f2816eec731"
+      "expected": "30e6a91cc5cafd5912f8349247456d5f04faef425c9d759f4877279a1ec78ffc"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-86:move:right:rejected-move-rejected",
-      "expected": "a17de1e441070bd901e1278a626cdb3c8521e375f8e9ba6931ae983355955cf9"
+      "expected": "041524eb0f3854bc7ce9bd4cf854097232f54b603fac5d873aa33b522089390c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-87:move:down:ok",
-      "expected": "8a29ccf11720d774bde2214757b9bc8d4cfe276b876dbff2cd76b1c4a55c02de"
+      "expected": "62bc38602c747380428beeebd391a6799e116c1efb01e510b234a5c0bc65ede2"
     },
     {
       "phase": "settlement",

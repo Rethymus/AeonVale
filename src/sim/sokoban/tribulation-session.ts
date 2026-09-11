@@ -41,19 +41,27 @@ export interface TribulationSessionState {
   readonly deadlocked: boolean;
   /** 余步紧张度门（docs/31 §2.3）：剩余步 ≤ 该阈值时 HUD 进入强调态。 */
   readonly pressureThreshold: number;
+  /** 首步提示（docs/31 §2.3）：本次天劫是否已用过提示。 */
+  readonly hintUsed: boolean;
+  /** 提示给出的最优首步方向（hint 成功后非空；随 undo 快照恢复为 null 语义由 hintUsed 独立承担）。 */
+  readonly hintDirection: Dir | null;
 }
 
 export type TribulationSessionAction =
   | { readonly type: 'move'; readonly dir: Dir }
   | { readonly type: 'undo' }
-  | { readonly type: 'set-ward'; readonly enabled: boolean };
+  | { readonly type: 'set-ward'; readonly enabled: boolean }
+  /** docs/31 §2.3 首步提示 token：消耗 1 层预告（要求 previewLevel ≥1），换取最优首步方向；每次天劫限 1 次。 */
+  | { readonly type: 'hint' };
 
 export type TribulationSessionErrorCode =
   | 'session-resolved'
   | 'move-rejected'
   | 'no-undo-snapshot'
   | 'no-undo-charges'
-  | 'no-ward-charges';
+  | 'no-ward-charges'
+  | 'no-preview-level'
+  | 'hint-already-used';
 
 export interface TribulationSessionError {
   readonly code: TribulationSessionErrorCode;
@@ -185,7 +193,9 @@ export function createTribulationSession(
     pillsConsumed: [],
     outcome: null,
     deadlocked: false,
-    pressureThreshold: Math.ceil(slack * 0.5)
+    pressureThreshold: Math.ceil(slack * 0.5),
+    hintUsed: false,
+    hintDirection: null
   };
   return initial.puzzle.status === 'playing' ? initial : resolveTerminalOutcome(initial, params);
 }
@@ -287,5 +297,29 @@ export function transitionTribulationSession(
       return transitionUndo(state, action, params);
     case 'set-ward':
       return transitionWard(state, action);
+    case 'hint':
+      return transitionHint(state);
   }
+}
+
+/** docs/31 §2.3 首步提示：要求 previewLevel ≥1 且本次天劫未用过；有界重解取最优首步方向。 */
+function transitionHint(state: TribulationSessionState): TribulationSessionTransition {
+  if (state.outcome) return reject(state, { type: 'hint' }, 'session-resolved');
+  if (state.hintUsed) return reject(state, { type: 'hint' }, 'hint-already-used');
+  if (state.preparation.previewLevel < 1) return reject(state, { type: 'hint' }, 'no-preview-level');
+  const remaining = Math.max(0, state.puzzle.moveBudget - state.puzzle.movesUsed);
+  const solution = solveBoard(state.puzzle.board, state.puzzle.player, {
+    maxNodes: SENTINEL_MAX_NODES,
+    maxMoves: remaining
+  });
+  if (!solution || solution.moves.length === 0) {
+    // 无可解路径时不消耗提示次数，视为死局信号（与哨兵同源）。
+    return accept({ ...cloneSession(state), deadlocked: true });
+  }
+  return accept({
+    ...cloneSession(state),
+    hintUsed: true,
+    hintDirection: solution.moves[0]!,
+    preparation: { ...clonePreparation(state.preparation), previewLevel: Math.max(0, state.preparation.previewLevel - 1) }
+  });
 }

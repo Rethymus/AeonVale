@@ -108,6 +108,7 @@ const pinnedTribulationSchema = z
     mirrorModifierMilli: number_,
     conductorModifierMilli: number_,
     herbHitModifierMilli: number_,
+    thunderDrawHerbModifierMilli: number_.default(1150),
     timeoutBodyDamage: number_,
     perfectTemperingGainMultiplier: number_,
     survivedTemperingGainMultiplier: number_,
@@ -196,7 +197,8 @@ const dirSchema = z.enum(['up', 'down', 'left', 'right']);
 const sessionActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('move'), dir: dirSchema }).strict(),
   z.object({ type: z.literal('undo') }).strict(),
-  z.object({ type: z.literal('set-ward'), enabled: z.boolean() }).strict()
+  z.object({ type: z.literal('set-ward'), enabled: z.boolean() }).strict(),
+  z.object({ type: z.literal('hint') }).strict()
 ]);
 
 const initialOverridesSchema = z
@@ -353,6 +355,7 @@ interface TribulationRecord {
 function describeSessionAction(action: TribulationSessionAction): string {
   if (action.type === 'move') return `move:${action.dir}`;
   if (action.type === 'undo') return 'undo';
+  if (action.type === 'hint') return 'hint';
   return `set-ward:${action.enabled ? 'on' : 'off'}`;
 }
 

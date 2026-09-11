@@ -4,7 +4,8 @@ import type { BlockKind } from '@sim/sokoban/types';
 import { clampInt } from './pressure';
 import type { CultivationRunState } from './types';
 
-export type PreparedHerbKind = 'conductive-moss';
+/** docs/31 §3.3 灵草 kind：conductive-moss=基型（降雷威）；thunder-draw=雷引草（升雷威）；vein-shield=护脉草（挡一次雷）。 */
+export type PreparedHerbKind = 'conductive-moss' | 'thunder-draw' | 'vein-shield';
 
 export interface PreparedHerb {
   readonly kind: PreparedHerbKind;

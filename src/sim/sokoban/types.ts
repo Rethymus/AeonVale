@@ -44,17 +44,20 @@ export function rotateCCW(dir: Dir): Dir {
   }
 }
 
-/** 固定地形。rift=断裂雷脉，只有水阵石压在其上时雷光才能通过。 */
-export type Terrain = 'empty' | 'wall' | 'source' | 'body' | 'herb' | 'rift';
+/** 固定地形。rift=断裂雷脉，只有水阵石压在其上时雷光才能通过。
+ * docs/31 §3.3 灵草 kind 扩展：herb-thunder=雷引草（光路命中=雷威增益，烧毁生命周期同基型）；
+ * herb-shield=护脉草（替身体挡一次雷：光路命中即阻断该次，随后耗尽为空地）。 */
+export type Terrain = 'empty' | 'wall' | 'source' | 'body' | 'herb' | 'herb-thunder' | 'herb-shield' | 'rift';
 
 /** 可推阵石。mirror=金阵石(折90°cw)、conductor=水阵石(直通)、insulator=绝缘石(阻断)。 */
 export type BlockKind = 'none' | 'mirror' | 'conductor' | 'insulator';
 
 /**
  * 阵石修饰（docs/31 §3.3）：叠加在 BlockKind 之上的语义修饰，走独立平行数组而非
- * 扩 BlockKind，避免破坏旧种子回放与既有序列化。当前仅 mirror-ccw（逆折镜：折向逆时针）。
+ * 扩 BlockKind，避免破坏旧种子回放与既有序列化。当前两种：
+ * mirror-ccw（逆折镜：折向逆时针）；burning（焚绝缘：阻断一次雷光后自毁）。
  */
-export type BlockModifier = 'none' | 'mirror-ccw';
+export type BlockModifier = 'none' | 'mirror-ccw' | 'burning';
 
 /** 劫式三型标签（docs/31 §4.3）：生成期确定性判定，替代裸步数数字的认知负荷层。 */
 export type SokobanFlavorTag = 'swift' | 'entangling' | 'momentum';

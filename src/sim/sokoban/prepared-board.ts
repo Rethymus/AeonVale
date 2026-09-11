@@ -5,7 +5,7 @@
  * 已解锁阵石和事件障碍。每次结构修改后都重新验证可解性；无法安全落位的
  * 内容会显式进入 ignoredBoardModifierTags，避免把“HUD 有数值”伪装成已接线。
  */
-import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
+import type { PreparedHerb, TribulationPreparation } from '@sim/cultivation-run/preparation';
 import { idx, traceBeam } from './beam';
 import { deriveFlavorTag, solveBoard } from './generator';
 import type { BlockKind, SokobanState, Terrain } from './types';
@@ -80,8 +80,12 @@ function remainsPlayable(state: SokobanState): boolean {
     && (state.challenge?.requiredBlockKinds.every(kind => solution.movedBlockKinds.includes(kind)) ?? true);
 }
 
-function tryPlaceTerrain(state: SokobanState, terrain: Terrain): number | null {
+function tryPlaceTerrain(state: SokobanState, terrain: Terrain, options: { readonly offBeam?: boolean } = {}): number | null {
+  const beamIndices = options.offBeam
+    ? new Set(state.beam.cells.map(cell => idx(state.board, cell.x, cell.y)))
+    : null;
   for (const index of candidateIndices(state)) {
+    if (beamIndices?.has(index)) continue;
     const previous = state.board.terrain[index]!;
     state.board.terrain[index] = terrain;
     if (remainsPlayable(state)) {
@@ -91,6 +95,13 @@ function tryPlaceTerrain(state: SokobanState, terrain: Terrain): number | null {
     state.board.terrain[index] = previous;
   }
   return null;
+}
+
+/** docs/31 §3.3：prepared herb kind → 板面地形。 */
+function herbTerrainFor(kind: PreparedHerb['kind']): Terrain {
+  if (kind === 'thunder-draw') return 'herb-thunder';
+  if (kind === 'vein-shield') return 'herb-shield';
+  return 'herb';
 }
 
 function tryPlaceBlock(state: SokobanState, kind: Exclude<BlockKind, 'none'>): boolean {
@@ -190,12 +201,19 @@ export function applyPreparationToPuzzle(
     if (tryPlaceBlock(state, kind)) placedBlockKinds.push(kind);
   }
 
+  // docs/31 §3.3：按 startingHerbs 的 kind 分地形落位；护脉草只放认证光路之外
+  //（挡一次雷是玩家失误的保险，不能堵死认证路径本身）；基型/雷引草沿用就近光路落位。
   const herbCount = requestedPreparedHerbs(preparation);
-  for (let count = 0; count < herbCount; count += 1) {
-    const placedIndex = tryPlaceTerrain(state, 'herb');
+  const herbKinds = preparation.startingHerbs.flatMap(herb => Array.from({ length: nonNegativeFloor(herb.count) }, () => herb.kind));
+  let herbPlaced = 0;
+  for (const kind of herbKinds) {
+    if (herbPlaced >= herbCount) break;
+    const terrain = herbTerrainFor(kind);
+    const placedIndex = tryPlaceTerrain(state, terrain, { offBeam: kind === 'vein-shield' });
     if (placedIndex === null) break;
     preparedHerbIndices.push(placedIndex);
     inventoryHerbIndices.push(placedIndex);
+    herbPlaced += 1;
   }
   if (boardModifierTags.includes('starting-herb:thunder')) {
     const eventHerbIndex = tryPlaceTerrain(state, 'herb');

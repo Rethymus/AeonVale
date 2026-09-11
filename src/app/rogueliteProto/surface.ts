@@ -2107,7 +2107,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     switch (state.status) {
       case 'playing': {
         const challenge = challengePresentation();
-        return `<span class="rp-help__diagram" aria-hidden="true"><i>天眼<br>雷源</i><b>金石<br>折雷</b><em>水石<br>续脉</em><strong>命门<br>淬体</strong></span><span class="rp-help__copy"><b>${challenge.title}</b>：${challenge.objective}<br>操作要点：移动到侧后方推阵石。亮边表示可立即推动，雷线箭头表示当前流向；灵草是可选保全目标。<kbd>方向键/WASD</kbd> 移动，<kbd>R</kbd> 撤步。</span>`;
+        return `<span class="rp-help__diagram" aria-hidden="true"><i>天眼<br>雷源</i><b>金石<br>折雷</b><em>水石<br>续脉</em><strong>命门<br>淬体</strong></span><span class="rp-help__copy"><b>${challenge.title}</b>：${challenge.objective}<br>操作要点：移动到侧后方推阵石。亮边表示可立即推动，雷线箭头表示当前流向；灵草是可选保全目标。<kbd>方向键/WASD</kbd> 移动，<kbd>R</kbd> 撤步，<kbd>H</kbd> 首步提示（耗 1 层预见，限一次）。</span>`;
       }
       case 'won':
         return `<b>雷光入体，淬体突破！</b>${lastScroll ? `<br>📜 <b>${lastScroll.title}</b><br>${lastScroll.body}` : ''}`;
@@ -2277,6 +2277,27 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       return;
     }
     syncTribulationSession(result.state);
+    canvas.focus({ preventScroll: true });
+  }
+
+  /** docs/31 §2.3 首步提示：消耗 1 层预告换最优首步方向（每次天劫限 1 次）。 */
+  function useHint(): void {
+    if (phase !== 'tribulation' || !tribulationSession || tribulationSession.outcome) return;
+    const result = transitionTribulationSession(tribulationSession, { type: 'hint' });
+    if (!result.ok) {
+      tribulationFeedback = result.error.code === 'no-preview-level'
+        ? '预见不足，无法换取首步提示。'
+        : result.error.code === 'hint-already-used'
+          ? '本次天劫的提示已经用过。'
+          : '当前无法使用提示。';
+      help.innerHTML = helpText();
+      return;
+    }
+    syncTribulationSession(result.state);
+    const dir = result.state.hintDirection;
+    const dirLabel = dir === 'up' ? '上' : dir === 'down' ? '下' : dir === 'left' ? '左' : '右';
+    tribulationFeedback = `首步提示（消耗 1 层预见）：向${dirLabel}。`;
+    help.innerHTML = helpText();
     canvas.focus({ preventScroll: true });
   }
 
@@ -2532,6 +2553,11 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     if (k === 'r' || k === 'R') {
       event.preventDefault();
       useUndo();
+      return;
+    }
+    if (k === 'h' || k === 'H') {
+      event.preventDefault();
+      useHint();
       return;
     }
     if (tribulationOutcome && (k === ' ' || k === 'Enter')) {

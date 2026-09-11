@@ -3,7 +3,16 @@
  * 纯函数、确定性、零随机（仅依赖板面状态）。步数上限防 mirror 成环死循环。
  */
 import type { Vec2 } from '@sim/world/types';
-import { DIR_VECTORS, rotateCCW, rotateCW, type BeamTrace, type BlockModifier, type SokobanBoard } from './types';
+import {
+  DIR_VECTORS,
+  rotateCCW,
+  rotateCW,
+  type BeamTrace,
+  type BlockKind,
+  type BlockModifier,
+  type SokobanBoard,
+  type Terrain
+} from './types';
 
 const MAX_BEAM_STEPS_MULT = 4;
 
@@ -39,11 +48,13 @@ export function traceBeam(board: SokobanBoard): BeamTrace {
     cells.push({ x, y });
     if (terrain === 'rift' && block !== 'conductor') break;
     if (block === 'insulator') break;
+    // 护脉草（docs/31 §3.3）：替身体挡一次雷——该次光路在此截断，随后由 move 应用耗尽它。
+    if (terrain === 'herb-shield') break;
     if (terrain === 'body') {
       reachedBody = true;
       break;
     }
-    if (terrain === 'herb') herbsHit.push({ x, y });
+    if (terrain === 'herb' || terrain === 'herb-thunder') herbsHit.push({ x, y });
     if (block === 'mirror') {
       // 逆折镜（mirror-ccw 修饰）折向逆时针，基型金阵石折向顺时针（docs/31 §3.3）。
       dir = modifierAt(board, i) === 'mirror-ccw' ? rotateCCW(dir) : rotateCW(dir);
@@ -54,4 +65,31 @@ export function traceBeam(board: SokobanBoard): BeamTrace {
   }
 
   return { cells, reachedBody, herbsHit };
+}
+
+/**
+ * 一次性守卫的耗尽判定（docs/31 §3.3，有状态光路的唯一状态迁移）：
+ * 光路被截断时检查末格——焚绝缘（insulator+burning）自毁为空、护脉草（herb-shield）
+ * 耗尽为空地。返回是否发生耗尽；调用方耗尽后需重追光路。
+ * 纯板面判定 + 就地迁移；solver 与 applyMove 共用本函数保证语义一致。
+ */
+export function consumeOneShotGuard(
+  board: { readonly width: number; readonly terrain: Terrain[] },
+  blocks: BlockKind[],
+  modifiers: BlockModifier[] | undefined,
+  beam: BeamTrace
+): boolean {
+  if (beam.reachedBody || beam.cells.length === 0) return false;
+  const last = beam.cells[beam.cells.length - 1]!;
+  const i = idx(board, last.x, last.y);
+  if ((blocks[i] ?? 'none') === 'insulator' && (modifiers?.[i] ?? 'none') === 'burning') {
+    blocks[i] = 'none';
+    if (modifiers) modifiers[i] = 'none';
+    return true;
+  }
+  if ((board.terrain[i] ?? 'empty') === 'herb-shield') {
+    board.terrain[i] = 'empty';
+    return true;
+  }
+  return false;
 }

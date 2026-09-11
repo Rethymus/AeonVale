@@ -7,7 +7,7 @@
  */
 import { Rng } from '@sim/world/rng';
 import type { Vec2 } from '@sim/world/types';
-import { idx, inBounds, traceBeam } from './beam';
+import { consumeOneShotGuard, idx, inBounds, traceBeam } from './beam';
 import { generateBoard, deriveFlavorTag, solveBoard, type GenerateBoardOptions } from './generator';
 import {
   DIR_VECTORS,
@@ -194,6 +194,10 @@ export function applyMove(state: SokobanState, action: SokobanAction): SokobanAc
   state.player = { x: tx, y: ty };
   state.movesUsed += 1;
   state.beam = traceBeam(board);
+  // 一次性守卫（docs/31 §3.3）：焚绝缘/护脉草在截断光路的末格耗尽，随后重追光路。
+  if (consumeOneShotGuard(board, board.blocks, board.blockModifiers, state.beam)) {
+    state.beam = traceBeam(board);
+  }
   for (const herb of state.beam.herbsHit) state.scorched[idx(board, herb.x, herb.y)] = true;
 
   if (state.beam.reachedBody) state.status = 'won';

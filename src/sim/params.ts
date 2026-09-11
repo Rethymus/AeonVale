@@ -50,6 +50,8 @@ export interface CultivationRunBalanceParams {
     mirrorModifierMilli: number;
     conductorModifierMilli: number;
     herbHitModifierMilli: number;
+    /** docs/31 §3.3 雷引草：光路命中=雷威增益（与 herbHit 的降益对称）。 */
+    thunderDrawHerbModifierMilli: number;
     timeoutBodyDamage: number;
     perfectTemperingGainMultiplier: number;
     survivedTemperingGainMultiplier: number;
@@ -411,6 +413,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
       mirrorModifierMilli: 960,
       conductorModifierMilli: 1080,
       herbHitModifierMilli: 950,
+      thunderDrawHerbModifierMilli: 1150,
       timeoutBodyDamage: 10,
       perfectTemperingGainMultiplier: 10,
       survivedTemperingGainMultiplier: 6,
