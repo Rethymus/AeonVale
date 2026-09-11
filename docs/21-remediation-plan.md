@@ -1064,3 +1064,32 @@ tsc 全绿；单测 2567/2567（-146 为删除的 visual-drift 等配套单测�
 - main.ts 其余旧世界函数（farm/economy/beast 等的 UI 编排，现为无调用死码
   或被旧档槽使用——随旧档槽 `aeonvale-save-v1` 决策一并处理）；
 - golden fixture core-farm-save-resume 与 serialize 链（阶段 2 第三步）。
+
+### 8.22 第十八轮（2026-09-10）：docs/31 迭代 1 实施包（天劫打磨首批）
+
+依据 docs/31 §1.3/§2.3/§3.3/§4.3 的 P1 建议落地（全部参数取自报告）：
+
+1. **挑战证书扩展**：`SokobanChallenge` 新增 `solverNodes`（认证求解展开节点数）、
+   `firstMoveFanout`（0-4 首步宽容度，仅对采纳候选做 ≤4 次有界重解）、
+   `flavorTag`（快/缠/势 三型标签，生成期确定性判定：余量紧或含绝缘石=快；
+   ≥2 株贴光路灵草=缠；其余=势）。模板路径与 prepared-board 重认证同步补全。
+2. **难度带定向重试**：32 次盲重试升级为"带内优先（center=10+6·stage、半径 4）、
+   带外保底取最近"——消除同 stage 认证步数方差（实测 stage3 中位距离 6）。
+3. **逆折镜（mirror-ccw）**：首批阵石修饰，走独立 `blockModifiers` 平行数组
+   （不破坏旧种子回放）；stage≥4 起以 p=min(0.10+0.02·stage, 0.25) 附着，
+   认证前完成；修饰版认证失败时剥离修饰按无修饰板复检（生成成功率不降）。
+   求解器/applyMove/clone 全链修饰随行。
+4. **死局面哨兵**：session 每次合法 move 后有界重解（maxNodes=4000），
+   不可解 ⇒ `deadlocked=true`；HUD 显示"此局已无解 · 建议撤步"；撤步复位。
+5. **余步紧张度门**：`pressureThreshold=ceil(budgetSlack×0.5)`，进入阈值区
+   HUD 余步入强调态（字重/下划线，非配色——守动效纪律）。
+6. **HUD 三型标签**：劫式标题带「快/缠/势」单字标签（认知负荷减半层）。
+
+验证：tsc 零错；单测+property+replay **2663/2663**（新 14 例专项：
+ccw 光路/旧档兼容/证书字段/带内收敛中位数/三型判定/哨兵语义/撤步复位）；
+golden 夹具 `--init` 重新授权（130 步，确定性自检通过）；构建/治理/content:lint
+全绿；浏览器回归 35/35（roguelite 全家/compact/keypoint/可达性/叙事/smoke）。
+
+**未实施（迭代 2 待续，docs/31 §5 矩阵）**：焚绝缘/宽脉桥（需有状态光路
+设计）、灵草 kind 扩展（雷引草/护脉草）、首步提示 token（消耗预见的
+准备态改造）、ghost 预览、配方图鉴。
