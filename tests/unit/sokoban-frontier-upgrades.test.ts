@@ -281,3 +281,52 @@ describe('docs/31 §2.3 迭代 2：首步提示 token', () => {
     if (!rejected.ok) expect(rejected.error.code).toBe('no-preview-level');
   });
 });
+
+describe('docs/31 §3.3 迭代 3：宽脉桥（wide conductor）', () => {
+  function wideBoard(): { board: SokobanBoard; wideRiftOffStone: number; stone: number } {
+    // 雷源右射：(1,0) rift①、(2,0) rift②（两连格断脉）、(4,0) 身体；
+    // 宽脉桥水阵石在 (1,1)=idx6（贴 rift①）——推入任一断格后两格皆续脉。
+    const width = 5;
+    const terrain = new Array(25).fill('empty') as SokobanBoard['terrain'];
+    terrain[0] = 'source';
+    terrain[4] = 'body';
+    terrain[1] = 'rift';
+    terrain[2] = 'rift';
+    const blocks = new Array(25).fill('none') as BlockKind[];
+    blocks[6] = 'conductor'; // (1,1)
+    const modifiers = new Array(25).fill('none') as ('none' | 'mirror-ccw' | 'burning' | 'wide')[];
+    modifiers[6] = 'wide';
+    return { board: { width, height: 5, terrain, blocks, blockModifiers: modifiers, sourcePos: { x: 0, y: 0 }, sourceDir: 'right' }, wideRiftOffStone: 2, stone: 6 };
+  }
+
+  test('宽水阵石贴落任一断格 ⇒ 两连格 rift 皆续脉（一石跨两断口）', () => {
+    const { board } = wideBoard();
+    // 石未入 rift：首格断脉即截断。
+    expect(traceBeam(board).reachedBody).toBe(false);
+    // 推入第二断格 (2,0)：相邻 wide 石让第一断格 (1,0) 同步续脉。
+    board.blocks[2] = 'conductor';
+    board.blocks[6] = 'none';
+    (board.blockModifiers!)[2] = 'wide';
+    (board.blockModifiers!)[6] = 'none';
+    expect(traceBeam(board).reachedBody).toBe(true);
+  });
+
+  test('基型水阵石只续脉自身所在格（对照：无 wide 修饰时邻格仍断）', () => {
+    const { board } = wideBoard();
+    board.blocks[2] = 'conductor';
+    board.blocks[6] = 'none';
+    // 不带 wide：石在 (2,0)，第一断格 (1,0) 无石 ⇒ 截断。
+    expect(traceBeam(board).reachedBody).toBe(false);
+  });
+
+  test('生成器 stage≥4 样本中实际出现宽脉桥（双连格 rift + wide 修饰）', () => {
+    let seen = 0;
+    for (let seed = 1; seed <= 24 && seen === 0; seed++) {
+      const g = generateBoard(5, new Rng(`sokoban:5:${seed}`));
+      if (!g) continue;
+      const riftCount = g.board.terrain.filter(t => t === 'rift').length;
+      if (riftCount >= 2 && g.board.blockModifiers?.includes('wide')) seen += 1;
+    }
+    expect(seen).toBeGreaterThanOrEqual(1);
+  });
+});

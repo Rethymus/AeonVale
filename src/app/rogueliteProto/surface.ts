@@ -2066,6 +2066,29 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     return '紫石·封雷';
   }
 
+  /**
+   * 劫式配方公示（docs/31 §3.3，纯展示层）：枚举板面修饰与灵草型，
+   * 产出「配方 逆折镜×焚绝缘×雷引草」式标签；无修饰/新灵草时返回空串。
+   */
+  function tribulationRecipeLabel(puzzle: SokobanState): string {
+    const labels: string[] = [];
+    const modifiers = puzzle.board.blockModifiers ?? [];
+    if (modifiers.includes('mirror-ccw')) labels.push('逆折镜');
+    if (modifiers.includes('burning')) labels.push('焚绝缘');
+    if (modifiers.includes('wide')) labels.push('宽脉桥');
+    for (const terrain of puzzle.board.terrain) {
+      if (terrain === 'herb-thunder') {
+        labels.push('雷引草');
+        break;
+      }
+      if (terrain === 'herb-shield') {
+        labels.push('护脉草');
+        break;
+      }
+    }
+    return labels.length > 0 ? `配方 ${labels.join('×')}` : '';
+  }
+
   function challengePresentation(): { readonly title: string; readonly objective: string } {
     switch (state.challenge?.archetype) {
       case 'sealed-meridian':
@@ -2139,7 +2162,9 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     const intel = preparation.previewLevel <= 0 ? '劫兆未明' : preparation.previewLevel === 1 ? `存活上限 ≤${preparation.maxSurvivablePower}` : preparation.previewLevel === 2 ? `安全雷威 ${preparation.minTemperingPower}–${preparation.maxSurvivablePower}` : `甜蜜雷威 ${preparation.sweetSpotMinPower}–${preparation.sweetSpotMaxPower}`;
     const required = state.challenge?.requiredBlockKinds.map(blockKindLabel).join(' · ') ?? '金石·折雷';
     const certificate = state.challenge ? `认证 ${state.challenge.certifiedMoves} 步 · 余量 ${state.challenge.budgetSlack}` : '已验可解';
-    const preparationSegments = [required, certificate, `${intel} · 预见 ${preparation.previewLevel}`, `护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`];
+    // 劫式配方公示（docs/31 §3.3）：修饰阵石×灵草型的组合标签进 HUD，玩家可见本局配方。
+    const recipe = tribulationRecipeLabel(state);
+    const preparationSegments = [required, certificate, ...(recipe ? [recipe] : []), `${intel} · 预见 ${preparation.previewLevel}`, `护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`];
     preparationEl.replaceChildren();
     preparationSegments.forEach((segment, index) => {
       if (index > 0) preparationEl.append(' ｜ ');

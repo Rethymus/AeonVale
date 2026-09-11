@@ -29,6 +29,22 @@ export function modifierAt(board: { readonly blockModifiers?: readonly BlockModi
   return board.blockModifiers?.[i] ?? 'none';
 }
 
+/** 宽脉桥（docs/31 §3.3）：任一四邻格上的 wide 水阵石可为本 rift 格续脉（一石跨两断脉）。 */
+function riftBridgedByWide(board: SokobanBoard, x: number, y: number): boolean {
+  const neighbors = [
+    { x: x - 1, y },
+    { x: x + 1, y },
+    { x, y: y - 1 },
+    { x, y: y + 1 }
+  ];
+  for (const n of neighbors) {
+    if (!inBounds(board, n.x, n.y)) continue;
+    const i = idx(board, n.x, n.y);
+    if ((board.blocks[i] ?? 'none') === 'conductor' && modifierAt(board, i) === 'wide') return true;
+  }
+  return false;
+}
+
 export function traceBeam(board: SokobanBoard): BeamTrace {
   const cells: Vec2[] = [];
   const herbsHit: Vec2[] = [];
@@ -46,7 +62,7 @@ export function traceBeam(board: SokobanBoard): BeamTrace {
     if (terrain === 'wall' || terrain === 'source') break;
     const block = board.blocks[i] ?? 'none';
     cells.push({ x, y });
-    if (terrain === 'rift' && block !== 'conductor') break;
+    if (terrain === 'rift' && block !== 'conductor' && !riftBridgedByWide(board, x, y)) break;
     if (block === 'insulator') break;
     // 护脉草（docs/31 §3.3）：替身体挡一次雷——该次光路在此截断，随后由 move 应用耗尽它。
     if (terrain === 'herb-shield') break;

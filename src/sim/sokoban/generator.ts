@@ -327,8 +327,15 @@ function straightPathCandidates(path: readonly Vec2[]): Array<{ readonly cell: V
   return result;
 }
 
-/** 把水阵石放在雷路侧边，玩家必须将它推入 rift 才能续接光路。 */
-function installConductorBridge(board: SokobanBoard, path: readonly Vec2[], rng: Rng): boolean {
+/** 把水阵石放在雷路侧边，玩家必须将它推入 rift 才能续接光路。
+ * docs/31 §3.3 宽脉桥：stage≥4 时以修饰族概率改凿 2 连格 rift 并给石附 wide——
+ * 一石跨两断脉，玩家只需推一次即可续接双断口。 */
+function installConductorBridge(
+  board: SokobanBoard,
+  path: readonly Vec2[],
+  rng: Rng,
+  options: { readonly wide: boolean }
+): boolean {
   for (const candidate of randomized(straightPathCandidates(path), rng)) {
     const target = candidate.cell;
     if (!isPlainCell(board, target.x, target.y)) continue;
@@ -336,8 +343,18 @@ function installConductorBridge(board: SokobanBoard, path: readonly Vec2[], rng:
       const stone = { x: target.x - side.x, y: target.y - side.y };
       const stand = { x: target.x - side.x * 2, y: target.y - side.y * 2 };
       if (!isPlainCell(board, stone.x, stone.y) || !isPlainCell(board, stand.x, stand.y)) continue;
+      const secondRift = { x: target.x + dv(candidate.dir).x, y: target.y + dv(candidate.dir).y };
+      const useWide = options.wide && isPlainCell(board, secondRift.x, secondRift.y);
       board.terrain[idx(board, target.x, target.y)] = 'rift';
-      board.blocks[idx(board, stone.x, stone.y)] = 'conductor';
+      const stoneIndex = idx(board, stone.x, stone.y);
+      board.blocks[stoneIndex] = 'conductor';
+      if (useWide) {
+        board.terrain[idx(board, secondRift.x, secondRift.y)] = 'rift';
+        if (!board.blockModifiers) {
+          board.blockModifiers = new Array(board.blocks.length).fill('none') as BlockModifier[];
+        }
+        board.blockModifiers[stoneIndex] = 'wide';
+      }
       return true;
     }
   }
@@ -415,7 +432,8 @@ function tryGenerate(stage: number, rng: Rng, options: GenerateBoardOptions): Ge
 
   const board: SokobanBoard = { width: n, height: n, terrain, blocks, sourcePos: source, sourceDir: dir };
   const requiredBlockKinds = selectedFeatureKinds(stage, rng, options.requiredBlockKinds ?? []);
-  if (requiredBlockKinds.includes('conductor') && !installConductorBridge(board, path, rng)) return null;
+  const wideBridgeChance = !options.disableModifiers && stage >= 4 ? Math.min(0.1 + 0.02 * stage, 0.25) : 0;
+  if (requiredBlockKinds.includes('conductor') && !installConductorBridge(board, path, rng, { wide: rng.chance(wideBridgeChance) })) return null;
   if (requiredBlockKinds.includes('insulator') && !installInsulatorSeal(board, path, rng)) return null;
 
   // 稀疏 off-path 灵草；生成器只放可保全目标，准备适配器再加入库存灵草。

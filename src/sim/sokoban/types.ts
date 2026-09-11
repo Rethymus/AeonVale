@@ -54,10 +54,11 @@ export type BlockKind = 'none' | 'mirror' | 'conductor' | 'insulator';
 
 /**
  * 阵石修饰（docs/31 §3.3）：叠加在 BlockKind 之上的语义修饰，走独立平行数组而非
- * 扩 BlockKind，避免破坏旧种子回放与既有序列化。当前两种：
- * mirror-ccw（逆折镜：折向逆时针）；burning（焚绝缘：阻断一次雷光后自毁）。
+ * 扩 BlockKind，避免破坏旧种子回放与既有序列化。当前三种：
+ * mirror-ccw（逆折镜：折向逆时针）；burning（焚绝缘：阻断一次雷光后自毁）；
+ * wide（宽脉桥：水阵石影响扩展到相邻 rift 格，一石跨两断脉）。
  */
-export type BlockModifier = 'none' | 'mirror-ccw' | 'burning';
+export type BlockModifier = 'none' | 'mirror-ccw' | 'burning' | 'wide';
 
 /** 劫式三型标签（docs/31 §4.3）：生成期确定性判定，替代裸步数数字的认知负荷层。 */
 export type SokobanFlavorTag = 'swift' | 'entangling' | 'momentum';
