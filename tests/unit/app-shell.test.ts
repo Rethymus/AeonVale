@@ -253,9 +253,10 @@ describe('public demo application shell', () => {
     expect(css).toContain('transition-duration: 0.01ms !important');
     expect(css).not.toMatch(/gradient\s*\(/i);
     expect(css).not.toMatch(/animation\s*:/i);
-    expect(css).toContain('.inv-craft-projection');
-    expect(css).toContain('.inv-furnace-range');
-    expect(css).toContain("[data-heat-band='ideal']");
+    // 旧世界退役（docs/21 §8.29）：行囊/丹炉 overlay 已删，.inv-* 死样式清除。
+    expect(css).not.toContain('.inv-craft-projection');
+    expect(css).not.toContain('.inv-furnace-range');
+    expect(css).not.toContain("data-heat-band='ideal'");
   });
 
   it('computes safe-area placement and 44px minimum controls from parsed CSS rules', () => {

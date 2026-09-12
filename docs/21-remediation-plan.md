@@ -1266,3 +1266,33 @@ portfolio:mvp-preflight 全链实跑通过。
 
 遗留（阶段 3 门控不变）：src/sim 9 目录整删、旧世界词表全量归档、golden
 fixture 归档——维护者第二道签字后启动。
+
+### 8.29 第二十五轮（2026-09-13）：退役阶段 2 收官·app.css 死样式清扫与视觉巡检
+
+§8.27/§8.28 删除了 world 屏 DOM 与壳层死分支，但样式表仍残留其全部布局
+（app.css 125 KB）。本轮做规则级清扫与视觉验收。
+
+1. **死样式审计**：提取 app.css 全部 353 个 class / 14 个 id 选择器名，对照
+   index.html + src/**（含动态模板字符串）+ tests/** 求零引用集——216 个死
+   class + 1 个死 id，全部属于已退役面（inv-* 行囊/丹炉 68、map-* 山河图 24、
+   touch-* 触控栏 12、vn-* 序章 VN 9、cultivation-* 旧修行 overlay 15、
+   demo-* 旧公开展示面板、world-command/world-vital/objective-rail/fate-*/
+   pressure-*/celestial-compass HUD 族、ending-/tribulation-/prologue surface 族）。
+2. **规则级裁剪**：逐规则逐选择器判定（仅当选择器含有的全部 class/id 均死
+   才删；纯元素/属性选择器保守保留；@media 递归，空则整弃），两遍共删 398
+   个规则块，**app.css 125 KB → 72 KB**（-42%），死选择器清零。app-shell
+   的 .inv-craft-projection/.inv-furnace-range/data-heat-band CSS 断言反转。
+3. **视觉巡检**（CSS 大裁剪验收）：delivery/portfolio capture 截图实检——
+   标题屏（立绘背景/按钮组/灵韵叙录入口/存档提示）、入世录开场（CG/分节
+   指示器/世界规则卡）、备劫工作台（六格竹简/沈砚立绘/修道门面板）、天劫
+   棋盘（光路束/转折镜/劫式公示/四脉状态）全部渲染正常，零回归。
+
+验证：tsc 零错；单测 **2037/2037**；治理通过；构建通过；浏览器回归 **44/44**。
+
+备注：本轮操作中误 drop 了一个历史遗留 stash（单分支化之前的"all-work"
+暂存，reflog 已不可恢复）；其内容早被 main 后续提交覆盖，不影响当前树，
+如实记录备查。
+
+退役进度：阶段 1 + 2 全部完成（应用层/渲染层/壳层分支/样式表四层清零）。
+剩余：**阶段 3（src/sim 9 目录整删 + 词表统一 + golden fixture 归档）——
+维护者第二道签字门控，未获授权不得启动。**
