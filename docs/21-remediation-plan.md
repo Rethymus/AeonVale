@@ -1217,7 +1217,10 @@ roguelite 全家 21/21。
    worldDecor）、src/content 3（act1Scenes/narrative/prologueScenes，叙录用
    narrationScenes 自管）。连带 51 个孤儿专属单测。**复扫归零**（81 个活模块
    全部可达）。
-4. **测试面同步**：openGame.ts 收缩至 v3 快照接口（画布像素助手与 world 字段
+4. **i18n 死键清理**：孤儿清扫使 33 个 world 词表键失去引用（ui.help.* 22、
+   ui.hud.* 11），content:lint 门拦截 CI 后补删——zh-CN.json 摘除死键、
+   i18n.test.ts 修剪为机制+活键断言、i18n.ts 移除无消费的 tList。
+5. **测试面同步**：openGame.ts 收缩至 v3 快照接口（画布像素助手与 world 字段
    全删）；live-player-depth-audit.spec（在线旧世界审计）移除；smoke.spec
    boot 断言改 title-only + schema v3；app-shell 源码守卫反转（断言 world HUD
    编排不再存在）。

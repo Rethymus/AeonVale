@@ -40,18 +40,3 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   }
   return s;
 }
-
-/** 按 dotted key 取字符串数组（如阶段名表）。缺键返回空数组。 */
-export function tList(key: string): string[] {
-  const dict = DICTS[currentLocale] as Record<string, unknown>;
-  const parts = key.split('.');
-  let cur: unknown = dict;
-  for (const p of parts) {
-    if (cur && typeof cur === 'object' && p in (cur as Record<string, unknown>)) {
-      cur = (cur as Record<string, unknown>)[p];
-    } else {
-      return [];
-    }
-  }
-  return Array.isArray(cur) ? cur.map(String) : [];
-}

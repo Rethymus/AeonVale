@@ -1,28 +1,6 @@
 {
   "ui": {
-    "help": {
-      "default": "点击目标移动/互动·行囊常驻，丹炉/山河图/修行在更多中·B 行囊·Esc 暂停/返回",
-      "inventory": "背包已开·B/Esc关闭·当前不会触发世界动作或过夜",
-      "cultivation": "修炼总览已开·Esc关闭·当前不会触发世界动作或过夜",
-      "pause": "已暂停·Esc恢复行动·当前不会推进时间或触发世界动作",
-      "dialogue": "对白中·点击继续·当前不会过夜或切换工具",
-      "location": "地点目录·点选地点与服务·Esc返回",
-      "farmAction": "农庄操作·点选项目进入·Esc返回",
-      "npcAction": "人物操作·点选互动·Esc返回",
-      "build": "建造中·点选候选放置·Esc返回",
-      "upgrade": "扩建面板·点选候选扩建·Esc返回",
-      "storage": "仓储面板·点选物品移动·Esc返回·当前不会过夜",
-      "shipping": "出货面板·点选物品入箱·Esc返回·当前不会过夜",
-      "processing": "加工面板·点选候选开工·Esc返回",
-      "facilityCollect": "设施收取·点选目标收取·Esc返回",
-      "shop": "坊市/摊位·点选商品购买·Esc返回",
-      "trade": "交易面板·点选条目成交·Esc返回",
-      "festival": "节日面板·点选项目参与·Esc返回",
-      "commission": "委托/差事面板·点选提交或领奖·Esc返回",
-      "teaShed": "旧茶棚·点选静养·Esc返回",
-      "greenhouse": "暖棚养护·点选照料·Esc返回",
-      "ascensionChoice": "飞升抉择·仅 1/2 可选结局·当前不会过夜或切换工具"
-    },
+    "help": {},
     "objective": {
       "first-till": "当前目标：先翻出一块地。",
       "first-sow": "当前目标：播下第一颗青苔种或露根草种。",
@@ -44,10 +22,6 @@
       "overrideLabel": "关闭横屏提示，仍以竖屏继续本次旅程"
     },
     "hud": {
-      "hp": "气血",
-      "pillPoison": "丹毒",
-      "cultivation": "体魄",
-      "stamina": "体力",
       "day": "第 {n} 日",
       "year": "第 {n} 年",
       "season": {
@@ -55,24 +29,7 @@
         "summer": "夏",
         "autumn": "秋",
         "winter": "冬"
-      },
-      "stages": [
-        "凡骨",
-        "淬皮",
-        "锻骨",
-        "通脉",
-        "洗髓",
-        "凝血",
-        "雷骨",
-        "飞升前夜"
-      ],
-      "invTitle": "—— 背包 ——",
-      "invEmpty": "（空）",
-      "invSeed": "种子",
-      "invHerb": "灵草",
-      "invPill": "丹药",
-      "invMisc": "杂物",
-      "invOther": "其他"
+      }
     }
   },
   "ending": {
