@@ -13,16 +13,11 @@ test('boot-ready reveals a playable first surface before any input', async ({ pa
   await page.goto(gameEntryPath());
 
   const initial = await waitForInitialSurface(page);
-  expect(initial.appSurface === 'title' || initial.appSurface === 'world').toBe(true);
-
-  if (initial.appSurface === 'title') {
-    await expect(page.locator('#flow-title-new-game')).toBeVisible();
-    await expect(page.locator('[data-app-surface="loading"]')).toBeHidden();
-    await expect(page.locator('canvas')).toBeHidden();
-  } else {
-    await expect(page.locator('#app')).toBeVisible();
-    await expect(page.locator('canvas')).toBeVisible();
-  }
+  // 旧世界退役（docs/21 §8.27）：world surface 永不可达，boot 落点必为标题。
+  expect(initial.appSurface).toBe('title');
+  await expect(page.locator('#flow-title-new-game')).toBeVisible();
+  await expect(page.locator('[data-app-surface="loading"]')).toBeHidden();
+  await expect(page.locator('canvas')).toBeHidden();
 });
 
 test('loads the current journey and reaches its desktop workbench without page errors', async ({ page }) => {
@@ -39,7 +34,7 @@ test('loads the current journey and reaches its desktop workbench without page e
   await expect(page).toHaveTitle(/Aeon Vale|永恒山谷/);
 
   const entryDebug = await gameDebugSnapshot(page);
-  expect(entryDebug.debugSchemaVersion).toBe(2);
+  expect(entryDebug.debugSchemaVersion).toBe(3);
   // 旧世界快捷键开关已随 legacyShortcuts 退役（docs/21 §8.21），此处不再上报。
   const expectedBuildRevision = process.env.PLAYWRIGHT_EXPECTED_BUILD_REVISION?.trim() || (process.env.PLAYWRIGHT_SKIP_WEBSERVER === 'true' ? null : 'playwright-test');
   if (expectedBuildRevision) expect(entryDebug.buildRevision).toBe(expectedBuildRevision);

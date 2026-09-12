@@ -169,11 +169,12 @@ describe('public demo application shell', () => {
     expect(syncStart).toBeGreaterThanOrEqual(0);
     expect(debugStart).toBeGreaterThan(syncStart);
     expect(refreshStart).toBeGreaterThan(debugStart);
-    expect(syncSource).toContain('setWorldAttention');
-    expect(syncSource).toContain('commandBar.hidden');
-    expect(syncSource).toContain('objectiveRail.hidden');
-    expect(syncSource).toContain('fateStatusStrip.hidden');
+    // 旧世界退役（docs/21 §8.27）：world HUD DOM 编排已删，同步函数只剩语义壳层喂数。
     expect(syncSource).toContain('updateSemanticState');
+    expect(syncSource).not.toContain('setWorldAttention');
+    expect(syncSource).not.toContain('commandBar.hidden');
+    expect(syncSource).not.toContain('objectiveRail.hidden');
+    expect(syncSource).not.toContain('fateStatusStrip.hidden');
     expect(debugSource).not.toContain('setWorldAttention');
     expect(debugSource).not.toContain('commandBar.hidden');
     expect(debugSource).not.toContain('objectiveRail.hidden');

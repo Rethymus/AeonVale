@@ -1188,3 +1188,46 @@ ghost 预览；残卷门控（新节点 cost 4-5）待灵草/修饰池经济联�
 四截图 paintedRatio=1、证书行"认证 14 步 · 余量 9"）；preflight 通过；
 构建/治理/readiness 全绿；浏览器回归 smoke/app-flow/save-health/
 roguelite 全家 21/21。
+
+### 8.27 第二十三轮（2026-09-12）：退役阶段 2 第二步收尾·renderer 与 world 死码物理删除
+
+§8.26 遗留项的收尾：旧世界渲染层与 main.ts 世界编排全部物理删除。
+
+1. **renderer.ts 整删**（2832 行）：`src/render/renderer.ts` git rm；
+   `src/app/previewTexture.ts` 与 7 个 renderer 专属单测同批删除。
+2. **main.ts 世界死码整删**（6247 → 606 行）：编译驱动逐块删除——
+   `loadRenderAssets`/layers 创建、`saveState`/`createFreshState`/ctx 装配
+   （存档链收缩为只读 `loadSave(): SaveHealth`）、world 状态变量块、
+   `handleFlowStateChange` 的 enter-loaded-world/continue-aftermath 副作用、
+   `syncAppPresentation` 缩为语义壳层喂数（updateSemanticState 最小输入）、
+   `publishDebugSnapshot` 缩为流程壳层字段（**schema v3**：flowScreen/
+   flowOverlay/uiMode/appSurface/viewportProfile/canvasBounds）、
+   `installPlaywrightTestHooks` 全族（enterLegacyWorld 门及其关键点已无消费）、
+   画布输入路由（指针/面板命中/快捷键）、`renderFrame` 与
+   `renderScheduler`。**保留**：Pixi Application + #app canvas（boot 表面信号、
+   responsive-layout 宽度断言、narration/roguelite 底面）、音频解锁（首次手势
+   init/resume）、标题 BGM 语境一次性设置、E7 标题诅咒、叙录/修途 surface
+   生命周期、runtime settings、save-health 呈现、responsiveShell（dispatch
+   置 no-op 兜底，待修途触控定稿重接）。
+3. **孤儿清扫**（可达性扫描：main.ts + tools 为活入口，逐 import 解析）：
+   57 个零消费模块删除——src/app 43（农务/面板/地点/热栏/行囊 UI、序章/结局
+   VN、journeyGuide、keybindings 等）、src/render 11（arrayPreview/
+   characterPresence/guardBeastPreview/inventoryIconStrip/lightningBolt/
+   npcWorldPreview/renderScheduler/tileAsset/tileVisuals/tutorialWarningZone/
+   worldDecor）、src/content 3（act1Scenes/narrative/prologueScenes，叙录用
+   narrationScenes 自管）。连带 51 个孤儿专属单测。**复扫归零**（81 个活模块
+   全部可达）。
+4. **测试面同步**：openGame.ts 收缩至 v3 快照接口（画布像素助手与 world 字段
+   全删）；live-player-depth-audit.spec（在线旧世界审计）移除；smoke.spec
+   boot 断言改 title-only + schema v3；app-shell 源码守卫反转（断言 world HUD
+   编排不再存在）。
+
+验证：tsc 零错；单测 **2072/2072**（app-shell 守卫更新后全绿）；治理通过
+（748→694 tracked files）；构建通过（index bundle 缩至 207 kB，renderer 出
+包）；浏览器回归 **44/44**（smoke/app-flow/responsive/runtime/save-health/
+roguelite 全家/cultivation-keypoint/narration/pages-playable/capture 系）；
+portfolio:mvp-preflight 全链实跑通过。
+
+退役进度：阶段 2 第一步（应用层解绑）+ 第二步（渲染层物理删除）完成。
+剩余：**阶段 3（src/sim 9 目录整删 + 词表统一 + golden fixture 归档）——
+维护者第二道签字门控，未获授权不得启动。**
