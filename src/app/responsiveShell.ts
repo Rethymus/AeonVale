@@ -1,5 +1,3 @@
-import { gameCommandFromTouch, type GameCommand, type TouchInput } from './semanticInputRouter';
-
 export interface ResponsiveShellElement {
   textContent: string | null;
   getAttribute(name: string): string | null;
@@ -28,7 +26,6 @@ export interface ResponsiveShellController {
 }
 
 export interface ResponsiveShellOptions {
-  readonly dispatch: (command: GameCommand) => void;
   readonly root?: ResponsiveShellRoot | null;
 }
 
@@ -53,65 +50,13 @@ function defaultRoot(): ResponsiveShellRoot | null {
   return document as unknown as ResponsiveShellRoot;
 }
 
-function touchInputFor(commandName: string | null): TouchInput | null {
-  switch (commandName) {
-    case 'move-up':
-      return { control: 'move', direction: 'up' };
-    case 'move-down':
-      return { control: 'move', direction: 'down' };
-    case 'move-left':
-      return { control: 'move', direction: 'left' };
-    case 'move-right':
-      return { control: 'move', direction: 'right' };
-    case 'primary':
-      return { control: 'confirm' };
-    case 'cancel':
-      return { control: 'cancel' };
-    case 'secondary':
-      return { control: 'cycle', direction: 'next' };
-    case 'menu':
-      return { control: 'open', target: 'pause' };
-    case 'farm':
-      return { control: 'open', target: 'menu' };
-    case 'inventory':
-      return { control: 'open', target: 'inventory' };
-    case 'cultivation':
-      return { control: 'open', target: 'cultivation' };
-    case 'map':
-      return { control: 'open', target: 'map' };
-    case 'furnace':
-      return { control: 'open', target: 'furnace' };
-    case 'journey':
-      return { control: 'open', target: 'journey' };
-    case 'pause':
-      return { control: 'open', target: 'pause' };
-    case 'settings':
-      return { control: 'open', target: 'settings' };
-    case 'end-day':
-      return { control: 'end-day' };
-    default:
-      return null;
-  }
-}
-
-function pointerButton(event: Event): number | null {
-  const value = (event as Event & { readonly button?: unknown }).button;
-  return typeof value === 'number' ? value : null;
-}
-
-function clickDetail(event: Event): number {
-  const value = (event as Event & { readonly detail?: unknown }).detail;
-  return typeof value === 'number' ? value : 0;
-}
-
 function setTextIfChanged(element: ResponsiveShellElement | null, text: string): void {
   if (element && element.textContent !== text) element.textContent = text;
 }
 
-export function createResponsiveShell(options: ResponsiveShellOptions): ResponsiveShellController {
+export function createResponsiveShell(options: ResponsiveShellOptions = {}): ResponsiveShellController {
   const root = options.root === undefined ? defaultRoot() : options.root;
   const bindings: ListenerBinding[] = [];
-  const pointerDispatched = new WeakSet<object>();
   let destroyed = false;
 
   const semanticElements = {
@@ -123,33 +68,6 @@ export function createResponsiveShell(options: ResponsiveShellOptions): Responsi
     panel: root?.querySelector(SEMANTIC_SELECTORS.panel) ?? null,
     announcement: root?.querySelector(SEMANTIC_SELECTORS.announcement) ?? null
   };
-
-  const dispatchTouchInput = (input: TouchInput | null): void => {
-    if (destroyed || !input) return;
-    const command = gameCommandFromTouch(input);
-    if (command) options.dispatch(command);
-  };
-
-  for (const button of Array.from(root?.querySelectorAll('button[data-game-command]') ?? [])) {
-    const input = touchInputFor(button.getAttribute('data-game-command'));
-    const onPointerDown: EventListener = event => {
-      if (!input || (pointerButton(event) ?? 0) !== 0) return;
-      pointerDispatched.add(button);
-      event.preventDefault();
-      dispatchTouchInput(input);
-    };
-    const onClick: EventListener = event => {
-      if (!input) return;
-      event.preventDefault();
-      const followedPointer = pointerDispatched.delete(button);
-      if (followedPointer && clickDetail(event) > 0) return;
-      dispatchTouchInput(input);
-    };
-
-    button.addEventListener('pointerdown', onPointerDown);
-    button.addEventListener('click', onClick);
-    bindings.push({ element: button, type: 'pointerdown', listener: onPointerDown }, { element: button, type: 'click', listener: onClick });
-  }
 
   return {
     updateSemanticState(state: SemanticGameState): void {

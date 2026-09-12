@@ -1234,3 +1234,35 @@ portfolio:mvp-preflight 全链实跑通过。
 退役进度：阶段 2 第一步（应用层解绑）+ 第二步（渲染层物理删除）完成。
 剩余：**阶段 3（src/sim 9 目录整删 + 词表统一 + golden fixture 归档）——
 维护者第二道签字门控，未获授权不得启动。**
+
+### 8.28 第二十四轮（2026-09-12）：退役阶段 2 延伸·流程壳层死分支收缩与 BGM 语境修复
+
+§8.27 之后 world screen 在机器层彻底不可达，本轮把流程壳层残留的 world 系
+状态机分支、DOM 与语义镜像一并收缩（应用层，不碰 src/sim——阶段 3 门控不变）。
+
+1. **修途返回标题 BGM 语境修复**：修途 surface 局内会把 generative BGM 切到
+   tribulation/tense 且 destroy 不自恢复；`destroyRogueliteProtoSurface` 现在
+   拆 surface 后还原标题语境（spring/farm/calm），紧张态不再残留到标题屏。
+2. **flow 机器收缩**（appFlowMachine/appFlowView/uiMode）：AppScreen 收为
+   boot/boot-error/title/narration/roguelite-proto；AppOverlay 收为
+   settings/codex；删除 start-new-game/finish-prologue/skip-prologue/
+   enter-loaded-world/start-tribulation/finish-tribulation/continue-aftermath/
+   show-ending/return-title 事件族与 world backdrop、Escape 暂停世界、B 键
+   行囊等死分支；setWorldAttention 接口删除（worldAttention 恒空）。
+3. **语义层收缩**：semanticGameState 删 worldContent/interactionPanel 镜像与
+   worldStatus/announcement/journey/attention 输入（收敛为 presentation+
+   saveHealth）；responsiveShell 删 data-game-command 触控绑定；semanticInputRouter
+   与 interactionPanels 随之孤儿删除（连带 2 个单测）。
+4. **index.html 死 surface 删除**：prologue/pause/inventory/map/cultivation/
+   tribulation/aftermath/ending 八个 section 与 touch-controls 触控栏移除；
+   #app 退化为纯画布容器（去 data-app-surface，`#app[hidden]` display:none
+   恒胜规则防布局覆盖）；semantic-game-state 语义摘要区保留。
+5. **测试同步**：app-flow-machine/app-flow-view/ui-mode/semantic-game-state/
+   responsive-shell 五个单测按收缩后契约重写；app-shell 守卫反转（world HUD
+   不存在、data-game-command 不存在、8 surface 集合）；单测 2072→2037。
+
+验证：tsc 零错；单测 **2037/2037**；治理通过（744 tracked files）；构建通过；
+浏览器回归 **44/44**（含 capture 系）。
+
+遗留（阶段 3 门控不变）：src/sim 9 目录整删、旧世界词表全量归档、golden
+fixture 归档——维护者第二道签字后启动。

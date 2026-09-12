@@ -116,7 +116,6 @@ class FakeRoot implements AppFlowViewRoot, AppFlowViewEventTarget {
   querySelector(selector: string): AppFlowViewElement | null {
     const surface = selector.match(/^\[data-app-surface="(.+)"\]$/)?.[1];
     if (surface) return this.surfaces.get(surface) ?? null;
-    if (selector === APP_FLOW_FOCUS_TARGETS.world) return this.elements.get('#game-canvas') ?? null;
     if (selector === '[data-flow-action="continue-game"]') return this.buttons.find(button => button.getAttribute('data-flow-action') === 'continue-game') ?? null;
     return this.elements.get(selector) ?? null;
   }
@@ -147,13 +146,12 @@ class FakeRoot implements AppFlowViewRoot, AppFlowViewEventTarget {
   }
 }
 
-const SURFACES = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'roguelite-proto', 'portrait-blocked'] as const;
+// 旧世界退役（docs/21 §8.28）：壳层只剩 8 个活 surface。
+const SURFACES = ['loading', 'boot-error', 'title', 'settings', 'narration', 'roguelite-proto', 'codex', 'portrait-blocked'] as const;
 
 function createFixture() {
   const root = new FakeRoot();
   for (const surface of SURFACES) root.addSurface(surface);
-  const canvas = root.addElement('game-canvas');
-  root.surfaces.get('world')?.append(canvas);
   const rogueliteRoot = root.addElement('roguelite-proto-root', { tabindex: '-1' });
   root.surfaces.get('roguelite-proto')?.append(rogueliteRoot);
   const orientationHeading = root.addElement('orientation-heading', { tabindex: '-1' });
@@ -166,21 +164,11 @@ function createFixture() {
     newGame: root.addButton('title', 'flow-title-new-game', 'start-roguelite-proto'),
     continueGame: root.addButton('title', 'flow-title-continue', 'continue-game'),
     settings: root.addButton('title', 'flow-title-settings', 'open-settings'),
-    prologueContinue: root.addButton('prologue', 'flow-prologue-continue', 'finish-prologue'),
-    prologueSkip: root.addButton('prologue', 'flow-prologue-skip', 'skip-prologue'),
     settingsClose: root.addButton('settings', 'flow-settings-close', 'close-overlay'),
-    pauseClose: root.addButton('pause', 'flow-pause-resume', 'close-overlay'),
-    inventoryClose: root.addButton('inventory', 'flow-inventory-close', 'close-overlay'),
-    inventoryFallback: root.addFocusable('inventory', 'flow-inventory-panel'),
-    mapClose: root.addButton('map', 'flow-map-close', 'close-overlay'),
-    cultivationClose: root.addButton('cultivation', 'flow-cultivation-close', 'close-overlay'),
-    tribulationPrimary: root.addFocusable('tribulation', 'flow-tribulation-primary'),
-    tribulationPause: root.addButton('tribulation', 'flow-tribulation-pause', 'open-pause'),
-    aftermathContinue: root.addButton('aftermath', 'flow-aftermath-continue', 'continue-aftermath'),
-    endingReturn: root.addButton('ending', 'flow-ending-return', 'return-title')
+    codexClose: root.addButton('codex', 'flow-codex-close', 'close-overlay')
   };
 
-  return { root, buttons, canvas, rogueliteRoot, buildLabel };
+  return { root, buttons, rogueliteRoot, buildLabel };
 }
 
 function visibleSurfaces(root: FakeRoot): string[] {
@@ -197,17 +185,10 @@ describe('app flow DOM presentation', () => {
       [createAppFlowState(), 'loading'],
       [runFlow([{ type: 'boot-error' }]), 'boot-error'],
       [runFlow([{ type: 'boot-ready' }]), 'title'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }]), 'prologue'],
       [runFlow([{ type: 'boot-ready' }, { type: 'continue-game' }]), 'roguelite-proto'],
       [runFlow([{ type: 'boot-ready' }, { type: 'start-roguelite-proto' }]), 'roguelite-proto'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }]), 'world'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'start-tribulation' }]), 'tribulation'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'start-tribulation' }, { type: 'finish-tribulation' }]), 'aftermath'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'show-ending' }]), 'ending'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'open-overlay', overlay: 'inventory' }]), 'inventory'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'open-overlay', overlay: 'map' }]), 'map'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'open-overlay', overlay: 'cultivation' }]), 'cultivation'],
-      [runFlow([{ type: 'boot-ready' }, { type: 'start-new-game' }, { type: 'skip-prologue' }, { type: 'open-overlay', overlay: 'pause' }]), 'pause'],
+      [runFlow([{ type: 'boot-ready' }, { type: 'start-narration' }]), 'narration'],
+      [runFlow([{ type: 'boot-ready' }, { type: 'start-narration' }, { type: 'open-overlay', overlay: 'codex' }]), 'codex'],
       [runFlow([{ type: 'boot-ready' }, { type: 'open-overlay', overlay: 'settings' }]), 'settings']
     ];
 
@@ -219,25 +200,6 @@ describe('app flow DOM presentation', () => {
       surface: 'portrait-blocked',
       focusTarget: APP_FLOW_FOCUS_TARGETS.orientation
     });
-  });
-
-  it('keeps the world surface while deriving one authoritative legacy attention mode', () => {
-    const { root, buttons } = createFixture();
-    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
-    controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-
-    controller.setWorldAttention({ panelActive: true });
-    expect(controller.getPresentation()).toMatchObject({ surface: 'world', mode: 'panel' });
-    const panelEscape = root.emit('keydown', { key: 'Escape' });
-    expect(panelEscape.defaultPrevented).toBe(false);
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
-    controller.setWorldAttention({ panelActive: true, locationActive: true, dialogueActive: true });
-    expect(controller.getPresentation()).toMatchObject({ surface: 'world', mode: 'dialogue' });
-    controller.setWorldAttention({});
-    expect(controller.getPresentation()).toMatchObject({ surface: 'world', mode: 'world' });
-    controller.destroy();
   });
 
   it('shows boot failures as the only surface, focuses recovery, and delegates reload', () => {
@@ -277,26 +239,8 @@ describe('app flow DOM presentation', () => {
     expect(buttons.newGame.focused).toBe(1);
     expect(root.surfaces.get('title')?.inert).toBe(false);
     expect(root.surfaces.get('title')?.getAttribute('aria-hidden')).toBe('false');
-    expect(root.surfaces.get('world')?.inert).toBe(true);
-    expect(root.surfaces.get('world')?.getAttribute('aria-hidden')).toBe('true');
-    controller.destroy();
-  });
-
-  it('keeps the world rendered as an inert backdrop behind inventory', () => {
-    const { root, buttons } = createFixture();
-    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
-
-    controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
-
-    expect(visibleSurfaces(root)).toEqual(['world', 'inventory']);
-    expect(root.surfaces.get('world')?.inert).toBe(true);
-    expect(root.surfaces.get('world')?.getAttribute('aria-hidden')).toBe('true');
-    expect(root.surfaces.get('world')?.getAttribute('data-flow-backdrop')).toBe('true');
-    expect(root.surfaces.get('inventory')?.inert).toBe(false);
-    expect(root.surfaces.get('inventory')?.getAttribute('aria-hidden')).toBe('false');
+    expect(root.surfaces.get('settings')?.inert).toBe(true);
+    expect(root.surfaces.get('settings')?.getAttribute('aria-hidden')).toBe('true');
     controller.destroy();
   });
 
@@ -328,38 +272,6 @@ describe('app flow DOM presentation', () => {
     controller.destroy();
   });
 
-  it('uses Escape to pause and resume World and Tribulation', () => {
-    const { root, buttons, canvas } = createFixture();
-    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
-    controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-
-    const pauseWorld = root.emit('keydown', { key: 'Escape' });
-    expect(pauseWorld.defaultPrevented).toBe(true);
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: 'pause' });
-    expect(root.activeElement).toBe(buttons.pauseClose);
-    root.emit('keydown', { key: 'Escape' });
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
-    expect(root.activeElement).toBe(canvas);
-
-    controller.dispatch({ type: 'start-tribulation' });
-    const pauseTribulation = root.emit('keydown', { key: 'Escape' });
-    expect(pauseTribulation.defaultPrevented).toBe(true);
-    expect(controller.getState()).toMatchObject({ screen: 'tribulation', overlay: 'pause' });
-    root.emit('keydown', { key: 'Escape' });
-    expect(controller.getState()).toMatchObject({ screen: 'tribulation', overlay: null });
-    expect(root.activeElement).toBe(buttons.tribulationPrimary);
-
-    controller.dispatch({ type: 'open-overlay', overlay: 'settings', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
-    expect(root.activeElement).toBe(buttons.settingsClose);
-    buttons.settingsClose.emit('click');
-    expect(controller.getState()).toMatchObject({ screen: 'tribulation', overlay: null });
-    expect(root.activeElement).toBe(buttons.tribulationPrimary);
-
-    controller.destroy();
-  });
-
   it('captures an overlay trigger, closes on Escape, and restores focus to that trigger', () => {
     const { root, buttons } = createFixture();
     const controller = createAppFlowViewController({ root, keyboardTarget: root });
@@ -378,96 +290,25 @@ describe('app flow DOM presentation', () => {
     controller.destroy();
   });
 
-  it('closes the inventory overlay with B and restores world focus', () => {
-    const { root, buttons, canvas } = createFixture();
-    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
-    controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: 'inventory' });
-
-    const close = root.emit('keydown', { key: 'b' });
-    expect(close.defaultPrevented).toBe(true);
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
-    expect(root.activeElement).toBe(canvas);
-    controller.destroy();
-  });
-
   it('activates flow buttons from touch pointerdown without double-firing the following click', () => {
-    const { root, buttons, canvas } = createFixture();
+    const { root, buttons } = createFixture();
     const transitions: AppFlowEvent[] = [];
     const controller = createAppFlowViewController({
       root,
       keyboardTarget: root,
-      continueAvailable: true,
       onStateChange: (_next, _previous, event) => transitions.push(event)
     });
     controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
+    buttons.settings.emit('click');
     transitions.length = 0;
 
-    const pointer = buttons.inventoryClose.emit('pointerdown', { button: 0, pointerType: 'touch' });
-    const click = buttons.inventoryClose.emit('click', { detail: 1 });
+    const pointer = buttons.settingsClose.emit('pointerdown', { button: 0, pointerType: 'touch' });
+    const click = buttons.settingsClose.emit('click', { detail: 1 });
 
     expect(pointer.defaultPrevented).toBe(true);
     expect(click.defaultPrevented).toBe(true);
-    expect(controller.getState()).toMatchObject({ screen: 'world', overlay: null });
-    expect(root.activeElement).toBe(canvas);
+    expect(controller.getState()).toMatchObject({ screen: 'title', overlay: null });
     expect(transitions.map(event => event.type)).toEqual(['close-overlay']);
-    controller.destroy();
-  });
-
-  it('routes the reserved tribulation, aftermath, and ending page actions', () => {
-    const { root, buttons } = createFixture();
-    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
-    controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-
-    controller.dispatch({ type: 'start-tribulation' });
-    expect(root.activeElement).toBe(buttons.tribulationPrimary);
-    buttons.tribulationPause.emit('click');
-    expect(visibleSurfaces(root)).toEqual(['pause']);
-    buttons.pauseClose.emit('click');
-    expect(controller.getState()).toMatchObject({ screen: 'tribulation', overlay: null });
-
-    controller.dispatch({ type: 'finish-tribulation' });
-    expect(visibleSurfaces(root)).toEqual(['aftermath']);
-    buttons.aftermathContinue.emit('click');
-    expect(controller.getState().screen).toBe('world');
-
-    controller.dispatch({ type: 'show-ending' });
-    expect(visibleSurfaces(root)).toEqual(['ending']);
-    buttons.endingReturn.emit('click');
-    expect(controller.getState().screen).toBe('title');
-    controller.destroy();
-  });
-
-  it('re-focuses the configured target after it becomes enabled on the current surface', () => {
-    const { root, buttons, canvas } = createFixture();
-    const controller = createAppFlowViewController({ root, keyboardTarget: root, continueAvailable: true });
-    controller.dispatch({ type: 'boot-ready' });
-    controller.dispatch({ type: 'start-new-game' });
-    controller.dispatch({ type: 'skip-prologue' });
-    buttons.inventoryClose.disabled = true;
-
-    controller.dispatch({ type: 'open-overlay', overlay: 'inventory', returnFocus: APP_FLOW_FOCUS_TARGETS.world });
-
-    expect(root.activeElement).toBe(buttons.inventoryFallback);
-    buttons.inventoryClose.disabled = false;
-    controller.refocusCurrentSurface();
-    expect(root.activeElement).toBe(buttons.inventoryClose);
-
-    buttons.inventoryClose.hidden = true;
-    controller.refocusCurrentSurface();
-    expect(root.activeElement).toBe(buttons.inventoryFallback);
-
-    controller.dispatch({ type: 'close-overlay' });
-    controller.refocusCurrentSurface();
-    expect(root.activeElement).toBe(canvas);
     controller.destroy();
   });
 

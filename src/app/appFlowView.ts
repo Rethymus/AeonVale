@@ -1,24 +1,15 @@
 import { APP_FLOW_FOCUS_TARGETS, createAppFlowState, transitionAppFlow, type AppFlowEvent, type AppFlowState, type AppFocusSelector } from './appFlowMachine';
-import { deriveUiMode, type UiMode, type UiModeInput } from './uiMode';
+import { deriveUiMode, type UiMode } from './uiMode';
 
-export const APP_SURFACE_IDS = ['loading', 'boot-error', 'world', 'title', 'prologue', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'narration', 'roguelite-proto', 'codex', 'portrait-blocked'] as const;
+export const APP_SURFACE_IDS = ['loading', 'boot-error', 'title', 'settings', 'narration', 'roguelite-proto', 'codex', 'portrait-blocked'] as const;
 
 export type AppSurfaceId = (typeof APP_SURFACE_IDS)[number];
 
 export const APP_SURFACE_LABELS: Readonly<Record<AppSurfaceId, string>> = {
   loading: '载入中',
   'boot-error': '载入失败',
-  world: '农庄世界',
   title: '标题',
-  prologue: '序章',
   settings: '设置',
-  pause: '暂停',
-  inventory: '物品管理',
-  map: '地点',
-  cultivation: '修行',
-  tribulation: '教学天劫',
-  aftermath: '战后结算',
-  ending: '结局',
   narration: '灵韵叙录',
   'roguelite-proto': '偷天换劫',
   codex: '叙录',
@@ -28,8 +19,7 @@ export const APP_SURFACE_LABELS: Readonly<Record<AppSurfaceId, string>> = {
 export const DEFAULT_BUILD_LABEL = '版本 0.1.0 · 试玩构建';
 const FOCUSABLE_SELECTOR = '[data-flow-focusable], button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
 
-export type AppFlowPresentationInput = UiModeInput & { readonly continueAvailable?: boolean };
-export type AppWorldAttention = Pick<UiModeInput, 'dialogueActive' | 'panelActive' | 'locationActive'>;
+export type AppFlowPresentationInput = { readonly flow: AppFlowState; readonly portraitBlocked?: boolean; readonly continueAvailable?: boolean };
 
 export interface AppFlowPresentation {
   readonly mode: UiMode;
@@ -82,11 +72,10 @@ export interface AppFlowViewController {
   setContinueAvailable(available: boolean): void;
   setBuildLabel(label: string): void;
   setPortraitBlocked(blocked: boolean): void;
-  setWorldAttention(attention: AppWorldAttention): void;
   destroy(): void;
 }
 
-type AppFlowAction = 'reload-page' | 'start-new-game' | 'continue-game' | 'open-settings' | 'finish-prologue' | 'skip-prologue' | 'close-overlay' | 'open-pause' | 'continue-aftermath' | 'start-roguelite-proto' | 'return-title';
+type AppFlowAction = 'reload-page' | 'continue-game' | 'open-settings' | 'close-overlay' | 'start-roguelite-proto';
 
 interface ListenerBinding {
   readonly target: AppFlowViewEventTarget;
@@ -121,7 +110,7 @@ export function deriveAppFlowPresentation(input: AppFlowPresentationInput): AppF
   }
 
   return {
-    mode: deriveUiMode(input),
+    mode: deriveUiMode(input.flow.screen),
     surface: surfaceForFlow(input.flow),
     focusTarget: input.flow.focus.initial,
     continueAvailable: input.continueAvailable === true
@@ -131,16 +120,10 @@ export function deriveAppFlowPresentation(input: AppFlowPresentationInput): AppF
 function isFlowAction(value: string | null): value is AppFlowAction {
   switch (value) {
     case 'reload-page':
-    case 'start-new-game':
     case 'continue-game':
     case 'open-settings':
-    case 'finish-prologue':
-    case 'skip-prologue':
     case 'close-overlay':
-    case 'open-pause':
-    case 'continue-aftermath':
     case 'start-roguelite-proto':
-    case 'return-title':
       return true;
     default:
       return false;
@@ -153,26 +136,14 @@ function focusSelectorFor(element: AppFlowViewElement, fallback: AppFocusSelecto
 
 function eventForAction(action: Exclude<AppFlowAction, 'reload-page'>, trigger: AppFlowViewElement, state: AppFlowState): AppFlowEvent {
   switch (action) {
-    case 'start-new-game':
-      return { type: 'start-new-game' };
     case 'continue-game':
       return { type: 'continue-game' };
     case 'open-settings':
       return { type: 'open-overlay', overlay: 'settings', returnFocus: focusSelectorFor(trigger, state.focus.initial) };
-    case 'finish-prologue':
-      return { type: 'finish-prologue' };
-    case 'skip-prologue':
-      return { type: 'skip-prologue' };
     case 'close-overlay':
       return { type: 'close-overlay' };
-    case 'open-pause':
-      return { type: 'open-overlay', overlay: 'pause', returnFocus: focusSelectorFor(trigger, state.focus.initial) };
-    case 'continue-aftermath':
-      return { type: 'continue-aftermath' };
     case 'start-roguelite-proto':
       return { type: 'start-roguelite-proto' };
-    case 'return-title':
-      return { type: 'return-title' };
   }
 }
 
@@ -204,10 +175,6 @@ function surfaceSelector(surface: AppSurfaceId): string {
   return `[data-app-surface="${surface}"]`;
 }
 
-function shouldRenderWorldBackdrop(flow: AppFlowState, surface: AppSurfaceId): boolean {
-  return flow.screen === 'world' && (surface === 'inventory' || surface === 'map' || surface === 'cultivation' || surface === 'pause' || surface === 'settings');
-}
-
 export function createAppFlowViewController(options: AppFlowViewControllerOptions = {}): AppFlowViewController {
   const root = options.root === undefined ? defaultRoot() : options.root;
   const keyboardTarget = options.keyboardTarget === undefined ? defaultKeyboardTarget() : options.keyboardTarget;
@@ -217,8 +184,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
   let portraitBlocked = options.portraitBlocked ?? false;
   let continueAvailable = options.continueAvailable ?? false;
   let buildLabel = options.buildLabel?.trim() || DEFAULT_BUILD_LABEL;
-  let worldAttention: AppWorldAttention = {};
-  let presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable, ...worldAttention });
+  let presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable });
   let renderedSurface: AppSurfaceId | null = null;
   let renderedFocusTarget: AppFocusSelector | null = null;
   let destroyed = false;
@@ -245,16 +211,13 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
 
   function render(): void {
     if (destroyed) return;
-    presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable, ...worldAttention });
+    presentation = deriveAppFlowPresentation({ flow: state, portraitBlocked, continueAvailable });
     for (const surface of surfaces) {
       const surfaceId = surface.getAttribute('data-app-surface');
       const active = surfaceId === presentation.surface;
-      const backdrop = shouldRenderWorldBackdrop(state, presentation.surface) && surfaceId === 'world';
-      surface.hidden = !(active || backdrop);
+      surface.hidden = !active;
       surface.inert = !active;
       surface.setAttribute('aria-hidden', String(!active));
-      if (backdrop) surface.setAttribute('data-flow-backdrop', 'true');
-      else surface.removeAttribute('data-flow-backdrop');
     }
 
     if (renderedSurface !== presentation.surface || renderedFocusTarget !== presentation.focusTarget) {
@@ -298,14 +261,12 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
 
   function escapeEventForCurrentState(): AppFlowEvent | null {
     if (state.overlay != null) return { type: 'close-overlay' };
-    if (state.screen === 'world') return presentation.mode === 'world' ? { type: 'open-overlay', overlay: 'pause' } : null;
-    if (state.screen === 'tribulation') return { type: 'open-overlay', overlay: 'pause' };
     return null;
   }
 
   function trapFocus(event: Event): void {
     const surface = activeSurface();
-    if (!surface || presentation.surface === 'world' || presentation.surface === 'loading') return;
+    if (!surface || presentation.surface === 'loading') return;
     const focusable = focusableElements(surface);
     if (focusable.length === 0) return;
     const current = root?.activeElement ?? null;
@@ -327,14 +288,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
       }
       return;
     }
-    const key = keyValue(event);
-    if ((key === 'b' || key === 'B') && state.overlay === 'inventory' && !commandModifierPressed(event)) {
-      event.preventDefault();
-      event.stopPropagation();
-      dispatch({ type: 'close-overlay' });
-      return;
-    }
-    if (key === 'Escape') {
+    if (keyValue(event) === 'Escape') {
       const escapeEvent = escapeEventForCurrentState();
       if (!escapeEvent) return;
       event.preventDefault();
@@ -342,7 +296,7 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
       dispatch(escapeEvent);
       return;
     }
-    if (key === 'Tab') trapFocus(event);
+    if (keyValue(event) === 'Tab') trapFocus(event);
   };
 
   if (keyboardTarget) {
@@ -419,17 +373,6 @@ export function createAppFlowViewController(options: AppFlowViewControllerOption
     setPortraitBlocked(blocked: boolean): void {
       if (destroyed || portraitBlocked === blocked) return;
       portraitBlocked = blocked;
-      render();
-    },
-    setWorldAttention(attention: AppWorldAttention): void {
-      if (destroyed) return;
-      const next = {
-        dialogueActive: attention.dialogueActive === true,
-        panelActive: attention.panelActive === true,
-        locationActive: attention.locationActive === true
-      };
-      if (next.dialogueActive === worldAttention.dialogueActive && next.panelActive === worldAttention.panelActive && next.locationActive === worldAttention.locationActive) return;
-      worldAttention = next;
       render();
     },
     destroy(): void {

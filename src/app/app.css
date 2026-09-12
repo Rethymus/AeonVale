@@ -52,6 +52,11 @@ button {
   background: var(--color-shell);
 }
 
+#app[hidden] {
+  /* hidden 属性恒胜布局 display（旧 world surface 已退役，本容器仅承载画布） */
+  display: none !important;
+}
+
 #app {
   position: relative;
   display: grid;

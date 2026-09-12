@@ -284,6 +284,9 @@ async function main(): Promise<void> {
   function destroyRogueliteProtoSurface(): void {
     rogueliteProtoSurface?.destroy();
     rogueliteProtoSurface = null;
+    // 修途局内会把 BGM 切到 tribulation/tense 且 destroy 不自恢复（surface 内部
+    // 只管进局语境）；返回标题后必须还原标题语境，否则紧张态残留到标题屏。
+    audio.setMusicContext({ season: 'spring', zone: 'farm', tension: 'calm', active: true });
   }
 
   function startNarrationCodex(): void {
@@ -390,8 +393,6 @@ async function main(): Promise<void> {
     responsiveShell?.updateSemanticState(
       deriveSemanticGameState({
         presentation,
-        worldStatus: '',
-        announcement: '',
         saveHealth
       })
     );
@@ -516,10 +517,9 @@ async function main(): Promise<void> {
     window.addEventListener('keydown', onOrientationGateKeydown, { capture: true });
   }
 
-  // 旧世界退役（docs/21 §8.27）：语义壳层保留（可达性摘要 + data-game-command
-  // 绑定），但其命令族（农务/行囊/地图/丹炉等 world 目标）已无处理器——以 no-op
-  // 兜底，待修途触控方案定稿后重新指向。
-  responsiveShell = createResponsiveShell({ dispatch: () => undefined });
+  // 旧世界退役（docs/21 §8.28）：语义壳层只承担可达性摘要喂数；触控命令路由
+  // （semanticInputRouter/data-game-command）随 world 屏退役。
+  responsiveShell = createResponsiveShell();
 
   // 灵韵叙录入口（#flow-title-narration）：点击开「开发者自白」modal；已读则 modal 内部直接 dispatch start-narration。
   // 该按钮无 data-flow-action，由本处自管点击（appFlowView 不接管），modal 仍留在 title surface 之上。

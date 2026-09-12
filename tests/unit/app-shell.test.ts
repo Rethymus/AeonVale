@@ -80,9 +80,11 @@ describe('public demo application shell', () => {
   });
 
   it('provides stable save-health status nodes without claiming persistence before runtime checks it', () => {
-    for (const id of ['flow-title-save-notice', 'flow-settings-save-status', 'flow-pause-save-status', 'orientation-save-status']) {
+    // 旧世界退役（docs/21 §8.28）：pause surface 已删，状态节点收敛为标题/设置/方向门。
+    for (const id of ['flow-title-save-notice', 'flow-settings-save-status', 'orientation-save-status']) {
       expect(html).toContain(`id="${id}"`);
     }
+    expect(html).not.toContain('id="flow-pause-save-status"');
     expect(html).toContain('id="flow-title-save-notice" class="flow-note" role="status" aria-live="polite" aria-atomic="true" hidden');
     expect(html).not.toContain('当前进度已保留');
     expect(html).not.toContain('当前进度会安全保留');
@@ -99,54 +101,20 @@ describe('public demo application shell', () => {
     expect(html).toContain('role="status" aria-live="polite" aria-atomic="true"');
   });
 
-  it('uses native named buttons for touch commands', () => {
-    for (const command of ['move-up', 'move-left', 'move-down', 'move-right', 'primary', 'cancel', 'secondary', 'menu']) {
-      expect(html).toContain(`data-game-command="${command}"`);
-    }
-    expect(html.match(/<button/g)?.length ?? 0).toBeGreaterThanOrEqual(8);
-    expect(html).toContain('aria-label="向上移动"');
-    expect(html).toContain('aria-label="主要操作"');
-    expect(html).toContain('aria-label="返回或关闭当前面板"');
-    expect(html).toContain('aria-label="打开菜单"');
+  it('retires touch command buttons with the legacy world (docs/21 §8.28)', () => {
+    expect(html).not.toContain('data-game-command=');
+    expect(html).not.toContain('id="touch-controls"');
   });
 
-  it('exposes native world navigation and complete public-demo controls', () => {
-    expect(html).toContain('id="world-command-bar"');
-    expect(html).toContain('id="objective-rail"');
-    expect(html).toContain('data-hud-density="compact"');
-    expect(html).toContain('id="objective-rail-primary"');
-    expect(html).toContain('id="objective-rail-details"');
-    expect(html).toContain('id="fate-status-strip"');
-    expect(html).toContain('id="fate-rail-details"');
-    expect(html).toContain('id="fate-rail-summary"');
-    expect(html).toContain('id="fate-summary-pressure"');
-    expect(html).toContain('id="fate-summary-celestial"');
-    expect(html).toContain('id="world-vital-strip"');
-    expect(html).toContain('id="world-vital-hp-label"');
-    expect(html).toContain('id="world-vital-stamina-label"');
-    expect(html).toContain('data-hud-secondary="true"');
+  it('exposes title-only shell controls after the world navigation retirement', () => {
     expect(html).toContain('id="flow-continue-status"');
-    const objectiveStart = html.indexOf('id="objective-rail"');
-    const objectiveClose = html.indexOf('</aside>', objectiveStart);
-    const fateStart = html.indexOf('id="fate-status-strip"');
-    expect(objectiveStart).toBeGreaterThanOrEqual(0);
-    expect(objectiveClose).toBeGreaterThan(objectiveStart);
-    expect(fateStart).toBeGreaterThan(objectiveClose);
-    expect(html.slice(objectiveStart, objectiveClose)).not.toContain('id="fate-rail-details"');
-    for (const command of ['journey', 'farm', 'inventory', 'map', 'cultivation', 'furnace', 'end-day', 'pause', 'settings']) {
-      expect(html).toContain(`data-game-command="${command}"`);
+    // world HUD 编排已随 renderer 退役，DOM 不再存在
+    for (const dead of ['id="world-command-bar"', 'id="objective-rail"', 'id="fate-status-strip"', 'id="world-vital-strip"', 'data-hud-density', 'data-demo-action']) {
+      expect(html).not.toContain(dead);
     }
-    expect(html).not.toContain('data-game-command="alchemy"');
-
-    for (const action of ['take-pill', 'tribulation-primary', 'move-up', 'move-left', 'move-down', 'move-right']) {
-      const button = parseOpeningTags(html).find(tag => tag.name === 'button' && tag.attributes['data-demo-action'] === action);
-      expect(button?.attributes.type, action).toBe('button');
-      expect(button?.attributes['data-flow-focusable'], action).toBe('true');
-    }
-
-    expect(html).toContain('data-app-slot="inventory"');
-    expect(html).not.toContain('data-app-surface="alchemy"');
-    expect(html).not.toContain('data-demo-action="alchemy-primary"');
+    expect(html).not.toContain('data-game-command=');
+    expect(html).toContain('id="flow-title-new-game"');
+    expect(html).toContain('id="flow-title-settings"');
     expect(html).toContain('role="status" aria-live="polite" aria-atomic="true"');
   });
 
@@ -184,16 +152,20 @@ describe('public demo application shell', () => {
 
   it('contains real focusable DOM surfaces for the complete application flow', () => {
     const surfaces = new Set(surfaceBlocks().map(surface => surface.surface));
-    expect(surfaces).toEqual(new Set(['world', 'loading', 'boot-error', 'title', 'prologue', 'narration', 'roguelite-proto', 'codex', 'settings', 'pause', 'inventory', 'map', 'cultivation', 'tribulation', 'aftermath', 'ending', 'portrait-blocked']));
+    // 旧世界退役（docs/21 §8.28）：壳层只剩 8 个活 surface。
+    expect(surfaces).toEqual(new Set(['loading', 'boot-error', 'title', 'narration', 'roguelite-proto', 'codex', 'settings', 'portrait-blocked']));
 
-    for (const action of ['reload-page', 'start-roguelite-proto', 'continue-game', 'open-settings', 'close-overlay', 'open-pause', 'continue-aftermath', 'return-title']) {
+    for (const action of ['reload-page', 'start-roguelite-proto', 'continue-game', 'open-settings', 'close-overlay']) {
       expect(html).toContain(`data-flow-action="${action}"`);
+    }
+    for (const retired of ['open-pause', 'continue-aftermath', 'return-title', 'finish-prologue', 'skip-prologue', 'start-new-game']) {
+      expect(html).not.toContain(`data-flow-action="${retired}"`);
     }
 
     expect(html).toContain('id="flow-title-new-game"');
     expect(html).toContain('id="flow-title-continue"');
     expect(html).toContain('id="flow-title-settings"');
-    expect(html).toContain('id="prologue-vn"');
+    expect(html).not.toContain('id="prologue-vn"');
     expect(html).toContain('aria-describedby="flow-continue-status"');
     expect(html).toMatch(/id="flow-title-continue"[^>]*disabled/);
   });
@@ -213,7 +185,7 @@ describe('public demo application shell', () => {
   it('assigns every flow button to one parsed surface with native button semantics', () => {
     const surfaces = surfaceBlocks();
     const buttons = parseOpeningTags(html).filter(tag => tag.name === 'button' && typeof tag.attributes['data-flow-action'] === 'string');
-    expect(buttons.length).toBeGreaterThanOrEqual(12);
+    expect(buttons.length).toBeGreaterThanOrEqual(5);
 
     for (const button of buttons) {
       const owner = surfaces.find(surface => button.start > surface.start && button.end < surface.close);
@@ -226,8 +198,8 @@ describe('public demo application shell', () => {
     const ownerByAction = new Map(buttons.map(button => [String(button.attributes['data-flow-action']), surfaces.find(surface => button.start > surface.start && button.end < surface.close)?.surface]));
     expect(ownerByAction.get('reload-page')).toBe('boot-error');
     expect(ownerByAction.get('start-roguelite-proto')).toBe('title');
-    expect(ownerByAction.get('continue-aftermath')).toBe('aftermath');
-    expect(ownerByAction.get('return-title')).toBe('ending');
+    expect(ownerByAction.get('continue-game')).toBe('title');
+    expect(ownerByAction.get('open-settings')).toBe('title');
   });
 
   it('provides readable boot recovery and a concrete title build label', () => {
@@ -252,22 +224,15 @@ describe('public demo application shell', () => {
     expect(titleMarkup).toContain('fetchpriority="high"');
   });
 
-  it('mounts the branching visual-novel stage inside the prologue surface without static flow buttons', () => {
-    const prologue = html.match(/<section[^>]+data-app-surface="prologue"[\s\S]*?<\/section>/)?.[0] ?? '';
-    expect(prologue).not.toBe('');
-    expect(prologue).toContain('id="flow-prologue-heading"');
-    expect(prologue).toContain('id="prologue-vn"');
-    expect(prologue).toContain('data-app-slot="prologue-vn"');
-    // 静态阅读段落保持精简（kicker 之外由 VN 运行时渲染）。
-    expect(prologue.match(/<p(?:\s|>)/g)?.length ?? 0).toBeLessThanOrEqual(3);
-    // 控件交由 prologueVN 自管：静态面板不再放 finish/skip 的 data-flow-action 按钮。
-    expect(prologue).not.toContain('data-flow-action="finish-prologue"');
-    expect(prologue).not.toContain('data-flow-action="skip-prologue"');
+  it('retires the prologue surface with the legacy world (docs/21 §8.28)', () => {
+    expect(html).not.toContain('data-app-surface="prologue"');
+    expect(html).not.toContain('id="prologue-vn"');
   });
 
   it('uses native dialog semantics and named return buttons for blocking overlays', () => {
-    expect(html.match(/role="dialog"/g)?.length ?? 0).toBeGreaterThanOrEqual(8);
-    expect(html.match(/aria-modal="true"/g)?.length ?? 0).toBeGreaterThanOrEqual(8);
+    // 活 overlay：boot-error（alertdialog）、codex、settings
+    expect(html.match(/role="dialog"/g)?.length ?? 0).toBe(2);
+    expect(html).toContain('role="alertdialog"');
     expect(html).not.toContain('onclick=');
     expect(html).not.toContain('tabindex="1"');
   });
@@ -303,24 +268,13 @@ describe('public demo application shell', () => {
     const surface = cssDeclarations('.flow-surface');
     expect(surface.inset).toBe('var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left)');
 
-    for (const selector of ['.flow-button', '.touch-button', '.world-command']) {
-      const declarations = cssDeclarations(selector);
-      expect(minimumPixels(declarations['min-width']), selector).toBeGreaterThanOrEqual(44);
-      expect(minimumPixels(declarations['min-height']), selector).toBeGreaterThanOrEqual(44);
-    }
+    const flowButton = cssDeclarations('.flow-button');
+    expect(minimumPixels(flowButton['min-width'])).toBeGreaterThanOrEqual(44);
+    expect(minimumPixels(flowButton['min-height'])).toBeGreaterThanOrEqual(44);
 
-    const objectiveSummary = cssDeclarations('.objective-rail-summary');
-    expect(minimumPixels(objectiveSummary['min-height'])).toBeGreaterThanOrEqual(44);
-    const fateSummary = cssDeclarations('.fate-summary');
-    expect(minimumPixels(fateSummary['min-height'])).toBeGreaterThanOrEqual(44);
-    expect(css).toContain('.objective-rail[hidden]');
-    expect(css).toContain('.fate-status-strip[hidden]');
-    expect(css).toContain('data-hud-density');
-
-    const worldSurface = parseOpeningTags(html).find(tag => tag.attributes.id === 'app');
-    expect(worldSurface?.attributes['data-app-surface']).toBe('world');
-    expect(worldSurface?.attributes.class).not.toBe('app-surface');
+    // 旧世界退役（docs/21 §8.28）：#app 不再是 flow surface，仅是画布容器。
+    const appDiv = parseOpeningTags(html).find(tag => tag.attributes.id === 'app');
+    expect(appDiv?.attributes['data-app-surface']).toBeUndefined();
     expect(cssDeclarations('[data-app-surface][hidden]').display).toBe('none !important');
-    expect(css).not.toContain('#app:has(canvas) ~ #game-loading');
   });
 });
