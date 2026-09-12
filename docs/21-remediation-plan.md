@@ -1164,3 +1164,27 @@ ghost 预览；残卷门控（新节点 cost 4-5）待灵草/修饰池经济联�
 **docs/31 三轮迭代至此全部 P1/P2 落地完毕。**余项仅 P3：残卷门控经济
 （修饰池上限=已解锁修饰节点数）、深度配方节点（曾 perfect 组合才解锁生成
 权重）——需先有真人试玩数据校准（docs/30 清单）。
+
+### 8.26 第二十二轮（2026-09-12）：退役阶段 2 第二步·portfolio 证据链迁移与世界入口门拆除
+
+阶段 2 第二步的前置依赖先落地：portfolio 验收链是最后一个旧世界消费方。
+
+1. **portfolio 证据链整体迁到主模式**（判定表 §8.21"唯一整族保留"项的处置）：
+   `portfolio-capture.spec.ts` 重写——四张审查截图改为 备劫工作台 1440×810 /
+   天劫棋盘 1440×810 / 生活事件 1440×810 / 紧凑横屏 736×414；runtime 信号改为
+   主模式证据（appSurface=roguelite-proto、六格竹简计数、HUD 认证·余量证书行、
+   劫兆情报行）；`portfolio-mvp-preflight.mjs` 校验与阈值同步迁移；
+   配套单测断言全部对齐。**preflight 全链实跑通过**（capture→evidence→verify，
+   无部署）。
+2. **世界入口门整族退役**：`enterLoadedLegacyWorld` 测试门从 main.ts 拆除；
+   `openGameWithLoadedSave`/`continueToLoadedWorld` 从 openGame.ts 移除；
+   `showcaseSave.ts` 删除。**旧世界自此在测试与玩家两侧均不可达**（机器层的
+   world 屏状态留给 renderer 退役同批清理）。
+3. 遗留：main.ts 内 world 屏的渲染循环与 UI 编排现为不可达死码，renderer.ts
+   2832 行待删——本批先提交已验证的入口拆除，renderer/main 死码物理删除作为
+   第二步的收尾提交（保持每步独立可回退）。
+
+验证：tsc 零错；单测 **2592/2592**；portfolio-capture 3/3（证据 JSON 实检：
+四截图 paintedRatio=1、证书行"认证 14 步 · 余量 9"）；preflight 通过；
+构建/治理/readiness 全绿；浏览器回归 smoke/app-flow/save-health/
+roguelite 全家 21/21。
