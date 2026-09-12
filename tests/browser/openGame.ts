@@ -116,12 +116,9 @@ export interface AeonDebugSnapshot {
   shippingBinItemCount?: number;
 }
 
-// 旧世界退役（docs/21 §8.16 阶段 2 第一步）：continueToWorld / openGame /
-// clearIntroDialogue / canvasPaintStats / canvasPngSnapshot 及 ?legacyShortcuts
-// 入口参数随 enterLegacyWorld 测试门退役（判定表见 docs/21 §8.21）。
-// continueToLoadedWorld / openGameWithLoadedSave 保留：portfolio-capture
-// （package.json portfolio:capture + tools/portfolio-mvp-preflight 链）仍
-// 经 enterLoadedLegacyWorld 进入旧世界展示存档，待产品决策后整族处置。
+// 旧世界退役（docs/21 §8.16 阶段 2 第二步）：全部旧世界入口助手随
+// enterLoadedLegacyWorld 测试门与 portfolio 主模式迁移一并退役
+// （判定表见 docs/21 §8.21/§8.26）。
 
 export function gameEntryPath(): string {
   const basePath = process.env.PLAYWRIGHT_GAME_BASE_PATH ?? '/';
@@ -142,36 +139,6 @@ export async function waitForInitialSurface(page: Page): Promise<AeonDebugSnapsh
     return !active.hidden && active.getAttribute('aria-hidden') === 'false' && style.display !== 'none' && style.visibility !== 'hidden' && active.offsetWidth > 0 && active.offsetHeight > 0;
   });
   return gameDebugSnapshot(page);
-}
-
-/**
- * 以 boot 已加载的存档状态进入旧世界（不清档）。
- * 供 portfolio-capture 种子存档用例使用；测试门不可用或 boot 未加载出
- * 有效存档时直接抛错（旧 fresh 入口已随 enterLegacyWorld 退役）。
- */
-export async function continueToLoadedWorld(page: Page): Promise<boolean> {
-  const entered = await page.evaluate(() => {
-    const target = (window as typeof window & { __AEON_TEST__?: { enterLoadedLegacyWorld?: () => boolean } }).__AEON_TEST__;
-    return target?.enterLoadedLegacyWorld?.() ?? false;
-  });
-  if (!entered) {
-    throw new Error('enterLoadedLegacyWorld test gate unavailable or no valid save loaded at boot');
-  }
-  const canvas = page.locator('canvas');
-  await canvas.waitFor({ state: 'visible' });
-  const box = await canvas.boundingBox();
-  const viewport = page.viewportSize();
-  if (!box || !viewport || box.y < 0 || box.y >= viewport.height) {
-    throw new Error(`Game canvas starts outside the initial viewport: box=${JSON.stringify(box)}, viewport=${JSON.stringify(viewport)}`);
-  }
-  await canvas.focus();
-  return true;
-}
-
-export async function openGameWithLoadedSave(page: Page): Promise<void> {
-  await page.goto(gameEntryPath());
-  await waitForInitialSurface(page);
-  await continueToLoadedWorld(page);
 }
 
 export async function gameDebugSnapshot(page: Page): Promise<AeonDebugSnapshot> {

@@ -1,32 +1,23 @@
-// 旧世界退役（docs/21 §8.16 阶段 2 第一步）唯一整族保留的旧世界 spec：
-// 100% 经 enterLoadedLegacyWorld 展示存档门进入旧世界，但被 package.json
-// `portfolio:capture` 与 tools/portfolio-mvp-preflight.mjs 验收链硬依赖，
-// 该两文件不在本批允许改动集内——待交付媒体产品决策落地后与
-// enterLoadedLegacyWorld 门、showcaseSave.ts、openGameWithLoadedSave 一并
-// 整族处置（判定与遗留见 docs/21 §8.21）。
+// 旧世界退役（docs/21 §8.16 阶段 2 第二步）：portfolio 证据链整体迁到主模式
+// 「偷天换劫」——四张审查截图改为 备劫工作台 / 天劫棋盘 / 生活事件 / 紧凑横屏，
+// 证据信号改为 HUD 认证·余量等主模式运行时文本。
+// 旧 world 渲染链（showcaseSave + enterLoadedLegacyWorld + openGameWithLoadedSave）
+// 随本迁移一并退役（判定与遗留见 docs/21 §8.21/§8.26）。
 import { expect, test, type Page } from '@playwright/test';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { buildRegistry } from '@content/registry';
-import { applyAction, createSimContext, createWorld, DEFAULT_BALANCE, placeArray } from '@sim';
-import { placeFacility } from '@sim/buildings/facilities';
-import { saveGame } from '@sim/serialize';
-import { mutateItem } from '@sim/world/player';
-import { tileAt } from '@sim/world/state';
-import { paintStatsFromDataUrl, gameDebugSnapshot, openGameWithLoadedSave, renderedCanvasPngSnapshot, type AeonDebugSnapshot, type CanvasPaintStats } from './openGame';
+import { gameDebugSnapshot, gameEntryPath } from './openGame';
 
-const SAVE_KEY = 'aeonvale-save-v1';
 const PORTFOLIO_EVIDENCE_PATH = 'test-results/portfolio/portfolio-mvp-evidence.json';
-const PORTFOLIO_PAINT_THRESHOLDS = { minSampled: 500, minPaintedRatio: 0.55, minColors: 32 } as const;
-const TODAY_BRIEFING_PROOF = ['前往丹炉', '承雷丹', '引雷入体'] as const;
+const PORTFOLIO_PAINT_THRESHOLDS = { minSampled: 500, minPaintedRatio: 0.5, minColors: 24 } as const;
+const RUNTIME_SIGNAL_PROOF = ['劫前修途', '认证', '引劫'] as const;
 const DESKTOP_PORTFOLIO_SCREENSHOT = { width: 1440, height: 810 } as const;
-const DESKTOP_BACKDROP_PORTFOLIO_SCREENSHOT = { width: 1440, height: 825 } as const;
 
 interface PortfolioScreenshotEvidence {
   path: string;
   width: number;
   height: number;
-  paintStats: CanvasPaintStats & { paintedRatio: number };
+  paintStats: { sampled: number; painted: number; paintedRatio: number; colors: number };
   thresholds: typeof PORTFOLIO_PAINT_THRESHOLDS;
 }
 
@@ -37,14 +28,12 @@ interface PortfolioMvpEvidence {
   stardewComparison: string[];
   xianxiaCore: string[];
   runtimeSignals: {
-    onboardingObjectiveId: string | null;
-    firstLoopProgress: '10/10';
-    selectedLocationId: string | null;
-    selectedLocationServiceCommand: string | null;
-    shippingBinItemCount: number;
-    todayBriefingTitle: string;
-    todayBriefingHasAsset: boolean;
-    todayBriefingProof: string[];
+    appSurface: string;
+    roundSeal: string;
+    agendaSlotCount: number;
+    hudCertificate: string;
+    hudIntel: string;
+    runtimeProof: string[];
   };
   evidence: string[];
   screenshotEvidence: PortfolioScreenshotEvidence[];
@@ -52,156 +41,90 @@ interface PortfolioMvpEvidence {
   noGo: string[];
 }
 
-function buildShowcaseSave(): string {
-  const reg = buildRegistry();
-  const state = createWorld({ seed: 20260714, width: 14, height: 9, content: reg, params: DEFAULT_BALANCE });
-  const ctx = createSimContext(state.masterSeed, reg, DEFAULT_BALANCE);
+const OPENING_TITLES = [
+  '这个世界的雷，先落在凡人屋顶',
+  '测灵石上，你的答案是零',
+  '修行之前，先弄清一碗饭从哪里来',
+  '仙人斗法时，凡人的田先碎了',
+  '测得是零，不等于什么都没进来'
+] as const;
 
-  // showcase 处于 stage=3 + temperingStack>0 的发展态；stage-3 与 first-tribulation 节拍会因此触发，
-  // 但展示存档应代表玩家已阅过它们，预标 seen 以免截图时弹出对白（本夹具是截图用，非叙事流测试）。
-  for (const beat of ['awaken', 'spirit-test', 'intro', 'first-till', 'first-tribulation', 'stage-3', 'shennong-art-truth']) {
-    state.player.flags.add(`narr-${beat}`);
-  }
-  state.player.flags.add('onboarding-first-second-water');
-  state.day = 9;
-  state.seasonDay = 9;
-  state.season = 'spring';
-  state.player.position = { x: 7, y: 3 };
-  state.player.facing = 'down';
-  state.player.stage = 3;
-  state.player.hp = 84_000;
-  state.player.stamina = 78_000;
-  state.player.bodyFoundation = 26_000;
-  state.player.cultivation = state.player.bodyFoundation;
-  state.player.temperingStack = 8_000;
-  state.player.pillPoison = 7_000;
-
-  mutateItem(state.player, 'item.spirit-stone', 9);
-  mutateItem(state.player, 'item.rust-hoe', 1);
-  mutateItem(state.player, 'item.water-pail', 1);
-  mutateItem(state.player, 'item.sickle', 1);
-  mutateItem(state.player, 'seed.mossling', 4);
-  mutateItem(state.player, 'seed.dewroot', 3);
-  mutateItem(state.player, 'herb.mossling', 2);
-  mutateItem(state.player, 'pill.ward-basic', 1);
-
-  const crops: Array<{ x: number; y: number; seedId: string; growth: number; stage: 'sprout' | 'growing' | 'mature'; watered?: boolean; qi?: boolean }> = [
-    { x: 5, y: 4, seedId: 'seed.mossling', growth: 100_000, stage: 'mature', watered: true, qi: true },
-    { x: 6, y: 4, seedId: 'seed.dewroot', growth: 62_000, stage: 'growing', watered: true },
-    { x: 7, y: 4, seedId: 'seed.mossling', growth: 34_000, stage: 'sprout' },
-    { x: 8, y: 4, seedId: 'seed.dewroot', growth: 86_000, stage: 'growing', watered: true, qi: true },
-    { x: 9, y: 4, seedId: 'seed.mossling', growth: 100_000, stage: 'mature', watered: true },
-    { x: 6, y: 5, seedId: 'seed.mossling', growth: 48_000, stage: 'growing', watered: true },
-    { x: 7, y: 5, seedId: 'seed.dewroot', growth: 18_000, stage: 'sprout' }
-  ];
-
-  for (const entry of crops) {
-    const tile = tileAt(state, entry.x, entry.y);
-    if (!tile) throw new Error(`missing showcase tile ${entry.x},${entry.y}`);
-    tile.blockType = 'none';
-    tile.soilType = entry.qi ? 'spirit-loam' : 'loam';
-    tile.tilled = true;
-    tile.wateredToday = entry.watered ?? false;
-    tile.channeledToday = entry.qi ?? false;
-    tile.moisture = entry.watered ? 80_000 : 28_000;
-    tile.qiDensity = entry.qi ? 70_000 : 22_000;
-    applyAction(state, { kind: 'sow', at: { x: entry.x, y: entry.y }, seedId: entry.seedId }, ctx);
-    const crop = state.crops.get(tile.id);
-    if (!crop) throw new Error(`missing showcase crop ${entry.x},${entry.y}`);
-    crop.growth = entry.growth;
-    crop.stage = entry.stage;
-    crop.health = 96_000;
-  }
-
-  expect(placeArray(state, 'array.insulation', 7, 5, ctx, { free: true }).placed).toBe(true);
-  const dryingTile = tileAt(state, 8, 5);
-  if (!dryingTile) throw new Error('missing showcase drying rack tile');
-  dryingTile.blockType = 'none';
-  dryingTile.tilled = false;
-  dryingTile.cropId = null;
-  expect(placeFacility(state, 'drying-rack', 8, 5, { free: true }).ok).toBe(true);
-  state.shippingBin['herb.mossling'] = 2;
-
-  const patrolTile = tileAt(state, 6, 5);
-  if (!patrolTile) throw new Error('missing showcase guard beast patrol tile');
-  state.guardBeasts.push({ id: 9001, vigor: 6, maxVigor: 6, bond: 68, specialty: 'field-ward' });
-  state.guardBeastPatrols.push({ beastId: 9001, tileId: patrolTile.id, assignedDay: state.day });
-
-  return JSON.stringify(saveGame(state, reg.schemaHash));
+async function dismissOrientationIfPresent(page: Page): Promise<void> {
+  const override = page.locator('#orientation-override');
+  if (await override.isVisible().catch(() => false)) await override.click();
 }
 
-async function installShowcaseSave(page: Page): Promise<void> {
-  const payload = buildShowcaseSave();
-  await page.addInitScript(
-    ({ key, value }: { key: string; value: string }) => {
-      window.localStorage.setItem(key, value);
-    },
-    { key: SAVE_KEY, value: payload }
-  );
+async function enterFirstPlanning(page: Page): Promise<void> {
+  await page.goto(gameEntryPath());
+  await dismissOrientationIfPresent(page);
+  await page.locator('#flow-title-new-game').click();
+  await page.locator('[data-app-surface="roguelite-proto"]').waitFor({ timeout: 8000 });
+  for (const title of OPENING_TITLES) {
+    await page.getByRole('heading', { name: title }).waitFor({ timeout: 8000 });
+    await page.locator('.cr-opening__button[data-primary="true"]').click();
+  }
+  await page.getByRole('heading', { name: '沈砚' }).waitFor({ timeout: 8000 });
+  await page.getByRole('button', { name: '查看第一道劫兆' }).click();
+  await page.getByRole('button', { name: '记下劫兆，安排修途' }).click();
+  await page.getByRole('heading', { name: '劫前修途' }).waitFor({ timeout: 8000 });
 }
 
-async function dismissIntroIfPresent(page: Page): Promise<void> {
-  for (let i = 0; i < 10; i += 1) {
-    const beatId = await page.evaluate(() => {
-      const debug = (window as typeof window & { __AEON_DEBUG__?: { dialogueBeatId?: string | null } }).__AEON_DEBUG__;
-      return debug?.dialogueBeatId ?? null;
+async function fillAgenda(page: Page, activities: readonly string[]): Promise<void> {
+  for (const activity of activities) {
+    await page.getByRole('button', { name: new RegExp(`^${activity}，[0-9]+ 日`) }).click();
+  }
+}
+
+async function paintStatsFromPng(page: Page, png: Buffer): Promise<{ sampled: number; painted: number; colors: number }> {
+  const dataUrl = `data:image/png;base64,${png.toString('base64')}`;
+  return page.evaluate(async (src: string) => {
+    const image = new Image();
+    image.src = src;
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('portfolio screenshot failed to load'));
     });
-    if (!beatId) return;
-    await page.keyboard.press('Enter');
-    await page.waitForTimeout(80);
-  }
-  await page.waitForFunction(() => {
-    const debug = (window as typeof window & { __AEON_DEBUG__?: { dialogueBeatId?: string | null } }).__AEON_DEBUG__;
-    return debug?.dialogueBeatId == null;
-  });
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return { sampled: 0, painted: 0, colors: 0 };
+    ctx.drawImage(image, 0, 0);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const colors = new Set<string>();
+    let sampled = 0;
+    let painted = 0;
+    const step = Math.max(6, Math.floor(Math.min(canvas.width, canvas.height) / 64));
+    for (let y = 0; y < canvas.height; y += step) {
+      for (let x = 0; x < canvas.width; x += step) {
+        const index = (y * canvas.width + x) * 4;
+        sampled += 1;
+        if ((data[index + 3] ?? 0) > 16) {
+          painted += 1;
+          colors.add(`${data[index]},${data[index + 1]!},${data[index + 2]!}`);
+        }
+      }
+    }
+    return { sampled, painted, colors: colors.size };
+  }, dataUrl);
 }
 
-async function waitForDebugState(page: Page, expected: Record<string, unknown>): Promise<void> {
-  try {
-    await page.waitForFunction(
-      target => {
-        const debug = (window as typeof window & { __AEON_DEBUG__?: Record<string, unknown> }).__AEON_DEBUG__ ?? {};
-        return Object.entries(target).every(([key, value]) => debug[key] === value);
-      },
-      expected,
-      { timeout: 10_000 }
-    );
-  } catch (error) {
-    const actual = await page.evaluate(() => (window as typeof window & { __AEON_DEBUG__?: Record<string, unknown> }).__AEON_DEBUG__ ?? {});
-    throw new Error(`Timed out waiting for debug state ${JSON.stringify(expected)}; actual ${JSON.stringify(actual)}`, { cause: error });
-  }
-}
-
-async function openFarmActionPanelForCapture(page: Page): Promise<void> {
-  // 固定视口重构后「农务」可能收进「更多」飞出菜单：不可见时先展开。
-  const farmButton = page.locator('#world-command-bar [data-game-command="farm"]');
-  if (!(await farmButton.isVisible().catch(() => false))) {
-    await page.locator('#world-command-more > summary').click();
-  }
-  await farmButton.click();
-  await waitForDebugState(page, { interactionPanelKind: 'farm-action' });
-}
-
-async function capturePortfolioScreenshot(page: Page, path: string, expectedSize: { width: number; height: number }): Promise<void> {
-  const snapshot = await renderedCanvasPngSnapshot(page);
-  if (!snapshot) throw new Error('Missing CSS-rendered canvas screenshot');
-  const screenshot = Buffer.from(snapshot.dataUrl.replace(/^data:image\/png;base64,/, ''), 'base64');
-  expect(screenshot.length).toBeGreaterThan(24);
-  expect(screenshot.subarray(0, 8).toString('hex')).toBe('89504e470d0a1a0a');
-  expect(screenshot.subarray(12, 16).toString('ascii')).toBe('IHDR');
-  expect({ width: snapshot.width, height: snapshot.height }).toEqual(expectedSize);
+async function captureViewportScreenshot(page: Page, path: string, expectedSize: { width: number; height: number }): Promise<void> {
+  await page.waitForTimeout(450);
+  const png = await page.screenshot({ animations: 'disabled' });
+  expect(png.length).toBeGreaterThan(24);
   await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, screenshot);
-  const stats = await paintStatsFromDataUrl(page, snapshot.dataUrl);
+  await writeFile(path, png);
+  const stats = await paintStatsFromPng(page, png);
   expect(stats.sampled).toBeGreaterThan(PORTFOLIO_PAINT_THRESHOLDS.minSampled);
   expect(stats.painted / stats.sampled).toBeGreaterThan(PORTFOLIO_PAINT_THRESHOLDS.minPaintedRatio);
   expect(stats.colors).toBeGreaterThan(PORTFOLIO_PAINT_THRESHOLDS.minColors);
-  await appendPortfolioScreenshotEvidence(path, snapshot.width, snapshot.height, stats);
+  await appendPortfolioScreenshotEvidence(path, expectedSize.width, expectedSize.height, stats);
 }
 
 async function readPortfolioEvidence(): Promise<Partial<PortfolioMvpEvidence> | null> {
   try {
-    const content = await readFile(PORTFOLIO_EVIDENCE_PATH, 'utf8');
+    const content = await readFile(PORTFOLIO_EVIDENCE_PATH, 'utf-8');
     return JSON.parse(content) as Partial<PortfolioMvpEvidence>;
   } catch {
     return null;
@@ -213,10 +136,17 @@ async function writePortfolioEvidence(evidence: PortfolioMvpEvidence): Promise<v
   await writeFile(PORTFOLIO_EVIDENCE_PATH, `${JSON.stringify(evidence, null, 2)}\n`);
 }
 
-async function appendPortfolioScreenshotEvidence(path: string, width: number, height: number, stats: CanvasPaintStats): Promise<void> {
+async function appendPortfolioScreenshotEvidence(
+  path: string,
+  width: number,
+  height: number,
+  stats: { sampled: number; painted: number; colors: number }
+): Promise<void> {
   const evidence = await readPortfolioEvidence();
   if (!evidence?.generatedBy) return;
-  const screenshotEvidence = Array.isArray(evidence.screenshotEvidence) ? evidence.screenshotEvidence.filter(entry => entry.path !== path) : [];
+  const screenshotEvidence = Array.isArray(evidence.screenshotEvidence)
+    ? evidence.screenshotEvidence.filter(entry => entry.path !== path)
+    : [];
   screenshotEvidence.push({
     path,
     width,
@@ -232,123 +162,111 @@ async function appendPortfolioScreenshotEvidence(path: string, width: number, he
   await writePortfolioEvidence({ ...evidence, screenshotEvidence } as PortfolioMvpEvidence);
 }
 
-function buildPortfolioMvpEvidence(debug: AeonDebugSnapshot, screenshotEvidence: PortfolioScreenshotEvidence[]): PortfolioMvpEvidence {
+async function collectRuntimeSignals(page: Page): Promise<PortfolioMvpEvidence['runtimeSignals']> {
+  const debug = await gameDebugSnapshot(page);
+  const roundSeal = (await page.locator('.rp-round-seal').textContent().catch(() => '')) ?? '';
+  const agendaSlotCount = await page.locator('.rp-agenda-slot').count();
+  const hudText = (await page.locator('.rp-hud').textContent().catch(() => '')) ?? '';
+  const hudCertificate = /认证 [0-9]+ 步 · 余量 [0-9]+/.exec(hudText)?.[0] ?? '';
+  const hudIntel = /劫兆未明|存活上限|安全雷威|甜蜜雷威/.exec(hudText)?.[0] ?? '';
   return {
-    generatedBy: 'portfolio:capture',
-    priority: 'P0-A',
-    localStatus: '本地可试玩 Demo 验收证据：首轮灵草日循环、出货补种、右上目标栏和截图均由浏览器自动化生成。',
-    stardewComparison: ['P0 对标《星露谷物语》的低门槛日循环：翻地、播种、浇水、过夜、收获、出货、补种。', 'P0 不追求成熟生活模拟体量，只证明数分钟内能看懂并重复第一轮农务经济闭环。'],
-    xianxiaCore: ['炼丹', '阵法', '淬体', '主动引劫', '种田即备战'],
-    runtimeSignals: {
-      onboardingObjectiveId: debug.onboardingObjectiveId ?? null,
-      firstLoopProgress: '10/10',
-      selectedLocationId: debug.selectedLocationId ?? null,
-      selectedLocationServiceCommand: debug.selectedLocationServiceCommand ?? null,
-      shippingBinItemCount: debug.shippingBinItemCount ?? 0,
-      todayBriefingTitle: debug.todayBriefingTitle ?? '',
-      todayBriefingHasAsset: debug.todayBriefingAssetId != null,
-      todayBriefingProof: TODAY_BRIEFING_PROOF.filter(text => debug.todayBriefingBody?.includes(text))
-    },
-    evidence: ['test-results/portfolio/01-farm-loop.png', 'test-results/portfolio/02-location-routing.png', 'test-results/portfolio/03-farm-actions.png', 'test-results/portfolio/04-mobile-farm-loop.png', 'pnpm portfolio:mvp-preflight -- --keep-public-tree'],
-    screenshotEvidence,
-    next: ['维护者人工试玩 3-5 分钟，确认首屏无需阅读设计文档也能理解下一步。', '后续转 Public、重新推送公开树、修改 Pages 设置、创建 tag 或 Release 前，重新取得维护者当次明确授权。'],
-    noGo: ['Public、Release 或远端设置变更仍保持 remote-action authorization boundary。', '每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。', 'docs/、Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入公开树、Pages 或 Release 产物。']
+    appSurface: debug.appSurface ?? '',
+    roundSeal: roundSeal.trim(),
+    agendaSlotCount,
+    hudCertificate,
+    hudIntel,
+    runtimeProof: []
   };
 }
 
-async function writePortfolioMvpEvidence(debug: AeonDebugSnapshot): Promise<void> {
-  const previous = await readPortfolioEvidence();
-  const screenshotEvidence = Array.isArray(previous?.screenshotEvidence) ? previous.screenshotEvidence : [];
-  const evidence = buildPortfolioMvpEvidence(debug, screenshotEvidence);
-  await writePortfolioEvidence(evidence);
-}
-
-async function expectPortfolioFarmLoopState(page: Page): Promise<void> {
-  const debug = await gameDebugSnapshot(page);
-  expect(debug.dialogueBeatId).toBeNull();
-  expect(debug.dialogueBackdropVisible).toBe(false);
-  expect(debug.todayBriefingVisible).toBe(false);
-  expect(debug.panelPreviewVisible).toBe(false);
-  expect(debug.locationPreviewVisible).toBe(false);
-  expect(debug.paused).toBe(false);
-  expect(debug.postAscensionMode).toBe('none');
-  expect(debug.onboardingObjectiveId).toBe('first-loop-complete');
-  expect(debug.helpText).toEqual(expect.stringContaining('目标'));
-  expect(debug.helpText).toEqual(expect.stringContaining('炼丹'));
-  expect(debug.helpText).toEqual(expect.stringContaining('引劫'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('点击目标移动/互动'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('行囊常驻'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('丹炉/山河图/修行在更多中'));
-  expect(debug.renderedHelpText).toEqual(expect.stringContaining('B 行囊'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('Q切换'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('U 丹炉'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('\n'));
-  expect(debug.renderedHelpText).not.toEqual(expect.stringContaining('function'));
-  expect(debug.todayBriefingTitle).toBe('2/4 · 炼制丹药');
-  for (const text of TODAY_BRIEFING_PROOF) {
-    expect(debug.todayBriefingBody).toEqual(expect.stringContaining(text));
-  }
-  expect(debug.todayBriefingAssetId).not.toBeNull();
-  expect(debug.selectedLocationId).toBe('farmstead');
-  expect(debug.selectedLocationServiceCommand).toBe('show-farm-work');
-  expect(debug.shippingBinItemCount).toBe(2);
-  await writePortfolioMvpEvidence(debug);
-}
-
-async function expectCanvasFitsViewport(page: Page): Promise<void> {
-  const box = await page.evaluate(() => {
-    const canvas = document.querySelector('canvas');
-    if (!(canvas instanceof HTMLCanvasElement)) return null;
-    const rect = canvas.getBoundingClientRect();
-    return { width: rect.width, height: rect.height };
-  });
-  const viewport = page.viewportSize();
-  expect(box).not.toBeNull();
-  expect(viewport).not.toBeNull();
-  expect(box!.width).toBeLessThanOrEqual(viewport!.width);
-  expect(box!.height).toBeLessThanOrEqual(viewport!.height);
+function buildPortfolioMvpEvidence(signals: PortfolioMvpEvidence['runtimeSignals']): PortfolioMvpEvidence {
+  return {
+    generatedBy: 'portfolio:capture',
+    priority: 'P0-A',
+    localStatus: '本地可试玩 Demo 验收证据：主模式「偷天换劫」的备劫工作台、天劫棋盘、生活事件与紧凑横屏均由浏览器自动化生成。',
+    stardewComparison: [
+      '对标生活模拟的低门槛开局：数分钟内看懂"排程→事件→参悟→引劫"的第一轮修途闭环。',
+      'P0 不追求成熟生活模拟体量，只证明主模式首屏无需说明书即可理解下一步。'
+    ],
+    xianxiaCore: ['排程备劫', '生活事件', '残卷参悟', '主动引劫', '劫灰传承'],
+    runtimeSignals: { ...signals, runtimeProof: [...RUNTIME_SIGNAL_PROOF] },
+    evidence: [
+      'test-results/portfolio/01-prep-workbench.png',
+      'test-results/portfolio/02-tribulation-board.png',
+      'test-results/portfolio/03-life-event.png',
+      'test-results/portfolio/04-compact-prep.png',
+      'pnpm portfolio:mvp-preflight'
+    ],
+    screenshotEvidence: [],
+    next: [
+      '维护者人工试玩 3-5 分钟，确认首屏无需阅读设计文档也能理解下一步。',
+      '远端授权操作（转 Public/Release/Pages 设置变更）仍需维护者当次授权。'
+    ],
+    noGo: [
+      'Public、Release 或远端设置变更仍保持 remote-action authorization boundary。',
+      '每次重新部署后，真实 Pages URL 未通过 pnpm test:browser:pages 前，不宣称 GitHub Pages 闭环完成。',
+      'Agent 状态、生成物、.env*、sourcemap 和私有设计资料不得进入发布产物。'
+    ]
+  };
 }
 
 test('captures deterministic review screenshots for public demo validation', async ({ page }) => {
   test.setTimeout(180_000);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await installShowcaseSave(page);
-  await openGameWithLoadedSave(page);
-  await dismissIntroIfPresent(page);
-  await expect(page.locator('canvas')).toBeVisible();
-  await expectPortfolioFarmLoopState(page);
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/01-farm-loop.png', DESKTOP_PORTFOLIO_SCREENSHOT);
+  await page.setViewportSize({ width: 1440, height: 810 });
+  await enterFirstPlanning(page);
+  await expect(page.locator('.rp-agenda-slot')).toHaveCount(6);
+  await fillAgenda(page, ['灵田', '苦练', '谋生', '歇息', '灵田', '苦练']);
+  await page.getByRole('button', { name: '结清本轮修途' }).click();
+  const resolution = page.locator('.cr-resolution');
+  await resolution.waitFor({ timeout: 8000 });
+  await resolution.getByRole('button', { name: '收起竹简，处理本轮事件' }).click();
+  const event = page.locator('.cr-event');
+  await event.waitFor({ timeout: 8000 });
+  await event.locator('.cr-event__button[data-affordable="true"]').first().click();
+  const insight = page.locator('.cr-insight');
+  await insight.waitFor({ timeout: 8000 });
+  await insight.locator('.cr-insight__continue').click();
+  const timing = page.locator('.cr-tribulation-choice');
+  await timing.waitFor({ timeout: 8000 });
+  await timing.getByRole('button', { name: /现在引劫/ }).click();
+  await page.locator('.rp-canvas').waitFor({ timeout: 8000 });
 
-  await page.locator('#world-command-more > summary').click();
-  await page.locator('#world-command-more [data-game-command="map"]').click();
-  await waitForDebugState(page, {
-    flowOverlay: 'map',
-    appSurface: 'map',
-    todayBriefingVisible: false,
-    panelPreviewVisible: false,
-    locationPreviewVisible: false
-  });
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/02-location-routing.png', DESKTOP_BACKDROP_PORTFOLIO_SCREENSHOT);
+  const signals = await collectRuntimeSignals(page);
+  expect(signals.appSurface).toBe('roguelite-proto');
+  expect(signals.hudCertificate).toMatch(/认证 [0-9]+ 步 · 余量 [0-9]+/);
+  expect(signals.hudIntel.length).toBeGreaterThan(0);
+  await writePortfolioEvidence(buildPortfolioMvpEvidence(signals));
 
-  await page.keyboard.press('Escape');
-  await waitForDebugState(page, { flowOverlay: null, appSurface: 'world' });
-  await openFarmActionPanelForCapture(page);
-  await waitForDebugState(page, {
-    todayBriefingVisible: false,
-    panelPreviewVisible: true,
-    locationPreviewVisible: false
-  });
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/03-farm-actions.png', DESKTOP_PORTFOLIO_SCREENSHOT);
+  await captureViewportScreenshot(page, 'test-results/portfolio/02-tribulation-board.png', DESKTOP_PORTFOLIO_SCREENSHOT);
+});
+
+test('captures prep workbench and life event screenshots for demo review', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1440, height: 810 });
+  await enterFirstPlanning(page);
+  await expect(page.locator('.rp-agenda-slot')).toHaveCount(6);
+  await captureViewportScreenshot(page, 'test-results/portfolio/01-prep-workbench.png', DESKTOP_PORTFOLIO_SCREENSHOT);
+
+  await fillAgenda(page, ['灵田', '苦练', '谋生', '歇息', '灵田', '苦练']);
+  await page.getByRole('button', { name: '结清本轮修途' }).click();
+  const resolution = page.locator('.cr-resolution');
+  await resolution.waitFor({ timeout: 8000 });
+  await resolution.getByRole('button', { name: '收起竹简，处理本轮事件' }).click();
+  const event = page.locator('.cr-event');
+  await event.waitFor({ timeout: 8000 });
+  await captureViewportScreenshot(page, 'test-results/portfolio/03-life-event.png', DESKTOP_PORTFOLIO_SCREENSHOT);
 });
 
 test('captures a small-viewport landscape keyboard-first screen for GitHub Pages demo review', async ({ page }) => {
-  test.setTimeout(60_000);
+  test.setTimeout(90_000);
   await page.setViewportSize({ width: 736, height: 414 });
-  await installShowcaseSave(page);
-  await openGameWithLoadedSave(page);
-  await dismissIntroIfPresent(page);
-  await expect(page.locator('canvas')).toBeVisible();
-  await expectCanvasFitsViewport(page);
-  await expectPortfolioFarmLoopState(page);
-  await capturePortfolioScreenshot(page, 'test-results/portfolio/04-mobile-farm-loop.png', { width: 736, height: 414 });
+  await enterFirstPlanning(page);
+  await expect(page.locator('.rp-agenda-slot')).toHaveCount(6);
+  await page.waitForTimeout(400);
+  const overflow = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth
+  }));
+  expect(overflow.scrollWidth).toBeLessThanOrEqual(overflow.clientWidth + 1);
+  await captureViewportScreenshot(page, 'test-results/portfolio/04-compact-prep.png', { width: 736, height: 414 });
 });

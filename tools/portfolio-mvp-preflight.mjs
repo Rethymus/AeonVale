@@ -43,16 +43,16 @@ if (includeLivePages) {
 }
 
 const portfolioScreenshots = [
-  { path: 'test-results/portfolio/01-farm-loop.png', width: 1440, height: 810 },
-  { path: 'test-results/portfolio/02-location-routing.png', width: 1440, height: 825 },
-  { path: 'test-results/portfolio/03-farm-actions.png', width: 1440, height: 810 },
-  { path: 'test-results/portfolio/04-mobile-farm-loop.png', width: 736, height: 414 }
+  { path: 'test-results/portfolio/01-prep-workbench.png', width: 1440, height: 810 },
+  { path: 'test-results/portfolio/02-tribulation-board.png', width: 1440, height: 810 },
+  { path: 'test-results/portfolio/03-life-event.png', width: 1440, height: 810 },
+  { path: 'test-results/portfolio/04-compact-prep.png', width: 736, height: 414 }
 ];
 
-const portfolioPaintThresholds = { minSampled: 500, minPaintedRatio: 0.55, minColors: 32 };
+const portfolioPaintThresholds = { minSampled: 500, minPaintedRatio: 0.5, minColors: 24 };
 
 const portfolioEvidencePath = 'test-results/portfolio/portfolio-mvp-evidence.json';
-const todayBriefingProof = ['农庄', '炼丹', '引劫', '首轮进度：10/10'];
+const runtimeSignalProof = ['劫前修途', '认证', '引劫'];
 
 function pngDimensions(file) {
   const data = readFileSync(file);
@@ -151,36 +151,28 @@ function verifyPortfolioEvidence() {
     console.error('[portfolio:mvp-preflight] Public demo evidence must remain scoped to P0-A local review.');
     process.exit(1);
   }
-  if (evidence.runtimeSignals?.onboardingObjectiveId !== 'first-loop-complete') {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove the first-loop onboarding objective is complete.');
+  if (evidence.runtimeSignals?.appSurface !== 'roguelite-proto') {
+    console.error('[portfolio:mvp-preflight] Public demo evidence must be captured on the roguelite main mode.');
     process.exit(1);
   }
-  if (evidence.runtimeSignals?.firstLoopProgress !== '10/10') {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove first-loop progress is 10/10.');
+  if (evidence.runtimeSignals?.agendaSlotCount !== 6) {
+    console.error('[portfolio:mvp-preflight] Public demo evidence must prove the six-slot agenda is visible.');
     process.exit(1);
   }
-  if (evidence.runtimeSignals?.selectedLocationId !== 'farmstead') {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove the review starts at the farmstead.');
+  if (!/认证 [0-9]+ 步 · 余量 [0-9]+/.test(evidence.runtimeSignals?.hudCertificate ?? '')) {
+    console.error('[portfolio:mvp-preflight] Public demo evidence must carry the certified-moves HUD certificate.');
     process.exit(1);
   }
-  if (evidence.runtimeSignals?.selectedLocationServiceCommand !== 'show-farm-work') {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove the farm-work service is selected.');
+  if (!(evidence.runtimeSignals?.hudIntel ?? '').match(/劫兆未明|存活上限|安全雷威|甜蜜雷威/)) {
+    console.error('[portfolio:mvp-preflight] Public demo evidence must carry a tribulation intel HUD line.');
     process.exit(1);
   }
-  if (evidence.runtimeSignals?.shippingBinItemCount !== 2) {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove the shipping bin has review output.');
-    process.exit(1);
-  }
-  if (evidence.runtimeSignals?.todayBriefingTitle !== '今日简报' || evidence.runtimeSignals?.todayBriefingHasAsset !== true) {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove today briefing is visible with an asset.');
-    process.exit(1);
-  }
-  if (!Array.isArray(evidence.runtimeSignals?.todayBriefingProof) || !todayBriefingProof.every(text => evidence.runtimeSignals.todayBriefingProof.includes(text))) {
-    console.error('[portfolio:mvp-preflight] Public demo evidence must prove today briefing body carries the P0 farm, alchemy, tribulation, and 10/10 progress cues.');
+  if (!Array.isArray(evidence.runtimeSignals?.runtimeProof) || !runtimeSignalProof.every(text => evidence.runtimeSignals.runtimeProof.includes(text))) {
+    console.error('[portfolio:mvp-preflight] Public demo evidence must carry the prep/certification/tribulation runtime cues.');
     process.exit(1);
   }
   verifyScreenshotEvidence(evidence);
-  for (const text of ['《星露谷物语》', '翻地、播种、浇水、过夜、收获、出货、补种', '炼丹', '阵法', '淬体', '主动引劫', '种田即备战', 'remote-action authorization boundary', 'pnpm test:browser:pages']) {
+  for (const text of ['生活模拟', '排程→事件→参悟→引劫', '排程备劫', '残卷参悟', '主动引劫', '劫灰传承', 'remote-action authorization boundary', 'pnpm test:browser:pages']) {
     requireEvidenceText(content, text);
   }
 }

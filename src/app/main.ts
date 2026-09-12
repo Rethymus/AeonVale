@@ -860,7 +860,7 @@ async function main(): Promise<void> {
     // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：start-new-game（清档+重置）与
     // finish-prologue/skip-prologue（节拍已见+存档）两个应用层副作用随 enterLegacyWorld
     // 测试门拆除——标题屏已无任何派发 start-new-game 的入口，序章不可达；
-    // enter-loaded-world 副作用保留（enterLoadedLegacyWorld 门仍为 portfolio-capture 服务）。
+    // 旧世界退役（§8.26）：enter-loaded-world 旧世界入口副作用随测试门退役。
     if (event.type === 'enter-loaded-world') {
       // 测试门：以 boot 已加载的存档状态入世界（等价 skip-prologue 的副作用，不清档）。
       for (const beatId of prologueBeatIds) markSeen(state, beatId);
@@ -1368,7 +1368,7 @@ async function main(): Promise<void> {
       // enterLoadedLegacyWorld（portfolio-capture 展示存档链）；enterLegacyWorld
       // 与农庄/地形/灵气关键点族随消费 spec 一并退役（判定表见 docs/21 §8.21）。
       __AEON_TEST__?: {
-        enterLoadedLegacyWorld: () => boolean;
+
       };
     };
     const locations = getActiveLocationDirectory(state);
@@ -1531,7 +1531,7 @@ async function main(): Promise<void> {
       __AEON_TEST__?: {
         enterLegacyWorld: () => boolean;
         configureSowKeypoint: () => boolean;
-        enterLoadedLegacyWorld: () => boolean;
+
         configureTerrainSemanticsKeypoint: () => TerrainSemanticsKeypoint | null;
         configureQiFlowKeypoint: () => QiFlowKeypoint | null;
         configureFarmsteadObjectKeypoint: (kind?: FarmsteadSceneObjectKind) => boolean;
@@ -1607,14 +1607,6 @@ async function main(): Promise<void> {
         flowView.dispatch({ type: 'start-new-game' });
         flowView.dispatch({ type: 'skip-prologue' });
         return flowView.getState().screen === 'world';
-      },
-      enterLoadedLegacyWorld: () => {
-        if (flowView?.getState().screen !== 'title') return false;
-        if (loaded.state == null) return false;
-        flowView.dispatch({ type: 'enter-loaded-world' });
-        // 终局存档会在入世界副作用里被 enterEndingIfNeeded 转到 ending 表面。
-        const screen = flowView.getState().screen;
-        return screen === 'world' || screen === 'ending';
       },
       configureSowKeypoint: () => {
         const targetPoint = firstFarmsteadFarmPlotTile(state);

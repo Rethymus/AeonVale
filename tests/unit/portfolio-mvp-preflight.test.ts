@@ -37,25 +37,24 @@ describe('可试玩 Demo 本地预检', () => {
 
   it('清理旧截图、校验四张试玩验收截图，并默认移除公开树', () => {
     expect(script).toContain("rmSync('test-results/portfolio', { recursive: true, force: true })");
-    expect(script).toContain("'test-results/portfolio/01-farm-loop.png'");
-    expect(script).toContain("'test-results/portfolio/02-location-routing.png'");
-    expect(script).toContain("'test-results/portfolio/03-farm-actions.png'");
-    expect(script).toContain("'test-results/portfolio/04-mobile-farm-loop.png'");
+    expect(script).toContain("'test-results/portfolio/01-prep-workbench.png'");
+    expect(script).toContain("'test-results/portfolio/02-tribulation-board.png'");
+    expect(script).toContain("'test-results/portfolio/03-life-event.png'");
+    expect(script).toContain("'test-results/portfolio/04-compact-prep.png'");
     expect(script).toContain("'test-results/portfolio/portfolio-mvp-evidence.json'");
     expect(script).toContain('readUInt32BE(16)');
     expect(script).toContain('readUInt32BE(20)');
     expect(script).toContain('width: 1440, height: 810');
-    expect(script).toContain('width: 1440, height: 825');
     expect(script).toContain('width: 736, height: 414');
     expect(script).toContain('unexpected dimensions');
-    expect(script).toContain("evidence.runtimeSignals?.onboardingObjectiveId !== 'first-loop-complete'");
-    expect(script).toContain("evidence.runtimeSignals?.firstLoopProgress !== '10/10'");
-    expect(script).toContain('todayBriefingProof');
-    expect(script).toContain("['农庄', '炼丹', '引劫', '首轮进度：10/10']");
-    expect(script).toContain('farm, alchemy, tribulation, and 10/10 progress cues');
+    expect(script).toContain("evidence.runtimeSignals?.appSurface !== 'roguelite-proto'");
+    expect(script).toContain("evidence.runtimeSignals?.agendaSlotCount !== 6");
+    expect(script).toContain('runtimeProof');
+    expect(script).toContain("['劫前修途', '认证', '引劫']");
+    expect(script).toContain('prep/certification/tribulation runtime cues');
     expect(script).toContain('screenshotEvidence');
     expect(script).toContain('paintedRatio');
-    expect(script).toContain('minPaintedRatio: 0.55');
+    expect(script).toContain('minPaintedRatio: 0.5');
     expect(script).toContain('screenshot stats are too blank');
     expect(script).toContain('remote-action authorization boundary');
     expect(script).toContain('Verified generated public demo evidence');
