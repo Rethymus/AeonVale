@@ -61,10 +61,12 @@ export interface SokobanMeta {
   readonly unlockedScrolls: readonly number[]; // 已得残卷页（stage 列表）
   readonly deathCount: number; // 灰烬传承次数
   readonly breakthroughs: number; // 总突破次数
+  /** 劫式配方图鉴（docs/31 §3.3）：跨局已遇 archetype×修饰×灵草型组合键（排序拼接）。 */
+  readonly encounteredRecipes: readonly string[];
 }
 
 export function emptyMeta(): SokobanMeta {
-  return { maxStageSolved: -1, unlockedScrolls: [], deathCount: 0, breakthroughs: 0 };
+  return { maxStageSolved: -1, unlockedScrolls: [], deathCount: 0, breakthroughs: 0, encounteredRecipes: [] };
 }
 
 /** 阶段是否可游玩：可重玩任何已通关阶，并在其上再探一阶。 */
@@ -85,7 +87,8 @@ export function recordBreakthrough(meta: SokobanMeta, stage: number): MetaTransi
       maxStageSolved: Math.max(meta.maxStageSolved, stage),
       unlockedScrolls: isNew ? [...meta.unlockedScrolls, stage] : meta.unlockedScrolls,
       deathCount: meta.deathCount,
-      breakthroughs: meta.breakthroughs + 1
+      breakthroughs: meta.breakthroughs + 1,
+      encounteredRecipes: meta.encounteredRecipes
     },
     unlockedScroll: isNew ? (SCROLL_PAGES[stage] ?? null) : null
   };
@@ -102,7 +105,8 @@ export function recordDeath(meta: SokobanMeta, stage: number): MetaTransition {
       maxStageSolved: meta.maxStageSolved,
       unlockedScrolls: isNew ? [...meta.unlockedScrolls, stage] : meta.unlockedScrolls,
       deathCount: meta.deathCount + 1,
-      breakthroughs: meta.breakthroughs
+      breakthroughs: meta.breakthroughs,
+      encounteredRecipes: meta.encounteredRecipes
     },
     unlockedScroll: isNew ? (SCROLL_PAGES[stage] ?? null) : null
   };
@@ -120,7 +124,8 @@ export function loadMeta(): SokobanMeta {
       maxStageSolved: typeof parsed.maxStageSolved === 'number' ? parsed.maxStageSolved : -1,
       unlockedScrolls: Array.isArray(parsed.unlockedScrolls) ? parsed.unlockedScrolls.filter((n): n is number => typeof n === 'number') : [],
       deathCount: typeof parsed.deathCount === 'number' ? parsed.deathCount : 0,
-      breakthroughs: typeof parsed.breakthroughs === 'number' ? parsed.breakthroughs : 0
+      breakthroughs: typeof parsed.breakthroughs === 'number' ? parsed.breakthroughs : 0,
+      encounteredRecipes: Array.isArray(parsed.encounteredRecipes) ? parsed.encounteredRecipes.filter((s): s is string => typeof s === 'string') : []
     };
   } catch {
     return emptyMeta();
@@ -134,4 +139,25 @@ export function saveMeta(meta: SokobanMeta): void {
   } catch {
     /* 隐私模式 / 配额满：静默降级，不阻塞游玩 */
   }
+}
+
+/**
+ * 劫式配方图鉴（docs/31 §3.3）：组合键 = archetype + 修饰(排序) + 灵草型(排序)；
+ * 记录进入局（enterTribulation）即算"已遇"——玩家摆出的每一个实际配方都可被回看。
+ */
+export function tribulationRecipeKey(input: {
+  readonly archetype: string;
+  readonly modifiers: readonly string[];
+  readonly herbKinds: readonly string[];
+}): string {
+  const modifiers = [...input.modifiers].sort().join('+') || 'base';
+  const herbs = [...input.herbKinds].sort().join('+') || 'none';
+  return `${input.archetype}|${modifiers}|${herbs}`;
+}
+
+export function recordEncounteredRecipe(meta: SokobanMeta, key: string): SokobanMeta {
+  if (meta.encounteredRecipes.includes(key)) return meta;
+  const next = [...meta.encounteredRecipes, key];
+  // 上限防膨胀：保留最近 64 条（跨局图鉴够用，localStorage 体量稳定）。
+  return { ...meta, encounteredRecipes: next.slice(-64) };
 }

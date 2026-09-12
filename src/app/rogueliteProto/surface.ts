@@ -6,7 +6,7 @@
  * 红线：app 层可用 DOM/Math.random（随机归效果，不进 sim）；HUD 每帧走 textContent，help 仅状态切换刷新。
  * factory 名 `createRogueliteProtoSurface` 保留（surface id 'roguelite-proto' 为 dev-only 不可见字符串）。
  */
-import { applyPreparationToPuzzle, createPuzzle, createTribulationSession, herbsAliveOf, solveBoard, traceBeam, transitionTribulationSession } from '@sim/sokoban';
+import { applyMove, applyPreparationToPuzzle, createPuzzle, createTribulationSession, herbsAliveOf, solveBoard, traceBeam, transitionTribulationSession } from '@sim/sokoban';
 import type { Dir, PreparedPuzzlePlacement, SokobanState, TribulationSessionOutcome, TribulationSessionState } from '@sim/sokoban';
 import {
   CULTIVATION_ACTIVITY_LABELS,
@@ -45,7 +45,7 @@ import { createCultivationResolutionSurface } from '../cultivationRun/resolution
 import { createCultivationTribulationChoiceSurface } from '../cultivationRun/tribulationChoiceSurface';
 import type { CultivationStaticPhaseSurface } from '../cultivationRun/interludeSurfaceShared';
 import type { CultivationRunPhaseSurface } from '../cultivationRun/surfaceShared';
-import { isStageUnlocked, loadMeta, recordBreakthrough, recordDeath, saveMeta, SCROLL_TOTAL, type ScrollPage, type SokobanMeta } from './meta';
+import { isStageUnlocked, loadMeta, recordBreakthrough, recordDeath, recordEncounteredRecipe, saveMeta, SCROLL_TOTAL, tribulationRecipeKey, type ScrollPage, type SokobanMeta } from './meta';
 import { clearCultivationJourney, loadCultivationJourney, saveCultivationJourney } from './runSave';
 
 export interface RogueliteProtoAudio {
@@ -1104,9 +1104,14 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     retentionFill.style.setProperty('--retention', String(retentionPercent));
     retentionValue.textContent = `${retentionPercent.toFixed(retentionPercent < 1 ? 2 : 0)}%`;
     causalTribulationEl.textContent = nextTribulationLabel(runState.stage);
+    // 紫劫兆拓层（docs/31 §3.3 配方图鉴）：已遇配方跨局回看 + 提示还有几味未遇组合。
+    const knownRecipeCount = meta.encounteredRecipes.length;
+    const recipeCodexNote = knownRecipeCount > 0
+      ? `劫式图鉴已录 ${knownRecipeCount} 味配方；未遇组合仍藏于天劫之中。`
+      : '劫式图鉴尚无记录——每一场真实入局都会留下配方拓片。';
     causalSafeEl.textContent = currentPreparation.previewLevel > 0
-      ? `现可预见：存活上限 ${currentPreparation.maxSurvivablePower}，甜蜜雷威 ${currentPreparation.sweetSpotMinPower}–${currentPreparation.sweetSpotMaxPower}。`
-      : `劫兆仍模糊。当前肉身最多承受雷威 ${currentPreparation.maxSurvivablePower}；参悟会逐步揭开甜蜜区间。`;
+      ? `现可预见：存活上限 ${currentPreparation.maxSurvivablePower}，甜蜜雷威 ${currentPreparation.sweetSpotMinPower}–${currentPreparation.sweetSpotMaxPower}。${recipeCodexNote}`
+      : `劫兆仍模糊。当前肉身最多承受雷威 ${currentPreparation.maxSurvivablePower}；参悟会逐步揭开甜蜜区间。${recipeCodexNote}`;
     const nextUnlock = activityPresentations.find(activity => activity.unlockStage === nextStageProfile.stage);
     breakthroughReward.textContent = runState.stage >= CULTIVATION_FINAL_STAGE
       ? `终劫不再扩容：把已存的劫力全部归于此身。`
@@ -1252,6 +1257,29 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
         : {})
     };
     preparedPuzzle = { ...prepared, state: puzzle };
+    // 劫式配方图鉴（docs/31 §3.3）：入局即记录本局实际配方（archetype×修饰×灵草型）。
+    {
+      const board = puzzle.board;
+      const modifierSet = new Set(
+        (board.blockModifiers ?? []).filter(modifier => modifier !== 'none')
+      );
+      const herbKinds = new Set<string>();
+      for (const terrain of board.terrain) {
+        if (terrain === 'herb-thunder') herbKinds.add('thunder-draw');
+        else if (terrain === 'herb-shield') herbKinds.add('vein-shield');
+        else if (terrain === 'herb') herbKinds.add('conductive-moss');
+      }
+      const key = tribulationRecipeKey({
+        archetype: puzzle.challenge?.archetype ?? 'turning-rune',
+        modifiers: [...modifierSet],
+        herbKinds: [...herbKinds]
+      });
+      const nextMeta = recordEncounteredRecipe(meta, key);
+      if (nextMeta !== meta) {
+        meta = nextMeta;
+        saveMeta(meta);
+      }
+    }
     tribulationSession = createTribulationSession(puzzle, preparation);
     state = tribulationSession.puzzle;
     stage = machineState.runState.stage;
@@ -1793,6 +1821,42 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     if (particles.length > 0 || shakeMag > 0) ensureEffectsRaf();
   }
 
+  /**
+   * ghost 预览计算（docs/31 §2.3 P2，纯函数）：玩家四邻有阵石且该推动合法时，
+   * 返回"推后"的假想光路；不满足条件返回 null。方向 = 玩家指向阵石的一步。
+   */
+  function ghostBeamForPushableStone(): { readonly beam: ReturnType<typeof traceBeam> } | null {
+    const board = state.board;
+    const candidates: Array<{ readonly dir: Dir; readonly x: number; readonly y: number }> = [
+      { dir: 'up', x: state.player.x, y: state.player.y - 1 },
+      { dir: 'down', x: state.player.x, y: state.player.y + 1 },
+      { dir: 'left', x: state.player.x - 1, y: state.player.y },
+      { dir: 'right', x: state.player.x + 1, y: state.player.y }
+    ];
+    for (const candidate of candidates) {
+      if (candidate.x < 0 || candidate.y < 0 || candidate.x >= board.width || candidate.y >= board.height) continue;
+      const i = candidate.y * board.width + candidate.x;
+      if ((board.blocks[i] ?? 'none') === 'none') continue;
+      const probe: SokobanState = {
+        ...state,
+        board: {
+          ...board,
+          terrain: [...board.terrain],
+          blocks: [...board.blocks],
+          ...(board.blockModifiers ? { blockModifiers: [...board.blockModifiers] } : {})
+        },
+        scorched: [...state.scorched],
+        beam: { ...state.beam, cells: state.beam.cells.map(c => ({ ...c })), herbsHit: state.beam.herbsHit.map(c => ({ ...c })) }
+      };
+      const move = applyMove(probe, { kind: 'move', dir: candidate.dir });
+      if (!move.ok) continue;
+      if (probe.status !== 'playing') return { beam: probe.beam };
+      // 推动成功且终局/仍进行都以推后光路为准；不可推动（挡墙等）尝试下一方向。
+      return { beam: probe.beam };
+    }
+    return null;
+  }
+
   function draw(): void {
     if (!ctx) return;
     ctx.fillStyle = P.boardBg;
@@ -1858,11 +1922,38 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
           ctx.beginPath();
           ctx.arc(cx, cy, 4, 0, Math.PI * 2);
           ctx.fill();
-        } else if (terrain === 'herb') {
+        } else if (terrain === 'herb' || terrain === 'herb-thunder' || terrain === 'herb-shield') {
           const { cx, cy } = center(x, y);
-          if (sprites.herb && ctx) {
+          if (sprites.herb && ctx && terrain === 'herb') {
             const s = TILE * 0.7;
             ctx.drawImage(sprites.herb, cx - s / 2, cy - s / 2, s, s);
+          } else if (terrain === 'herb-thunder') {
+            // 雷引草（docs/31 §3.3）：暖金草形 + 雷芒描边（增益草与基型视觉区分）。
+            ctx.strokeStyle = P.mirrorGold;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy + 8);
+            ctx.quadraticCurveTo(cx - 10, cy, cx - 6, cy - 9);
+            ctx.moveTo(cx, cy + 8);
+            ctx.quadraticCurveTo(cx + 10, cy, cx + 6, cy - 9);
+            ctx.moveTo(cx, cy + 8);
+            ctx.lineTo(cx, cy - 11);
+            ctx.stroke();
+            ctx.fillStyle = P.mirrorGold;
+            ctx.beginPath();
+            ctx.arc(cx, cy - 13, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (terrain === 'herb-shield') {
+            // 护脉草：环盾轮廓（保险草一眼可辨）。
+            ctx.strokeStyle = P.conductorBlue;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 9, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = P.herbLight;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fill();
           } else {
             ctx.fillStyle = P.herbLight;
             ctx.beginPath();
@@ -1943,6 +2034,36 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
         ctx.fill();
         ctx.restore();
         previous = cell;
+      }
+    }
+
+    // ghost 预览（docs/31 §2.3 P2）：玩家贴近可推阵石时，虚线画出"推后"假想光路，
+    // 并高亮会被烧到的灵草——0 新算法（克隆板面 + applyMove + traceBeam 皆现成），纯展示层。
+    if (state.status === 'playing' && !reduceFx) {
+      const ghost = ghostBeamForPushableStone();
+      if (ghost) {
+        ctx.save();
+        ctx.globalAlpha = 0.5;
+        ctx.setLineDash([6, 6]);
+        ctx.strokeStyle = P.boltViolet;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const ghostSrc = center(b.sourcePos.x, b.sourcePos.y);
+        ctx.moveTo(ghostSrc.cx, ghostSrc.cy);
+        for (const c of ghost.beam.cells) {
+          const m = center(c.x, c.y);
+          ctx.lineTo(m.cx, m.cy);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // 会被假想光路烧到的新鲜灵草：暗金描框提示。
+        ctx.strokeStyle = P.mirrorGold;
+        ctx.lineWidth = 2;
+        for (const herb of ghost.beam.herbsHit) {
+          if (state.scorched[herb.y * b.width + herb.x]) continue;
+          ctx.strokeRect(herb.x * TILE + 4, herb.y * TILE + 4, TILE - 8, TILE - 8);
+        }
+        ctx.restore();
       }
     }
 

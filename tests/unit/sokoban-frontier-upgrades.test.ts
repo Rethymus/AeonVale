@@ -330,3 +330,36 @@ describe('docs/31 §3.3 迭代 3：宽脉桥（wide conductor）', () => {
     expect(seen).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('docs/31 §2.3/§3.3 迭代 3 余项：ghost 预览与配方图鉴', () => {
+  test('ghost 预览素材面：推后光路 ≠ 原光路（applyMove+traceBeam 组合自洽）', () => {
+    const width = 5;
+    const terrain = new Array(25).fill('empty') as SokobanBoard['terrain'];
+    terrain[0] = 'source';
+    terrain[4] = 'body'; // (4,0)：直射可到（光路沿第 0 行）
+    const blocks = new Array(25).fill('none') as BlockKind[];
+    blocks[7] = 'mirror'; // (2,1)：直射光路上——推上 (2,0) 后折向下
+    const board: SokobanBoard = { width, height: 5, terrain, blocks, sourcePos: { x: 0, y: 0 }, sourceDir: 'right' };
+    expect(traceBeam(board).reachedBody).toBe(true);
+    const probe = {
+      stage: 0, board: { ...board, terrain: [...board.terrain], blocks: [...board.blocks] },
+      player: { x: 2, y: 2 }, beam: traceBeam(board), scorched: new Array(25).fill(false) as boolean[],
+      herbsTotal: 0, moveBudget: 10, movesUsed: 0, status: 'playing' as const
+    };
+    const move = applyMove(probe, { kind: 'move', dir: 'up' }); // 推镜 (2,1)→(2,0)
+    expect(move.ok).toBe(true);
+    expect(probe.beam.reachedBody).toBe(traceBeam(probe.board).reachedBody); // applyMove 重追与显式 traceBeam 一致
+    expect(traceBeam(probe.board).cells.length).not.toBe(traceBeam(board).cells.length); // 推后光路 ≠ 原光路 ⇒ ghost 有信息量
+  });
+
+  test('配方键：archetype×修饰×灵草型排序拼接，去重记录', async () => {
+    const { tribulationRecipeKey, recordEncounteredRecipe, emptyMeta } = await import('../../src/app/rogueliteProto/meta');
+    const key = tribulationRecipeKey({ archetype: 'compound-array', modifiers: ['wide', 'mirror-ccw'], herbKinds: ['thunder-draw'] });
+    expect(key).toBe('compound-array|mirror-ccw+wide|thunder-draw');
+    let meta = emptyMeta();
+    meta = recordEncounteredRecipe(meta, key);
+    const again = recordEncounteredRecipe(meta, key);
+    expect(again).toBe(meta); // 重复记录幂等
+    expect(meta.encounteredRecipes).toHaveLength(1);
+  });
+});
