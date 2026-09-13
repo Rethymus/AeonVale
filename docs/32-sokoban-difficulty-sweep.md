@@ -196,3 +196,24 @@ beginStagePlanning 的占位棋盘是丢弃型产物：规划屏不渲染棋盘�
 规划屏零读取；快照/恢复路径经入场重生成自洽。
 
 验证：单测 2039/2039；浏览器回归 44/44；治理/构建/preflight 通过。
+
+## 10. 健康指标刷新与休眠质量门修复（2026-09-13）
+
+依 m5:report/balance 数据刷新触发巡检，发现**三个质量工具自 7abf33f
+（发布治理工具链提交）起入口即坏**：`main;`（裸表达式）而非 `main();` ——
+m5-certify/balance-scan/balance-tune 全部空转（零输出、恒 exit 0），**CI 的
+m5:check 门从未真正执行过**。本批修复三处并激活：
+
+- **m5 pr profile（镜像 CI 门）实跑 1.9s 通过**：结构零失败、
+  mechanicalDeadlocks=0、确定性复跑通过——激活后 CI 保持绿。
+- 指标快照（旧世界农庄 sim，64 seeds）：veteran ascension 79.7% [0.683,
+  0.877]（目标带 0.75-0.85 内）；normal 26.6%（目标带 0.3-0.45 下沿之下，
+  pr 样本不足 Wilson 认证）。
+- balance 扫描：三组参数单调性正常（harvestCult 推进单调↑、tribulationBolts
+  在扫描范围内惰性、lootChance 只抬收益不动妖兽税）。
+
+**结论与迭代点裁定**：上述指标全部度量旧世界农庄 sim——按退役计划属阶段 3
+删除范围，现在为其调参是给将删系统返工，不做。真正的缺口是**主模式（修途）
+没有 m5/balance 覆盖**：tests/replay/cultivation-harness 已具备确定性全生命
+周期驱动，补一层多种子指标汇总（stage 分布/死因分布/渡劫结果分布）即可成为
+修途版 m5——留作下一轮迭代点（工具层，不碰 sim）。

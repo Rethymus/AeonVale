@@ -119,4 +119,4 @@ function main() {
   console.log(`调优后旋钮: ${JSON.stringify(snapshot(best.params))}`);
 }
 
-main;
+main();

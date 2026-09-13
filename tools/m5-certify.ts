@@ -130,4 +130,4 @@ function main(): void {
   if ((options.failOn === 'structural' && report.structuralFailures.length) || (options.failOn === 'targets' && (report.structuralFailures.length || targetFailed))) process.exitCode = 1;
 }
 
-main;
+main();

@@ -92,4 +92,4 @@ function main() {
   console.log('\n解读：参数→指标的单调关系即"自动调参"的搜索方向。');
 }
 
-main;
+main();
