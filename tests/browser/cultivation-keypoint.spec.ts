@@ -226,6 +226,36 @@ test.describe('D27 CDP 关键态门禁', () => {
     });
   });
 
+  test('充能无实体丹时护脉入口置灰（docs/32 §11 UX 防线）', async ({ page }) => {
+    await enterCultivation(page);
+    const client = await page.context().newCDPSession(page);
+    try {
+      const result = await client.send('Runtime.evaluate', {
+        expression: 'window.__AEON_TEST__?.configureCultivationOverloadKeypoint?.(false, true)',
+        returnByValue: true
+      });
+      expect(result.exceptionDetails, JSON.stringify(result.exceptionDetails ?? null)).toBeUndefined();
+      expect(result.result.value).toBeTruthy();
+    } finally {
+      await client.detach();
+    }
+
+    // 事件标签充能（ward-charge）不含实体丹：0 丹时入口必须置灰并说明原因，
+    // 否则真人开盾会在劫后结算触发 invalid-consumption 死局。
+    const blocked = page.getByRole('button', { name: '护脉丹：缺实体丹' });
+    await expect(blocked).toBeDisabled();
+    await expect(blocked).toHaveAttribute('aria-disabled', 'true');
+    await expect(blocked).toHaveAttribute('title', /行囊已无丹/);
+
+    // 深度防御：程序化点击也不得启用护持。
+    await page.evaluate(() => {
+      const buttons = document.querySelectorAll('.rp-actions .rp-btn');
+      (buttons[1] as HTMLElement | undefined)?.click();
+    });
+    await expect(blocked).toBeDisabled();
+    await expect(page.getByRole('button', { name: '护脉丹：已启用' })).toHaveCount(0);
+  });
+
   test('显式启用护脉丹把同一步过载降为补修', async ({ page }) => {
     await enterCultivation(page);
     await configureOverloadKeypoint(page, true);

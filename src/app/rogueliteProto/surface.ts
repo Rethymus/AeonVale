@@ -159,7 +159,7 @@ interface CultivationJourneySnapshot {
 
 interface CultivationBrowserTestApi {
   readonly [key: string]: unknown;
-  readonly configureCultivationOverloadKeypoint?: (withWardPill?: boolean) => CultivationBrowserTestSnapshot;
+  readonly configureCultivationOverloadKeypoint?: (withWardPill?: boolean, withWardChargeOnly?: boolean) => CultivationBrowserTestSnapshot;
   readonly configureCultivationPlanningKeypoint?: (mode?: 'default' | 'pressure') => CultivationBrowserTestSnapshot;
   readonly configureCultivationLifespanKeypoint?: () => CultivationBrowserTestSnapshot;
   readonly configureCultivationAscensionKeypoint?: () => CultivationBrowserTestSnapshot;
@@ -1510,7 +1510,7 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     };
   }
 
-  function configureCultivationOverloadKeypoint(withWardPill = false): CultivationBrowserTestSnapshot {
+  function configureCultivationOverloadKeypoint(withWardPill = false, withWardChargeOnly = false): CultivationBrowserTestSnapshot {
     const runState = createCultivationRunState({
       seed: 27_001,
       overrides: {
@@ -1537,7 +1537,9 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       tribulationAgendaTarget: 0
     };
     stage = 0;
-    preparation = deriveTribulationPreparation(runState);
+    preparation = withWardChargeOnly && !withWardPill
+      ? deriveTribulationPreparation(runState, { wardChargesBonus: 1 }) // docs/32 §11：事件标签充能（无实体丹）
+      : deriveTribulationPreparation(runState);
     const puzzle = oneMoveOverloadPuzzle();
     preparedPuzzle = {
       state: puzzle,
@@ -2370,8 +2372,17 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
       help.innerHTML = helpText();
     }
     retryBtn.disabled = Boolean(!session || session.outcome || session.undoChargesRemaining <= 0 || session.undoSnapshots.length === 0);
-    rerollBtn.disabled = Boolean(!session || session.outcome || session.wardChargesRemaining <= 0);
-    rerollBtn.textContent = session?.wardEnabled ? '护脉丹：已启用' : '护脉丹：未启用';
+    // docs/32 §11 观察项的 UX 防线：ward-charge 充能不含实体丹——0 丹开盾会让
+    // 劫后结算陷入 invalid-consumption（sim 契约），充能存在而行囊无丹时置灰入口。
+    const wardBlockedByPills = Boolean(session && !session.outcome && session.wardChargesRemaining > 0 && machineState.runState.pills <= 0);
+    rerollBtn.disabled = Boolean(!session || session.outcome || session.wardChargesRemaining <= 0 || wardBlockedByPills);
+    rerollBtn.textContent = wardBlockedByPills
+      ? '护脉丹：缺实体丹'
+      : session?.wardEnabled
+        ? '护脉丹：已启用'
+        : '护脉丹：未启用';
+    rerollBtn.setAttribute('aria-disabled', String(rerollBtn.disabled));
+    rerollBtn.title = wardBlockedByPills ? '护持充能需要一枚护脉丹实体；行囊已无丹，此时开盾劫后将无法结算。' : '';
     if (deadRun) {
       nextBtn.textContent = '立劫灰碑记 →';
       nextBtn.disabled = !settlementApplied;
@@ -2512,6 +2523,13 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   function toggleWard(): void {
     if (!tribulationSession) return;
+    // 深度防御（与 syncHud 置灰同条件）：充能来自事件标签时不含实体丹，
+    // 0 丹开盾会在结算层被 invalid-consumption 拒绝回写。
+    if (tribulationSession.wardChargesRemaining > 0 && machineState.runState.pills <= 0) {
+      tribulationFeedback = '<b>护持充能需要一枚护脉丹实体。</b>行囊已无丹——此时开盾，劫后结算将无法回写。先去炼一枚再来。';
+      help.innerHTML = helpText();
+      return;
+    }
     const result = transitionTribulationSession(tribulationSession, {
       type: 'set-ward',
       enabled: !tribulationSession.wardEnabled

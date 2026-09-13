@@ -241,3 +241,21 @@ m5:check 门从未真正执行过**。本批修复三处并激活：
    置灰开盾或 sim 层让 tag 充能自带丹。
 4. `--check` 与按策略基线带比对出带即红（当前全过）；未接 CI——带值
    与代理策略强耦合，先稳定几轮再考虑入夜扫。
+
+## 12. §11 观察项的 UX 防线落地（2026-09-13）
+
+`ward-charge:+1` 事件标签授予的护持充能不含实体丹：0 丹开盾会让劫后结算
+被 `invalid-consumption` 拒绝回写（原 UI 呈现"天劫结算未能回写"死局）。
+本批在 app 层闭环（不碰 src/sim）：
+
+1. **入口置灰**（surface.ts syncHud）：充能 >0 且行囊丹 =0 时护脉按钮
+   置灰，文案改「护脉丹：缺实体丹」，title 说明原因；`aria-disabled` 同步。
+2. **深度防御**（toggleWard 头部守卫）：同条件直接拦截并给出指引反馈
+   （"先去炼一枚再来"），程序化调用也无法启用。
+3. **E2E 锁定**：`configureCultivationOverloadKeypoint` 扩展第二参
+   `withWardChargeOnly`（经 `wardChargesBonus` 构造充能无丹态），新增
+   cultivation-keypoint 用例断言置灰文案/aria/title 与程序化点击不启用；
+   既有「显式启用护脉丹」（丹=1）用例不受影响。
+
+验证：浏览器回归 **45/45**（新增 1 例）、单测 2039/2039、治理/构建通过。
+sim 侧若未来统一语义（tag 充能自带丹），此防线自动失效为无害冗余。
