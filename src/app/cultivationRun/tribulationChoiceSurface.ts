@@ -32,10 +32,17 @@ function firstTribulationGuidance(state: CultivationRunMachineState): readonly s
   const interpretation = interpretCultivationTribulationTags([...state.tribulationTags, ...state.insightEffectTags]);
   const preparation = deriveTribulationPreparation(state.runState, interpretation.preparationModifiers);
   if (preparation.previewLevel > 0) return null;
-  return [
+  const lines: string[] = [];
+  // docs/32 §13：零训练策略 stage-0 过载身死 100%（m5 首校准硬教学门）——
+  // 体魄为 0 时显式给出「先锻体」建议，把教学门的因果说给新手听。
+  if (state.runState.bodyFoundation <= 0) {
+    lines.push('此身体魄仍是 0：未经锻打的肉身直承雷光，几乎必会过载身死。建议「再备一轮」，先以苦练把体魄抬起来。');
+  }
+  lines.push(
     '初劫劫兆未明，谨记承雷三途：雷威落在甜蜜区间，可完美淬体；未合火候而未越上限，只算带伤承雷；一旦超过肉身可承受的雷威上限，当场灰飞烟灭。',
     '雷威越贴近而不超过肉身上限，淬体越厚；此劫无预见可凭，只能按肉身上限保守估量。'
-  ];
+  );
+  return lines;
 }
 
 export function createCultivationTribulationChoiceSurface(options: CultivationTribulationChoiceSurfaceOptions): CultivationRunPhaseSurface {

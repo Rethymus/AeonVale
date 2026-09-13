@@ -366,6 +366,7 @@ const CALIBRATED_BANDS: Readonly<Record<PolicyId, Record<BandKey, { min: number;
 } as const;
 
 interface Options {
+  seedStart: number;
   seeds: number;
   generations: number;
   policy: PolicyId | 'all';
@@ -378,12 +379,14 @@ function parseOptions(args: string[]): Options {
     return i < 0 ? undefined : args[i + 1];
   };
   const seeds = Number(value('--seeds') ?? 8);
+  const seedStart = Number(value('--seed-start') ?? 1);
   const generations = Number(value('--generations') ?? 4);
   const policy = (value('--policy') ?? 'all') as PolicyId | 'all';
   if (!Number.isInteger(seeds) || seeds <= 0) throw new Error('--seeds must be a positive integer');
+  if (!Number.isInteger(seedStart) || seedStart <= 0) throw new Error('--seed-start must be a positive integer');
   if (!Number.isInteger(generations) || generations <= 0) throw new Error('--generations must be a positive integer');
   if (!['balanced', 'herbalist', 'ascetic', 'all'].includes(policy)) throw new Error('--policy must be balanced|herbalist|ascetic|all');
-  return { seeds, generations, policy, check: args.includes('--check') };
+  return { seedStart, seeds, generations, policy, check: args.includes('--check') };
 }
 
 function median(values: readonly number[]): number {
@@ -400,14 +403,14 @@ function main(): void {
   const perPolicy = new Map<PolicyId, LifeOutcome[]>();
   for (const policy of policies) {
     const outcomes: LifeOutcome[] = [];
-    for (let seed = 1; seed <= options.seeds; seed++) {
+    for (let seed = options.seedStart; seed < options.seedStart + options.seeds; seed++) {
       outcomes.push(runLife(seed, policy, params, options.generations));
     }
     perPolicy.set(policy, outcomes);
   }
 
   const failures: string[] = [];
-  console.log(`修途健康指标（m5 主模式版）· seeds=${options.seeds} × 策略 ${[...policies].join('/')} × 换代上限 ${options.generations}`);
+  console.log(`修途健康指标（m5 主模式版）· seeds=${options.seedStart}..${options.seedStart + options.seeds - 1} × 策略 ${[...policies].join('/')} × 换代上限 ${options.generations}`);
   console.log('渡劫策略 = solver 最优（天机代打）；日程策略按境界解锁替换；确定性：同 (seed,policy) 复跑一致。\n');
 
   for (const [policy, outcomes] of perPolicy) {

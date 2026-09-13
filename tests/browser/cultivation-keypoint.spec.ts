@@ -256,6 +256,28 @@ test.describe('D27 CDP 关键态门禁', () => {
     await expect(page.getByRole('button', { name: '护脉丹：已启用' })).toHaveCount(0);
   });
 
+  test('首劫抉择屏对零体魄给出先锻体引导（docs/32 §13）', async ({ page }) => {
+    await enterCultivation(page);
+    // 全灵田轮（零苦练）→ 结算走完 → 抉择屏：体魄 0 时必须显式教「先锻体」。
+    await fillAgenda(page, ['灵田', '灵田', '灵田', '灵田', '灵田', '灵田']);
+    await page.getByRole('button', { name: '结清本轮修途' }).click();
+    const resolution = page.locator('.cr-resolution');
+    await resolution.waitFor({ timeout: 20_000 });
+    await resolution.getByRole('button', { name: '收起竹简，处理本轮事件' }).click();
+    const event = page.locator('.cr-event');
+    await event.waitFor({ timeout: 20_000 });
+    await event.locator('.cr-event__button[data-affordable="true"]').first().click();
+    const insight = page.locator('.cr-insight');
+    await insight.waitFor({ timeout: 20_000 });
+    await insight.locator('.cr-insight__continue').click();
+
+    const choice = page.locator('.cr-tribulation-choice');
+    await choice.waitFor({ timeout: 20_000 });
+    const guidance = choice.locator('.cr-tribulation-choice__guidance');
+    await expect(guidance).toContainText('此身体魄仍是 0');
+    await expect(guidance).toContainText('先以苦练把体魄抬起来');
+  });
+
   test('显式启用护脉丹把同一步过载降为补修', async ({ page }) => {
     await enterCultivation(page);
     await configureOverloadKeypoint(page, true);
