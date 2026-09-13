@@ -52,7 +52,7 @@ import {
   type TribulationSessionState
 } from '@sim/sokoban';
 
-type PolicyId = 'balanced' | 'herbalist' | 'ascetic' | 'hybrid';
+export type PolicyId = 'balanced' | 'herbalist' | 'ascetic' | 'hybrid';
 
 /** 每次引劫前的日程轮数（与 app 层 presenter 常量一致的值，纯 sim 驱动不复用 app 代码）。 */
 const AGENDA_ROUNDS_PER_TRIBULATION = 2;
@@ -111,7 +111,7 @@ interface TribulationRecord {
   readonly stage: number;
 }
 
-interface LifeOutcome {
+export interface LifeOutcome {
   readonly finalStatus: string;
   readonly deathCause: string | null;
   readonly maxStage: number;
@@ -162,7 +162,7 @@ function runTribulation(
   return { session, settlement };
 }
 
-function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGenerations: number): LifeOutcome {
+export function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGenerations: number): LifeOutcome {
   const tribulations: TribulationRecord[] = [];
   let generations = 0;
   let finalStatus = 'generations-capped';
@@ -515,4 +515,5 @@ function main(): void {
   }
 }
 
-main();
+const isDirectRun = process.argv[1] !== undefined && (process.argv[1].endsWith('cultivation-metrics.ts') || process.argv[1].endsWith('cultivation-metrics'));
+if (isDirectRun) main();
