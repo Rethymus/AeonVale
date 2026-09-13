@@ -7,7 +7,7 @@
  *
  * 运行：node node_modules/tsx/dist/cli.mjs tools/sokoban-sweep.ts [--salts 200] [--stages 0-6]
  */
-import { createPuzzle, generateBoard, type SokobanState } from '@sim/sokoban';
+import { createPuzzle, generateBoard, bandCenterForStage, SOKOBAN_BAND_RADIUS, type SokobanState } from '@sim/sokoban';
 import { Rng } from '@sim/world/rng';
 
 interface Row {
@@ -61,8 +61,8 @@ function quantile(sorted: readonly number[], q: number): number {
 }
 
 function summarizeStage(rows: readonly Row[], stage: number): string {
-  const bandCenter = 10 + 6 * stage;
-  const bandRadius = 4;
+  const bandCenter = bandCenterForStage(stage);
+  const bandRadius = SOKOBAN_BAND_RADIUS;
   const certs = rows.map(r => r.certified).sort((a, b) => a - b);
   const inBand = rows.filter(r => Math.abs(r.certified - bandCenter) <= bandRadius);
   const fallbacks = rows.filter(r => r.fallback);

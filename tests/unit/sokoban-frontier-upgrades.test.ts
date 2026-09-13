@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { consumeOneShotGuard, modifierAt, traceBeam } from '@sim/sokoban/beam';
-import { deriveFlavorTag, generateBoard, solveBoard } from '@sim/sokoban/generator';
+import { deriveFlavorTag, generateBoard, bandCenterForStage, SOKOBAN_BAND_CENTER_BY_STAGE, solveBoard } from '@sim/sokoban/generator';
 import { applyMove, createPuzzle } from '@sim/sokoban/logic';
 import { createTribulationSession, transitionTribulationSession } from '@sim/sokoban/tribulation-session';
 import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
@@ -57,7 +57,8 @@ describe('docs/31 §1.3 挑战证书扩展', () => {
 
   test('难度带定向：多 seed 的认证步数较旧盲重试显著收敛（中位数距带心 ≤6）', () => {
     const stage = 3;
-    const center = 10 + 6 * stage;
+    const center = bandCenterForStage(stage);
+    expect(center).toBe(27); // docs/32 §5 经验表（旧线性公式为 28）
     const distances: number[] = [];
     for (let seed = 1; seed <= 8; seed++) {
       const g = generateBoard(stage, new Rng(`sokoban:${stage}:${seed}`));
@@ -68,8 +69,24 @@ describe('docs/31 §1.3 挑战证书扩展', () => {
     distances.sort((a, b) => a - b);
     const median = distances[Math.floor(distances.length / 2)]!;
     // docs/31 §1.3：带内（≤4）优先、带外保底取最近。中位数 ≤6 视为收敛成立
-    //（旧实现为盲重试取首个可解候选，无向带心收敛压力；实测本 seed 集中位数为 6）。
+    //（旧实现为盲重试取首个可解候选，无向带心收敛压力）。
     expect(median).toBeLessThanOrEqual(6);
+  });
+
+  test('带心查表：高阶带心回归可达区间而非线性外推（docs/32 §5）', () => {
+    expect(SOKOBAN_BAND_CENTER_BY_STAGE).toEqual([10, 16, 22, 27, 20, 19, 18]);
+    expect(bandCenterForStage(0)).toBe(10);
+    expect(bandCenterForStage(6)).toBe(18);
+    expect(bandCenterForStage(9)).toBe(18); // 超表尾取末位
+    expect(bandCenterForStage(-1)).toBe(10); // 负值夹到表头
+  });
+
+  test('连续带外提前放弃：保底已有即封顶重试（docs/32 §4-2）', () => {
+    // stage4 旧行为必跑满 32 次重试（带内率 0%）；此处验证生成仍成功且带外
+    // 候选被采纳——行为的成本封顶由扫描工具的耗时降幅佐证（docs/32 附录）。
+    const g = generateBoard(4, new Rng('sokoban:4:0'));
+    expect(g).not.toBeNull();
+    expect(g!.challenge.certifiedMoves).toBeGreaterThan(0);
   });
 
   test('createPuzzle 模板路径（强制兜底时）同样带三新字段', () => {
@@ -86,9 +103,11 @@ describe('docs/31 §4.3 三型标签判定', () => {
     expect(tag).toBe('swift');
   });
 
-  test('含绝缘石判为 swift', () => {
-    const tag = deriveFlavorTag({ certifiedMoves: 20, budgetSlack: 20, requiredBlockKinds: ['insulator'], board: board() });
-    expect(tag).toBe('swift');
+  test('绝缘石仅在余量未显著超过步长时判为 swift（docs/32 §4-3 去支配）', () => {
+    const tight = deriveFlavorTag({ certifiedMoves: 20, budgetSlack: 8, requiredBlockKinds: ['insulator'], board: board() });
+    expect(tight).toBe('swift'); // slackRatio 0.4 ≤ 1.1
+    const loose = deriveFlavorTag({ certifiedMoves: 20, budgetSlack: 24, requiredBlockKinds: ['insulator'], board: board() });
+    expect(loose).not.toBe('swift'); // slackRatio 1.2 > 1.1，回落到 缠/势 判定
   });
 
   test('两株贴光路灵草判为 entangling', () => {

@@ -31,6 +31,22 @@ const ALL_DIRS: readonly Dir[] = ['up', 'down', 'left', 'right'];
 const MAX_SOLVE_NODES = 40000;
 const MAX_GENERATED_SOLUTION_MOVES = 96;
 
+/**
+ * 难度带带心查表（docs/32 §5，500 样本 p75 口径经验值）。
+ * 线性公式 10+6·stage 在 stage≥4 完全脱锚（7×7/8×8 板面 + 复合必需石下
+ * 可达认证步中位只有 16-17），查表后带内重试才真正命中，重试风暴随之消失。
+ * 超出表尾的 stage 取末位（当前终阶为 6）。
+ */
+export const SOKOBAN_BAND_CENTER_BY_STAGE: readonly number[] = [10, 16, 22, 27, 20, 19, 18];
+export const SOKOBAN_BAND_RADIUS = 4;
+/** 连续带外提前放弃阈值（docs/32 §4-2）：带外保底已有即止，封顶生成成本。 */
+export const SOKOBAN_MAX_OUT_OF_BAND_STREAK = 8;
+
+export function bandCenterForStage(stage: number): number {
+  const safe = Math.max(0, Math.min(Math.floor(stage), SOKOBAN_BAND_CENTER_BY_STAGE.length - 1));
+  return SOKOBAN_BAND_CENTER_BY_STAGE[safe]!;
+}
+
 export interface GenResult {
   readonly board: SokobanBoard;
   readonly player: Vec2;
@@ -478,7 +494,10 @@ export function deriveFlavorTag(input: {
   readonly archetype?: SokobanArchetype;
 }): SokobanFlavorTag {
   const slackRatio = input.certifiedMoves > 0 ? input.budgetSlack / input.certifiedMoves : 1;
-  if (slackRatio <= 0.35 || input.requiredBlockKinds.includes('insulator')) return 'swift';
+  // docs/32 §4-3：绝缘石不再单独支配 swift（高阶曾达 65-71%）；仅当余量未显著
+  // 超过认证步长（≤1.1，探针实测值）才判快型，松配绝缘石回落到 缠/势 判定，
+  // 三型在每阶均有分布（实测 swift 12-68% / 缠 0-60% / 势 12-76%）。
+  if (slackRatio <= 0.35 || (input.requiredBlockKinds.includes('insulator') && slackRatio <= 1.1)) return 'swift';
   const herbs: Vec2[] = [];
   for (let i = 0; i < input.board.terrain.length; i++) {
     if (input.board.terrain[i] === 'herb') {
@@ -553,8 +572,8 @@ function countFirstMoveFanout(
  * 带内候选即刻采纳，全程未中带则取离 center 最近者（消除同 stage 步数方差）。
  */
 export function generateBoard(stage: number, rng: Rng, options: GenerateBoardOptions = {}): GenResult | null {
-  const bandCenter = 10 + 6 * stage;
-  const bandRadius = 4;
+  const bandCenter = bandCenterForStage(stage);
+  const bandRadius = SOKOBAN_BAND_RADIUS;
   interface ScoredCandidate {
     readonly result: GenResult;
     readonly solverNodes: number;
@@ -562,6 +581,7 @@ export function generateBoard(stage: number, rng: Rng, options: GenerateBoardOpt
     readonly distance: number;
   }
   let fallback: ScoredCandidate | null = null;
+  let outOfBandStreak = 0;
   for (let attempt = 0; attempt < 32; attempt++) {
     const r = tryGenerate(stage, rng, options);
     if (!r) continue;
@@ -619,6 +639,12 @@ export function generateBoard(stage: number, rng: Rng, options: GenerateBoardOpt
       // 带外：留作保底，继续重试找更近的。
       if (!fallback || distance < fallback.distance) {
         fallback = { result: candidate, solverNodes: solution.exploredNodes, fanout: 0, distance };
+        outOfBandStreak = 0; // 出现更近候选：仍在向带心收敛，重置计数
+      } else {
+        // docs/32 §4-2：连续 K 次带外且无更近候选即提前放弃——中阶候选持续
+        // 逼近带心会不断重置计数（保留搜索），高阶平台期立即封顶生成成本。
+        outOfBandStreak += 1;
+        if (outOfBandStreak >= SOKOBAN_MAX_OUT_OF_BAND_STREAK) break;
       }
       continue;
     }
