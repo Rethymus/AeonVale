@@ -1402,7 +1402,10 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   function beginStagePlanning(nextStage: number, agendas = CULTIVATION_AGENDAS_BEFORE_TRIBULATION): void {
     stage = Math.max(0, nextStage);
     const runState = { ...machineState.runState, stage, status: 'active' as const };
-    state = createPuzzle(stage, seedSalt);
+    // docs/32 §9：此处不再同步生成占位棋盘——规划屏不渲染棋盘，真入场
+    // （buildTribulationBoard）会按 machineState.runState.stage 重新生成；
+    // 高阶同步生成 2.5-3.9s 且产物必被丢弃。state 保持上一块有效棋盘，
+    // 仅作画布尺寸兜底（入场时 resizeCanvasForState 重设）。
     preparation = deriveTribulationPreparation(runState);
     preparedPuzzle = null;
     tribulationSession = null;

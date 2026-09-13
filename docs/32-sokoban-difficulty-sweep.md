@@ -169,3 +169,30 @@ keypoint 全过——CDP keypoint 用手作谜题不经生成路径，天然免�
 治理/构建/preflight 通过。
 
 **docs/32 §4 四项建议全部关闭。**
+
+## 9. §4-4 视觉核查与残余同步生成点处置（2026-09-13）
+
+**占位层视觉核查**（真入场流程截图，rAF 延迟钩子拉长窗口，DOM/CSS 全真）：
+构图居中（kicker「天劫将至」宽字距·宋体大标题「雷云聚形，劫盘推演中……」
+金色强调·分隔线下注语），暗色放射底与棋盘面板融合，右侧持久状态轨保留
+上下文；就绪后截图与既有 portfolio 基准**字节级一致**（CDN 内容哈希去重
+证实）——占位层零残留、棋盘渲染零漂移。
+
+**残余同步 createPuzzle 调用点评估**（实测单次耗时）：
+
+| 调用点 | stage | 耗时 | 处置 |
+| ------ | ----- | ---- | ---- |
+| 模块初始化（177） | 0 | 4ms | 保留 |
+| beginCultivationRun | 0 | 4ms | 保留（无感） |
+| 换代 transitionToHeir（2548） | 0 | 4ms | 保留（无感） |
+| 测试 keypoint（1582/1619 等） | 0-2 | 4-64ms | 保留（测试 parity） |
+| **beginStagePlanning** | 1→6 | 64ms-**3.9s** | **懒惰化移除** |
+
+beginStagePlanning 的占位棋盘是丢弃型产物：规划屏不渲染棋盘，真入场
+（buildTribulationBoard）按 `machineState.runState.stage` 重新生成。高阶
+换阶（3→4 起）在结算继续键上同步阻塞 2.5-3.9s——本批直接删除该生成，
+`state` 保持上一块有效棋盘作画布尺寸兜底（入场时 resizeCanvasForState
+重设）。`state.board` 全部消费点（draw/ghost/bodyCenter）都在天劫屏内，
+规划屏零读取；快照/恢复路径经入场重生成自洽。
+
+验证：单测 2039/2039；浏览器回归 44/44；治理/构建/preflight 通过。
