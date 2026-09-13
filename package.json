@@ -43,6 +43,8 @@
     "m5:certify": "node node_modules/tsx/dist/cli.mjs tools/m5-certify.ts --profile nightly --fail-on targets",
     "m5:hp-inheritance": "node node_modules/tsx/dist/cli.mjs tools/m5-hp-inheritance.ts",
     "balance": "node node_modules/tsx/dist/cli.mjs tools/balance-scan.ts",
+    "cultivation:metrics": "node node_modules/tsx/dist/cli.mjs tools/cultivation-metrics.ts",
+    "cultivation:check": "node node_modules/tsx/dist/cli.mjs tools/cultivation-metrics.ts --seeds 8 --generations 4 --check",
     "tune": "node node_modules/tsx/dist/cli.mjs tools/balance-tune.ts",
     "content:lint": "node node_modules/tsx/dist/cli.mjs tools/content-lint.ts",
     "governance:check": "node tools/governance-check.mjs",

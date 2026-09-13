@@ -217,3 +217,27 @@ m5:check 门从未真正执行过**。本批修复三处并激活：
 没有 m5/balance 覆盖**：tests/replay/cultivation-harness 已具备确定性全生命
 周期驱动，补一层多种子指标汇总（stage 分布/死因分布/渡劫结果分布）即可成为
 修途版 m5——留作下一轮迭代点（工具层，不碰 sim）。
+
+## 11. 修途版 m5 健康指标工具（2026-09-13，§10 锁定项落地）
+
+`tools/cultivation-metrics.ts` + `pnpm cultivation:metrics` / `cultivation:check`：
+
+1. **驱动**：复用 tests/replay/cultivation-harness 同一确定性 sim 链路
+   （agenda→event→insight→preparation→puzzle→session→settlement→epitaph→
+   heir），自由生命周期循环（每次引劫前两轮日程；身死/封卷走劫灰传承
+   换代续世；飞升终局）。渡劫 = solver 最优「天机代打」（有实体丹时
+   开盾）；日程三型策略（balanced/herbalist/ascetic，按境界解锁替换）。
+   全部派生选择走 Rng 命名流——同 (seed,policy) 复跑逐字节一致（已验证）。
+2. **首校准基线**（seeds=8×3 策略×换代上限 4，171 次渡劫，25s）：
+   - balanced/herbalist（无体魄训练）：**stage-0 过载身死 100%**，连继承
+     换代也救不回——首劫对零训练策略是硬教学门（solver 直解 = 最短光路
+     = 最大雷威，弱肉身必过载；符合"承雷先锻体"设计语义）。
+   - ascetic（苦修系）：推进 3-4 境，perfect 52.3% / survived 35.5% /
+     insufficient 12.1%，零过载零超时；最终资源枯竭封卷换代（gen 封顶）。
+   - 朴素代理无人飞升（0%）——代理能力锚点，非趣味目标。
+3. **sim 侧观察（只记录不改）**：事件标签 `ward-charge:+1` 授予的护持
+   充能不含实体丹——0 丹开盾会使结算陷入 `invalid-consumption` 死局。
+   代理已对齐真人（无丹不开盾）；若未来真人路径可达同态，需在 app 层
+   置灰开盾或 sim 层让 tag 充能自带丹。
+4. `--check` 与按策略基线带比对出带即红（当前全过）；未接 CI——带值
+   与代理策略强耦合，先稳定几轮再考虑入夜扫。
