@@ -52,7 +52,7 @@ import {
   type TribulationSessionState
 } from '@sim/sokoban';
 
-type PolicyId = 'balanced' | 'herbalist' | 'ascetic';
+type PolicyId = 'balanced' | 'herbalist' | 'ascetic' | 'hybrid';
 
 /** 每次引劫前的日程轮数（与 app 层 presenter 常量一致的值，纯 sim 驱动不复用 app 代码）。 */
 const AGENDA_ROUNDS_PER_TRIBULATION = 2;
@@ -63,22 +63,35 @@ const MAX_TRIBULATIONS_PER_LIFE = 12;
 const POLICY_TEMPLATES: Readonly<Record<PolicyId, readonly CultivationActivityId[]>> = {
   balanced: ['farming', 'farming', 'livelihood', 'rest', 'alchemy', 'insight'],
   herbalist: ['farming', 'farming', 'farming', 'rest', 'alchemy', 'farming'],
-  ascetic: ['training', 'farming', 'livelihood', 'rest', 'training', 'meridian']
+  ascetic: ['training', 'farming', 'livelihood', 'rest', 'training', 'meridian'],
+  // docs/32 §14：训练+丹道混合型——体魄与护持丹药同步成型，冲击飞升路径的代理。
+  hybrid: ['training', 'training', 'training', 'alchemy', 'farming', 'rest']
 };
 
 /** 境界未解锁的槽位替换为低阶通用活动（保持模板节奏与自持性）。 */
-function policySlots(policy: PolicyId, stage: number, rng: Rng): CultivationActivityId[] {
+function policySlots(policy: PolicyId, stage: number, rng: Rng, food = Infinity, herbs = Infinity): CultivationActivityId[] {
   const template = POLICY_TEMPLATES[policy];
   const unlock: Record<string, number> = {
     training: 0, farming: 0, livelihood: 0, rest: 0,
     alchemy: 1, insight: 2, meridian: 3, arrayStudy: 4, lightningBath: 5, heavenTheft: 6
   };
-  return Array.from({ length: SLOTS_PER_AGENDA }, (_, i) => {
+  const slots = Array.from({ length: SLOTS_PER_AGENDA }, (_, i) => {
     const activity = template[i % template.length]!;
     if (stage >= (unlock[activity] ?? 0)) return activity;
     const fallback: CultivationActivityId[] = ['farming', 'livelihood', 'rest'];
     return fallback[rng.intRange(0, fallback.length - 1)]!;
   });
+  // 资源自适应（确定性：纯状态读）：食物见底换下一格苦练为灵田；灵草不足换
+  // 下一格炼丹为灵田——防饿死/断草卡局，等价真人的保底调度。
+  if (food < 8) {
+    const idx = slots.indexOf('training');
+    if (idx >= 0) slots[idx] = 'farming';
+  }
+  if (herbs < 2) {
+    const idx = slots.indexOf('alchemy');
+    if (idx >= 0) slots[idx] = 'farming';
+  }
+  return slots;
 }
 
 function solverOptimalActions(session: TribulationSessionState, inventoryPills: number): readonly TribulationSessionAction[] {
@@ -156,6 +169,7 @@ function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGener
   let deathCause: string | null = null;
   let maxStage = 0;
   let lifeIndex = 0;
+  let insufficientStreak = 0;
 
   let state: CultivationRunState | null = null;
 
@@ -178,7 +192,8 @@ function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGener
       // 两轮六格日程（每次引劫前），失败先降级全歇息、再失败按余寿尽处理。
       let planned = true;
       for (let agendaRound = 0; agendaRound < AGENDA_ROUNDS_PER_TRIBULATION; agendaRound++) {
-        const slots = policySlots(policy, state.stage, rng);
+        const slots = policySlots(policy, state.stage, rng, state.food, state.herbs);
+        if (process.env.CM_DEBUG) console.error(`[cm] slots life=${lifeIndex}: ${slots.join(",")}`);
         let resolution = resolveCultivationAgenda(state, { slots }, params, { insightEffectTags: effectTags });
         if (!resolution.ok) {
           const fallbackSlots = Array.from({ length: SLOTS_PER_AGENDA }, () => 'rest' as CultivationActivityId);
@@ -192,6 +207,7 @@ function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGener
         state = resolution.state;
         for (const slot of slots) activityCounts[slot] = (activityCounts[slot] ?? 0) + 1;
       }
+      if (process.env.CM_DEBUG) console.error(`[cm] life=${lifeIndex} round=${round} planned=${planned} status=${state.status} stage=${state.stage} food=${state.food} herbs=${state.herbs} pills=${state.pills} lifespan=${state.lifespanRemainingDays}`);
       if (!planned || state.status === 'lifespan-ended') {
         // 规划被卡 = 余寿/资源枯竭（app 层「封卷归灰」语义）：走传承换代续世。
         deathCause = 'lifespan-ended';
@@ -267,6 +283,7 @@ function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGener
       // 引劫（solver 最优）。
       const salt = rng.intRange(0, 1_000_000);
       const ran = runTribulation(state, params, salt, tribulationTagPool, effectTags, () => undefined);
+      if (process.env.CM_DEBUG && ran) console.error(`[cm] trib life=${lifeIndex} round=${round} stage=${state.stage} -> ${ran.session.outcome!.result}/${ran.settlement.settlement.kind}`);
       if (!ran) {
         // 板不可解/结算拒绝属策略外能力缺口，按"天劫悬而未决"封代记录。
         finalStatus = 'unsolvable-board';
@@ -278,6 +295,7 @@ function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGener
         settlementKind: ran.settlement.settlement.kind,
         stage: state.stage
       });
+      insufficientStreak = ran.settlement.settlement.kind === 'insufficient' ? insufficientStreak + 1 : 0;
       maxStage = Math.max(maxStage, state.stage);
       state = ran.settlement.state;
 
@@ -317,6 +335,12 @@ function runLife(seed: number, policy: PolicyId, params: BalanceParams, maxGener
         state = heir.state;
         continue outer; // 新一世
       }
+      // 雷威不足墙（docs/32 §14）：连续多次 insufficient 说明体魄成长追不上
+      // 该阶甜蜜区下限——代理无法换策略，收束此 campaign 而非无限磨回合。
+      if (insufficientStreak >= 4) {
+        finalStatus = 'insufficient-wall';
+        break outer;
+      }
       // breakthrough / insufficient / death-prevented：继续下一轮准备。
       if (tribulations.length >= MAX_TRIBULATIONS_PER_LIFE * lifeIndex) {
         finalStatus = 'rounds-capped';
@@ -352,17 +376,19 @@ function wilson(successes: number, n: number, z = 1.96): [number, number] {
 }
 
 /**
- * 基线带（2026-09-13 实测校准：seeds=8 × 3 策略 × 换代上限 4，共 171 次渡劫 / 24 局）。
+ * 基线带（2026-09-13 大窗复校准：seed-start=1 × seeds=32 × 4 策略 × 换代上限 4，
+ * 共 756 次渡劫 / 128 campaign；含 §14 雷威不足墙终局语义）。
  * 带含义：点估计落在 [min, max] 视为健康；--check 出带 exit 1。
- * 注意：这些带描述「天机代打 + 三型日程」朴素代理的当前基线（策略能力锚点），
- * 不是玩家趣味目标；变更 sim 平衡参数或代理策略后必须重校准并更新此表。
+ * 注意：带描述「天机代打 + 四型日程」代理的策略能力锚点，不是玩家趣味目标；
+ * 变更 sim 平衡参数或代理策略后必须重校准。
  */
 type BandKey = 'ascensionRate' | 'overloadShare' | 'perfectShare' | 'meanGenerations' | 'maxStageMedian';
 
 const CALIBRATED_BANDS: Readonly<Record<PolicyId, Record<BandKey, { min: number; max: number }>>> = {
   balanced: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0.95, max: 1 }, perfectShare: { min: 0, max: 0.05 }, meanGenerations: { min: 3.5, max: 4 }, maxStageMedian: { min: 0, max: 0 } },
   herbalist: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0.95, max: 1 }, perfectShare: { min: 0, max: 0.05 }, meanGenerations: { min: 3.5, max: 4 }, maxStageMedian: { min: 0, max: 0 } },
-  ascetic: { ascensionRate: { min: 0, max: 0.1 }, overloadShare: { min: 0, max: 0.05 }, perfectShare: { min: 0.45, max: 0.6 }, meanGenerations: { min: 3.5, max: 4 }, maxStageMedian: { min: 3, max: 4 } }
+  ascetic: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0, max: 0.05 }, perfectShare: { min: 0.12, max: 0.28 }, meanGenerations: { min: 1, max: 2 }, maxStageMedian: { min: 3, max: 4 } },
+  hybrid: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0, max: 0.05 }, perfectShare: { min: 0.18, max: 0.34 }, meanGenerations: { min: 1, max: 2 }, maxStageMedian: { min: 3, max: 4 } }
 } as const;
 
 interface Options {
@@ -385,7 +411,7 @@ function parseOptions(args: string[]): Options {
   if (!Number.isInteger(seeds) || seeds <= 0) throw new Error('--seeds must be a positive integer');
   if (!Number.isInteger(seedStart) || seedStart <= 0) throw new Error('--seed-start must be a positive integer');
   if (!Number.isInteger(generations) || generations <= 0) throw new Error('--generations must be a positive integer');
-  if (!['balanced', 'herbalist', 'ascetic', 'all'].includes(policy)) throw new Error('--policy must be balanced|herbalist|ascetic|all');
+  if (!['balanced', 'herbalist', 'ascetic', 'hybrid', 'all'].includes(policy)) throw new Error('--policy must be balanced|herbalist|ascetic|hybrid|all');
   return { seedStart, seeds, generations, policy, check: args.includes('--check') };
 }
 
@@ -398,7 +424,7 @@ function median(values: readonly number[]): number {
 function main(): void {
   const options = parseOptions(process.argv.slice(2));
   const params = withDefaultBalanceParams(DEFAULT_BALANCE);
-  const policies: readonly PolicyId[] = options.policy === 'all' ? ['balanced', 'herbalist', 'ascetic'] : [options.policy];
+  const policies: readonly PolicyId[] = options.policy === 'all' ? ['balanced', 'herbalist', 'ascetic', 'hybrid'] : [options.policy];
 
   const perPolicy = new Map<PolicyId, LifeOutcome[]>();
   for (const policy of policies) {
