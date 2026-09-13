@@ -18,7 +18,7 @@ import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@
 import { Rng } from '@sim/world/rng';
 import { runLife, type LifeOutcome, type PolicyId } from './cultivation-metrics';
 
-const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
+let SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
 const GENERATIONS = 4;
 const ITERS = 24;
 
@@ -73,18 +73,40 @@ function withTribulation(min: number, source: number): BalanceParams {
   };
 }
 
+const START = { min: 6, source: 125 };
+
 function main(): void {
   const args = process.argv.slice(2);
   const itersIndex = args.indexOf('--iters');
+  const seedStartIndex = args.indexOf('--seed-start');
+  const seedsCountIndex = args.indexOf('--seeds');
+  const startMinIndex = args.indexOf('--start-min');
+  const startSourceIndex = args.indexOf('--start-source');
   const iters = itersIndex >= 0 ? Number(args[itersIndex + 1]) : ITERS;
   if (!Number.isInteger(iters) || iters <= 0) throw new Error('--iters must be a positive integer');
+  if (seedStartIndex >= 0) {
+    const start = Number(args[seedStartIndex + 1]);
+    const count = seedsCountIndex >= 0 ? Number(args[seedsCountIndex + 1]) : SEEDS.length;
+    if (!Number.isInteger(start) || start <= 0 || !Number.isInteger(count) || count <= 0) throw new Error('--seed-start/--seeds must be positive integers');
+    SEEDS = Array.from({ length: count }, (_, i) => start + i);
+  }
+  if (startMinIndex >= 0) {
+    const v = Number(args[startMinIndex + 1]);
+    if (!Number.isInteger(v)) throw new Error('--start-min must be an integer');
+    START.min = v;
+  }
+  if (startSourceIndex >= 0) {
+    const v = Number(args[startSourceIndex + 1]);
+    if (!Number.isInteger(v)) throw new Error('--start-source must be an integer');
+    START.source = v;
+  }
 
   const rng = new Rng(42);
-  let current = { min: 6, source: 125 };
+  let current = { ...START };
   let best = evaluate(withTribulation(current.min, current.source));
-  console.log(`修途邻域 hill-climb（${iters} 轮，2 策略 × ${SEEDS.length} 种子 × ${GENERATIONS} 代/评估）`);
+  console.log(`修途邻域 hill-climb（${iters} 轮，2 策略 × ${SEEDS.length} 种子(${SEEDS[0]}..${SEEDS[SEEDS.length - 1]}) × ${GENERATIONS} 代/评估，起点 (${current.min},${current.source})）`);
   console.log(`目标: hybridAsc≈0.875 asceticAsc≈0.65 asceticGate≈0.2`);
-  console.log(`起点 (6,125): hybrid=${best.hybridAsc.toFixed(3)} ascetic=${best.asceticAsc.toFixed(3)} gate=${best.asceticGate.toFixed(3)} penalty=${best.penalty.toFixed(3)}\n`);
+  console.log(`起点 (${current.min},${current.source}): hybrid=${best.hybridAsc.toFixed(3)} ascetic=${best.asceticAsc.toFixed(3)} gate=${best.asceticGate.toFixed(3)} penalty=${best.penalty.toFixed(3)}\n`);
 
   let improvements = 0;
   for (let iter = 0; iter < iters; iter++) {
