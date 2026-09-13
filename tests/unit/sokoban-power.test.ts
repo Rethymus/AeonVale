@@ -106,12 +106,19 @@ describe('D27-d · Sokoban 雷威', () => {
       insufficientTemperingGainMultiplier: 3
     });
     const state = straightState();
+    // 雷威随 DEFAULT_BALANCE.baseSourcePower 浮动：窗口以实测值锚定，测的是
+    // 「档位由窗口参数决定」的机制而非绝对数值。
     const beamPower = calculateBeamPower(state, preparation(), params).beamPower;
-
-    expect(evaluateTribulation(state, preparation(), params).temperingGain).toBe(beamPower * 7);
-    expect(evaluateTribulation(state, preparation({ sweetSpotMinPower: 80, sweetSpotMaxPower: 90 }), params).temperingGain)
+    const windowed = preparation({
+      minTemperingPower: beamPower - 20,
+      maxSurvivablePower: beamPower + 20,
+      sweetSpotMinPower: beamPower - 5,
+      sweetSpotMaxPower: beamPower + 5
+    });
+    expect(evaluateTribulation(state, windowed, params).temperingGain).toBe(beamPower * 7);
+    expect(evaluateTribulation(state, preparation({ minTemperingPower: beamPower - 20, maxSurvivablePower: beamPower + 20, sweetSpotMinPower: beamPower - 18, sweetSpotMaxPower: beamPower - 10 }), params).temperingGain)
       .toBe(beamPower * 5);
-    expect(evaluateTribulation(state, preparation({ minTemperingPower: 100 }), params).temperingGain)
+    expect(evaluateTribulation(state, preparation({ minTemperingPower: beamPower + 30, maxSurvivablePower: beamPower + 60, sweetSpotMinPower: beamPower + 35, sweetSpotMaxPower: beamPower + 50 }), params).temperingGain)
       .toBe(beamPower * 3);
     expect(evaluateTribulation(straightState({ status: 'lost', beam: { cells: [], reachedBody: false, herbsHit: [] } }), preparation(), params).bodyDamage)
       .toBe(17);

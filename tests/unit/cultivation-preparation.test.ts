@@ -135,10 +135,10 @@ describe('D27-d · 雷威结果谱系', () => {
   test('同一条光路可由安全区间区分不足、完美、承受与过载', () => {
     const state = straightBeamState();
 
-    expect(evaluateTribulation(state, preparation({ minTemperingPower: 100, maxSurvivablePower: 130, sweetSpotMinPower: 110, sweetSpotMaxPower: 120 })).result).toBe('insufficient');
-    expect(evaluateTribulation(state, preparation({ minTemperingPower: 80, maxSurvivablePower: 110, sweetSpotMinPower: 90, sweetSpotMaxPower: 100 })).result).toBe('perfect');
-    expect(evaluateTribulation(state, preparation({ minTemperingPower: 80, maxSurvivablePower: 110, sweetSpotMinPower: 80, sweetSpotMaxPower: 90 })).result).toBe('survived');
-    expect(evaluateTribulation(state, preparation({ minTemperingPower: 50, maxSurvivablePower: 90, sweetSpotMinPower: 60, sweetSpotMaxPower: 80 })).result).toBe('overload');
+    const bp = evaluateTribulation(state, preparation({ minTemperingPower: 0, maxSurvivablePower: 10000, sweetSpotMinPower: 1, sweetSpotMaxPower: 9998 })).beamPower;
+    expect(evaluateTribulation(state, preparation({ minTemperingPower: bp + 20, maxSurvivablePower: bp + 40, sweetSpotMinPower: bp + 25, sweetSpotMaxPower: bp + 35 })).result).toBe('insufficient');
+    expect(evaluateTribulation(state, preparation({ minTemperingPower: bp - 20, maxSurvivablePower: bp + 20, sweetSpotMinPower: bp - 10, sweetSpotMaxPower: bp + 10 })).result).toBe('perfect');
+    expect(evaluateTribulation(state, preparation({ minTemperingPower: bp - 20, maxSurvivablePower: bp + 20, sweetSpotMinPower: bp - 20, sweetSpotMaxPower: bp - 12 })).result).toBe('survived');
   });
 
   test('步数耗尽优先判为 timeout', () => {

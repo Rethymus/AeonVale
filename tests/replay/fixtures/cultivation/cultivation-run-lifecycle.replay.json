@@ -47,7 +47,7 @@
       "mortalHeartPressureDivisor": 25,
       "tribulation": {
         "baseMinTemperingPower": 50,
-        "stageMinTemperingPower": 10,
+        "stageMinTemperingPower": 6,
         "willpowerPerMinPower": 1000,
         "baseMaxSurvivablePower": 85,
         "stageMaxSurvivablePower": 5,
@@ -65,7 +65,7 @@
         "maxUndoCharges": 2,
         "maxWardCharges": 2,
         "maxPreparedHerbs": 3,
-        "baseSourcePower": 100,
+        "baseSourcePower": 125,
         "pathCellLossMilli": 15,
         "minimumPathConductivityMilli": 700,
         "mirrorModifierMilli": 960,
@@ -404,7 +404,7 @@
     {
       "phase": "derive-preparation",
       "label": "tribulation-1:derive-preparation",
-      "expected": "751631b671d08dbc6716e53a58cea0fcb638c2600a4f528dcb42d8a3dabf4185"
+      "expected": "86601377fd3aca87009cfa66e0106416ea3e17d6929107cb7699268eb7915e53"
     },
     {
       "phase": "create-puzzle",
@@ -419,127 +419,127 @@
     {
       "phase": "create-session",
       "label": "tribulation-1:create-session",
-      "expected": "d7136599604e766255376fadb93f90e0a72387aea36b3702611cf002e1302a8b"
+      "expected": "bd441131af28367ae3cebb0afc88f23a98872a6e9c1fafd0e545b7a0a43a3975"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-1:move:down:ok",
-      "expected": "8f1d4dca1e168ba218d355683b46ac0cacefb9945c7f61852d018438cdca5c4b"
+      "expected": "8b978ccf02f3bc63d667028609c2896f9305d02bca26e8bf7c0bc1035504d49b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-2:undo:ok",
-      "expected": "56e78ea03f897320840eae00df2eefafe6ffc6ae0a8dfe9b0fb1cd5c062f6010"
+      "expected": "d8c4a85623924ee8db8b8605fc8c2b5e47bce430f9d06c53b458906651584061"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-3:move:down:ok",
-      "expected": "ccb9259769dd3b0e089a5857b556ab58daca98655e66bc4e148e8fc9b9b93278"
+      "expected": "4bd0138f06e62877c3d2242409445507e9a84def5b1cb9c8a5537e7de17b1d36"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-4:move:down:ok",
-      "expected": "b6d49b389023d6eb7f4f25f15d87714d395abc947e9b1366981dd4fedd3c0d7e"
+      "expected": "1371e33ea08c55edea9b1364b8fa6844ebf02d26dda9f787a773ea0f037111ff"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-5:move:right:ok",
-      "expected": "cd436fb0df9d4f05a452de15e40bb4b23cb6e6c85edaf5a1cdd74da8adaa9217"
+      "expected": "8968131550ede90b3c14bc8bc75fd39bb61953cb41cc951d7c83206a1c1611b5"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-6:move:down:ok",
-      "expected": "966c18a9dacd6327d0065a855e72abd2aaf7921cc109287419f7033c04582292"
+      "expected": "e229ada4ce9fcfac76d06f98de711b945fabe1c8ec89f81cda5cd0252f34dd45"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-7:move:down:ok",
-      "expected": "0cecd2b6059c65acd28bfdb81b6f0a341d6f670a9806ce73d2f03c1cca317148"
+      "expected": "cce1d650cb5233e76157f50c21804f9c3475112d56c3536ba3a9b2695550bf6b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-8:move:left:ok",
-      "expected": "47ad324d1df56abee0093618c20b15f1ab45c211496ee16708acbd593c44df0a"
+      "expected": "186e486be0962042d87411b3873efb3a62dc4afa4c4e2bf0218879833f70d017"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-9:move:up:ok",
-      "expected": "0c94030314de879c9da0cc1b450489dbb84c99c2ef549260ff04ae6f01d11314"
+      "expected": "8d80ade42077836ee324963756464dc3af9790a46ea6a16ecc2544285019c39b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-10:move:right:ok",
-      "expected": "366ed316a7f72e1cc9437bed0908d94009c67201cfed90f3b7ddf2b74100fcfd"
+      "expected": "6d5fc56cd3dbea8f17f97f5f6bcb1bdb015fe7ae3b6ff70f5e320df67fbe865c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-11:move:up:ok",
-      "expected": "e1c3e72071eef0825cf5a832eb8635360fea640ccf7d36058bb1e4de0a713682"
+      "expected": "709a5e3ed62cfa91b6e376a838e49cda490c49edda2089e447c267f9a19ec8f6"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-12:move:left:ok",
-      "expected": "4d2a975666ddac3118516a58deb19d1484d8b006e9234f9528a08f2b1478924f"
+      "expected": "a0b63ee11ddd7bf8153d15005fcd4711ab8325270ce2a83bea42ed84b4f8812e"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-13:move:up:ok",
-      "expected": "897d2f327a615f1effe6bdee5a6e7870f189ea1bf4e99ff3e75fdcd73d5eacec"
+      "expected": "529b82db5fd00282bd8c4374c31e8f371877e1bff4f63e4075a864ee46f1805c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-14:move:up:ok",
-      "expected": "aa378c44a582dfc5d2efcf07f9384b091db197be30c287862e332a6ed861862e"
+      "expected": "c9fff1e096593d3145bf244fc23ec92377da98458f732429ca45fcb4bc2b90ed"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-15:move:right:ok",
-      "expected": "6f57d0ccf4f2dfeac78c8b074ff642e9f4325acca27bd5c4ee8372deb88b4db8"
+      "expected": "d763ff1471c20a0816948e3e35e0bd214ec837217509a56f0ed596f4f16f21a0"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-16:move:down:ok",
-      "expected": "98863fd2524f34e7fa1ed641444c8b61dfc75430d890f97564bd11bcb4d08281"
+      "expected": "c14f83ca3af834f7f9cd026f5bdf708a37c8284d34792450cac8033067e3304c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-17:move:down:ok",
-      "expected": "efccefd4701645a3dd3b27babd9f8d2f44c51f99488382bc1afa1486eb33d538"
+      "expected": "ebbbef941bad72cc38ebacb5c7ad299fd19d1f6b0eb4f4ef8c14f65ff9dfd667"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-18:move:down:ok",
-      "expected": "e4b21d9991fc6be4e6cc1957e178343265ad4478a7111f5adfcbe75e266e9b84"
+      "expected": "18c8c380cfa327067bcbfcd4e3666503d70491aab4017fc281273da08c71cb5b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-19:move:right:ok",
-      "expected": "f0854cbc0b3a13634f2b48d0aafbdb91d2c9f1d437b4d754c7100eb3cc2d8628"
+      "expected": "7076b4b3d9d59e65628936cb08a104ea5e35134a764ddc149ae8cea437486a9b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-20:move:right:ok",
-      "expected": "fdcf23ca5e9a506d90cd308f9121b9fa520113af0f593b8e0db446aea5eff5b9"
+      "expected": "21ac809bfdf8070b534485dcc4fef56da4eda17462a187404a89c65773347142"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-21:move:up:ok",
-      "expected": "39149a74ebfb9a2a0987ceef3a84ebff237d49faed23ec30195b50a8a89c19c0"
+      "expected": "53ea0b756ce2e1750084dbcb4c3252bb21d53ba5b08bdd9f496b12756579a522"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-22:move:left:ok",
-      "expected": "bafcaabe0a01d16a4b9b6b7b9b40d790f3d656093460f63e0ee19811ff1958ad"
+      "expected": "a979f69b3a7874475d7c478872d950f77aa403e865a38bf9cb0bec35193cd245"
     },
     {
       "phase": "settlement",
       "label": "tribulation-1:settlement:breakthrough",
-      "expected": "f4da5560c602b1f1df17db95fba7879ce050e1e302e8c0fd7a28c8191889b5b2"
+      "expected": "dc1641696d30b3e2339fe51d7a6906216f4a96b4922ce1b6820706e6bf246e77"
     },
     {
       "phase": "derive-preparation",
       "label": "tribulation-2:derive-preparation",
-      "expected": "df15d563008b95e1d8992ca6518c0dd8d4880e2bc1b28d182ab76327f1376b7e"
+      "expected": "de352ca4fccf56ab82705f5d124df898422573d3a89cc8911199c37ef989b435"
     },
     {
       "phase": "create-puzzle",
@@ -554,202 +554,202 @@
     {
       "phase": "create-session",
       "label": "tribulation-2:create-session",
-      "expected": "da7202104eb09a37fd843827b529b04d0ee5d1716e40b0eea5776ac4be078118"
+      "expected": "59fe56212baa4ed6565ae05f53a22718c0c8ade95df2a3bf0e4d54f433ef4c56"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-1:move:up:ok",
-      "expected": "fb7fd9a2601ad56ad60156f492ee54fc27a50dc60e10e63dd23fb52f3e22b38f"
+      "expected": "9c5bfd4293ec0040917fe71db12db3cf7458c1f2b1cef1b7b1110a83d5e05040"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-2:move:right:ok",
-      "expected": "f4c26d0a48695d53d4d5375a5d0ecf08ae274fb40799a17e9397e3bce8304858"
+      "expected": "45db1bfe95f6b3260fcf8f08ee9f62c6bd7d2ce0e50b0dbfacab64dd647d98b7"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-3:move:down:ok",
-      "expected": "ebda9aacc8df435798b02d4fb709e42fec10547e16d1ab309fb4260e9845fa8d"
+      "expected": "b4d85d5aa706b0581d0ab67e26fbda4c0e29e27147b1d53a74d5d41e3a92e261"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-4:move:left:ok",
-      "expected": "cfdc156787b99edbde27d0790532b51cdba62b0a2c6c7a4a114de82ee9ad7aa2"
+      "expected": "69a26e2c53485a2270fc8955273f0c968c24c80b7f92576a086e643903208f53"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-5:move:up:ok",
-      "expected": "ff108bccf68617545b90392bff1dcef0acb705fb52ce339b78c3cc83c6d7e0cb"
+      "expected": "5e1a1dd617780a53cbd8df536426eb945f15a78dcd82323b3766093695eb1e07"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-6:move:right:ok",
-      "expected": "e13f198739c5099dcb5e0182cf73b69c2ce497f035957cf3c55f1bc62af23cfc"
+      "expected": "68b39e5d98e7243669a36a5a66e3686796a51c2da7354bd9f9c0b2b52458686a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-7:move:down:ok",
-      "expected": "cd0a9cfdd76c287a7cf7a08cb39b8c4e2e0a1b94f9d31d511edf8faf0d30c2b5"
+      "expected": "7a2a9611d40443d88e7edb4862b1b5b4f50a5738c7475bdb7e5421caeadb2a6a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-8:move:left:ok",
-      "expected": "1b4c71b326200a052c51ec328ab4560bf1aaf39cf259dced298d643c232982f8"
+      "expected": "4fb661ff40d97cda7620ef6b0b4f780bfa39b631f44bcae1a9d7b777b99748dd"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-9:move:up:ok",
-      "expected": "5645e868b31bab0ed1bf328f13cab7491e0437bc7f50ca3e94b02681fed32dd8"
+      "expected": "125bbd630eb15b0e5ccecb6cbc2cfd507780a3bf81fd30faee9f8a3f7c36108a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-10:move:right:ok",
-      "expected": "f40ec05947277ce5fd9a31ed90365b8f4a71db7e5479d0ccf1d72b38cd05dbf2"
+      "expected": "2101fe97cd2320b024cdbd2cb8fb0213f95de98416500efe2b12513b8e25f991"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-11:move:down:ok",
-      "expected": "b8f7800a56f56f08e74705c5bc5e362d65a4648ab29953b7455dbde2ad4c2cd9"
+      "expected": "1761779eac1a14bbb20d95cee8ad815c0d09d0832e53dc184bae041a54540639"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-12:move:left:ok",
-      "expected": "7b3bcf831543cb899f642e1632b122cb7954f84ffc639d384dfb8c9d2f538359"
+      "expected": "c631ad477b25d610e5f1b00e4938d358c06f83211c94e70ed04ce61b193546bb"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-13:move:up:ok",
-      "expected": "25aea817156382511486f0ccd9ebab54aa17ab153e02c2768d24194c7592f513"
+      "expected": "ccd85a6e52f91614cba27f9b025c9fe4ba93d77543e9a139fd0271c08de93cdf"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-14:move:right:ok",
-      "expected": "4c81d434883e8a71a27dfaaea5866c67e6563fe119d99c43d207d1e154e5c1a7"
+      "expected": "043530379d314c57a28c73306b480e8e5dce390a66d3d92707de9bc73d0caecf"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-15:move:down:ok",
-      "expected": "873f938caafe4ebfc4844ed1046fc8c5aee45378017e2d209ba19d998e482e80"
+      "expected": "eed115d6203fc4e45895197cab5ad96ce4fb27a01f1a7163895f13da7a8d7227"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-16:move:left:ok",
-      "expected": "2f2efffab05d5fca052159a6b2c5f629c3134d2beb793f86198eb4f86dfbc51e"
+      "expected": "b9cde46b529169d2cdceb532ecf0d4aeedf20b4afa0c501c9cacaccbef76403b"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-17:move:up:ok",
-      "expected": "0870f7014ab1b57174ebca7f1ae8e086119e41fffb1e182b027b5a748eb4a1c7"
+      "expected": "f454553997a0bc29c0886a5007af9adf5aeee16d2d673c06394802bca31adf21"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-18:move:right:ok",
-      "expected": "9bbd31f2cbc1884dbb6d51c312d5676437c9faed1fdb7b2fb1c40b4d6fe17a63"
+      "expected": "0e7b36181ffb7eec295767afa90ed800bfefa77bffd92e268d1c3aab40fbf828"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-19:move:down:ok",
-      "expected": "e432e6bbd3c95b6d86fd55a19f15732e9659e1e718d38e546dbb557eff199757"
+      "expected": "4d09cd859691fe74676444dc6e470b11e73233ed720e317ab360b8202145cdba"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-20:move:left:ok",
-      "expected": "5665a6355fbdbf9a4ac4b60dd66c8570b517a1fbcca113f682f26099d1da9bdc"
+      "expected": "1639a5c5f8571e33821c3ca86fd25f6e017d1e106bac4fabc23309aa84c6c522"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-21:move:up:ok",
-      "expected": "bb570db4c9a7e07d36152457e2da529878232b509adeabaff7497b822b4f1bbf"
+      "expected": "f44214636e14767681094e9932b739225f23c68d2379293259d928cdbe6d9ccc"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-22:move:right:ok",
-      "expected": "48e4fe9af8caaf1c2da37b0ba3b229188541b7c68d3040f40a053732a9c05e93"
+      "expected": "7a10a732758929842153698b90d398ef2136d99d4ed49958d7cc5421af1d5644"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-23:move:down:ok",
-      "expected": "98729a4295a64c0cc52dbd4759e2073189ffd82adf677cafb222d2de28dfd657"
+      "expected": "0a69c7b97b89ece402c661548a493e39c69eb74a6e34578d734f2e57e608800a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-24:move:left:ok",
-      "expected": "424d2445a6708423b87cc40b971d1632af24251a1cac60b903b649b90094d525"
+      "expected": "91908067ad082baeb8b168ed658129ba6875d4d0a92c21295e3534de4cf26b16"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-25:move:up:ok",
-      "expected": "81a5af2c7c21ec29d0dbb6ff2fc9cdeea7c51d0351a8d0bb39c19fb03877f68b"
+      "expected": "c8157a8af3f6c6da68077906937b12961d5b6a7be3f73a2f02f5c1bfe0154232"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-26:move:right:ok",
-      "expected": "cf6bc153282f9504906152e848280d1be6a07bcf62aa81b345172bc8a25f8fef"
+      "expected": "d667c1d0443bc6dd6084f2a4ddfe5b70f126d8c17ce094fe0b15df659b5b95ba"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-27:move:down:ok",
-      "expected": "b11d452c6c6429315f75ad00b879edc3325826748d806d6bd9de353e52b50da4"
+      "expected": "1dfa9ee24765c4cc7907acf39521cc3b818ec2c4dcc414911b9eeffd1e79294e"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-28:move:left:ok",
-      "expected": "029a85cd99bfdec5eb8a2d2db398c27e9d5784d079c365e2facc3d8d09b5c9b6"
+      "expected": "05c85155fcdb27aaf212fe392f071793115573c057d5f1dd52793964c573ef0c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-29:move:up:ok",
-      "expected": "fdbad6f99c3962a81d34f84897fddf67dcc90a6264e9bcf3546b61b26df96724"
+      "expected": "d291c8444f6256314a0fc0cc583bc6f95e13274af5fb6c55fe87ac7ee0fc18f6"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-30:move:right:ok",
-      "expected": "e1c2cbcc979e81d4f0ce62813c4213edec2b29362317d3a7eee31ba62b49139b"
+      "expected": "2ed69f9610e2a4794c1a287c9ae0d918bfc01258ef1bcbe28400ef3bbf55394a"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-31:move:down:ok",
-      "expected": "202a190b6697f5ea43728e6e59cadfd577a2d3fbf4beb411b6c818f262753212"
+      "expected": "1ddc758082d61ec4c77445150de2497bd943dde5c24b3c997c17e0e639fd977c"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-32:move:left:ok",
-      "expected": "0f038fb12f33cbb3125b8d03bbf59183dd0ebe3575f370b5b7e5563436bd14d7"
+      "expected": "bada3d1a5bde181110ee67d9db208695d88fb1a4a8c74711ccebf395efd4cae7"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-33:move:up:ok",
-      "expected": "19fd3a91c09dec5b8feaebcbd18015258827b9018a3dcf98787a1e812c9f5f2a"
+      "expected": "95dc77d6320b94155682b69239bcee12968074d61656233904f7977111edabaa"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-34:move:right:ok",
-      "expected": "7dc896fde14dd80e77399581564e02cdf634902fa132a1188bb901c093903727"
+      "expected": "2faf4a479b65adcbc411f9887c1aa0878cf93fe9b9ffb41f894f96dadc89d2b8"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-35:move:down:ok",
-      "expected": "dd15032ddb6bdb9eeda7a36ba88bea6b193efb5b0316ab6c3be47a26752f83a1"
+      "expected": "112e4bd4c28225ab5e0b28eeb47cae8aee0de88efda6f269de77123ca02b9c71"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-36:move:left:ok",
-      "expected": "ce47424b125fbf1a2f9784479eaba2a2ec03ac8bba2d16aed7177c5f5fae19bc"
+      "expected": "a590afd582add5d5a04ab5e811b80747e5246bc09ce0c79d5bace2ddc2303b86"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-37:move:up:ok",
-      "expected": "31b7af53a2920e7f957ec00eea2a360e37e41765dbb749bf43b6da4342711938"
+      "expected": "5f3672b169c5ee70d5380a3f036988091159c96396598a09967ea7cfc2da855f"
     },
     {
       "phase": "session-action",
       "label": "tribulation-2:action-38:move:right:ok",
-      "expected": "250bc1e147e4224f5c56e0ae82c72b7936177e5ddf9f5a6cfc0d9fb5df6807cc"
+      "expected": "dcbd946124f9d4bcefbce5f8a930b9d6f2edb115c8edfc4923b2a0e4e6c40abe"
     },
     {
       "phase": "settlement",
       "label": "tribulation-2:settlement:death",
-      "expected": "a90728d191c3c01fddd463fba34d373ba665f8b4e5d075c98f4f4d84d621cdb7"
+      "expected": "1d34090f6a9f01fa71b951385f3b5a37adac9c3f5015bdb4e5920500e43faf46"
     },
     {
       "phase": "epitaph",

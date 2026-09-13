@@ -376,8 +376,8 @@ function wilson(successes: number, n: number, z = 1.96): [number, number] {
 }
 
 /**
- * 基线带（2026-09-13 大窗复校准：seed-start=1 × seeds=32 × 4 策略 × 换代上限 4，
- * 共 756 次渡劫 / 128 campaign；含 §14 雷威不足墙终局语义）。
+ * 基线带（2026-09-13 §19 新参数实施后复校准：min=6/source=125 已是 DEFAULT_BALANCE，
+ * seed-start=1 × seeds=32 × 4 策略 × 换代上限 4，共 795 次渡劫 / 128 campaign）。
  * 带含义：点估计落在 [min, max] 视为健康；--check 出带 exit 1。
  * 注意：带描述「天机代打 + 四型日程」代理的策略能力锚点，不是玩家趣味目标；
  * 变更 sim 平衡参数或代理策略后必须重校准。
@@ -387,8 +387,9 @@ type BandKey = 'ascensionRate' | 'overloadShare' | 'perfectShare' | 'meanGenerat
 const CALIBRATED_BANDS: Readonly<Record<PolicyId, Record<BandKey, { min: number; max: number }>>> = {
   balanced: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0.95, max: 1 }, perfectShare: { min: 0, max: 0.05 }, meanGenerations: { min: 3.5, max: 4 }, maxStageMedian: { min: 0, max: 0 } },
   herbalist: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0.95, max: 1 }, perfectShare: { min: 0, max: 0.05 }, meanGenerations: { min: 3.5, max: 4 }, maxStageMedian: { min: 0, max: 0 } },
-  ascetic: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0, max: 0.05 }, perfectShare: { min: 0.12, max: 0.28 }, meanGenerations: { min: 1, max: 2 }, maxStageMedian: { min: 3, max: 4 } },
-  hybrid: { ascensionRate: { min: 0, max: 0.05 }, overloadShare: { min: 0, max: 0.05 }, perfectShare: { min: 0.18, max: 0.34 }, meanGenerations: { min: 1, max: 2 }, maxStageMedian: { min: 3, max: 4 } }
+  // ascetic ascensionRate 带覆盖种子窗方差实测 59-81%。
+  ascetic: { ascensionRate: { min: 0.45, max: 0.85 }, overloadShare: { min: 0.9, max: 1 }, perfectShare: { min: 0.12, max: 0.24 }, meanGenerations: { min: 1.8, max: 3.1 }, maxStageMedian: { min: 5, max: 6 } },
+  hybrid: { ascensionRate: { min: 0.65, max: 0.92 }, overloadShare: { min: 0, max: 0.05 }, perfectShare: { min: 0.17, max: 0.28 }, meanGenerations: { min: 1, max: 1.3 }, maxStageMedian: { min: 5, max: 6 } }
 } as const;
 
 interface Options {

@@ -195,11 +195,13 @@ describe('D27-d · 天劫 session 护持', () => {
   });
 
   test('普通结果保持 evaluateTribulation 数值兼容且不误耗护持', () => {
+    // 雷威随 DEFAULT_BALANCE.baseSourcePower 浮动：普通结果窗口以实测 beamPower 锚定。
+    const beamPower = evaluateTribulation(overloadPuzzle(), preparation({ minTemperingPower: 0, maxSurvivablePower: 10000, sweetSpotMinPower: 1, sweetSpotMaxPower: 9998 })).beamPower;
     const prep = preparation({
-      minTemperingPower: 80,
-      maxSurvivablePower: 100,
-      sweetSpotMinPower: 85,
-      sweetSpotMaxPower: 90,
+      minTemperingPower: beamPower - 25,
+      maxSurvivablePower: beamPower + 25,
+      sweetSpotMinPower: beamPower - 18,
+      sweetSpotMaxPower: beamPower - 8,
       wardCharges: 1
     });
     let session = createTribulationSession(overloadPuzzle(), prep);

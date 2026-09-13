@@ -419,3 +419,38 @@ lifespanBreakthroughGain∈{180,450,800}`，hybrid/ascetic × 8 种子 × 换代
 对零训练不安全）；(6,125) 为均衡最优点（双路线皆可飞升、ascetic 教学门
 死亡率可接受）；(5,130) 仍是 hybrid 专精速通点（100%）。全 12 格可
 `--override` 二连复现。
+
+## 19. 推荐窗口实施为真实平衡参数（2026-09-13，§18 落地）
+
+`src/sim/params.ts`：`cultivationRun.tribulation.stageMinTemperingPower
+10 → 6`、`baseSourcePower 100 → 125`（§18 细网格甜点 (6,125)）。
+
+1. **Golden Replay 重授权**（skill 全流程）：归因=显式接受的平衡变更；
+   发现默认 updater 只刷 facts/哈希且**用夹具内嵌 pinned 旧参数复放**
+   （恒零差异的假象）——参数变更必须 `--init` 全新授权以烘焙新 pinned
+   params。执行后 diff 427 行：pinned params 更新 + 逐步哈希漂移，
+   **facts 完全不变**（perfect/breakthrough/timeout/death 全同——原脚本
+   直解雷威本就落在新窗口 perfect 区），一句可解释，复放 6/6 绿。
+2. **新基线复校准**（默认参数，seeds 1-32 × 4 策略 × 4 代，795 次渡劫）：
+   - balanced/herbalist：stage-0 过载 100% **不变——教学门在推荐窗口内
+     完好**（§18 预测精确复现）；
+   - **ascetic：飞升 59.4%**（19/32，Wilson [0.42,0.75]）、首劫死 8/32=25%
+     （§18 的 2/8 精确复现）、墙剩 5 局；
+   - **hybrid：飞升 81.3%**（26/32）、零过载、32/32 到 6 阶——§18 的
+     87.5%±Wilson 覆盖。
+   - 渡劫结果张力形态：ascetic survived 116 / overload 60 / perfect 47 /
+     insufficient 42；hybrid survived 156 / perfect 62 / insufficient 56。
+3. **CALIBRATED_BANDS 重写**（新参数默认基线）；校准窗 + 101-116/
+   201-216/301-316 三个不相交窗 `--check` 全过（ascetic 飞升率与换代数
+   带按跨窗方差放宽——种子窗间 59-81% 的真实波动被两轮出带暴露后收编）。
+4. **连带测试修复**（旧参数硬编码数值）：sokoban-power /
+   cultivation-preparation / sokoban-tribulation-session 三处改为以实测
+   beamPower 锚定窗口（测「档位由窗口决定」的机制而非绝对值，此后对
+   源力类调参免疫）；integration 教学门测试钉 `baseSourcePower=100`
+   （机制断言与平衡调参解耦）；github-workflows 测试断言容 CRLF
+   （ci.yml 行尾归一为 LF）。
+
+验证：单测 2039/2039、回放 6/6、浏览器回归 46/46、治理/构建/preflight
+通过。**§15-§18 的调参建议自此进入产品**；docs/30 真人试玩观察点新增：
+真人首劫死亡率与苦练采纳率 vs 代理基线（ascetic 首劫死 25%/hybrid 0%）
+的落点。

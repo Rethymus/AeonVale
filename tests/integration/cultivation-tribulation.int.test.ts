@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { DEFAULT_BALANCE } from '@sim/params';
 import { createCultivationRunState, resolveCultivationAgenda } from '@sim/cultivation-run/agenda';
 import { deriveTribulationPreparation } from '@sim/cultivation-run/preparation';
 import { evaluateTribulation } from '@sim/sokoban/power';
@@ -30,6 +31,8 @@ function solvedStraightBeam(): SokobanState {
 }
 
 describe('D27-d · 日程到天劫集成', () => {
+  // 教学门机制断言与源力解耦：钉回 §18 实施前的源力，防止随平衡调参漂移。
+  const legacySourceParams = { ...DEFAULT_BALANCE, cultivationRun: { ...DEFAULT_BALANCE.cultivationRun, tribulation: { ...DEFAULT_BALANCE.cultivationRun.tribulation, baseSourcePower: 100 } } };
   test('同一雷路下，苦练日程把过载死亡改为可承受结果', () => {
     const initial = createCultivationRunState();
     const trained = resolveCultivationAgenda(initial, {
@@ -43,12 +46,13 @@ describe('D27-d · 日程到天劫集成', () => {
     if (!trained.ok || !untrained.ok) return;
 
     const puzzle = solvedStraightBeam();
-    const trainedOutcome = evaluateTribulation(puzzle, deriveTribulationPreparation(trained.state));
-    const untrainedOutcome = evaluateTribulation(puzzle, deriveTribulationPreparation(untrained.state));
+    const trainedPrep = deriveTribulationPreparation(trained.state, {}, legacySourceParams);
+    const trainedOutcome = evaluateTribulation(puzzle, trainedPrep, legacySourceParams);
+    const untrainedOutcome = evaluateTribulation(puzzle, deriveTribulationPreparation(untrained.state, {}, legacySourceParams), legacySourceParams);
 
     expect(trainedOutcome.beamPower).toBe(untrainedOutcome.beamPower);
     expect(deriveTribulationPreparation(trained.state).maxSurvivablePower)
-      .toBeGreaterThan(deriveTribulationPreparation(untrained.state).maxSurvivablePower);
+      .toBeGreaterThan(deriveTribulationPreparation(untrained.state, {}, legacySourceParams).maxSurvivablePower);
     expect(untrainedOutcome.result).toBe('overload');
     expect(['perfect', 'survived']).toContain(trainedOutcome.result);
   });

@@ -389,7 +389,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
     mortalHeartPressureDivisor: 25,
     tribulation: {
       baseMinTemperingPower: 50,
-      stageMinTemperingPower: 10,
+      stageMinTemperingPower: 6, // docs/32 §18/§19：推荐窗口（细网格甜点），高阶通路打开且 stage-0 教学门完好
       willpowerPerMinPower: 1000,
       baseMaxSurvivablePower: 85,
       stageMaxSurvivablePower: 5,
@@ -407,7 +407,7 @@ export const DEFAULT_BALANCE: BalanceParams = {
       maxUndoCharges: 2,
       maxWardCharges: 2,
       maxPreparedHerbs: 3,
-      baseSourcePower: 100,
+      baseSourcePower: 125, // docs/32 §18/§19：与 min 斜率联动开窗（源力非独立旋钮，见 §16）
       pathCellLossMilli: 15,
       minimumPathConductivityMilli: 700,
       mirrorModifierMilli: 960,
