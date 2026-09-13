@@ -144,3 +144,28 @@ stdout 输出逐阶统计与确定性抽验。后续复跑只需该命令，无�
   不变，符合 golden-replay-update skill"预期内行为变更→更新零差异"路径）。
 
 结论：§4-1/4-2/4-3 关闭；§4-4（入场异步化）为剩余 UX 项。
+
+## 8. §4-4 入场异步化实施（2026-09-13，P3 收官）
+
+`src/app/rogueliteProto/surface.ts`（UX 层，不碰 sim）：
+
+1. **enterTribulation 拆分**：点击「现在引劫」后立即上屏占位层
+   （`.rp-tribulation-loading`：天劫将至·雷云聚形，absolute 盖棋盘网格，
+   静态样式守动效纪律），双 rAF 确认占位已绘制后才执行同步推演
+   （buildTribulationBoard）——推演不再占用输入帧。
+2. **半态防竞**：`tribulationBuilding` 窗口内 persistJourney 挂起（防空
+   session 快照）、棋盘键盘输入挂起（防旧 state 错步）；棋盘就绪后补存。
+3. **自愈**：恢复快照若落在推演窗口（session 为空），showTribulationBoard
+   转入 enterTribulation 重建，而非渲染空盘。
+
+**时序实测**（Playwright rAF 采集，stage1 全流程真点击）：点击 → 占位上屏
+**51ms**（≤2 帧）；占位 → 棋盘就绪 35ms（低阶）。高阶推演时长不变
+（3-4s），但已移出输入帧且全程有可见反馈。证据采集用一次性探针 spec
+（走查 劫兆→两轮规划→结算→事件→参悟→劫抉→现在引劫 全链），数据留档
+于此，探针不入库。
+
+验证：单测 2039/2039；浏览器回归 44/44（roguelite 全家 + cultivation
+keypoint 全过——CDP keypoint 用手作谜题不经生成路径，天然免疫异步化）；
+治理/构建/preflight 通过。
+
+**docs/32 §4 四项建议全部关闭。**

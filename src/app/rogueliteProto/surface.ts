@@ -199,6 +199,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   let meta: SokobanMeta = loadMeta();
   let lastScroll: ScrollPage | null = null;
   let deadRun = false;
+  // docs/32 §4-4：入场推演窗口标志——期间存档与棋盘输入挂起，防半态快照/竞态。
+  let tribulationBuilding = false;
   let destroyed = false;
 
   // juice 效果状态（自有 rAF，仅效果期间跑）
@@ -280,7 +282,14 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     `.rp-plan-actions{display:flex;justify-content:flex-end;align-items:stretch;gap:6px;flex-direction:column;margin-top:auto;border-block-start:1px solid ${P.boardBorder};padding-block-start:8px;}`,
     `.rp-plan-help{margin:0;color:${P.helpText};font-size:12px;}`,
     '.rp-plan-buttons{display:grid;grid-template-columns:1fr;gap:8px;}',
-    `.rp-tribulation{height:100%;min-height:0;display:grid;grid-template-columns:minmax(390px,1.45fr) minmax(300px,.78fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:12px;padding:clamp(8px,1.4vw,16px);overflow:hidden;background:radial-gradient(circle at 28% 48%,${P.primaryBg} 0,${P.boardBg} 46%,${P.boardBg} 130%);border:1px solid ${P.primaryBorder};color:${P.text};}`,
+    `.rp-tribulation{height:100%;min-height:0;position:relative;display:grid;grid-template-columns:minmax(390px,1.45fr) minmax(300px,.78fr);grid-template-rows:auto auto auto 1fr;grid-template-areas:"canvas hud" "canvas help" "canvas dpad" "canvas actions";align-items:start;gap:12px;padding:clamp(8px,1.4vw,16px);overflow:hidden;background:radial-gradient(circle at 28% 48%,${P.primaryBg} 0,${P.boardBg} 46%,${P.boardBg} 130%);border:1px solid ${P.primaryBorder};color:${P.text};}`,
+    // docs/32 §4-4 天劫入场异步化：高阶棋盘推演 3-4s，占位层先上屏再让出输入帧。
+    // 动效纪律：静态样式（app.css 禁 animation），脉冲感由文案与边框承担。
+    `.rp-tribulation-loading{position:absolute;inset:0;z-index:3;display:grid;place-content:center;justify-items:center;gap:12px;padding:24px;background:${P.boardBg};color:${P.text};text-align:center;}`,
+    '.rp-tribulation-loading[hidden]{display:none!important;}',
+    `.rp-tribulation-loading__kicker{font-size:12px;letter-spacing:.32em;color:${P.helpText};}`,
+    `.rp-tribulation-loading__title{margin:0;font-family:"Noto Serif CJK SC","Songti SC",serif;font-size:26px;font-weight:700;letter-spacing:.14em;color:${P.accent};}`,
+    `.rp-tribulation-loading__note{margin:0;font-size:12px;line-height:1.7;color:${P.helpText};border-block-start:1px solid ${P.primaryBorder};padding-block-start:12px;}`,
     `.rp-hud{grid-area:hud;width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;padding:3px;background:${P.boardBorder};font-size:13px;font-variant-numeric:tabular-nums;box-shadow:0 10px 28px rgba(0,0,0,.22);}`,
     `.rp-hud-item{min-width:0;padding:8px 10px;background:linear-gradient(145deg,${P.btnBg},${P.boardBg});color:${P.text};line-height:1.45;}`,
     // 余步紧张度门（docs/31 §2.3）：强调态走字重/下划线（动效纪律：非配色变化）。
@@ -570,6 +579,24 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   tribulation.setAttribute('aria-label', '天劫布阵');
   wrap.appendChild(tribulation);
 
+  // docs/32 §4-4：入场占位层（棋盘推演期间的即时反馈，absolute 盖在网格之上）。
+  const tribulationLoading = document.createElement('div');
+  tribulationLoading.className = 'rp-tribulation-loading';
+  tribulationLoading.hidden = true;
+  tribulationLoading.setAttribute('role', 'status');
+  tribulationLoading.setAttribute('aria-live', 'polite');
+  const loadingKicker = document.createElement('p');
+  loadingKicker.className = 'rp-tribulation-loading__kicker';
+  loadingKicker.textContent = '天劫将至';
+  const loadingTitle = document.createElement('h2');
+  loadingTitle.className = 'rp-tribulation-loading__title';
+  loadingTitle.textContent = '雷云聚形，劫盘推演中……';
+  const loadingNote = document.createElement('p');
+  loadingNote.className = 'rp-tribulation-loading__note';
+  loadingNote.textContent = '高阶劫式繁复，推演需数息；此间勿离席，落雷只在念定之间。';
+  tribulationLoading.append(loadingKicker, loadingTitle, loadingNote);
+  tribulation.appendChild(tribulationLoading);
+
   const hud = document.createElement('div');
   hud.className = 'rp-hud';
   hud.setAttribute('role', 'status');
@@ -736,6 +763,9 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   function persistJourney(): void {
     if (destroyed) return;
+    // 入场推演窗口（tribulationBuilding）不落盘：此刻 session 仍是旧值，
+    // 快照会在恢复时落进空盘分支；棋盘就绪后由 buildTribulationBoard 补存。
+    if (tribulationBuilding) return;
     const available = saveCultivationJourney(currentJourneySnapshot());
     opts.onSaveAvailabilityChange?.(available);
   }
@@ -1237,6 +1267,26 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
 
   function enterTribulation(): void {
     destroyPhaseSurfaces();
+    // docs/32 §4-4：高阶棋盘推演 3-4s，不再占用输入帧——先上屏占位层，
+    // 双 rAF 确保占位已绘制后再同步推演（期间 persistJourney 与棋盘输入挂起）。
+    phase = 'tribulation';
+    planning.hidden = true;
+    phaseHost.hidden = true;
+    tribulation.hidden = false;
+    tribulationBuilding = true;
+    tribulationLoading.hidden = false;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (destroyed || !tribulationBuilding || phase !== 'tribulation') return;
+        tribulationBuilding = false;
+        tribulationLoading.hidden = true;
+        buildTribulationBoard();
+      });
+    });
+  }
+
+  function buildTribulationBoard(): void {
+    destroyPhaseSurfaces();
     const interpretation = interpretCultivationTribulationTags([...machineState.tribulationTags, ...machineState.insightEffectTags]);
     preparation = deriveTribulationPreparation(machineState.runState, interpretation.preparationModifiers);
     const basePuzzle = createPuzzle(machineState.runState.stage, seedSalt, undefined, {
@@ -1291,13 +1341,23 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     planning.hidden = true;
     phaseHost.hidden = true;
     tribulation.hidden = false;
+    tribulationLoading.hidden = true;
     deadRun = false;
     lastScroll = null;
     showTribulationBoard();
+    // 棋盘就绪后补一次存档：入场窗口（building）期间 persistJourney 挂起，
+    // 此刻 session 已齐，快照可安全落盘。
+    persistJourney();
   }
 
   function showTribulationBoard(): void {
     destroyPhaseSurfaces();
+    // 自愈：若在入场推演窗口中断线/关页，恢复快照可能没有会话——重新走
+    // 异步入场重建棋盘（docs/32 §4-4），而不是在空 session 上渲染。
+    if (!tribulationSession) {
+      enterTribulation();
+      return;
+    }
     phase = 'tribulation';
     planning.hidden = true;
     phaseHost.hidden = true;
@@ -2695,6 +2755,8 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
+    // docs/32 §4-4：推演窗口挂起棋盘输入（防旧 state 上的错步/撤销）。
+    if (tribulationBuilding) return;
     const k = event.key;
     if (k === 'r' || k === 'R') {
       event.preventDefault();
