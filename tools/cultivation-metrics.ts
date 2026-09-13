@@ -392,6 +392,7 @@ const CALIBRATED_BANDS: Readonly<Record<PolicyId, Record<BandKey, { min: number;
 } as const;
 
 interface Options {
+  readonly overrides: readonly { path: string; value: number }[];
   seedStart: number;
   seeds: number;
   generations: number;
@@ -400,6 +401,16 @@ interface Options {
 }
 
 function parseOptions(args: string[]): Options {
+  const overrides: { path: string; value: number }[] = [];
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] !== '--override') continue;
+    const raw = args[i + 1];
+    if (!raw || !raw.includes('=')) throw new Error('--override expects path=value');
+    const eq = raw.indexOf('=');
+    const parsed = Number(raw.slice(eq + 1));
+    if (!Number.isFinite(parsed)) throw new Error(`--override value must be numeric: ${raw}`);
+    overrides.push({ path: raw.slice(0, eq), value: parsed });
+  }
   const value = (name: string): string | undefined => {
     const i = args.indexOf(name);
     return i < 0 ? undefined : args[i + 1];
@@ -412,7 +423,7 @@ function parseOptions(args: string[]): Options {
   if (!Number.isInteger(seedStart) || seedStart <= 0) throw new Error('--seed-start must be a positive integer');
   if (!Number.isInteger(generations) || generations <= 0) throw new Error('--generations must be a positive integer');
   if (!['balanced', 'herbalist', 'ascetic', 'hybrid', 'all'].includes(policy)) throw new Error('--policy must be balanced|herbalist|ascetic|hybrid|all');
-  return { seedStart, seeds, generations, policy, check: args.includes('--check') };
+  return { overrides, seedStart, seeds, generations, policy, check: args.includes('--check') };
 }
 
 function median(values: readonly number[]): number {
@@ -424,6 +435,21 @@ function median(values: readonly number[]): number {
 function main(): void {
   const options = parseOptions(process.argv.slice(2));
   const params = withDefaultBalanceParams(DEFAULT_BALANCE);
+  for (const override of options.overrides) {
+    const segments = override.path.split('.');
+    let node: Record<string, unknown> = params as unknown as Record<string, unknown>;
+    for (let i = 0; i < segments.length - 1; i++) {
+      const next = node[segments[i]!];
+      if (!next || typeof next !== 'object') throw new Error(`--override path invalid: ${override.path}`);
+      node = next as Record<string, unknown>;
+    }
+    const leaf = segments.at(-1)!;
+    if (!(leaf in node)) throw new Error(`--override leaf missing: ${override.path}`);
+    node[leaf] = override.value;
+  }
+  if (options.overrides.length) {
+    console.log(`参数覆盖: ${options.overrides.map(o => `${o.path}=${o.value}`).join(' · ')}`);
+  }
   const policies: readonly PolicyId[] = options.policy === 'all' ? ['balanced', 'herbalist', 'ascetic', 'hybrid'] : [options.policy];
 
   const perPolicy = new Map<PolicyId, LifeOutcome[]>();

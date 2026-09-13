@@ -311,3 +311,35 @@ CALIBRATED_BANDS 全量重写（含 hybrid 带）；校准窗 + 两个不相交�
 
 过程缺陷修正：maxStage 此前在结算后未回填（少记一阶）；资源自适应首版
 因 CRLF 替换静默失败未生效（工具输出与手写 trace 分岔定位后修复）。
+
+## 15. 高阶平衡参数敏感性扫描（2026-09-13，§14 墙因定位）
+
+工具：`cultivation-metrics --override path=value`（可重复，深路径覆写，
+仅工具层）。扫描面：hybrid × 6 种子 × 换代上限 4（A 组附 ascetic 交叉验证）。
+观察指标：最高境界中位（墙位）、终局构成、perfect 占比。
+
+| 旋钮（默认） | 取值 | 墙位中位 | 结论 |
+| ------------ | ---- | -------- | ---- |
+| 基线 | — | 4 | §14 复现 |
+| A `stageMinTemperingPower`（10） | **5** | **6**（5 局到 6，1 rounds-capped） | **唯一有效旋钮，强单调** |
+| | 7 | 5 | 每降 1 ≈ 墙位 +0.5 阶 |
+| | 14 | 3 | 反向亦然 |
+| B `perfectTemperingGainMultiplier`（10） | 16/24/36 | 4（不动） | 无效：淬体增益被 stage caps 封顶 |
+| C `lifespanBreakthroughGain`（180） | 300/450/650 | 4（不动） | 无效：墙先于寿元到来 |
+| D `training.bodyFoundationGain`（1600） | 2400/3200/4800 | 4（不动） | 无效：体魄只抬上限，墙在下限 |
+| E `stageMaxSurvivablePower`（5） | 10/15 | 4（不动） | 无效：**上限侧与墙无关** |
+| A=5 × ascetic 交叉 | 5 | 5（2 局到 6） | 策略无关的系统性效应 |
+
+**根因定论**：雷威不足墙纯粹在 **min 下限侧**——solver 直解可达雷威区间
+约 100-130（baseSourcePower=100 + 路径/灵草修正），而 minTemperingPower
+= 50 + stage×10：stage 5 下限即 100，直解雷威必然不足；上限侧、淬体倍率、
+寿元、体魄增益全部不改变「雷威 vs 下限」关系，故均无效。A=5 时 stage 6
+下限 80 回到可达区间，hybrid/ascetic 均能到 6 阶（但飞升率仍 0——终局
+insufficient-wall/rounds-capped，6 阶内仍有二阶瓶颈，未深挖）。
+
+**给维护者的调参候选**（按证据强度）：
+1. `stageMinTemperingPower` 10 → 7±1：墙位 4→5，高阶通路打开一格，
+   零训练 stage-0 教学门不受影响（下限主要作用于高阶）；
+2. 或等效抬雷威可达上限（`baseSourcePower`/herb 修正——本扫描未覆盖，
+   建议补扫后决策）；
+3. B/C/D/E 四旋钮可从「开高阶通路」的候选中划除。
