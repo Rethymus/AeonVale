@@ -1371,3 +1371,14 @@ vn-hint，均在复合或 @media 选择器内）。第三遍 token 级修剪移�
 （governance:dist）是最后一道防线，不可跳过。README 同步修正两处
 "两模式"残留表述与三处已删命令引用（balance/tune/m5:check/headless →
 cultivation:metrics/check/cultivation-tune）。
+
+### 8.31 阶段 3 收尾补遗：不可达模块清扫（2026-09-14）
+
+修正不可达扫描器的 `.ts` 后缀解析缺陷后复扫，发现并删除 2 个残留孤儿：
+`src/app/itemIcons.ts`（旧世界库存图标映射）与 `src/app/worldMovement.ts`
+（旧世界玩家移动工具集）。连带删除对应单测（item-icons / world-movement）。
+
+验证：tsc 零错；单测 1076/1076（-11）；治理通过（601 tracked files）；
+构建通过；浏览器关键 spec 13/13。
+
+**src/app 全部模块自 main.ts 可达——阶段 3 残留清零。**
