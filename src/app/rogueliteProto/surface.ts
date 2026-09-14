@@ -1275,8 +1275,21 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     tribulation.hidden = false;
     tribulationBuilding = true;
     tribulationLoading.hidden = false;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
+    // 双 rAF 推进，但当宿主 rAF 停摆（后台标签/嵌入式 webview）时以 120ms
+    // 定时器兜底——推演只等"至少两帧绘制"的语义，不依赖 rAF 真实起搏
+    // （实机试玩 docs/30 §六捕获：IAB 后台 rAF 0 起搏致占位层永久卡死）。
+    const afterPaint = (cb: () => void): void => {
+      let settled = false;
+      const run = (): void => {
+        if (settled) return;
+        settled = true;
+        cb();
+      };
+      requestAnimationFrame(run);
+      setTimeout(run, 120);
+    };
+    afterPaint(() => {
+      afterPaint(() => {
         if (destroyed || !tribulationBuilding || phase !== 'tribulation') return;
         tribulationBuilding = false;
         tribulationLoading.hidden = true;
