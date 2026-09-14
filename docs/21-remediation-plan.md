@@ -1296,3 +1296,25 @@ fixture 归档——维护者第二道签字后启动。
 退役进度：阶段 1 + 2 全部完成（应用层/渲染层/壳层分支/样式表四层清零）。
 剩余：**阶段 3（src/sim 9 目录整删 + 词表统一 + golden fixture 归档）——
 维护者第二道签字门控，未获授权不得启动。**
+
+### 8.29 补充：阶段 2 不可逆点就绪快照（2026-09-14，非执行）
+
+应维护者决策需求生成**只读盘点**（未删任何文件、未改任何 sim）。删除面
+与保留侧依赖的精确现状：
+
+**候选删除面（旧世界 sim，15 目录 / 47 文件 / ≈11.7k 行）**：
+social 2141 行 / progression 2515 行 / world 1465 行 / farm 864 行 /
+buildings 948 行 / tribulation 655 行 / economy 530 行 / alchemy 452 行 /
+exploration 308 行 / story 228 行 / processing 219 行 / collection 277 行 /
+storage 207 行 / inventory 191 行 / celestial 744 行。
+
+**保留侧依赖（删除前须先解耦）**：主模式 sokoban / cultivation-run /
+roguelite 均导入 `@sim/world/rng` 与 `@sim/world/types`——执行序应为
+① 抽离 rng/types 至共享位置（如 `@sim/core`，预计 <300 行）并全量改
+import；② 始删 15 目录与 `@sim` 根再导出；③ tools 旧 sim 工具
+（headless-run/balance-*/m5-*/simulation-metrics/playtest-report/
+onboarding-funnel，§8.16 判定表原列）与 core-farm golden fixture 按
+判定表归档；④ 四门 + 浏览器全家收口。
+
+**明确提示**：本快照非启动。sim 删除为不可逆点，仍待维护者第二道单独
+签字（§8.16 前置条件 2）；签字后按本快照 ①→④ 顺序执行即可，无需再盘点。
