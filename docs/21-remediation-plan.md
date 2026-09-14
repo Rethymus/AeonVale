@@ -1356,3 +1356,10 @@ onboarding-funnel，§8.16 判定表原列）与 core-farm golden fixture 按
 preflight 全链通过。
 
 **阶段 0-3 全部完成。旧世界自此仅存在于 docs 设计档案与归档注记中。**
+
+**§8.30 收尾补记（同日）**：阶段 3 删除 app 孤儿后二次 CSS 审计发现 8 个
+残留死 class（demo-dpad/ending-surface/flow-frame-cultivation/
+flow-frame-map/flow-menu-grid/objective-rail-primary/tribulation-surface/
+vn-hint，均在复合或 @media 选择器内）。第三遍 token 级修剪移除 13 个规则
+块（app.css 72→70KB），死样式清零；验证：单测守卫 25/25、浏览器 45/45
+（narration-flow 首轮并发偶发，单跑与复跑全绿）、治理/构建通过。
