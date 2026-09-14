@@ -114,6 +114,16 @@ interface Particle {
 }
 
 interface CultivationBrowserTestSnapshot {
+  readonly board?: {
+    readonly cols: number;
+    readonly rows: number;
+    readonly player: { x: number; y: number };
+    readonly blocks: ReadonlyArray<{ x: number; y: number; kind: string; modifier: string }>;
+    readonly body: { x: number; y: number } | null;
+    readonly beamCells: ReadonlyArray<{ x: number; y: number }>;
+    readonly moveBudget: number;
+    readonly movesUsed: number;
+  } | null;
   readonly phase: RogueliteProtoPhase;
   readonly machinePhase: CultivationRunMachineState['phase'];
   readonly outcome: TribulationSessionOutcome['result'] | null;

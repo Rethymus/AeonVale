@@ -588,3 +588,12 @@ session 的 deadlocked 哨兵（余步内有界重解不可达即"此局已无�
 快照），facts 与结果序列零变化——符合"advisory 字段不改结局"的预期。
 已按 golden-replay-update skill 走默认 updater 刷新（pinned params 未变，
 本次无需 --init），回放 4/4 复绿。
+
+**试玩工具化补记（同日）**：实机代理试玩（真实 UI 全点击路径）发现两处
+真实缺陷并已修复——① 引劫双 rAF 推进在 rAF 停摆宿主（后台标签/嵌入式
+webview）永久卡死 → afterPaint 双通道兜底；② 死锁哨兵 4000 界误报 →
+40000 对齐（§22）。为支撑后续自动实玩验证，`cultivationSnapshot` 测试
+快照新增只读 `board` 面（cols/rows/player/blocks/body/beamCells/
+moveBudget/movesUsed），后续自动实玩可直接读盘计算推序，不再依赖像素
+取证。真人试玩三项观测中，「先锻体」引导已在真实劫抉屏有机路径验证
+（零体魄必现、文案完整）。
