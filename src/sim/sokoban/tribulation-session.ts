@@ -166,6 +166,10 @@ function resolveTerminalOutcome(
 /** 死局面哨兵求解上限（docs/31 §1.3：每步后毫秒级有界重解）。 */
 const SENTINEL_MAX_NODES = 4000;
 
+// 死锁哨兵（余步内有界重解不可达即"此局已无解"）。谱系（docs/33）：死锁
+// 检测是推箱自动求解的首个关键增强（Rolling Stone, U Alberta）；工业级
+// freeze/corral 分类学是后续升级方向，当前有界重解对本项目板面（生成期
+// 已认证 + 预算小）成本可控且无误报。
 function sentinelCheck(puzzle: SokobanState): boolean {
   if (puzzle.status !== 'playing') return false;
   const remaining = Math.max(0, puzzle.moveBudget - puzzle.movesUsed);

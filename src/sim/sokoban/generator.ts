@@ -7,6 +7,13 @@
  *   2) isSolvable：有界 BFS 求解器（状态 = 玩家位 + blocks 快照），安全网 + 测试用。
  *   3) generateBoard：tryGenerate + isSolvable 验证 + 强制"初始未解"（至少要推一步）+ 重试；耗尽则 null（调用方兜底）。
  *
+ * 方法谱系（docs/33 调研）：构造式"生成即可解"与 Taylor & Parberry 2011
+ * （Procedural Generation of Sokoban Levels, GAMEON-NA）同构，谱系上溯
+ * Murase et al. 1996（Automatic Making of Sokoban Problems）；难度带定向
+ * 重试较其"集合内事后由易到难排序"更强（认证步数直接作难度度量，思路同
+ * Jarusek & Pelánek 2010 的难度评分）。可解性 NP-hard/PSPACE-complete，
+ * 故认证用有界求解器而非完备搜索。
+ *
  * 守纯度：仅用注入的 Rng，无 Math.random/Date.now。求解器有 maxNodes 上限防爆炸。
  */
 import type { Rng } from '@sim/core/rng';
