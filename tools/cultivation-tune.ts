@@ -77,6 +77,7 @@ const START = { min: 6, source: 125 };
 
 function main(): void {
   const args = process.argv.slice(2);
+  const exhaustive = args.includes('--exhaustive');
   const itersIndex = args.indexOf('--iters');
   const seedStartIndex = args.indexOf('--seed-start');
   const seedsCountIndex = args.indexOf('--seeds');
@@ -101,6 +102,10 @@ function main(): void {
     START.source = v;
   }
 
+  if (exhaustive) {
+    runExhaustive();
+    return;
+  }
   const rng = new Rng(42);
   let current = { ...START };
   let best = evaluate(withTribulation(current.min, current.source));
@@ -139,6 +144,54 @@ function knobMin(key: Knob['key']): number {
 }
 function knobMax(key: Knob['key']): number {
   return KNOBS.find(k => k.key === key)!.max;
+}
+
+function runExhaustive(): void {
+  interface Cell {
+    readonly min: number;
+    readonly source: number;
+    readonly hybridAsc: number;
+    readonly asceticAsc: number;
+    readonly asceticGate: number;
+    readonly penalty: number;
+  }
+  const cells: Cell[] = [];
+  const seedsNote = `${SEEDS.length} 种子(${SEEDS[0]}..${SEEDS[SEEDS.length - 1]})`;
+  console.log(`全景观穷举：min 5-7 × source 120-130（33 格 × 2 策略 × ${seedsNote} × ${GENERATIONS} 代）`);
+  let done = 0;
+  for (let min = 5; min <= 7; min++) {
+    for (let source = 120; source <= 130; source++) {
+      const ev = evaluate(withTribulation(min, source));
+      cells.push({ min, source, hybridAsc: ev.hybridAsc, asceticAsc: ev.asceticAsc, asceticGate: ev.asceticGate, penalty: ev.penalty });
+      done += 1;
+      console.error(`[exhaustive] ${done}/33 (${min},${source}) penalty=${ev.penalty.toFixed(3)}`);
+    }
+  }
+
+  const byPenalty = [...cells].sort((a, b) => a.penalty - b.penalty);
+  console.log('\n== 复合罚排名（前 8） ==');
+  for (const cell of byPenalty.slice(0, 8)) {
+    console.log(`  (${cell.min},${cell.source}) penalty=${cell.penalty.toFixed(3)} hybrid=${cell.hybridAsc.toFixed(3)} ascetic=${cell.asceticAsc.toFixed(3)} gate=${cell.asceticGate.toFixed(3)}`);
+  }
+
+  // Pareto 前沿（NSGA-II 式非支配集）：目标 hybridAsc↑ / asceticAsc↑ / |gate−0.2|↓
+  const gateErr = (c: Cell): number => Math.abs(c.asceticGate - 0.2);
+  const dominates = (a: Cell, b: Cell): boolean => {
+    const oa = [a.hybridAsc, a.asceticAsc, -gateErr(a)];
+    const ob = [b.hybridAsc, b.asceticAsc, -gateErr(b)];
+    return oa.every((v, i) => v >= ob[i]!) && oa.some((v, i) => v > ob[i]!);
+  };
+  const front = cells.filter(c => !cells.some(o => dominates(o, c)));
+  console.log('\n== Pareto 非支配前沿 ==');
+  for (const c of front.sort((a, b) => a.min - b.min || a.source - b.source)) {
+    console.log(`  (${c.min},${c.source}) hybrid=${c.hybridAsc.toFixed(3)} ascetic=${c.asceticAsc.toFixed(3)} gate=${c.asceticGate.toFixed(3)} penalty=${c.penalty.toFixed(3)}`);
+  }
+
+  const globalBest = byPenalty[0]!;
+  const sweet = cells.find(c => c.min === 6 && c.source === 125)!;
+  console.log(`\n全局最优点: (${globalBest.min},${globalBest.source}) penalty=${globalBest.penalty.toFixed(3)}`);
+  console.log(`(6,125) penalty=${sweet.penalty.toFixed(3)}｜${globalBest.penalty < sweet.penalty ? '存在更优格——需复核' : '(6,125) 穷举确认全局最优'}`);
+  console.log('适用性结论：2 维离散 33 格空间内穷举严格强于 CMA-ES/NSGA-II（元启发式仅适用于高维/连续/不可枚举空间）；参数空间扩至 ≥3 维或连续化时应换回元启发式。');
 }
 
 main();
