@@ -1363,3 +1363,11 @@ flow-frame-map/flow-menu-grid/objective-rail-primary/tribulation-surface/
 vn-hint，均在复合或 @media 选择器内）。第三遍 token 级修剪移除 13 个规则
 块（app.css 72→70KB），死样式清零；验证：单测守卫 25/25、浏览器 45/45
 （narration-flow 首轮并发偶发，单跑与复跑全绿）、治理/构建通过。
+
+**发布门实战捕获（同日）**：`governance:dist` 拦截真实泄漏——本地 Agent
+状态缓存被写入 `assets/logo/.omc/`（gitignore 覆盖故未入库），但构建复制
+`assets/logo` 时将其带进 `dist/logo/`。处置：删除泄漏缓存目录、重建 dist
+复检通过。教训归档：Agent 工具的节流缓存可落在任意 cwd，发布门
+（governance:dist）是最后一道防线，不可跳过。README 同步修正两处
+"两模式"残留表述与三处已删命令引用（balance/tune/m5:check/headless →
+cultivation:metrics/check/cultivation-tune）。

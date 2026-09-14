@@ -158,15 +158,15 @@ pnpm dev          # 打开 http://127.0.0.1:5173
 ```text
 src/sim       确定性核心模拟 —— 纯函数、零 DOM/GPU/IO/时间依赖
 src/render    PixiJS 表现层   —— 落雷几何、震屏与粒子不污染 sim
-src/app       流程与界面      —— 标题流程、两模式 surface、输入路由
+src/app       流程与界面      —— 标题流程、修途/叙录 surface、输入路由
 src/content   数据驱动内容    —— schema、注册表与简体中文本地化
 src/io        平台 IO          —— Web Audio 音频引擎
 ```
 
 - `mulberry32` + 命名 RNG 流使逻辑状态可重现；表现层的闪电形状与粒子可以非确定，但不改变结算。
 - Golden Replay 与 `stateHash` 守护存档往返和行为兼容。
-- `pnpm balance` 运行蒙特卡洛扫描；`pnpm tune` 用 CMA-ES / NSGA-II 搜索平衡参数；`pnpm m5:check` 验收战役难度曲线。
-- 无头 sim 支持批量代理测试；LLM 可作为只读 playtester 评判回放轨迹，不进入 `src/sim/`。
+- `pnpm cultivation:metrics` 输出修途四类分布；`pnpm cultivation:check` 是接入 CI 的基线带门；`tools/cultivation-tune.ts` 提供邻域爬山与 33 格穷举全景观（docs/32）。
+- 确定性代理（solver 最优 + 四型日程）驱动批量生命周期评估；LLM 可作为只读 playtester 评判回放轨迹，不进入 `src/sim/`。
 
 ### 常用命令
 
@@ -178,7 +178,7 @@ pnpm test:fast          # 单元 + 属性
 pnpm test:replay        # Golden 回放
 pnpm content:lint       # 内容 schema 与本地化校验
 pnpm governance:check   # 治理与泄露检查
-pnpm headless           # 无头跑完整 sim
+pnpm cultivation:check  # 修途基线带门（本地复现 CI 金丝雀）
 pnpm readme:media       # 用 Playwright + ffmpeg 重生成 README 截图与 GIF
 ```
 
@@ -192,7 +192,7 @@ pnpm readme:media       # 用 Playwright + ffmpeg 重生成 README 截图与 GIF
 |---|---|
 | `src/sim/` | 确定性核心模拟（零 DOM/GPU 依赖） |
 | `src/render/` | PixiJS 8 表现层 |
-| `src/app/` | 流程、界面与两模式 surface |
+| `src/app/` | 流程、界面与修途/叙录 surface |
 | `src/content/` | 内容定义、Zod schema、中文本地化 |
 | `src/io/` | Web Audio 音频引擎与平台 IO |
 | `tools/` | 内容校验、平衡扫描、自动调参与发布工具 |
