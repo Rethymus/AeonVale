@@ -43,7 +43,7 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(ciWorkflow).toContain('pnpm content:lint');
     expect(ciWorkflow).toContain('pnpm test');
     expect(ciWorkflow).toContain('pnpm test:replay');
-    expect(ciWorkflow).toContain('pnpm m5:check');
+    expect(ciWorkflow).toContain('pnpm cultivation:check');
     expect(ciWorkflow).toContain('      - run: pnpm build');
     expect(ciWorkflow).toContain('      - run: pnpm governance:dist');
     expect(ciWorkflow).toContain('aeonvale-pages-dist-${{ github.sha }}');

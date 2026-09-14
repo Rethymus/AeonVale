@@ -5,8 +5,8 @@
  */
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_BALANCE } from '@sim/params';
-import { deriveStreams } from '@sim/world/rng';
-import type { SoilType } from '@sim/world/types';
+import { deriveStreams } from '@sim/core/rng';
+import type { SoilType } from '@sim/core/types';
 import {
   COMBAT_FIELD_HEIGHT,
   COMBAT_FIELD_WIDTH,

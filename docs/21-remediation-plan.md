@@ -1318,3 +1318,41 @@ onboarding-funnel，§8.16 判定表原列）与 core-farm golden fixture 按
 
 **明确提示**：本快照非启动。sim 删除为不可逆点，仍待维护者第二道单独
 签字（§8.16 前置条件 2）；签字后按本快照 ①→④ 顺序执行即可，无需再盘点。
+
+### 8.30 阶段 2 不可逆点执行：旧世界 sim 整删与词表归档（2026-09-14，第二道签字已获）
+
+维护者于本轮对话中明确授权（二选一推进选①），按 §8.29 就绪快照 ①→④ 执行：
+
+1. **共享基元抽离**：`world/types.ts`（68 行）与 `world/rng.ts`（151 行）
+   迁至 `src/sim/core/`（零依赖、自包含）；全仓 39 个文件 import 由
+   `@sim/world/*` 重定向 `@sim/core/*`。
+2. **旧世界 sim 整删**：15 目录（alchemy/buildings/celestial/collection/
+   economy/exploration/farm/inventory/processing/social/storage/story/
+   tribulation/world 剩余/progression）共 47 文件 ≈1.17 万行；`serialize.ts`
+   收缩为 canonicalSerialize 单导出；`@sim` 根 index 重写为保留面
+   （core/params/serialize/sokoban/cultivation-run/roguelite）。
+3. **应用层连带**：main.ts 旧档解码链改"遗留档一律 invalid-fallback"语义
+   （修途旅程走 runSave 独立键不受影响）；删除仅旧世界引用的 app 孤儿
+   （actionFeedback/farmsteadScene/Focus/locationActionSignals/
+   onboardingObjective/toolAsset）与 roguelite/schedule 的 farm 依赖
+   （电导表内联）。
+4. **工具与夹具归档**（判定表"随旧 sim 退役"项）：headless-run/
+   balance-scan/balance-tune/m5-*(4)/simulation-metrics/playtest-report/
+   onboarding-funnel/update-golden-replay + core-farm golden fixture +
+   golden.replay.test 删除；package.json 死脚本 10 个移除；ci.yml
+   `m5:check` 移除（cultivation:check 已在此前接入并守护主模式）。
+5. **词表与配置**：AGENTS.md 技能条目五项一次到位重定向
+   （balance-sweep-tune→cultivation:metrics/check/tune；content-add→
+   主模式内容路径；sim-invariant→纯度纪律条款；golden-replay-update→
+   cultivation --init 要点；llm-playtester→主模式轨迹）；
+   `.gitleaks.toml` 正则去除 `save|` 分支；docs/08、16 头部加归档注记。
+6. **测试面**：删除旧 world 单测 58 + integration 7 + property 8 +
+   headless 套件 + core-farm 回放；save-health 单测重写为纯函数面、
+   浏览器 spec 重写为 invalid-fallback 统一语义。
+
+**完成判据核验**：`git grep 旧世界/legacyWorld` 仅剩刻意注记；tsc 零错；
+单测 1086/1086；replay（cultivation）4/4；治理通过（604 tracked files，
+-144）；构建通过；浏览器回归 45/45；cultivation:check 通过；
+preflight 全链通过。
+
+**阶段 0-3 全部完成。旧世界自此仅存在于 docs 设计档案与归档注记中。**

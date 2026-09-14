@@ -3,7 +3,7 @@
  * sim 层只读这些 Def；运行时实例（CropInstance 等）在 sim/world 与各系统。
  * 这些接口与 src/content/schemas.ts 的 Zod schema 一一对应（schema 校验后得到这些类型）。
  */
-import type { PropertyVector, Season } from '@sim/world/types';
+import type { PropertyVector, Season } from '@sim/core/types';
 
 export type Tier = 1 | 2 | 3 | 4 | 5;
 

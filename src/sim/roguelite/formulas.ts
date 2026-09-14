@@ -7,7 +7,7 @@
  * 保持切片轻量隔离。R4-b 接入正式 resolveDueTribulation 时，这些会被真实函数取代。
  */
 import type { BalanceParams } from '@sim/params';
-import type { Vec2 } from '@sim/world/types';
+import type { Vec2 } from '@sim/core/types';
 
 /** 单雷基值（毫点 HP）。镜像 boltBaseDamage。 */
 export function boltBaseDamage(stage: number, params: BalanceParams): number {

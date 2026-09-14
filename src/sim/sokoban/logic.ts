@@ -5,8 +5,8 @@
  * 烧毁灵草 → 判胜（雷光到身体=突破）/判负（步数预算耗尽）。
  * 棋盘来自手工模板（docs/26 §7：生成器质量是关键风险，原型先手工模板，程序生成留后续）。
  */
-import { Rng } from '@sim/world/rng';
-import type { Vec2 } from '@sim/world/types';
+import { Rng } from '@sim/core/rng';
+import type { Vec2 } from '@sim/core/types';
 import { consumeOneShotGuard, idx, inBounds, traceBeam } from './beam';
 import { generateBoard, deriveFlavorTag, solveBoard, type GenerateBoardOptions } from './generator';
 import {

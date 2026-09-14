@@ -19,7 +19,7 @@
  *
  * 红线：src/sim 不依赖此层；此处也不反向依赖 app/io，保持可被任意工具 / 单测复用。
  */
-import { Rng, hashStr } from '@sim/world/rng';
+import { Rng, hashStr } from '@sim/core/rng';
 
 export type AmbientMode = 'eno' | 'reich' | 'sparse' | 'pendulum';
 

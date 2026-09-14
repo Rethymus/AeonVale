@@ -5,7 +5,7 @@
  * 纯回合、无实时、零随机（beam/推箱都是板面状态的纯函数）—— 直击 R4-a"看不懂"问题。
  * 守 docs/00 C3/C4：sim 层无 IO、无 Math.random/Date.now。棋盘生成用项目 Rng。
  */
-import type { Vec2 } from '@sim/world/types';
+import type { Vec2 } from '@sim/core/types';
 
 export type Dir = 'up' | 'down' | 'left' | 'right';
 

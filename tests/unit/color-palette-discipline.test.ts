@@ -8,7 +8,7 @@ const ALLOWED_NUMERIC_LITERALS = new Map<string, ReadonlySet<string>>([
   ['src/render/palette.ts', new Set(['0xffffff'])],
   ['src/render/sprites.ts', new Set(['0x6d2b79f5'])],
   ['src/render/worldDecor.ts', new Set(['0x7feb352d', '0x846ca68b', '0x9e3779b9'])],
-  ['src/sim/world/rng.ts', new Set(['0x6d2b79f5'])]
+  ['src/sim/core/rng.ts', new Set(['0x6d2b79f5'])]
 ]);
 
 function productionFiles(root: string): string[] {

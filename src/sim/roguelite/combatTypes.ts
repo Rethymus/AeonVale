@@ -5,12 +5,12 @@
  *   备劫（在单块战术灵田布阵）→ 种子化劈雷时刻表（= 天道预告）→ 逐雷承劫 → 存活/死亡。
  *
  * 红线（守 docs/00 C3/C4、CONTRIBUTING）：sim 层纯函数、确定、无 IO；
- * 随机一律走 Rng（@sim/world/rng 的 deriveStreams），禁止 Math.random / Date.now / performance.now。
+ * 随机一律走 Rng（@sim/core/rng 的 deriveStreams），禁止 Math.random / Date.now / performance.now。
  * 半实时手感（走位/擦弹时机）由 app 层 rAF 驱动，本层只产出"种子化有序时刻表 + 逐雷纯结算"。
  *
  * 本切片不碰 GameState / SimContext / 金标准回放；整合进正式 resolveDueTribulation 是 R4-b 的事。
  */
-import type { SoilType, Vec2 } from '@sim/world/types';
+import type { SoilType, Vec2 } from '@sim/core/types';
 
 /** 战斗田尺寸（原型：单屏一棋盘）。 */
 export const COMBAT_FIELD_WIDTH = 7;

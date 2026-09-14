@@ -12,7 +12,7 @@
  *
  * 该模块不触碰 AudioContext/DOM，可在 Node 单测与离线渲染（Tone.Offline）中直接验证。
  */
-import { Rng, hashStr } from '@sim/world/rng';
+import { Rng, hashStr } from '@sim/core/rng';
 
 export type MusicSeason = 'spring' | 'summer' | 'autumn' | 'winter';
 export type MusicZone = 'farm' | 'market' | 'forest' | 'tribulation';

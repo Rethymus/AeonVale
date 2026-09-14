@@ -15,7 +15,7 @@
  * 用法：node node_modules/tsx/dist/cli.mjs tools/cultivation-tune.ts [--iters 24]
  */
 import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@sim/params';
-import { Rng } from '@sim/world/rng';
+import { Rng } from '@sim/core/rng';
 import { runLife, type LifeOutcome, type PolicyId } from './cultivation-metrics';
 
 let SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];

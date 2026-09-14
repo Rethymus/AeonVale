@@ -6,7 +6,7 @@ import { describe, expect, test } from 'vitest';
 import { generateBoard, solveBoard } from '@sim/sokoban/generator';
 import { traceBeam } from '@sim/sokoban/beam';
 import { createPuzzle } from '@sim/sokoban/logic';
-import { Rng } from '@sim/world/rng';
+import { Rng } from '@sim/core/rng';
 
 describe('sokoban generator · 可解性与初始未解', () => {
   test('多 stage/seed：均可解、初始未解、源在界内', () => {

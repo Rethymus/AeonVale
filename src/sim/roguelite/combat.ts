@@ -7,8 +7,8 @@
  * 做确定性结算。结算数学镜像 tribulationSystem.ts 的 resolveTribulationBolt / runTribulation（见 formulas.ts）。
  */
 import type { BalanceParams } from '@sim/params';
-import type { Rng, RngStreams } from '@sim/world/rng';
-import type { SoilType } from '@sim/world/types';
+import type { Rng, RngStreams } from '@sim/core/rng';
+import type { SoilType } from '@sim/core/types';
 import {
   COMBAT_FIELD_HEIGHT,
   COMBAT_FIELD_WIDTH,

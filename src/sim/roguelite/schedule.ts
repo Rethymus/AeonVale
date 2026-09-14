@@ -8,9 +8,8 @@
  * rodPower（引雷草）/ insulated（绝缘垫）两个布阵变量。
  */
 import type { BalanceParams } from '@sim/params';
-import { SOIL_CONDUCTIVITY } from '@sim/farm/tile';
-import type { Rng } from '@sim/world/rng';
-import type { Vec2 } from '@sim/world/types';
+import type { Rng } from '@sim/core/rng';
+import type { Vec2 } from '@sim/core/types';
 import {
   BOLT_BASE_SPACING_SEC,
   STAGE_BOLT_COUNT,
@@ -47,7 +46,8 @@ export function tileWeight(
 ): number {
   const tp = params.lightning.targeting;
   const metal = 1 + (tile.rodPower > 0 ? tp.metalAttractCoef : 0);
-  const conductivity = SOIL_CONDUCTIVITY[tile.soilType] ?? 1;
+  // 阶段 3：原 @sim/farm/tile 电导表内联（值取自退役前 HEAD，docs/21 §8.30）。
+  const conductivity = ({ 'wet-loam': 1.8, water: 1.8, 'metal-ore': 1.5, scorched: 1.2, loam: 1.0, 'spirit-loam': 1.0, 'dry-sand': 0.5, rock: 0.3, insulated: 0.1 } as Record<string, number>)[tile.soilType] ?? 1;
   const arrayMod = tile.insulated ? tp.arrayInsulate : 1;
   const d = Math.max(Math.abs(tile.x - playerPos.x), Math.abs(tile.y - playerPos.y));
   const prox = 1 + tp.playerProximityCoef / (1 + d);

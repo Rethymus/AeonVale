@@ -4,7 +4,7 @@ import { deriveFlavorTag, generateBoard, bandCenterForStage, SOKOBAN_BAND_CENTER
 import { applyMove, createPuzzle } from '@sim/sokoban/logic';
 import { createTribulationSession, transitionTribulationSession } from '@sim/sokoban/tribulation-session';
 import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
-import { Rng } from '@sim/world/rng';
+import { Rng } from '@sim/core/rng';
 import type { BlockKind, Dir, SokobanBoard } from '@sim/sokoban/types';
 
 function board(overrides: { blocks?: Partial<Record<string, BlockKind>>; modifiers?: Partial<Record<string, 'mirror-ccw'>> } = {}): SokobanBoard {

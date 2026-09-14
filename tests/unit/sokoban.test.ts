@@ -7,7 +7,7 @@ import { describe, expect, test } from 'vitest';
 import { traceBeam } from '@sim/sokoban/beam';
 import { applyMove, createPuzzle } from '@sim/sokoban/logic';
 import type { BlockKind, Dir, SokobanBoard, SokobanState, Terrain } from '@sim/sokoban/types';
-import type { Vec2 } from '@sim/world/types';
+import type { Vec2 } from '@sim/core/types';
 
 function board(spec: {
   w: number;

@@ -8,7 +8,7 @@
  * 运行：node node_modules/tsx/dist/cli.mjs tools/sokoban-sweep.ts [--salts 200] [--stages 0-6]
  */
 import { createPuzzle, generateBoard, bandCenterForStage, SOKOBAN_BAND_RADIUS, type SokobanState } from '@sim/sokoban';
-import { Rng } from '@sim/world/rng';
+import { Rng } from '@sim/core/rng';
 
 interface Row {
   stage: number;

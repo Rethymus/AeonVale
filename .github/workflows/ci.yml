@@ -64,7 +64,6 @@ jobs:
       - run: pnpm content:lint
       - run: pnpm test
       - run: pnpm test:replay
-      - run: pnpm m5:check
       # docs/32 §13：修途版 m5 基线带（5 种子窗稳定性验证后接入；25s 成本）。
       - run: pnpm cultivation:check
       # 单分支模型：根树即发布源，直接按 Pages 参数构建并校验产物。

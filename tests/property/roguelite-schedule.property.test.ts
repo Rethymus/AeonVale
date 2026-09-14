@@ -5,7 +5,7 @@
 import { describe, expect, test } from 'vitest';
 import fc from 'fast-check';
 import { DEFAULT_BALANCE } from '@sim/params';
-import { deriveStreams } from '@sim/world/rng';
+import { deriveStreams } from '@sim/core/rng';
 import {
   COMBAT_FIELD_HEIGHT,
   COMBAT_FIELD_WIDTH,

@@ -18,7 +18,7 @@
  * --check：与 CALIBRATED_BANDS（真实数据校准）比对，出带即 exit 1。
  */
 import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@sim/params';
-import { Rng } from '@sim/world/rng';
+import { Rng } from '@sim/core/rng';
 import {
   CULTIVATION_INSIGHT_MAX_UNLOCKS_PER_AGENDA,
   CULTIVATION_INSIGHT_NODE_IDS,

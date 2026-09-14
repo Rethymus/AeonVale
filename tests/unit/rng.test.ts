@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { Rng, deriveStreams, hashStr } from '@sim/world/rng';
+import { Rng, deriveStreams, hashStr } from '@sim/core/rng';
 
 describe('Rng 确定性 (C3)', () => {
   it('同种子 ⇒ 同序列', () => {

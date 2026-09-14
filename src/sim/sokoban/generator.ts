@@ -9,8 +9,8 @@
  *
  * 守纯度：仅用注入的 Rng，无 Math.random/Date.now。求解器有 maxNodes 上限防爆炸。
  */
-import type { Rng } from '@sim/world/rng';
-import type { Vec2 } from '@sim/world/types';
+import type { Rng } from '@sim/core/rng';
+import type { Vec2 } from '@sim/core/types';
 import { consumeOneShotGuard, idx, inBounds, modifierAt, traceBeam } from './beam';
 import {
   DIR_VECTORS,

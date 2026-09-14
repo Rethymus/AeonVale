@@ -1,55 +1,28 @@
 import { expect, test } from '@playwright/test';
-import { buildRegistry } from '@content/registry';
-import { createWorld, DEFAULT_BALANCE } from '@sim';
-import { saveGame } from '@sim/serialize';
 import { gameEntryPath } from './openGame';
 
 const SAVE_KEY = 'aeonvale-save-v1';
 const JOURNEY_KEY = 'aeonvale-cultivation-journey-v1';
-// 旧世界退役（docs/21 §8.16 阶段 2 第一步）：「首写失败不上报安全」用例经
-// continueToWorld 断言旧世界暂停面文案，与旧档槽耦合，随测试门退役（判定表见 docs/21 §8.21）。
-const registry = buildRegistry();
-
-function corruptNestedInventoryPayload(): string {
-  const state = createWorld({ seed: 7, width: 4, height: 4, content: registry, params: DEFAULT_BALANCE });
-  const save = saveGame(state, registry.schemaHash);
-  const serialized = save.state as { player: { inventory: Record<string, unknown> } };
-  serialized.player.inventory['item.corrupt'] = null;
-  return JSON.stringify(save);
-}
-
-const invalidSaves = [
+// 阶段 3（docs/21 §8.30）：旧世界序列化退役后，aeonvale-save-v1 内任何遗留
+// 载荷都按 invalid-fallback 呈现——不再按旧世界的细分失败模式区分。
+const legacySaves = [
   { name: 'malformed JSON', payload: '{broken' },
-  { name: 'an unsupported save format', payload: JSON.stringify({ formatVersion: 2, schemaHash: registry.schemaHash, state: {} }) },
+  { name: 'an unsupported save format', payload: JSON.stringify({ formatVersion: 2, schemaHash: 'whatever', state: {} }) },
   { name: 'an incompatible schema', payload: JSON.stringify({ formatVersion: 1, schemaHash: 'not-current', state: {} }) },
-  {
-    name: 'a deserialize failure',
-    payload: JSON.stringify({ formatVersion: 1, gameVersion: '0.1.0', schemaHash: registry.schemaHash, createdAt: 0, state: 42 })
-  },
+  { name: 'a deserialize failure', payload: JSON.stringify({ formatVersion: 1, gameVersion: '0.1.0', schemaHash: 'legacy', createdAt: 0, state: 42 }) },
   {
     name: 'a structurally incomplete state',
     payload: JSON.stringify({
       formatVersion: 1,
       gameVersion: '0.1.0',
-      schemaHash: registry.schemaHash,
+      schemaHash: 'legacy',
       createdAt: 0,
-      state: {
-        crops: [],
-        arrays: [],
-        facilities: [],
-        player: { flags: [], inventory: {} },
-        flags: [],
-        rngSnapshot: {}
-      }
+      state: { crops: [], arrays: [], facilities: [], player: { flags: [], inventory: {} }, flags: [], rngSnapshot: {} }
     })
-  },
-  {
-    name: 'a malformed nested inventory slot',
-    payload: corruptNestedInventoryPayload()
   }
 ] as const;
 
-for (const scenario of invalidSaves) {
+for (const scenario of legacySaves) {
   test(`${scenario.name} falls back visibly without enabling Continue`, async ({ page }) => {
     await page.addInitScript(({ key, value }: { key: string; value: string }) => window.localStorage.setItem(key, value), { key: SAVE_KEY, value: scenario.payload });
     await page.goto(gameEntryPath());

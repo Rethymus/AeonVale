@@ -5,9 +5,6 @@
  * 启动：pnpm dev。全程中文 UI（C8）。
  */
 import { Application } from 'pixi.js';
-import { type GameState } from '@sim';
-import { deserializeState } from '@sim/serialize';
-import { buildRegistry, isSchemaHashCompatible } from '@content/registry';
 import { t } from '@content/i18n';
 import manifestJson from '../../assets/manifest.json';
 import { createTitleAmbience } from './titleAmbience';
@@ -15,7 +12,6 @@ import { computeViewportLayout } from '@render/viewportLayout';
 import { AudioEngine, type SfxId } from '@io/audio';
 import { AssetStore, assetUrlForId, validateManifest } from '@io/assets';
 import { preloadUiFont } from './fontPreload';
-import { type FarmActionFeedbackKind } from './actionFeedback';
 import { createResponsiveShell, type ResponsiveShellController } from './responsiveShell';
 import { type AppFlowEvent, type AppFlowState } from './appFlowMachine';
 import { createAppFlowViewController, type AppFlowViewController } from './appFlowView';
@@ -24,9 +20,8 @@ import { createNarrationSurface, NARRATION_E7_FLAG_KEY, type NarrationSurfaceCon
 import { createRogueliteProtoSurface, type RogueliteProtoSurface } from './rogueliteProto/surface';
 import { hasCultivationJourney } from './rogueliteProto/runSave';
 import { createNarrationCodex, type NarrationCodexController } from './narrationCodex';
-import { type GridPoint } from './worldMovement';
 import { deriveSemanticGameState } from './semanticGameState';
-import { decodeStoredSave, deriveSaveHealthPresentation, saveHealthAfterLoad, type SaveHealth } from './saveHealth';
+import { deriveSaveHealthPresentation, saveHealthAfterLoad, type SaveHealth } from './saveHealth';
 import { DEFAULT_RUNTIME_SETTINGS, RUNTIME_SETTINGS_STORAGE_KEY, decodeRuntimeSettings, runtimeSettingsPersistenceText, serializeRuntimeSettings, type RuntimeSettings } from './runtimeSettings';
 import { applyColorPaletteCssVariables, ColorPalette, cssColor } from '@render/ColorPalette';
 import { installMotionSkin } from './motionSkin';
@@ -35,51 +30,7 @@ applyColorPaletteCssVariables(document.documentElement);
 installMotionSkin();
 document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', cssColor('shellPine'));
 
-type DirectFarmActionKind = Exclude<FarmActionFeedbackKind, 'sow' | 'fertilize'>;
-
-type PointerWorldActionKind = 'none' | 'object' | 'build-place' | 'array-place' | 'farm-till' | 'farm-sow' | 'farm-water' | 'farm-harvest' | 'farm-channel-qi' | 'farm-stable' | 'pickup' | 'move' | 'blocked';
-
-interface PendingWorldCommand {
-  readonly target: GridPoint;
-  readonly destination: GridPoint;
-  readonly description: string;
-  readonly run: () => boolean;
-}
-
-interface TerrainSemanticsKeypoint {
-  tillableX: number;
-  tillableY: number;
-  plantableX: number;
-  plantableY: number;
-  blockedX: number;
-  blockedY: number;
-  selectedX: number;
-  selectedY: number;
-}
-
-interface BuildArrayKeypoint {
-  targetX: number;
-  targetY: number;
-  playerX: number;
-  playerY: number;
-  arrayDefId: 'array.lightning-rod' | 'array.insulation';
-}
-
-interface ArraySnapshot {
-  count: number;
-  defIds: string[];
-  activeCount: number;
-}
-
-interface QiFlowKeypoint {
-  lowX: number;
-  lowY: number;
-  highX: number;
-  highY: number;
-}
-
 async function main(): Promise<void> {
-  const reg = buildRegistry();
   const assetStore = new AssetStore(validateManifest(manifestJson));
   const SEED = 20260710;
   const SAVE_KEY = 'aeonvale-save-v1';
@@ -89,19 +40,15 @@ async function main(): Promise<void> {
   // 旧世界退役（docs/21 §8.27 阶段 2 第二步）：renderer/layers/renderScheduler
   // 及 world 屏全部 UI 编排已物理删除；标题 → 修途/灵韵叙录/设置链保留。
   const loadSave = (): SaveHealth => {
-    let raw: string | null;
+    // 阶段 3（docs/21 §8.30）：旧世界存档序列化已退役——aeonvale-save-v1 键
+    // 不再有写入方；任何遗留原始档一律按 invalid-fallback 呈现（不可解码）。
+    // 修途旅程存档走 runSave 独立键，不受影响。
     try {
-      raw = localStorage.getItem(SAVE_KEY);
+      const raw = localStorage.getItem(SAVE_KEY);
+      return saveHealthAfterLoad(raw == null ? 'empty' : 'invalid-fallback');
     } catch {
       return saveHealthAfterLoad('storage-unavailable');
     }
-
-    const decoded = decodeStoredSave<GameState>(
-      raw,
-      schemaHash => isSchemaHashCompatible(reg, schemaHash),
-      savedState => deserializeState(savedState) as GameState
-    );
-    return saveHealthAfterLoad(decoded.status);
   };
   // 旧世界退役（docs/21 §8.16 阶段 2 第一步）：clearSave 仅由 start-new-game
   // 应用层副作用调用，随该接线一并移除（旧档清除语义归 boot 读档/健康链）。
