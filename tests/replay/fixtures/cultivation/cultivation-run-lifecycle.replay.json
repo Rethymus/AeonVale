@@ -424,7 +424,7 @@
     {
       "phase": "session-action",
       "label": "tribulation-1:action-1:move:down:ok",
-      "expected": "8b978ccf02f3bc63d667028609c2896f9305d02bca26e8bf7c0bc1035504d49b"
+      "expected": "c0f91330869774b42fee9aedfce14e91d85d8bc438cf592be3d15ec7aea381ec"
     },
     {
       "phase": "session-action",
@@ -434,27 +434,27 @@
     {
       "phase": "session-action",
       "label": "tribulation-1:action-3:move:down:ok",
-      "expected": "4bd0138f06e62877c3d2242409445507e9a84def5b1cb9c8a5537e7de17b1d36"
+      "expected": "97924a80ab3e732a3b7360bcaa33c397994370293d35fda98fb97ca493e07eb7"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-4:move:down:ok",
-      "expected": "1371e33ea08c55edea9b1364b8fa6844ebf02d26dda9f787a773ea0f037111ff"
+      "expected": "8e28c806d3788334d6b0cec203b49a877e430b104c32c1c8af4a79d069d58e7e"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-5:move:right:ok",
-      "expected": "8968131550ede90b3c14bc8bc75fd39bb61953cb41cc951d7c83206a1c1611b5"
+      "expected": "9062714ac0458dacf8274e40c1af4296b8314f568555431307bc65fa1ca8b988"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-6:move:down:ok",
-      "expected": "e229ada4ce9fcfac76d06f98de711b945fabe1c8ec89f81cda5cd0252f34dd45"
+      "expected": "5a970582dc8ce0387ceb6cdd3e5c114ca834dbe0d0c5813cb0560815f82c8c04"
     },
     {
       "phase": "session-action",
       "label": "tribulation-1:action-7:move:down:ok",
-      "expected": "cce1d650cb5233e76157f50c21804f9c3475112d56c3536ba3a9b2695550bf6b"
+      "expected": "5a256f3e4e846e4a38dd34b05dbe7ba372b7555334ae09277dbfd0e160061348"
     },
     {
       "phase": "session-action",

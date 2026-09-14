@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import { DEFAULT_BALANCE } from '@sim/params';
 import type { TribulationPreparation } from '@sim/cultivation-run/preparation';
+import { createPuzzle } from '@sim/sokoban/logic';
+import { solveBoard } from '@sim/sokoban/generator';
 import {
   TRIBULATION_SESSION_PILL_IDS,
   createTribulationSession,
@@ -241,5 +243,28 @@ describe('D27-d · 天劫 session 护持', () => {
     expect(result).toMatchObject({ ok: false, state: before, error: { code: 'no-ward-charges' } });
     expect(result.state).toBe(session);
     expect(session).toEqual(before);
+  });
+});
+
+
+describe('死锁哨兵零误报性质（docs/32 §22）', () => {
+  // 性质：若开局存在认证解，则沿该解任意前缀后的局面在哨兵界内必可重解——
+  // 否则 UI 会给出错误的「此局已无解·建议撤步」指引。本测试锁定曾经的
+  // 4000 节点误报格（stage4 salt4/salt10 等，docs/32 §22 探针实测）。
+  test('认证解前缀不触发死锁哨兵（stage4 误报格复验）', () => {
+    for (const salt of [4, 7, 10, 13]) {
+      const base = createPuzzle(4, salt, undefined, {});
+      const session = createTribulationSession(base, { minTemperingPower: 0, maxSurvivablePower: 10000, sweetSpotMinPower: 0, sweetSpotMaxPower: 10000, moveBudgetBonus: 0, previewLevel: 0, undoCharges: 0, wardCharges: 0, protectedHerbCount: 0, unlockedBlockKinds: [], startingHerbs: [], sourcePowerBonus: 0, eventPowerModifierMilli: 1000, pressure: 0, mortalHeart: 0 } as TribulationPreparation, DEFAULT_BALANCE);
+      const solution = solveBoard(session.puzzle.board, session.puzzle.player, { maxMoves: session.puzzle.moveBudget });
+      expect(solution, `salt ${salt} 无认证解`).not.toBeNull();
+      let walk: TribulationSessionState = session;
+      for (const dir of solution!.moves) {
+        const remaining = Math.max(0, walk.puzzle.moveBudget - walk.puzzle.movesUsed);
+        const re = solveBoard(walk.puzzle.board, walk.puzzle.player, { maxNodes: 40000, maxMoves: remaining });
+        expect(re, `salt ${salt} 前缀误报死锁`).not.toBeNull();
+        walk = transitionTribulationSession(walk, { type: 'move', dir }, DEFAULT_BALANCE).state;
+        if (walk.outcome !== null) break;
+      }
+    }
   });
 });

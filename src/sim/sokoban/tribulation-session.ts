@@ -164,7 +164,9 @@ function resolveTerminalOutcome(
 }
 
 /** 死局面哨兵求解上限（docs/31 §1.3：每步后毫秒级有界重解）。 */
-const SENTINEL_MAX_NODES = 4000;
+// 与生成期认证界（generator MAX_SOLVE_NODES=40000）对齐：哨兵界低于认证界
+// 时，长解板的可行局面会被误报为死锁（docs/32 §22 实测 4000 界下 6.8% 误报）。
+const SENTINEL_MAX_NODES = 40000;
 
 // 死锁哨兵（余步内有界重解不可达即"此局已无解"）。谱系（docs/33）：死锁
 // 检测是推箱自动求解的首个关键增强（Rolling Stone, U Alberta）；工业级
