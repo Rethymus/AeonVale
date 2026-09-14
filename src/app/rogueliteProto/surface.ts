@@ -121,6 +121,7 @@ interface CultivationBrowserTestSnapshot {
     readonly blocks: ReadonlyArray<{ x: number; y: number; kind: string; modifier: string }>;
     readonly body: { x: number; y: number } | null;
     readonly beamCells: ReadonlyArray<{ x: number; y: number }>;
+    readonly walls: ReadonlyArray<{ x: number; y: number }>;
     readonly moveBudget: number;
     readonly movesUsed: number;
   } | null;
@@ -1515,7 +1516,25 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   }
 
   function cultivationBrowserTestSnapshot(): CultivationBrowserTestSnapshot {
+    const liveBoard = tribulationSession?.puzzle.board ?? state.board;
+    const bodyIdx = liveBoard.terrain.indexOf('body');
     return {
+      board: {
+        cols: liveBoard.width,
+        rows: liveBoard.height,
+        player: { ...state.player },
+        blocks: liveBoard.blocks
+          .map((kind, index) => ({ x: index % liveBoard.width, y: Math.floor(index / liveBoard.width), kind, modifier: liveBoard.blockModifiers?.[index] ?? 'none' }))
+          .filter(cell => cell.kind !== 'none'),
+        body: bodyIdx >= 0 ? { x: bodyIdx % liveBoard.width, y: Math.floor(bodyIdx / liveBoard.width) } : null,
+        beamCells: state.beam.cells.map(cell => ({ ...cell })),
+        walls: liveBoard.terrain
+          .map((terrain, index) => ({ terrain, x: index % liveBoard.width, y: Math.floor(index / liveBoard.width) }))
+          .filter(cell => cell.terrain === 'wall')
+          .map(cell => ({ x: cell.x, y: cell.y })),
+        moveBudget: state.moveBudget,
+        movesUsed: state.movesUsed
+      },
       phase,
       machinePhase: machineState.phase,
       outcome: tribulationOutcome?.result ?? null,
