@@ -65,7 +65,6 @@
   },
   "dependencies": {
     "pixi.js": "^8.6.0",
-    "tone": "^15.1.22",
     "zod": "^3.23.8"
   },
   "devDependencies": {
