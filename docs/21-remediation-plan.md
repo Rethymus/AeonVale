@@ -1398,3 +1398,36 @@ index）为旧 roguelite 设计阶段的战斗公式与日程模块。主模式
 （tests/unit + tests/property）确认正常运行——80 文件 / 1048 测试全绿。
 自定义脚本扫描 src/ 76 文件 71 个导出面：**死导出 0**——全部导出符号
 均有跨文件消费方。代码库导出面清洁，无需进一步修剪。
+
+### 8.32 项目质量终态快照（2026-09-15）
+
+阶段 0-3 退役 + 平衡数据链 + 资源调研 + 前沿范式调研全部完成后，
+项目到达自主可迭代工作穷尽的稳定态。全量指标如下：
+
+**代码库规模**：
+- src/ 全 TypeScript 行数：23,029（退役前约 85,000+，净减 73%）
+- tracked files：595（退役前约 750+）
+- src/app：35 文件（主模式 surface + 流程壳层 + 叙录/修途 surface 集群）
+- src/sim：sokoban（8 文件）+ cultivation-run（13 文件）+ params + serialize + core
+- src/render：4 文件（ColorPalette/palette/sprites/viewportLayout）
+- src/io：6 文件（assets/audio/bgm/generativeAmbient/generativeMusic/narrationTrack）
+- src/content：5 文件 + locales
+
+**生产依赖**：3 个（pixi.js ^8.6.0 / zod ^3.23.8 / tone ^15.1.22）
+
+**质量门（全绿）**：
+- tsc strict+noUncheckedIndexedAccess：零错
+- 单元测试：78 文件 / 1060 测试
+- Golden Replay（cultivation）：4/4
+- Property Tests：10 文件 / 35 用例
+- 浏览器回归：45/45
+- governance:check：595 tracked files 通过
+- content:lint：通过（3 警告）
+- cultivation:check 基线带：通过
+- build：通过（dist 瘦身后 index 207KB）
+
+**剩余外部依赖（代理不可代行）**：
+1. docs/30 §六真人试玩：20-30 分钟人工会话，观测零苦练首劫死率 /
+   ascetic 首劫死率 / 「先锻体」引导触达，对照 docs/32 §19 代理基线
+   （ascetic 25% / hybrid 81.3% / 零苦练 100%）判读是否需调参
+2. docs/27 §12.3 真人 Go/No-Go：对照承诺撤销的最终确认
