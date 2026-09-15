@@ -2366,21 +2366,6 @@ position: relative;
 
 
 
-/* —— 序章视觉小说舞台（P-VP1）：水墨氛围由纯色层叠呈现。
-   护栏：app-shell.test 限定本文件不出现渐变函数与动画声明，
-   color-palette-discipline 限定色值只来自 ColorPalette；故 §16 六色
-   就近映射到既有 canonical token（纸/墨/靛/气青/朱砂/金），氛围 =
-   实色面板 + 朱砂留边 + 大量留白；逐字浮现交给运行时文本改写。 —— */
-#prologue-vn {
---vn-paper: var(--color-paperUi);
-  --vn-ink: var(--color-inkUi);
-  --vn-indigo: var(--color-water);
-  --vn-qicyan: var(--color-qiFlow);
-  --vn-cinnabar: var(--color-dangerUi);
-  --vn-gilt: var(--color-giltUi);
-  margin-top: 18px;
-}
-
 
 
 
