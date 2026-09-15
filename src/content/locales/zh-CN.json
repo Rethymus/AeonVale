@@ -1,18 +1,6 @@
 {
   "ui": {
     "help": {},
-    "objective": {
-      "first-till": "当前目标：先翻出一块地。",
-      "first-sow": "当前目标：播下第一颗青苔种或露根草种。",
-      "first-water": "当前目标：给刚种下的幼苗浇一次水。",
-      "first-harvest": "当前目标：继续照料，收下第一株成熟灵草。",
-      "first-ship": "当前目标：把第一株灵草投进出货箱。",
-      "first-sleep": "当前目标：点击居所或“歇息”过夜，等次日结算换回灵石。",
-      "first-market-restock": "当前目标：去山谷集市补几颗种子，把第二轮药材接上。",
-      "first-second-sow": "当前目标：把刚补到的种子播回田里，接上第二轮药材。",
-      "first-second-water": "当前目标：给刚补种的新苗浇上第一轮水，把第二轮药材真正接稳。",
-      "first-loop-complete": "当前目标：第二轮药材动线已成立，继续照料新苗、卖余货，或再扩一小片田。"
-    },
     "orientation": {
       "kicker": "横屏游玩",
       "heading": "请横置设备",
@@ -21,23 +9,7 @@
       "overrideButton": "仍要竖屏继续",
       "overrideLabel": "关闭横屏提示，仍以竖屏继续本次旅程"
     },
-    "hud": {
-      "day": "第 {n} 日",
-      "year": "第 {n} 年",
-      "season": {
-        "spring": "春",
-        "summer": "夏",
-        "autumn": "秋",
-        "winter": "冬"
-      }
-    }
-  },
-  "ending": {
-    "ascension": "白日飞升\n凡骨碎裂，踏雷而起。天道，输了这一局。\n太一宗当年说我是废物——倒也没说错。废物，才捡得到别人不要的那条路。",
-    "poison-death": "丹毒暴毙\n凡骨扛不住的，从来不只是雷。",
-    "tribulation-death": "陨于天劫\n凡人逆天，终被天收——但有人记得，你曾向它挥过拳。",
-    "lifespan-death": "大限已至\n凡骨熬尽，仍未等来下一道雷。",
-    "madness": "走火入魔\n《偷天换劫诀》的上一个修习者，也是这样结束的。"
+    "hud": {}
   },
   "narration": {
     "intro": {
