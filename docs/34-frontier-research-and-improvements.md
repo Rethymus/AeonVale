@@ -186,3 +186,12 @@ scene 或需要跨场景变量跟踪（如 NPC 好感度），建议迁移到 In
 | Hades God Mode | 已实现 | 先锻体引导 + 哨兵零误报 |
 | Boxoban 数据集 | 参考 | 无 ML 需求；构造式已 100% 可解 |
 | 差异化路线图 | **采纳建议** | 每日挑战（seedSalt=日期哈希），低成本高社区价值 |
+
+### §21 更正：主模式 property test 覆盖已存在
+
+§21 原记录"主模式修途零 property test 覆盖"为**误判**——
+tests/property/ 目录含 10 个 cultivation-run/sokoban property test 文件
+（agenda/events/insight/legacy/preparation/progression/tribulation-
+settlement/prepared-board/tribulation-session），共 35 个测试用例，
+全部通过。这些测试在阶段 3 清理中因测试主模式 sim（keeper）而正确保留。
+无需新增 property test 覆盖。
