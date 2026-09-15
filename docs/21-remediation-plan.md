@@ -1382,3 +1382,14 @@ cultivation:metrics/check/cultivation-tune）。
 构建通过；浏览器关键 spec 13/13。
 
 **src/app 全部模块自 main.ts 可达——阶段 3 残留清零。**
+
+### 8.31 补充：@sim/roguelite 模块归档（2026-09-14）
+
+`src/sim/roguelite`（5 文件 / 483 行：combat/combatTypes/formulas/schedule/
+index）为旧 roguelite 设计阶段的战斗公式与日程模块。主模式
+（rogueliteProto surface）不消费该模块——实际消费方仅 2 个测试文件
+（roguelite-combat / roguelite-schedule property）。随阶段 3 一并归档：
+删除模块 + 从 @sim barrel 移除 re-export + 连带删除 2 个测试。
+
+验证：tsc 零错；单测 1063/1063（-13）；治理通过（594 files）；
+构建通过；cultivation:check 基线带通过。
