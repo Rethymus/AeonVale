@@ -131,7 +131,7 @@ describe('D27-e · 劫灰传承性质', () => {
     );
   });
 
-  test('PBT-D27-14 候选有界且唯一：任意合法碑记最多给八项知识和四件遗物', () => {
+  test('PBT-D27-14 候选有界且唯一：任意合法碑记最多给全部节点知识加田边批注、四件遗物', () => {
     fc.assert(
       fc.property(epitaphInputArb, input => {
         const epitaph = createCultivationAshEpitaph({
@@ -143,9 +143,10 @@ describe('D27-e · 劫灰传承性质', () => {
         const candidates = deriveCultivationLegacyCandidates(epitaph);
         const knowledgeIds = candidates.knowledge.map(candidate => candidate.id);
         const relicIds = candidates.relics.map(candidate => candidate.id);
+        const maxKnowledgeCount = CULTIVATION_INSIGHT_NODE_IDS.length + 1; // 全节点批注 + 前人田边批注
 
         expect(knowledgeIds.length).toBeGreaterThanOrEqual(1);
-        expect(knowledgeIds.length).toBeLessThanOrEqual(8);
+        expect(knowledgeIds.length).toBeLessThanOrEqual(maxKnowledgeCount);
         expect(relicIds.length).toBeGreaterThanOrEqual(1);
         expect(relicIds.length).toBeLessThanOrEqual(4);
         expect(new Set(knowledgeIds).size).toBe(knowledgeIds.length);

@@ -22,12 +22,16 @@ const INSIGHT_EFFECT_LABELS: Readonly<Record<CultivationInsightEffectTag, string
   'activity:farming:field-breathing': '读懂灵田的五行呼吸',
   'activity:alchemy:clear-furnace': '理清一道稳炉次序',
   'tribulation:block:thunder-guiding-stone': '解锁引雷阵石',
+  'tribulation:block:insulating-jade-seal': '解锁绝缘玉封',
   'tribulation:pill:warding-formula': '天劫前多得一次护持',
   'tribulation:preview:violet-omen': '提高下一劫的预见层级',
   'narrative:annotation:ash-vow': '读到劫灰中未尽的誓言'
 };
 
 let insightSurfaceSequence = 0;
+
+/** 网格上行节点：阵石支系（引雷→绝缘）。丹方支与劫兆走下行，起笔/末梢跨双行。 */
+const UPPER_BRANCH_NODE_IDS: ReadonlySet<string> = new Set(['field-breathing', 'thunder-guiding-stone', 'insulating-jade-seal']);
 
 function prerequisiteDepth(node: CultivationInsightNodeDefinition, nodesById: ReadonlyMap<string, CultivationInsightNodeDefinition>, visiting = new Set<string>()): number {
   if (node.prerequisiteNodeIds.length === 0 || visiting.has(node.id)) return 0;
@@ -215,7 +219,8 @@ export function createCultivationInsightSurface(options: CultivationInsightSurfa
       item.dataset.availability = status.availability;
       const depth = prerequisiteDepth(node, nodesById);
       item.style.gridColumn = String(Math.min(5, depth + 1));
-      item.style.gridRow = depth === 0 || depth >= 3 ? '1 / span 2' : node.id === 'field-breathing' || node.id === 'thunder-guiding-stone' ? '1' : '2';
+      // 列 = 拓扑深度；行按支系分层：起笔/末梢跨双行，阵石支在上、丹方支在下。
+      item.style.gridRow = depth === 0 || depth >= 4 ? '1 / span 2' : UPPER_BRANCH_NODE_IDS.has(node.id) ? '1' : '2';
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'cr-insight__node-button';

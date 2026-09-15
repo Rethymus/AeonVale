@@ -19,11 +19,11 @@ function budget(agendaIndex: number, unlockedThisAgenda = 0): CultivationInsight
 }
 
 describe('D27-c 残卷参悟 · 固定图契约', () => {
-  it('固定为七节点 DAG，并覆盖五类首切片节点', () => {
+  it('固定为八节点 DAG，并覆盖五类首切片节点', () => {
     const categories = new Set<CultivationInsightNodeCategory>(CULTIVATION_INSIGHT_NODES.map(node => node.category));
     const known = new Set(CULTIVATION_INSIGHT_NODES.map(node => node.id));
 
-    expect(CULTIVATION_INSIGHT_NODES).toHaveLength(7);
+    expect(CULTIVATION_INSIGHT_NODES).toHaveLength(8);
     expect(categories).toEqual(
       new Set(['activity-upgrade', 'array-stone', 'pill-recipe', 'tribulation-intel', 'narrative-annotation'])
     );
@@ -63,6 +63,7 @@ describe('D27-c 残卷参悟 · 固定图契约', () => {
     ['field-breathing', ['foundation-rhythm']],
     ['clear-furnace-sequence', ['foundation-rhythm']],
     ['thunder-guiding-stone', ['field-breathing']],
+    ['insulating-jade-seal', ['thunder-guiding-stone']],
     ['warding-pill-formula', ['clear-furnace-sequence']],
     ['violet-omen-rubbing', ['thunder-guiding-stone', 'warding-pill-formula']],
     ['ash-annotated-vow', ['violet-omen-rubbing']]
@@ -147,12 +148,13 @@ describe('D27-c 残卷参悟 · 固定图契约', () => {
     expect(unknownTarget).toMatchObject({ ok: false, error: { code: 'unknown-target-node' } });
   });
 
-  it('沿完整路径解锁后返回全部七项效果标签', () => {
+  it('沿完整路径解锁后返回全部八项效果标签', () => {
     const order: readonly CultivationInsightNodeId[] = [
       'foundation-rhythm',
       'field-breathing',
       'clear-furnace-sequence',
       'thunder-guiding-stone',
+      'insulating-jade-seal',
       'warding-pill-formula',
       'violet-omen-rubbing',
       'ash-annotated-vow'

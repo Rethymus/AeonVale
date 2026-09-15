@@ -175,6 +175,7 @@ export const CULTIVATION_KNOWLEDGE_LEGACY_IDS = [
   'knowledge:field-breathing',
   'knowledge:clear-furnace-sequence',
   'knowledge:thunder-guiding-stone',
+  'knowledge:insulating-jade-seal',
   'knowledge:warding-pill-formula',
   'knowledge:violet-omen-rubbing',
   'knowledge:ash-annotated-vow'
@@ -258,6 +259,12 @@ const KNOWLEDGE_BY_NODE: Readonly<Record<CultivationInsightNodeId, CultivationKn
     id: 'knowledge:thunder-guiding-stone',
     label: '引雷阵图残页',
     inheritedNodeId: 'thunder-guiding-stone',
+    startingEffect: startingEffect({ insight: 2 })
+  },
+  'insulating-jade-seal': {
+    id: 'knowledge:insulating-jade-seal',
+    label: '绝缘玉封残页',
+    inheritedNodeId: 'insulating-jade-seal',
     startingEffect: startingEffect({ insight: 2 })
   },
   'warding-pill-formula': {

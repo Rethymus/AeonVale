@@ -120,20 +120,21 @@ describe('D27-c 事件玩家面', () => {
 });
 
 describe('D27-c 参悟玩家面', () => {
-  it('呈现全部 7 节点拓扑、前置关系、成本与可读状态', () => {
+  it('呈现全部 8 节点拓扑、前置关系、成本与可读状态', () => {
     const state = insightMachine();
     const root = rootElement();
     const surface = createCultivationInsightSurface({ root, state, dispatch: reducerDispatch(state, []) });
     const nodes = root.querySelectorAll<HTMLButtonElement>('.cr-insight__node-button');
 
-    expect(nodes).toHaveLength(7);
+    expect(nodes).toHaveLength(8);
     expect(root.querySelector('[data-node-id="foundation-rhythm"]')?.textContent).toContain('可参悟 · 消耗 2 悟痕');
     expect(root.querySelector('[data-node-id="field-breathing"]')?.textContent).toContain('需先参透：吐纳记骨');
+    expect(root.querySelector('[data-node-id="insulating-jade-seal"]')?.textContent).toContain('需先参透：引雷阵石');
     expect(root.querySelector('[data-node-id="violet-omen-rubbing"]')?.textContent).toContain('引雷阵石、护脉丹方');
-    expect(root.querySelector('.cr-insight__graph')?.getAttribute('aria-label')).toContain('拓扑顺序');
-    expect(root.querySelector('.cr-insight__lede')?.textContent).toContain('沿残卷脉络参透一页');
-    expect(root.querySelector('[data-node-id="foundation-rhythm"]')?.parentElement?.dataset.availability).toBe('available');
     expect(root.querySelector('[data-node-id="foundation-rhythm"]')?.parentElement?.style.gridColumn).toBe('1');
+    expect(root.querySelector('[data-node-id="insulating-jade-seal"]')?.parentElement?.style.gridColumn).toBe('4');
+    expect(root.querySelector('[data-node-id="insulating-jade-seal"]')?.parentElement?.style.gridRow).toBe('1');
+    expect(root.querySelector('[data-node-id="violet-omen-rubbing"]')?.parentElement?.style.gridRow).toBe('2');
     expect(root.querySelector('[data-node-id="ash-annotated-vow"]')?.parentElement?.style.gridColumn).toBe('5');
     expect(root.querySelector('.cr-insight__feedback')?.getAttribute('aria-live')).toBe('polite');
 

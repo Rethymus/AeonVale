@@ -62,7 +62,7 @@ async function finishRoundStory(page: Page, destination: 'planning' | 'tribulati
 
   const insight = page.locator('.cr-insight');
   await expect(insight).toBeVisible();
-  await expect(insight.locator('.cr-insight__node-button')).toHaveCount(7);
+  await expect(insight.locator('.cr-insight__node-button')).toHaveCount(8);
   const continueButton = insight.locator('.cr-insight__continue');
   await expect(continueButton).toHaveText(/，查看劫兆$/);
   await continueButton.click();

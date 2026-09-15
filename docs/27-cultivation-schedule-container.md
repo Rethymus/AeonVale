@@ -707,7 +707,7 @@ src/app/cultivationRun/
 - `maxUnlocksPerAgenda = 1` 与 `unlockedThisAgenda` 由调用方阶段契约携带并由 sim 校验，落实“每轮最多打开一个节点”。
 - 事件与参悟的单元/性质测试已覆盖确定性、输入不可变、资源/悟痕守恒、拓扑前置、合法集合有界和单轮上限；D27-c 的纯 sim 范围可视为完成。
 - `src/app/cultivationRun/machine.ts` 已提供无 DOM、无持久化的纯应用状态机，覆盖 `planning → schedule-resolving → event → insight → planning / tribulation` 主路径及失败原子性。
-- 逐格结算页、事件双选页与七节点参悟页已经接入当前可玩 surface；键盘、触控、资源不足说明、焦点与 ARIA live 状态均有 jsdom/Playwright 门禁。
+- 逐格结算页、事件双选页与八节点参悟页已经接入当前可玩 surface；键盘、触控、资源不足说明、焦点与 ARIA live 状态均有 jsdom/Playwright 门禁。
 - 三个活动强化标签已真实改变后续日课：吐纳记骨强化苦练、田息同调强化灵田、澄炉次第降低炼丹副作用；重复标签不叠加，无关活动不受影响。
 - 事件历史与天劫标签、已解锁节点及累计效果会随同一世跨阶段保留，玩家不再只看到后台数值。
 

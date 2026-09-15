@@ -115,8 +115,8 @@ async function finishRoundWithAccessiblePhases(page: Page, destination: 'plannin
   await expect(insight).toBeVisible();
   await expect(insight.locator('.cr-insight__feedback')).toHaveAttribute('aria-live', 'polite');
   const nodes = insight.locator('.cr-insight__node-button');
-  await expect(nodes).toHaveCount(7);
-  for (let index = 0; index < 7; index += 1) {
+  await expect(nodes).toHaveCount(8);
+  for (let index = 0; index < 8; index += 1) {
     await expectFocusable(nodes.nth(index));
     await expectMinimumTouchTarget(nodes.nth(index));
   }
@@ -197,7 +197,7 @@ test.describe('修仙日程 · 无障碍与触控门禁', () => {
     await page.locator('.cr-event__button[data-affordable="true"]').first().click();
 
     const insightNodes = page.locator('.cr-insight__node-button');
-    await expect(insightNodes).toHaveCount(7);
+    await expect(insightNodes).toHaveCount(8);
     const nodeMetrics = await insightNodes.evaluateAll(elements => elements.map(element => {
       const box = element.getBoundingClientRect();
       const effect = element.querySelector('.cr-insight__node-effect');

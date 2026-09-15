@@ -25,6 +25,17 @@ describe('D27-c→D27-d · 离散效果适配', () => {
     });
   });
 
+  test('绝缘玉封解锁 insulator，双阵石标签合并去重', () => {
+    const result = interpretCultivationTribulationTags([
+      'tribulation:block:thunder-guiding-stone',
+      'tribulation:block:insulating-jade-seal',
+      'tribulation:block:thunder-guiding-stone'
+    ]);
+
+    expect(result.preparationModifiers.unlockedBlockKinds).toEqual(['conductor', 'insulator']);
+    expect(result.ignoredTags).toEqual([]);
+  });
+
   test('棋盘结构标签不降格为数值加成', () => {
     const result = interpretCultivationTribulationTags([
       'starting-herb:thunder',

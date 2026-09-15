@@ -16,7 +16,7 @@ export function interpretCultivationTribulationTags(
   let protectedHerbCountBonus = 0;
   let maxSurvivablePowerBonus = 0;
   let sourcePowerBonus = 0;
-  const unlockedBlockKinds: Array<'conductor'> = [];
+  const unlockedBlockKinds: Array<'conductor' | 'insulator'> = [];
   const boardModifierTags: string[] = [];
   const ignoredTags: string[] = [];
 
@@ -41,6 +41,9 @@ export function interpretCultivationTribulationTags(
         break;
       case 'tribulation:block:thunder-guiding-stone':
         if (!unlockedBlockKinds.includes('conductor')) unlockedBlockKinds.push('conductor');
+        break;
+      case 'tribulation:block:insulating-jade-seal':
+        if (!unlockedBlockKinds.includes('insulator')) unlockedBlockKinds.push('insulator');
         break;
       case 'starting-herb:thunder':
       case 'sword-scar-obstacle:1':

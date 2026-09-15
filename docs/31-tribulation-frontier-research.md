@@ -23,7 +23,7 @@
 | 手作模板 | 2 张兜底模板（TPL_A 单折 / TPL_B 双折+罚草） | `src/sim/sokoban/logic.ts` L35-57、回退 L115-136 |
 | 准备适配 | 落位后逐一重解认证，无法安全落位显式进 ignored 标签 | `src/sim/sokoban/prepared-board.ts` L76-161、L210-219 |
 | 会话编排 | undo 快照栈 + 护持开关；撤步按 P100 枚数折丹 | `src/sim/sokoban/tribulation-session.ts` L213-249 |
-| 残卷 | 固定 7 节点 DAG，每轮日程最多解锁 1 节点 | `src/sim/cultivation-run/insight.ts` L10、L54-111 |
+| 残卷 | 固定 8 节点 DAG（2026-09-15 增绝缘玉封，阵石支引雷→绝缘），每轮日程最多解锁 1 节点 | `src/sim/cultivation-run/insight.ts` L12-21、L56-129 |
 | 灵草 | **仅 1 种**（`conductive-moss`），只有数量轴 | `src/sim/cultivation-run/preparation.ts` L7、L135 |
 | 引导 UI | 四格图例 + "认证 N 步 · 余量 M" 文本；R 撤步只写在帮助文案里 | `src/app/rogueliteProto/surface.ts` L2108、L2129 |
 
@@ -104,7 +104,7 @@
 
 ### 3.2 本项目组合空间盘点（现状）
 
-三轴现状极不对等：**残卷轴** 7 节点（活动升级 3 / 阵石 1 / 丹方 1 / 劫兆情报 1 / 叙事 1），仅做**合法性门**；**阵石轴** 3 kind、0 修饰（mirror 只会 cw 折、conductor 只跨单格 rift、insulator 永久阻断）；**灵草轴** 1 kind × 数量。有效劫式 = requiredBlockKinds 的 4 个子集 → **组合空间 ≈ 4 × stage**，"组合"实际只是"解锁先后"。preparation/prepared-board 已把"阵石必须被最短解使用"做实（placedBlockKinds 过滤），扩展缝很干净。
+三轴现状极不对等：**残卷轴** 8 节点（活动升级 3 / 阵石 2 / 丹方 1 / 劫兆情报 1 / 叙事 1），仅做**合法性门**；**阵石轴** 3 kind、0 修饰（mirror 只会 cw 折、conductor 只跨单格 rift、insulator 永久阻断）；**灵草轴** 1 kind × 数量。有效劫式 = requiredBlockKinds 的 4 个子集 → **组合空间 ≈ 4 × stage**，"组合"实际只是"解锁先后"。preparation/prepared-board 已把"阵石必须被最短解使用"做实（placedBlockKinds 过滤），扩展缝很干净。
 
 ### 3.3 建议（参数级）：三轴正交契约 + 首批修饰
 

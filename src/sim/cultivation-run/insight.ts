@@ -1,7 +1,7 @@
 /**
  * D27-c 残卷参悟纯 sim。
  *
- * 固定七节点图只负责知识解锁契约：不抽样、不计时、不触碰 UI。调用方必须把
+ * 固定八节点图只负责知识解锁契约：不抽样、不计时、不触碰 UI。调用方必须把
  * `budget` 随参悟阶段状态一起保存，成功后使用返回的新 budget，才能落实每轮最多
  * 一个节点的限制。
  */
@@ -14,6 +14,7 @@ export const CULTIVATION_INSIGHT_NODE_IDS = [
   'field-breathing',
   'clear-furnace-sequence',
   'thunder-guiding-stone',
+  'insulating-jade-seal',
   'warding-pill-formula',
   'violet-omen-rubbing',
   'ash-annotated-vow'
@@ -33,6 +34,7 @@ export const CULTIVATION_INSIGHT_EFFECT_TAGS = [
   'activity:farming:field-breathing',
   'activity:alchemy:clear-furnace',
   'tribulation:block:thunder-guiding-stone',
+  'tribulation:block:insulating-jade-seal',
   'tribulation:pill:warding-formula',
   'tribulation:preview:violet-omen',
   'narrative:annotation:ash-vow'
@@ -50,7 +52,7 @@ export interface CultivationInsightNodeDefinition {
   readonly effectTags: readonly CultivationInsightEffectTag[];
 }
 
-/** 固定 DAG：一根起笔、两条活动分支、阵石/丹方汇流，再抵达劫兆与叙事批注。 */
+/** 固定 DAG：一根起笔、两条活动分支，阵石支先引雷再绝缘、丹方支汇流，再抵达劫兆与叙事批注。 */
 export const CULTIVATION_INSIGHT_NODES = [
   {
     id: 'foundation-rhythm',
@@ -83,6 +85,14 @@ export const CULTIVATION_INSIGHT_NODES = [
     insightCost: 4,
     prerequisiteNodeIds: ['field-breathing'],
     effectTags: ['tribulation:block:thunder-guiding-stone']
+  },
+  {
+    id: 'insulating-jade-seal',
+    label: '绝缘玉封',
+    category: 'array-stone',
+    insightCost: 4,
+    prerequisiteNodeIds: ['thunder-guiding-stone'],
+    effectTags: ['tribulation:block:insulating-jade-seal']
   },
   {
     id: 'warding-pill-formula',

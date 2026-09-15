@@ -21,7 +21,6 @@ import { DEFAULT_BALANCE, withDefaultBalanceParams, type BalanceParams } from '@
 import { Rng } from '@sim/core/rng';
 import {
   CULTIVATION_INSIGHT_MAX_UNLOCKS_PER_AGENDA,
-  CULTIVATION_INSIGHT_NODE_IDS,
   applyCultivationTribulationOutcome,
   createCultivationAshEpitaph,
   createCultivationRunState,
@@ -67,6 +66,22 @@ const POLICY_TEMPLATES: Readonly<Record<PolicyId, readonly CultivationActivityId
   // docs/32 §14：训练+丹道混合型——体魄与护持丹药同步成型，冲击飞升路径的代理。
   hybrid: ['training', 'training', 'training', 'alchemy', 'farming', 'rest']
 };
+
+/**
+ * 参悟解锁优先级：bot 按此顺序取首个可负担节点。与绝缘玉封（insulating-jade-seal）
+ * 入图前的有效解锁序逐位一致，末尾追加新节点——保持基线带可比性；绝缘石仅在
+ * 超长对局（≥8 次参悟）进入棋盘。docs/35 §五。
+ */
+const INSIGHT_UNLOCK_PRIORITY: readonly CultivationInsightNodeId[] = [
+  'foundation-rhythm',
+  'field-breathing',
+  'clear-furnace-sequence',
+  'thunder-guiding-stone',
+  'warding-pill-formula',
+  'violet-omen-rubbing',
+  'ash-annotated-vow',
+  'insulating-jade-seal'
+];
 
 /** 境界未解锁的槽位替换为低阶通用活动（保持模板节奏与自持性）。 */
 function policySlots(policy: PolicyId, stage: number, rng: Rng, food = Infinity, herbs = Infinity): CultivationActivityId[] {
@@ -257,9 +272,9 @@ export function runLife(seed: number, policy: PolicyId, params: BalanceParams, m
         }
       }
 
-      // 参悟：按固定顺序取首个未解锁且可负担的节点。
+      // 参悟：按优先级取首个未解锁且可负担的节点。
       if (state.insight >= 2) {
-        for (const nodeId of CULTIVATION_INSIGHT_NODE_IDS) {
+        for (const nodeId of INSIGHT_UNLOCK_PRIORITY) {
           if (unlockedNodeIds.includes(nodeId)) continue;
           const unlock = unlockCultivationInsightNode({
             state,
