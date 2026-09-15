@@ -219,6 +219,7 @@ async function main(): Promise<void> {
       assetUrlForId: id => assetUrlForId(assetStore, id),
       audio: {
         playSfx: id => audio.playSfx(id as SfxId),
+        playSfxAt: (id, pan) => audio.playSfxAt(id as SfxId, pan),
         setMusicContext: (zone, tension) => audio.setMusicContext({ season: 'spring', zone, tension, active: true })
       },
       onReturnToTitle: () => flowView?.dispatch({ type: 'return-title-from-roguelite-proto' }),

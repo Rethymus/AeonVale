@@ -161,8 +161,31 @@ golden replay 4/4 / cultivation:check 基线带 / governance 三门，全部通�
 
 ### 6.2 后续待办
 
-- §五 2（BGM 离线渲染）、§五 3（雷声方向感）：待实施
+- §五 3（雷声方向感）：**已落地**（见 §6.3）
+- §五 1（安全练习板）：绝缘石已通过 DAG 前置（引雷→绝缘）获得
+  "先易后难"渐进；首现无干扰练习板仍待真人试玩确认需求
 - §五 1（安全练习板）：绝缘石已通过 DAG 前置（引雷→绝缘）获得
   "先易后难"渐进；首现无干扰练习板仍待真人试玩确认需求
 - 真人试玩工作单：docs/30 §六（零苦练首劫死率 / ascetic 首劫死率 /
   「先锻体」引导触达）
+
+### 6.3 雷击空间音效（已落地）＋ BGM 离线渲染否决记录（2026-09-16）
+
+**§五 3 落地**：主模式天劫棋盘原本没有任何"雷落"瞬时的声音——只有结算后的
+突破/爆炸音。本轮补齐最后一声雷：
+
+| 文件 | 变更 |
+| ---- | ---- |
+| `src/io/audio.ts` | 新增 `'thunder-strike'` SfxId 与合成层（近场 Farnell 变体：噪声高通 2.5k→400 劈击 + 正弦 70→40Hz 雷体 + 0.45s 程序化 IR 尾）；新增 `playSfxAt(id, pan)`——临时 StereoPannerNode 汇点（`sfxSink`），`tone`/`noiseBurst`/`sfxrSynth` 三帮助器优先接 sink，同步派发后还原 |
+| `src/app/rogueliteProto/surface.ts` | `RogueliteProtoAudio` 桥加 `playSfxAt?`；`syncTribulationSession` 在 outcome 首现（唯一收口点）时按「光路源 - 肉身」横向偏移计算 pan（clamp ±0.8）发声；`timeout`（步数耗尽，无雷落）不发声 |
+| `src/app/main.ts` | roguelite 桥装配 `playSfxAt` |
+
+**§五 2 否决（有据）**：Tone.js 的 Synth 建立在原生 WebAudio 节点
+（OscillatorNode/增益包络）上，逐样本 DSP 跑在浏览器音频线程的原生代码里，
+主线程只承担 Transport/Part 的事件调度——"实时合成开销"比预想小一个量级。
+离线预渲染需付出缓存内存（每 context 键 ~14MB float32 立体声）、资产重量或
+过渡接缝的代价，收益不成比例。维持 docs/35 §三 判定原文："仅在需要自定义
+DSP 或离线渲染时引入原生 Web Audio API，否则继续使用 Tone.js"。
+
+**验证**：typecheck / 1015 单测 / 浏览器 45/45（keypoint 用例在真实
+Chromium + 真实 WebAudio 下驱动天劫结算，新路径执行无错）全部通过。

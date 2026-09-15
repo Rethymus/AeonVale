@@ -45,7 +45,9 @@ export type SfxId =
   | 'codex-page'
   | 'codex-unlock'
   | 'ui-fontsize'
-  | 'e7-glitch';
+  | 'e7-glitch'
+  // 主模式天劫雷击落体音（docs/35 §6.3）：光路首次击中肉身的瞬间，按源-肉身方位 pan。
+  | 'thunder-strike';
 export type BgmMode = 'calm' | 'tense' | 'off';
 
 // 与 app/narrationTypes.ts 的 Speaker 重复定义，避免 io 层反向依赖 app。
@@ -318,6 +320,12 @@ export class AudioEngine {
   private sfxFileResolver: ((id: string) => string | undefined) | null = null;
   private sfxFileBuffers = new Map<string, AudioBuffer>();
   private sfxFileLoading = new Map<string, Promise<AudioBuffer | null>>();
+  /**
+   * 空间化 SFX 的临时汇点：playSfxAt 置为 StereoPannerNode，帮助器（tone/noiseBurst/
+   * sfxrSynth）优先接它；普通 playSfx 恒为 null（直连 master）。合成图构建是同步的，
+   * 单线程下"置入→派发→还原"不会交错。
+   */
+  private sfxSink: AudioNode | null = null;
 
   /** 首次用户手势后调用（浏览器策略）。无 Web Audio 则 no-op。 */
   init(): void {
@@ -367,8 +375,7 @@ export class AudioEngine {
     if (preset) {
       this.sfxrSynth(preset, now);
       return;
-    }
-    switch (id) {
+    }    switch (id) {
       case 'till':
         // 翻地：先给低频落锄，再叠一层短促土屑噪声，避免在真实浏览器里过轻。
         this.tone(110, 0.1, 0.24, now, 'sine');
@@ -774,11 +781,81 @@ export class AudioEngine {
         ringOsc.stop(now + 0.8);
         break;
       }
+      case 'thunder-strike': {
+        // 近场雷击（docs/35 §6.3）：比 narration-thunder 更近/更亮——
+        // L1 劈击（噪声高通 2.5k→400 扫频，0.28s）+ L2 雷体（正弦 70→40Hz）
+        // + L3 短卷积尾。全部接入 sink（playSfxAt 时为 StereoPanner）。
+        const sink = this.sfxSink ?? master;
+        const strike = ctx.createOscillator();
+        strike.type = 'sine';
+        strike.frequency.setValueAtTime(70, now);
+        strike.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+        const strikeEnv = ctx.createGain();
+        strikeEnv.gain.setValueAtTime(0, now);
+        strikeEnv.gain.linearRampToValueAtTime(0.55, now + 0.012);
+        strikeEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+        strike.connect(strikeEnv);
+        strikeEnv.connect(sink);
+        strike.start(now);
+        strike.stop(now + 0.75);
+        if (this.noise) {
+          const crack = ctx.createBufferSource();
+          crack.buffer = this.noise;
+          crack.loop = true;
+          const hp = ctx.createBiquadFilter();
+          hp.type = 'highpass';
+          hp.frequency.setValueAtTime(2500, now);
+          hp.frequency.exponentialRampToValueAtTime(400, now + 0.26);
+          const crackEnv = ctx.createGain();
+          crackEnv.gain.setValueAtTime(0, now);
+          crackEnv.gain.linearRampToValueAtTime(0.45, now + 0.008);
+          crackEnv.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+          crack.connect(hp);
+          hp.connect(crackEnv);
+          crackEnv.connect(sink);
+          crack.start(now);
+          crack.stop(now + 0.32);
+          // 程序化短 IR 尾（0.45s 指数衰减噪声 → 近墙回响）。
+          const irLen = Math.floor(ctx.sampleRate * 0.45);
+          const irBuf = ctx.createBuffer(1, irLen, ctx.sampleRate);
+          const irData = irBuf.getChannelData(0);
+          for (let ii = 0; ii < irLen; ii++) irData[ii] = (Math.random() * 2 - 1) * Math.exp((-3 * ii) / irLen);
+          const conv = ctx.createConvolver();
+          conv.buffer = irBuf;
+          const tailIn = ctx.createGain();
+          tailIn.gain.value = 0.35;
+          crackEnv.connect(tailIn);
+          tailIn.connect(conv);
+          conv.connect(sink);
+        }
+        break;
+      }
       case 'ui':
       default:
         this.tone(660, 0.05, 0.15, now, 'square');
         break;
     }
+  }
+
+  /**
+   * 空间化 SFX（docs/35 §6.3）：pan ∈ [-1,1]（-1=全左，0=中，1=全右）。
+   * 通过临时 sfxSink（StereoPannerNode）复用既有合成路径；无音频环境时 no-op。
+   */
+  playSfxAt(id: SfxId, pan: number): void {
+    const ctx = this.ctx;
+    const master = this.master;
+    if (!ctx || !master) return;
+    const panner = ctx.createStereoPanner();
+    panner.pan.value = Math.max(-1, Math.min(1, pan));
+    panner.connect(master);
+    this.sfxSink = panner;
+    try {
+      this.playSfx(id);
+    } finally {
+      this.sfxSink = null;
+    }
+    // 图已同步构建完毕；延迟断开避免截断仍在发声的包络尾。
+    window.setTimeout(() => panner.disconnect(), 6000);
   }
 
   /**
@@ -827,7 +904,7 @@ export class AudioEngine {
 
   private tone(freq: number, dur: number, gain: number, start: number, type: OscillatorType): void {
     const ctx = this.ctx!;
-    const master = this.master!;
+    const sink = this.sfxSink ?? this.master!;
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = type;
@@ -836,14 +913,14 @@ export class AudioEngine {
     g.gain.linearRampToValueAtTime(gain, start + 0.01);
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     o.connect(g);
-    g.connect(master);
+    g.connect(sink);
     o.start(start);
     o.stop(start + dur + 0.02);
   }
 
   private noiseBurst(dur: number, gain: number, filterFreq: number, start: number): void {
     const ctx = this.ctx!;
-    const master = this.master!;
+    const sink = this.sfxSink ?? this.master!;
     if (!this.noise) return;
     const src = ctx.createBufferSource();
     src.buffer = this.noise;
@@ -855,7 +932,7 @@ export class AudioEngine {
     g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
     src.connect(filter);
     filter.connect(g);
-    g.connect(master);
+    g.connect(sink);
     src.start(start);
     src.stop(start + dur);
   }
@@ -863,7 +940,7 @@ export class AudioEngine {
   /** 回放一段 jsfxr 风格 SFX；每次叠加 ±2% playbackRate 抖动以"避单调"。 */
   private sfxrSynth(params: SfxrParams, start: number): void {
     const ctx = this.ctx!;
-    const master = this.master!;
+    const sink = this.sfxSink ?? this.master!;
     const samples = renderSfxrSamples(ctx.sampleRate, params);
     const buf = ctx.createBuffer(1, samples.length, ctx.sampleRate);
     buf.getChannelData(0).set(samples);
@@ -873,7 +950,7 @@ export class AudioEngine {
     const g = ctx.createGain();
     g.gain.value = 1;
     src.connect(g);
-    g.connect(master);
+    g.connect(sink);
     src.start(start);
     src.stop(start + params.duration + 0.02);
   }

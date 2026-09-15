@@ -50,6 +50,8 @@ import { clearCultivationJourney, loadCultivationJourney, saveCultivationJourney
 
 export interface RogueliteProtoAudio {
   playSfx?(id: string): void;
+  /** 空间化 SFX：pan ∈ [-1,1]（-1=左，1=右），无音频环境时由 io 层 no-op。 */
+  playSfxAt?(id: string, pan: number): void;
   setMusicContext?(zone: 'farm' | 'tribulation', tension: 'calm' | 'tense'): void;
 }
 
@@ -2514,7 +2516,16 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     tribulationOutcome = nextSession.outcome;
     state = tribulationOutcome?.fatal ? { ...nextSession.puzzle, status: 'lost' } : tribulationOutcome?.deathPrevented ? { ...nextSession.puzzle, status: 'won' } : nextSession.puzzle;
     tribulationFeedback = null;
-    if (!hadOutcome && tribulationOutcome) settleTribulationOutcome();
+    if (!hadOutcome && tribulationOutcome) {
+      // docs/35 §6.3 雷击方向感：雷从光路源侧传来，按「源-肉身」横向偏移定 pan；
+      // 步数耗尽（timeout）没有雷落，不发声。
+      if (tribulationOutcome.result !== 'timeout') {
+        const width = Math.max(1, state.board.width);
+        const pan = Math.max(-0.8, Math.min(0.8, ((state.board.sourcePos.x - state.player.x) / width) * 1.6));
+        audio?.playSfxAt?.('thunder-strike', pan);
+      }
+      settleTribulationOutcome();
+    }
     draw();
     syncHud();
   }
