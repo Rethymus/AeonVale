@@ -2519,15 +2519,49 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     syncHud();
   }
 
+  // docs/34 §3.1 输入缓冲：150ms 内的连续按键排队，前一步完成后消费。
+  let pendingDir: Dir | null = null;
+  let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
   function tryMove(dir: Dir): void {
     if (phase !== 'tribulation' || !tribulationSession || tribulationSession.outcome) return;
+    // 检测推石：目标格有方块且推入格可用
+    const dv = dir === 'up' ? { x: 0, y: -1 } : dir === 'down' ? { x: 0, y: 1 } : dir === 'left' ? { x: -1, y: 0 } : { x: 1, y: 0 };
+    const tx = state.player.x + dv.x, ty = state.player.y + dv.y;
+    const tIdx = ty * state.board.width + tx;
+    const pushed = (state.board.blocks[tIdx] ?? 'none') !== 'none';
     const result = transitionTribulationSession(tribulationSession, { type: 'move', dir });
     if (!result.ok) {
       tribulationFeedback = result.error.code === 'move-rejected' ? '这个方向走不通，换一条路。' : '天劫已经结算，不能继续移动。';
       help.innerHTML = helpText();
       return;
     }
+    // docs/34 §3.2 推石反馈：微震屏 + 推石粒子
+    if (pushed) {
+      const bcx = tx * TILE + TILE / 2, bcy = ty * TILE + TILE / 2;
+      triggerShake(2);
+      spawnBurst(bcx, bcy, [P.beamGlow, P.boardBorder], 8);
+    }
     syncTribulationSession(result.state);
+    // 150ms 输入缓冲消费
+    if (pendingDir) {
+      const buffered = pendingDir;
+      pendingDir = null;
+      if (pendingTimer) { clearTimeout(pendingTimer); pendingTimer = null; }
+      setTimeout(() => tryMove(buffered), 30);
+    }
+  }
+
+  function bufferMove(dir: Dir): void {
+    pendingDir = dir;
+    if (pendingTimer) clearTimeout(pendingTimer);
+    pendingTimer = setTimeout(() => {
+      if (pendingDir) {
+        const d = pendingDir;
+        pendingDir = null;
+        tryMove(d);
+      }
+    }, 150);
   }
 
   function useUndo(): void {
