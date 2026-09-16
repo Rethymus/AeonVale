@@ -19,7 +19,7 @@
 | 模块 | 现状 | 关键位置 |
 |---|---|---|
 | 生成器 | 构造式 cw 光路 + 单 mirror 后退扰动 + 有界 BFS 认证 + 强制初始未解 + 32 次重试 | `src/sim/sokoban/generator.ts`：buildPath L205、mirror 扰动 L370-386、solveBoard L131、MAX_SOLVE_NODES=40000 L27、MAX_GENERATED_SOLUTION_MOVES=96 L28、预算余量 L432-433 |
-| 阵石接入 | 特性随 stage 概率解锁：p(绝缘)=min(0.45+0.04·stage, 0.75)、p(水石)=min(0.4+0.05·stage, 0.8) | `generator.ts` L335-346；水桥/绝缘闸构造 L303-333 |
+| 阵石接入 | **严格知识门控（2026-09-16，docs/35 §6.5）**：特性由调用方（preparation.unlockedBlockKinds，即参悟 DAG）声明，stage 概率注入已移除；wide 桥双道筛选使实际附着率对齐调参值 | `generator.ts` selectedFeatureKinds/installConductorBridge；水桥/绝缘闸构造同前 |
 | 手作模板 | 2 张兜底模板（TPL_A 单折 / TPL_B 双折+罚草） | `src/sim/sokoban/logic.ts` L35-57、回退 L115-136 |
 | 准备适配 | 落位后逐一重解认证，无法安全落位显式进 ignored 标签 | `src/sim/sokoban/prepared-board.ts` L76-161、L210-219 |
 | 会话编排 | undo 快照栈 + 护持开关；撤步按 P100 枚数折丹 | `src/sim/sokoban/tribulation-session.ts` L213-249 |

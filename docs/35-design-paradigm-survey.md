@@ -132,13 +132,14 @@ EOF
 
 ## 六、执行记录（2026-09-15 当轮落地）
 
-### 6.1 绝缘玉封参悟节点（已落地）——修复 insulator 真实不可达
+### 6.1 绝缘玉封参悟节点（已落地）——补全绝缘石的知识解锁链
 
-调研过程中发现比"安全练习板"更根本的问题：**绝缘石（insulator）在真实
-对局中没有任何解锁入口**——`interpretCultivationTribulationTags` 只处理
-`tribulation:block:thunder-guiding-stone`（引雷阵石 → conductor），
-`insulator` 仅存在于测试 keypoint（surface.ts 的 `['conductor','insulator']`
-硬编码）。生成器的绝缘封路构造（`installInsulatorSeal`）在真实游玩不可达。
+调研过程中发现参悟 DAG 与阵石解锁链的断层：`interpretCultivationTribulationTags`
+只处理 `tribulation:block:thunder-guiding-stone`（引雷阵石 → conductor），
+**不存在解锁绝缘石的参悟节点**。当时误判为「绝缘石真实不可达」——实际上
+旧 `selectedFeatureKinds` 有 stage 概率注入（stage≥1 约 49% 概率白送绝缘特性），
+绝缘板早已出现，只是**玩家无法控制、与知识进度脱钩**（§6.5 据此实施严格知识
+门控）。本节修复把绝缘石变成确定性解锁，方向正确；动机表述以本勘误为准。
 
 修复（The Witness"约束渐进"范式落地：阵石支系 引雷阵石 → 绝缘玉封，
 玩家先在 conductor 板建立折射直觉，再引入阻断约束）：
@@ -212,3 +213,24 @@ Chromium + 真实 WebAudio 下驱动天劫结算，新路径执行无错）全�
 
 **验证**：typecheck / 浏览器 45/45（含新 HUD 断言）/ 桌面+844×390 截图
 确认单行渲染无溢出。
+
+### 6.5 严格知识门控（已落地，2026-09-16）——§6.1 勘误的工程结论
+
+§6.1 的勘误（stage 概率注入使绝缘板与知识进度脱钩）引出本轮主改动：
+**移除旁路，阵石特性严格由参悟 DAG 声明**。
+
+| 文件 | 变更 |
+| ---- | ---- |
+| `src/sim/sokoban/generator.ts` | `selectedFeatureKinds` 移除 stage 概率注入；`installConductorBridge` wide 双道筛选（实际附着率 ~1.7% → 22.5%，对齐调参 20%） |
+| `tests/unit/sokoban-generator.test.ts` | 新增「知识门控」钉子测试（无 options 恒 ['mirror']）；劫式组合测试改显式请求 |
+| `tests/unit/sokoban-frontier-upgrades.test.ts` | 带收敛/宽脉桥测试改显式请求（保留原测试意图） |
+| `tests/replay/fixtures/cultivation/…replay.json` | 生成序列变化，按策略 `--init` 全新重授权 |
+| `docs/32` §23 | 门控后分阶分群体数据 + 基线带免重校准证据 |
+
+**设计依据**：docs/31 §3.3 正交契约（残卷轴=合法性门）+ §3.3 P2（稀有度
+残卷门控）+ The Witness「新机制首现可控」（§2.2）。玩家现在必须参悟
+引雷阵石/绝缘玉封才会见到对应劫式——知识获得与机制登场严格同步。
+
+**数据结论**：解锁群体 stage 2-6 全带内；未解锁群体中盘低于带心（预期
+代价，预算自适应补偿）；`cultivation:check` 基线带**免重校准**带内
+（hybrid 飞升率 87.5%）。细节见 docs/32 §23。
