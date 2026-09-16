@@ -251,3 +251,26 @@ Chromium + 真实 WebAudio 下驱动天劫结算，新路径执行无错）全�
 解锁（真实玩家路径不受 bot 优先级约束）。内容价值真实，非摆设。
 bot 端 thunder-guiding-stone 8/8 全解锁 ⇒ 严格门控后 conductor 板照常
 进入 bot 对局，与 §23 基线带免重校准的结论互洽。
+
+### 6.7 新阵石首现教学板（已落地，2026-09-16）
+
+§6.5 严格门控的后续一刀（§2.2 The Witness 式首现可控的最后一块）：玩家
+campaign 中**首次结算含某阵石特性的劫式之前**，该类特性首现的棋盘保证
+无干扰构造——关闭全部修饰（wide/mirror-ccw/burning）并把生成器灵草封顶
+1 株，首现注意力留给新机制本身。
+
+| 文件 | 变更 |
+| ---- | ---- |
+| `src/sim/sokoban/generator.ts` | `GenerateBoardOptions.teaching`：修饰全关 + 灵草 ≤1 |
+| `src/sim/cultivation-run/types.ts` | `conductorBoardsSettled` / `insulatorBoardsSettled` 可选计数（历代累计，旧档缺省 0） |
+| `src/sim/cultivation-run/agenda.ts` | 创建状态初始化 0/0 |
+| `src/sim/cultivation-run/tribulation-settlement.ts` | 请求可选 `boardKinds`，结算时累计；**身死未结算不计数——继承者首见教学板会重新触发（重教语义）** |
+| `src/app/rogueliteProto/surface.ts` | `buildTribulationBoard` 按「已解锁 ∧ 从未结算」计算 teaching；结算回写 boardKinds |
+| 测试 | generator teaching（无修饰/灵草≤1/仍可解 + 对照）、settlement 计数（旧档从 0 起计/缺省不触碰）、agenda 默认状态形状 |
+
+**判定语义**：教学触发条件 =「该特性已解锁 ∧ 该特性从未被结算」。换代保留
+计数：一旦某特性在任意一世结算过一次，后世不再重复教学；若玩家死在首块
+教学板上（无结算），继承者面对的同特性首板仍是教学板。
+
+**验证**：typecheck / 1067 全量 / 浏览器 45/45 / 基线带免重校准 /
+golden replay `--init` 重授权 4/4（state 序列化新增两字段）全部通过。
