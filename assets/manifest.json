@@ -1883,11 +1883,14 @@
     },
     {
       "id": "logo.emblem",
-      "path": "logo/logo-emblem.png",
-      "type": "png",
-      "checksum": "4498ee101660dbc6fe59d58b8d4638f617a6bf37bf5ee02bc8f1c711407afce6",
+      "path": "logo/logo-emblem.webp",
+      "type": "webp",
+      "checksum": "8939d958d81bbafb03fa64bb1846d715bdfc332d6cb898779fa3ceb3ec60b48f",
       "license": "AI-Generated",
-      "source": "gpt-image-2 /images/generations emblem (herb+lightning+soil ink talisman, ink+spirit-gold); trim/square via tools/compose-logo.py; 不量化(logo 保留高细节)"
+      "source": "gpt-image-2 /images/generations emblem (herb+lightning+soil ink talisman, ink+spirit-gold); trim/square via tools/compose-logo.py; 不量化(logo 保留高细节)",
+      "human_edits": [
+        "2026-09-16 PNG→WebP q85 性能转写（docs/32 §24）；原 PNG 保留作 provenance"
+      ]
     },
     {
       "id": "logo.full",
@@ -2162,9 +2165,9 @@
     },
     {
       "id": "map.farmstead-courtyard-v1",
-      "path": "maps/map.farmstead-courtyard-v1.png",
-      "type": "png",
-      "checksum": "9b9241b9ea4610bd4b873ffb2528eebda955b8040e46ffe83bde072ffa2eab26",
+      "path": "maps/map.farmstead-courtyard-v1.webp",
+      "type": "webp",
+      "checksum": "28c034fb722df3169d5f57c33d704fa746a66febe7fa9d460abce66a88c8eeae",
       "license": "AI-Generated",
       "source": "gpt-image-2 via relay; AeonVale 2026-07 art overhaul v1; motif=农庄庭院操作地图概念",
       "src": {
@@ -2176,7 +2179,9 @@
         "ref_imgs": [],
         "generated_at": "2026-07-19T15:36:13.814Z"
       },
-      "human_edits": [],
+      "human_edits": [
+        "2026-09-16 PNG→WebP q82 性能转写（LCP 优化，docs/32 §24）；原 PNG 保留作 provenance/master_ref"
+      ],
       "ai_disclosed": true
     },
     {
