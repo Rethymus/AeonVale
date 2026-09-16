@@ -220,7 +220,7 @@ describe('public demo application shell', () => {
 
     expect(titleMarkup).toContain('class="title-backdrop"');
     expect(titleMarkup).toContain('class="title-backdrop-art"');
-    expect(titleMarkup).toContain('src="./maps/map.farmstead-courtyard-v1.png"');
+    expect(titleMarkup).toContain('src="./maps/map.farmstead-courtyard-v1.webp"');
     expect(titleMarkup).toContain('fetchpriority="high"');
   });
 
