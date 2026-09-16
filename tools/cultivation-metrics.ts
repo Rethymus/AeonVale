@@ -132,6 +132,8 @@ export interface LifeOutcome {
   readonly maxStage: number;
   readonly generations: number;
   readonly tribulations: readonly TribulationRecord[];
+  /** 本世全部代际累计参悟解锁（按代拼接，供解锁分布聚合）。 */
+  readonly insightUnlocks: readonly CultivationInsightNodeId[];
 }
 
 type RecordStep = (label: string) => void;
@@ -185,6 +187,7 @@ export function runLife(seed: number, policy: PolicyId, params: BalanceParams, m
   let maxStage = 0;
   let lifeIndex = 0;
   let insufficientStreak = 0;
+  const insightUnlocks: CultivationInsightNodeId[] = [];
 
   let state: CultivationRunState | null = null;
 
@@ -290,6 +293,7 @@ export function runLife(seed: number, policy: PolicyId, params: BalanceParams, m
             state = unlock.state;
             unlockedNodeIds = unlock.unlockedNodeIds;
             effectTags = unlock.effectTags;
+            insightUnlocks.push(nodeId);
             break;
           }
         }
@@ -368,7 +372,7 @@ export function runLife(seed: number, policy: PolicyId, params: BalanceParams, m
     }
   }
 
-  return { finalStatus, deathCause, maxStage, generations, tribulations };
+  return { finalStatus, deathCause, maxStage, generations, tribulations, insightUnlocks };
 }
 
 // ---------------------------------------------------------------------------
@@ -501,6 +505,8 @@ function main(): void {
     console.log(`  渡劫结果: ${counts(tribResults)}`);
     console.log(`  换代代数: mean=${meanGenerations.toFixed(2)} median=${median(generationsValues)} max=${Math.max(...generationsValues, 0)}`);
     console.log(`  最高境界: ${counts(stages.map(String))}（median=${stageMedian}）`);
+    const unlockNodes = outcomes.flatMap(o => o.insightUnlocks);
+    console.log(`  参悟解锁分布: ${counts(unlockNodes) || '（无）'}`);
     console.log(
       `  飞升率 ${((ascended / total) * 100).toFixed(1)}% Wilson[${lo.toFixed(3)}, ${hi.toFixed(3)}]｜perfect 占比 ${(perfectShare * 100).toFixed(1)}%｜overload 死因占比 ${(overloadShare * 100).toFixed(1)}%\n`
     );

@@ -234,3 +234,20 @@ Chromium + 真实 WebAudio 下驱动天劫结算，新路径执行无错）全�
 **数据结论**：解锁群体 stage 2-6 全带内；未解锁群体中盘低于带心（预期
 代价，预算自适应补偿）；`cultivation:check` 基线带**免重校准**带内
 （hybrid 飞升率 87.5%）。细节见 docs/32 §23。
+
+### 6.6 绝缘玉封可达性核查（2026-09-16）
+
+`cultivation-metrics` 新增「参悟解锁分布」统计（LifeOutcome.insightUnlocks
+按代累计聚合）。seeds=8 × 换代上限 4 实测：
+
+| 策略 | 解锁分布 |
+| ---- | -------- |
+| hybrid（飞升代理） | foundation:8 field:8 clear-furnace:8 **thunder:8** warding:7 violet:2 **insulating-jade-seal:2** ash:1 |
+| ascetic | foundation:8 field:4 clear-furnace:1 |
+| balanced / herbalist | foundation:14 / 13（早期过载身死，参悟经济未展开） |
+
+判读：绝缘玉封在 bot 的**故意末位**优先级下于 2/8 飞升 campaign 可达；
+对玩家它是 cost 4、紧随引雷阵石的可选深度节点——想要绝缘内容可主动提前
+解锁（真实玩家路径不受 bot 优先级约束）。内容价值真实，非摆设。
+bot 端 thunder-guiding-stone 8/8 全解锁 ⇒ 严格门控后 conductor 板照常
+进入 bot 对局，与 §23 基线带免重校准的结论互洽。
