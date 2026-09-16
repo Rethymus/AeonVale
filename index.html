@@ -8,6 +8,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="" />
     <title>永恒山谷：大道之歌 · Aeon Vale</title>
+    <!-- 启动链并行化（docs/32 §24.6）：UI 字体在 main.ts 中被 await 且仅由 JS FontFace 发现，
+         慢网下 JS→字体串行使冷载 LCP 达 7.2s；preload 让字体与 JS 并行拉取，
+         FontFace.load() 命中缓存即刻返回，首帧字体保证不变。crossorigin 须与
+         FontFace 的匿名 CORS 拉取模式一致，避免二次下载。 -->
+    <link rel="preload" href="./fonts/lxgw-wenkai-regular.subset.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="./src/app/app.css" />
   </head>
   <body>

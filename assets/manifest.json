@@ -1885,11 +1885,12 @@
       "id": "logo.emblem",
       "path": "logo/logo-emblem.webp",
       "type": "webp",
-      "checksum": "8939d958d81bbafb03fa64bb1846d715bdfc332d6cb898779fa3ceb3ec60b48f",
+      "checksum": "c1e66757f52c878f9c639d4cba1b0bbc9879731298843542e7082fea99062ab3",
       "license": "AI-Generated",
       "source": "gpt-image-2 /images/generations emblem (herb+lightning+soil ink talisman, ink+spirit-gold); trim/square via tools/compose-logo.py; 不量化(logo 保留高细节)",
       "human_edits": [
-        "2026-09-16 PNG→WebP q85 性能转写（docs/32 §24）；原 PNG 保留作 provenance"
+        "2026-09-16 PNG→WebP q85 性能转写（docs/32 §24）；原 PNG 保留作 provenance",
+        "2026-09-16 降采样 512→256（显示 104px）+ WebP q85 性能转写（docs/32 §24.6）"
       ]
     },
     {
