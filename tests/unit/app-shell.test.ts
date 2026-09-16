@@ -67,6 +67,8 @@ describe('public demo application shell', () => {
   it('declares a viewport-safe responsive game shell', () => {
     expect(html).toContain('viewport-fit=cover');
     expect(html).toContain('href="./src/app/app.css"');
+    // docs/32 §24.6：UI 字体必须经 preload 与 JS 并行拉取（慢网启动链串行防御）。
+    expect(html).toContain('rel="preload" href="./fonts/lxgw-wenkai-regular.subset.woff2" as="font" type="font/woff2" crossorigin');
     expect(html).toContain('id="game-shell"');
     expect(html).toContain('id="app"');
   });

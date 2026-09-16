@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo/logo-emblem.png" alt="永恒山谷：大道之歌 徽记" width="180">
+  <img src="assets/logo/logo-emblem.webp" alt="永恒山谷：大道之歌 徽记" width="180">
 </p>
 
 <h1 align="center">永恒山谷：大道之歌 · Aeon Vale: Song of the Dao</h1>

@@ -290,3 +290,20 @@ LCP 中位 7.2s）；index.html preload 并行化后 LCP 5.4s、字体发现提�
 全量裁剪），display:swap 原已正确。剩余移动 LCP 差距为载荷带宽下限，
 架构级取舍（代码分割/延迟 Pixi 启动）挂起待真实用户数据。数据链见
 docs/32 §24.6。
+
+### 6.10 多轮改动全库一致性巡检（2026-09-16）
+
+对 §6.1-§6.9（资产转写/字体预载/生成器门控/绝缘节点/HUD/音效/教学板）
+做全库巡检，七类扫描结果：
+
+| 扫描项 | 结果 |
+| ------ | ---- |
+| 旧资产路径残留 | 仅 README 徽记仍引 299KB 原图 → **本轮转 webp**；docs/32 §24.2 的 .png 引用为历史记录（保留）；public-readiness 测试夹具为临时目录（不涉真实资产） |
+| stage 旁路残留 | 全部为变更记录/注释（generator、frontier 测试、docs/31/32/35），无活代码 |
+| 节点计数（七/8） | 仅存于变更记录语境 ✓ |
+| README 描述 | 折雷/续脉/封雷、参悟、GIF 路径均准确 ✓ |
+| manifest 校验和 | 288 sprites + 19 audio + 1 fonts 全部与磁盘文件一致 ✓ |
+| 教学计数器持久化链 | runSave 整包 JSON 往返（无 schema 剥离）+ 快照类型守卫宽松 + createCultivationRunMachineState 展开保留 → 存活 ✓ |
+| 测试钉住项 | app-shell 钉住背景路径（上轮已随转写更新）→ **本轮补 preload 断言**防回退 |
+
+结论：库内无真实缺陷残留；落地 README webp 化与 preload 回归钉两项。
