@@ -52,13 +52,27 @@ describe('sokoban generator · 确定性与多样性', () => {
     expect(sigs.size).toBeGreaterThanOrEqual(3);
   });
 
-  test('劫式组合：中后期样本实际出现封脉、断脉与复合阵', () => {
+  test('劫式组合：显式请求对应阵石时出现封脉、断脉与复合阵', () => {
     const archetypes = new Set<string>();
     for (let stage = 1; stage <= 6; stage += 1) {
-      for (let seed = 0; seed < 8; seed += 1) archetypes.add(createPuzzle(stage, seed).challenge?.archetype ?? 'none');
+      for (let seed = 0; seed < 8; seed += 1) {
+        for (const requested of [['insulator'], ['conductor'], ['conductor', 'insulator']] as const) {
+          const puzzle = createPuzzle(stage, seed, undefined, { requiredBlockKinds: [...requested] });
+          archetypes.add(puzzle.challenge?.archetype ?? 'none');
+        }
+      }
     }
     expect(archetypes.has('sealed-meridian')).toBe(true);
     expect(archetypes.has('broken-meridian')).toBe(true);
     expect(archetypes.has('compound-array')).toBe(true);
+  });
+
+  test('知识门控（docs/31 §3.3）：未请求的特性不得注入——无 options 时仅 mirror', () => {
+    for (const stage of [1, 2, 3, 4, 5, 6] as const) {
+      for (let seed = 0; seed < 8; seed += 1) {
+        const puzzle = createPuzzle(stage, seed);
+        expect(puzzle.challenge?.requiredBlockKinds, `stage ${stage} seed ${seed}`).toEqual(['mirror']);
+      }
+    }
   });
 });

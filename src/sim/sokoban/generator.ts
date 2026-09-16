@@ -359,26 +359,32 @@ function installConductorBridge(
   rng: Rng,
   options: { readonly wide: boolean }
 ): boolean {
-  for (const candidate of randomized(straightPathCandidates(path), rng)) {
-    const target = candidate.cell;
-    if (!isPlainCell(board, target.x, target.y)) continue;
-    for (const side of randomized(perpendicularVectors(candidate.dir), rng)) {
-      const stone = { x: target.x - side.x, y: target.y - side.y };
-      const stand = { x: target.x - side.x * 2, y: target.y - side.y * 2 };
-      if (!isPlainCell(board, stone.x, stone.y) || !isPlainCell(board, stand.x, stand.y)) continue;
-      const secondRift = { x: target.x + dv(candidate.dir).x, y: target.y + dv(candidate.dir).y };
-      const useWide = options.wide && isPlainCell(board, secondRift.x, secondRift.y);
-      board.terrain[idx(board, target.x, target.y)] = 'rift';
-      const stoneIndex = idx(board, stone.x, stone.y);
-      board.blocks[stoneIndex] = 'conductor';
-      if (useWide) {
-        board.terrain[idx(board, secondRift.x, secondRift.y)] = 'rift';
-        if (!board.blockModifiers) {
-          board.blockModifiers = new Array(board.blocks.length).fill('none') as BlockModifier[];
+  // wide 请求走两遍筛选：先只考虑「双断口皆可凿」的候选（target 与 secondRift 均为
+  // 空格），全部落空再退回单断口。旧实现先随机落位再检查 secondRift，cw 螺旋直段
+  // 普遍很短（secondRift 多为折点镜），调参的 wide 概率被实际压到 ~2%（docs/35 §6.5）。
+  const passes: readonly boolean[] = options.wide ? [true, false] : [false];
+  for (const requireWide of passes) {
+    for (const candidate of randomized(straightPathCandidates(path), rng)) {
+      const target = candidate.cell;
+      if (!isPlainCell(board, target.x, target.y)) continue;
+      for (const side of randomized(perpendicularVectors(candidate.dir), rng)) {
+        const stone = { x: target.x - side.x, y: target.y - side.y };
+        const stand = { x: target.x - side.x * 2, y: target.y - side.y * 2 };
+        if (!isPlainCell(board, stone.x, stone.y) || !isPlainCell(board, stand.x, stand.y)) continue;
+        const secondRift = { x: target.x + dv(candidate.dir).x, y: target.y + dv(candidate.dir).y };
+        if (requireWide && !isPlainCell(board, secondRift.x, secondRift.y)) continue;
+        board.terrain[idx(board, target.x, target.y)] = 'rift';
+        const stoneIndex = idx(board, stone.x, stone.y);
+        board.blocks[stoneIndex] = 'conductor';
+        if (requireWide) {
+          board.terrain[idx(board, secondRift.x, secondRift.y)] = 'rift';
+          if (!board.blockModifiers) {
+            board.blockModifiers = new Array(board.blocks.length).fill('none') as BlockModifier[];
+          }
+          board.blockModifiers[stoneIndex] = 'wide';
         }
-        board.blockModifiers[stoneIndex] = 'wide';
+        return true;
       }
-      return true;
     }
   }
   return false;
@@ -400,16 +406,18 @@ function installInsulatorSeal(board: SokobanBoard, path: readonly Vec2[], rng: R
   return false;
 }
 
+/**
+ * 阵石特性选择（docs/31 §3.3 正交契约落地）：残卷轴 = 「什么能出现」的合法性门。
+ * 特性严格由调用方声明（真实对局 = preparation.unlockedBlockKinds，即参悟 DAG：
+ * 引雷阵石 → conductor、绝缘玉封 → insulator），mirror 恒在。
+ * 2026-09-16 前的 stage 概率注入已移除——它会绕过知识门控，在玩家未参悟对应
+ * 节点时抛出绝缘/导雷特性，违背 The Witness 式「新机制首现可控」（docs/35 §6.5）。
+ */
 function selectedFeatureKinds(
-  stage: number,
-  rng: Rng,
   requested: readonly Exclude<BlockKind, 'none'>[]
 ): readonly Exclude<BlockKind, 'none'>[] {
   const selected = new Set<Exclude<BlockKind, 'none'>>(['mirror']);
   for (const kind of requested) selected.add(kind);
-  if (stage >= 1 && rng.chance(Math.min(0.45 + stage * 0.04, 0.75))) selected.add('insulator');
-  if (stage >= 2 && rng.chance(Math.min(0.4 + stage * 0.05, 0.8))) selected.add('conductor');
-  if (stage >= 4 && selected.size === 1) selected.add(rng.chance(0.5) ? 'conductor' : 'insulator');
   return ['mirror', 'conductor', 'insulator'].filter(kind => selected.has(kind as Exclude<BlockKind, 'none'>)) as Exclude<BlockKind, 'none'>[];
 }
 
@@ -454,7 +462,7 @@ function tryGenerate(stage: number, rng: Rng, options: GenerateBoardOptions): Ge
   }
 
   const board: SokobanBoard = { width: n, height: n, terrain, blocks, sourcePos: source, sourceDir: dir };
-  const requiredBlockKinds = selectedFeatureKinds(stage, rng, options.requiredBlockKinds ?? []);
+  const requiredBlockKinds = selectedFeatureKinds(options.requiredBlockKinds ?? []);
   const wideBridgeChance = !options.disableModifiers && stage >= 4 ? Math.min(0.1 + 0.02 * stage, 0.25) : 0;
   if (requiredBlockKinds.includes('conductor') && !installConductorBridge(board, path, rng, { wide: rng.chance(wideBridgeChance) })) return null;
   if (requiredBlockKinds.includes('insulator') && !installInsulatorSeal(board, path, rng)) return null;

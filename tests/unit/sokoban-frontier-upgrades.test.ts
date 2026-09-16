@@ -61,7 +61,8 @@ describe('docs/31 §1.3 挑战证书扩展', () => {
     expect(center).toBe(27); // docs/32 §5 经验表（旧线性公式为 28）
     const distances: number[] = [];
     for (let seed = 1; seed <= 8; seed++) {
-      const g = generateBoard(stage, new Rng(`sokoban:${stage}:${seed}`));
+      // 带心表在特性参与语境下校准（docs/32 §5）：显式请求全类阵石等价旧 stage 旁路语境。
+      const g = generateBoard(stage, new Rng(`sokoban:${stage}:${seed}`), { requiredBlockKinds: ['conductor', 'insulator'] });
       if (!g) continue;
       distances.push(Math.abs(g.challenge.certifiedMoves - center));
     }
@@ -341,7 +342,8 @@ describe('docs/31 §3.3 迭代 3：宽脉桥（wide conductor）', () => {
   test('生成器 stage≥4 样本中实际出现宽脉桥（双连格 rift + wide 修饰）', () => {
     let seen = 0;
     for (let seed = 1; seed <= 24 && seen === 0; seed++) {
-      const g = generateBoard(5, new Rng(`sokoban:5:${seed}`));
+      // 知识门控（docs/35 §6.5）：特性须显式请求，裸调用不再概率注入 conductor。
+      const g = generateBoard(5, new Rng(`sokoban:5:${seed}`), { requiredBlockKinds: ['conductor'] });
       if (!g) continue;
       const riftCount = g.board.terrain.filter(t => t === 'rift').length;
       if (riftCount >= 2 && g.board.blockModifiers?.includes('wide')) seen += 1;
