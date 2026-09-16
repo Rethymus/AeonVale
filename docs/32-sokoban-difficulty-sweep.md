@@ -640,3 +640,57 @@ insulator）。落地 docs/31 §3.3 正交契约（残卷轴 =「什么能出现
 - 200-salt 全量扫描（7 阶 × 200，2617s）：stage 6 纯镜群体带内率 71.5%、
   模板兜底 0、确定性抽验 0 违例。
 - Golden replay 因生成序列变化按策略执行 `--init` 全新重授权（4/4 通过）。
+
+## 24. 线上性能审计与 LCP 优化（2026-09-16，docs/35 §6.8）
+
+### 24.1 方法
+
+chrome-devtools MCP 本会话不可用，等效路径：Playwright + Chromium 直驱
+**线上站点**（rethymus.github.io/AeonVale），PerformanceObserver
+（buffered LCP/layout-shift/longtask）+ 真实交互流程（标题→开场→日程→
+事件→参悟→引劫棋盘 24 步移动）+ rAF 帧间隔采样；每次冷加载用全新
+browser context（无 HTTP 缓存）。阈值依 web.dev：LCP≤2.5s / INP≤200ms /
+CLS≤0.1（good）；TBT<200ms 为 INP 的实验室代理。
+
+### 24.2 优化前（3 次冷加载，2026-09-16 上午）
+
+| 指标 | 冷载(首) | 判定 |
+| ---- | -------- | ---- |
+| LCP | **4032ms**（三次中位 2532ms） | **超阈值**（LCP 元素=index.html 标题背景 `<img fetchpriority="high" src="./maps/map.farmstead-courtyard-v1.png">`，**3196KB** 原始 PNG） |
+| FCP | 772ms | ✓ |
+| CLS | 0 | ✓（img 带显式 width/height） |
+| TBT | 0ms（无任何 longtask） | ✓ |
+| 非JS载荷 | 3.9MB（map PNG 3196KB + logo 299KB + 字体 313KB） | 主因 |
+| 棋盘帧预算 | p50=p95=16.7ms、max 16.8ms、掉帧(>32ms)=0、60fps | ✓ 极佳 |
+
+### 24.3 优化落地（commit 92d0b73）
+
+| 动作 | 前 | 后 |
+| ---- | -- | -- |
+| 标题背景转 WebP q82（同尺寸 1672×941） | 3196KB PNG | **381KB**（-88%） |
+| 徽记转 WebP q85（512×512，显示 104×104） | 299KB PNG | **103KB**（-66%） |
+| manifest 条目转指（type=webp+新 checksum+human_edits 记录），原 PNG 保留作 provenance/master_ref | — | — |
+| index.html 两处 src 转指；app-shell 测试断言同步 | — | — |
+
+### 24.4 优化后线上复测（部署后同方法）
+
+| 指标 | 冷载(首) | 判定 |
+| ---- | -------- | ---- |
+| LCP | **2012ms**（三次中位 1484ms） | **回到阈值内**（-50%） |
+| FCP | 1184ms | ✓ |
+| CLS / TBT | 0 / 0ms | ✓ |
+| 非JS载荷 | 827KB（-79%） | — |
+| 棋盘帧预算 | p95=16.7ms、60fps、0 掉帧 | ✓ 无需优化 |
+
+### 24.5 结论
+
+- **唯一超阈值项是 LCP**，根因单一（3.2MB 未压缩概念图作标题背景），
+  WebP 转写后冷载 LCP 4.0s→2.0s，回到 good 区间；其余指标（CLS/TBT/
+  帧预算）出厂即优，无需动作。
+- **INP 说明**：headless Chromium 的 event-timing 不产出 interactionId
+  条目，无法直测；以 TBT=0ms（无 longtask）+ 棋盘 60fps/0 掉帧作实验室
+  代理，交互风险可排除。
+- 帧预算证明天劫棋盘（Pixi 渲染 + sim + HUD + 输入缓冲 + 教学板计数）
+  在真实交互负载下 vsync 锁定无掉帧——性能层无进一步工作项。
+- 复测方法：临时 Playwright 审计脚本（已按惯例用后即删），要点见
+  §24.1；后续可按同法重跑。
