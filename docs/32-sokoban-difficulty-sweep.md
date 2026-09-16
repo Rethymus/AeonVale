@@ -694,3 +694,56 @@ CLS≤0.1（good）；TBT<200ms 为 INP 的实验室代理。
   在真实交互负载下 vsync 锁定无掉帧——性能层无进一步工作项。
 - 复测方法：临时 Playwright 审计脚本（已按惯例用后即删），要点见
   §24.1；后续可按同法重跑。
+
+### 24.6 移动维度复测与字体加载策略（2026-09-16，commit e4c4d0b）
+
+方法同 §24.1，新增：360×800 @3x 移动视口 + Lighthouse 移动实验室档节流
+（Slow 4G：1.6Mbps 下行 / 750Kbps 上行 / 150ms RTT）+ 4x CPU 降速；
+每次冷载全新 context。字体时间线经 resource timing 直接观测。
+
+#### 优化前（移动+Slow 4G，3 次冷载）
+
+| 指标 | 中位 | 判定 |
+| ---- | ---- | ---- |
+| LCP | **7192ms** | 超阈 2.9 倍 |
+| FCP | 1616ms | ✓ |
+| CLS / TBT | 0 / 0ms | ✓ |
+| 字体开始/完成 | **4188ms / 6761ms** | 铁证：UI 字体仅由 JS FontFace 发现，慢网下 JS(400KB)→执行→字体(313KB) 完全串行，首帧被 `main.ts` 的 `await preloadUiFont` 门控 |
+
+#### 字体加载策略评估（lxgw-wenkai-regular.subset.woff2，313KB）
+
+| 维度 | 现状 | 判定 |
+| ---- | ---- | ---- |
+| font-display | `display:'swap'`（FontFace 构造参数） | ✓ 已正确 |
+| 发现时机 | 仅 JS 执行后 → 串行链 | **缺陷 → preload 修复** |
+| 子集化 | `tools/subset-font.mjs` 按 src 全量文案裁剪（数千叙述字符） | 313KB 为语料约束，非加载策略问题；再裁=删内容 |
+
+#### 优化落地（commit e4c4d0b）
+
+1. **index.html 字体预载**：`<link rel="preload" as="font" type="font/woff2" crossorigin>`——
+   与 JS 并行拉取；`assetPublicUrl` 为纯相对路径（无版本查询），preload URL 与
+   FontFace 拉取精确匹配（crossorigin 对齐匿名 CORS 模式）不产生二次下载；
+   `await preloadUiFont` 的首帧字体保证原样保留（命中 HTTP 缓存即刻返回）。
+2. **徽记降采样**：logo-emblem.webp 512→256px（显示 104px），103KB→**31KB**。
+
+#### 优化后（同方法复测）
+
+| 场景 | 指标 | 前 | 后 |
+| ---- | ---- | -- | -- |
+| 移动+Slow 4G（线上） | LCP 中位 | 7192ms | **5388ms**（-25%） |
+| 移动+Slow 4G（线上） | 字体开始/完成 | 4188/6761ms | **527 / 5038ms**（-87% 发现延迟） |
+| 移动+Slow 4G（线上） | FCP / CLS / TBT | 1616 / 0 / 0 | 1980 / 0 / 0 |
+| 桌面无节流（同网络窗口 5 次冷载） | LCP 中位 | — | 2996ms（2700–4044） |
+
+#### 结论与后续判定
+
+- **字体发现串行是真实缺陷且已修复**：fontStart 提前 3.7s，移动 LCP -25%；
+  「首帧前有字体」的产品保证未变。
+- **移动 LCP 仍超 2.5s，但已是载荷带宽下限问题**：首屏关键字节
+  （JS 400KB + 字体 313KB + 背景 381KB ≈ 1.1MB）在 1.6Mbps 下理论地板
+  ≈5.5s，实测 5.4s 贴合。进一步压缩需要**架构级**取舍（JS 代码分割 /
+  延迟 Pixi 启动 / 字体 unicode-range 分片），合成极慢网档的收益需以
+  真实用户网络分布（RUM，docs/30 §六）校验后再立项——避免为不存在的
+  用户画像过度工程。
+- 桌面绝对值受跨时段网络噪声支配（同日两次会话 2012 vs 2996ms 中位，
+  载荷反而更低）；跨会话 A/B 不可靠，受控比较以移动节流组为准。
