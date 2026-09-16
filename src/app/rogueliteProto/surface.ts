@@ -2392,9 +2392,21 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     const intel = preparation.previewLevel <= 0 ? '劫兆未明' : preparation.previewLevel === 1 ? `存活上限 ≤${preparation.maxSurvivablePower}` : preparation.previewLevel === 2 ? `安全雷威 ${preparation.minTemperingPower}–${preparation.maxSurvivablePower}` : `甜蜜雷威 ${preparation.sweetSpotMinPower}–${preparation.sweetSpotMaxPower}`;
     const required = state.challenge?.requiredBlockKinds.map(blockKindLabel).join(' · ') ?? '金石·折雷';
     const certificate = state.challenge ? `认证 ${state.challenge.certifiedMoves} 步 · 余量 ${state.challenge.budgetSlack}` : '已验可解';
+    // docs/35 §2.3 顿悟辅助（Baba Is You 式"看见错误配置"）：未被当前光路触及的
+    // 折光/导雷阵石数。光路本就逐帧可见，此计数只省去逐格点数的认知负荷，不泄露
+    // 解法位置。绝缘石不计——其职责是封直路（generator.ts installInsulatorSeal），
+    // 正解中它恰恰常在光路之外，计入会误导。归零是"接近正解"的启发式信号而非
+    // 胜利条件（玩家可用不经全部阵石的替代解获胜）。
+    let offPathStones = 0;
+    state.board.blocks.forEach((kind, idx) => {
+      if (kind !== 'mirror' && kind !== 'conductor') return;
+      const x = idx % state.board.width;
+      const y = Math.floor(idx / state.board.width);
+      if (!state.beam.cells.some(cell => cell.x === x && cell.y === y)) offPathStones += 1;
+    });
     // 劫式配方公示（docs/31 §3.3）：修饰阵石×灵草型的组合标签进 HUD，玩家可见本局配方。
     const recipe = tribulationRecipeLabel(state);
-    const preparationSegments = [required, certificate, ...(recipe ? [recipe] : []), `${intel} · 预见 ${preparation.previewLevel}`, `护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`];
+    const preparationSegments = [required, certificate, `未入光路 ${offPathStones}`, ...(recipe ? [recipe] : []), `${intel} · 预见 ${preparation.previewLevel}`, `护持 ${session?.wardChargesRemaining ?? 0} · 撤步 ${session?.undoChargesRemaining ?? 0}`];
     preparationEl.replaceChildren();
     preparationSegments.forEach((segment, index) => {
       if (index > 0) preparationEl.append(' ｜ ');

@@ -113,6 +113,7 @@ test.describe('D27 修途→事件→参悟→天劫主路径 · smoke', () => {
     await expect(page.locator('#roguelite-proto-root .rp-help')).toContainText('推阵石');
     await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/预见 \d/);
     await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/护持 \d/);
+    await expect(page.locator('#roguelite-proto-root .rp-hud')).toContainText(/未入光路 \d/);
     const dpad = page.locator('.rp-dpad');
     await expect(dpad).toBeVisible();
     await expect(dpad.getByRole('button')).toHaveCount(4);
