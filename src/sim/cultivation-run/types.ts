@@ -70,6 +70,12 @@ export interface CultivationRunState {
   agendaIndex: number;
   /** 本世已完成结算的天劫次数；首劫结算后用于解锁基础预见赠予（换代从 0 重开）。 */
   tribulationsSettled: number;
+  /**
+   * 历代累计已结算的含对应阵石劫式次数（docs/35 §6.7 首现教学板判定；
+   * 换代保留——后世不再重复教学）。旧档缺省视为 0。
+   */
+  conductorBoardsSettled?: number;
+  insulatorBoardsSettled?: number;
   status: CultivationRunStatus;
   lifespanRemainingDays: number;
   bodyFoundation: number;

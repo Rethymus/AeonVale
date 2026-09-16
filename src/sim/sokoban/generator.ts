@@ -74,6 +74,11 @@ export interface GenerateBoardOptions {
   readonly requiredBlockKinds?: readonly Exclude<BlockKind, 'none'>[];
   /** 测试与教学场景用：跳过修饰阵石附着（docs/31 §3.3），保持旧种子行为。 */
   readonly disableModifiers?: boolean;
+  /**
+   * 新阵石首现教学板（docs/35 §6.7，The Witness 式首现可控）：关闭全部修饰
+   * （wide/mirror-ccw/burning）并把灵草封顶 1 株——首现注意力留给新阵石机制本身。
+   */
+  readonly teaching?: boolean;
 }
 
 export interface SolveOptions {
@@ -463,12 +468,15 @@ function tryGenerate(stage: number, rng: Rng, options: GenerateBoardOptions): Ge
 
   const board: SokobanBoard = { width: n, height: n, terrain, blocks, sourcePos: source, sourceDir: dir };
   const requiredBlockKinds = selectedFeatureKinds(options.requiredBlockKinds ?? []);
-  const wideBridgeChance = !options.disableModifiers && stage >= 4 ? Math.min(0.1 + 0.02 * stage, 0.25) : 0;
+  // 教学板（docs/35 §6.7）：新阵石首现时无任何修饰干扰（wide/mirror-ccw/burning 全关）。
+  const noModifiers = options.disableModifiers === true || options.teaching === true;
+  const wideBridgeChance = !noModifiers && stage >= 4 ? Math.min(0.1 + 0.02 * stage, 0.25) : 0;
   if (requiredBlockKinds.includes('conductor') && !installConductorBridge(board, path, rng, { wide: rng.chance(wideBridgeChance) })) return null;
   if (requiredBlockKinds.includes('insulator') && !installInsulatorSeal(board, path, rng)) return null;
 
   // 稀疏 off-path 灵草；生成器只放可保全目标，准备适配器再加入库存灵草。
-  const herbCount = Math.min(stage, 3);
+  // 教学板灵草至多 1 株——首现注意力留给新阵石本身。
+  const herbCount = options.teaching ? Math.min(Math.min(stage, 3), 1) : Math.min(stage, 3);
   let placed = 0;
   for (let t = 0; t < 40 && placed < herbCount; t++) {
     const cx = rng.intRange(0, n - 1);
@@ -531,7 +539,7 @@ export function deriveFlavorTag(input: {
 
 /** 修饰阵石附着（docs/31 §3.3）：stage≥4 起对 mirror 附 mirror-ccw、对 insulator 附 burning；在认证前完成。 */
 function attachModifiers(stage: number, rng: Rng, board: SokobanBoard, options: GenerateBoardOptions): void {
-  if (options.disableModifiers || stage < 4) return;
+  if (options.disableModifiers || options.teaching || stage < 4) return;
   const p = Math.min(0.1 + 0.02 * stage, 0.25);
   if (board.blockModifiers && board.blockModifiers.some(m => m !== 'none')) return; // 已附着（重试候选复用板面时不重复）
   const modifiers = board.blockModifiers ?? (new Array(board.blocks.length).fill('none') as BlockModifier[]);

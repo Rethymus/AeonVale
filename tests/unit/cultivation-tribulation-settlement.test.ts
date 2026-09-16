@@ -169,3 +169,46 @@ describe('D27-d · 天劫结果回写当世', () => {
     expect(tooManyHerbs).toEqual({ ok: false, state, error: 'invalid-consumption' });
   });
 });
+
+describe('docs/35 §6.7 · 首现教学板计数', () => {
+  test('结算带 boardKinds 时累计对应阵石计数，缺省旧档从 0 起计', () => {
+    const legacyState = fundedState();
+    delete (legacyState as Partial<CultivationRunState>).conductorBoardsSettled;
+    delete (legacyState as Partial<CultivationRunState>).insulatorBoardsSettled;
+
+    const first = applyCultivationTribulationOutcome({
+      state: legacyState,
+      preparedHerbsScorched: 0,
+      outcome: outcome(),
+      boardKinds: ['conductor']
+    });
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+    expect(first.state.conductorBoardsSettled).toBe(1);
+    expect(first.state.insulatorBoardsSettled ?? 0).toBe(0);
+
+    const second = applyCultivationTribulationOutcome({
+      state: first.state,
+      preparedHerbsScorched: 0,
+      outcome: outcome(),
+      boardKinds: ['conductor', 'insulator']
+    });
+    expect(second.ok).toBe(true);
+    if (!second.ok) return;
+    expect(second.state.conductorBoardsSettled).toBe(2);
+    expect(second.state.insulatorBoardsSettled).toBe(1);
+  });
+
+  test('不带 boardKinds 的结算不触碰计数（回放/旧行为兼容）', () => {
+    const state = fundedState();
+    const result = applyCultivationTribulationOutcome({
+      state,
+      preparedHerbsScorched: 0,
+      outcome: outcome()
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.state.conductorBoardsSettled ?? 0).toBe(0);
+    expect(result.state.insulatorBoardsSettled ?? 0).toBe(0);
+  });
+});

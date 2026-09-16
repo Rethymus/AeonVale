@@ -45,6 +45,8 @@ export function createCultivationRunState(options: CreateCultivationRunOptions =
     stage: 0,
     agendaIndex: 0,
     tribulationsSettled: 0,
+    conductorBoardsSettled: 0,
+    insulatorBoardsSettled: 0,
     status: 'active',
     lifespanRemainingDays: params.bodyCultivation.lifespanStartDays,
     bodyFoundation: 0,

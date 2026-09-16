@@ -392,42 +392,42 @@
     {
       "phase": "create-run",
       "label": "create-run",
-      "expected": "bad011ace4be1a590044dfa797330362aad1cd5a633920debcec348d2e25c83a"
+      "expected": "80f203adeacfe001ca8168d499560af67e1d8b2f39d3a8c1be1b5979de0c8382"
     },
     {
       "phase": "agenda",
       "label": "agenda-1",
-      "expected": "726614a446991578376fa16b291b53a8fb603063caa4fcdc0dcc82b915479d49"
+      "expected": "bba3a72afd5120c7184fc40132d32290939ce8eb0de1eaf1c02a65d009a5d341"
     },
     {
       "phase": "event",
       "label": "event-1:purple-cloud-over-fields:watch-thunder-plot",
-      "expected": "52e2f08ec8579321f07879244842a0b3c85a8cec8ee85e395c48cbea852e80d4"
+      "expected": "679c62d4ce26173dad218a2e10a57be69e6a0689d17f6bd839c2e2e72cf43102"
     },
     {
       "phase": "insight",
       "label": "insight-1:foundation-rhythm",
-      "expected": "281b79b01b69b69190a84edc976f2a48e9b006d59aba085d4b479d3f4f079d66"
+      "expected": "ec1cc8a5d91adc32b86ba06344bf8213d1d83f6d642ac635952690922aa23692"
     },
     {
       "phase": "agenda",
       "label": "agenda-2",
-      "expected": "43ded3069546a25a14c9c1223f88f38d38e7c0d8bf1e49bc10844f74e892b33e"
+      "expected": "9e8c5801fb22add41270a21723ebdd7bd939479092b018bd7cf783ba6f5bcb02"
     },
     {
       "phase": "event",
       "label": "event-2:distant-breakthrough-afterglow:copy-sky-pattern",
-      "expected": "56c50b1e4c64a08829cc8346b5919a2c0fa5ad5f0e2ea2c166c202af0bc9d5df"
+      "expected": "b4ec2598aa26268ef6f2d7a6de19d00455ccb68805442bc9dcfe6226d08f0c18"
     },
     {
       "phase": "insight",
       "label": "insight-2:field-breathing",
-      "expected": "d81f2ccef54c12eadbe2d2e2b02ee731aff2f25ae6461ff286e9f1cc8284ff2a"
+      "expected": "5f91036c59c2c5b19470069ab64a292819c16ae6334244309caab97c9f052013"
     },
     {
       "phase": "agenda",
       "label": "agenda-3",
-      "expected": "4f27c81e4010260fe1f35360f0f6936b0031c26e9cfde48479709b4a44c1489c"
+      "expected": "855d68ae24bf994622dae8c978b46d6154da0166ef2f03902ee349d9de3afed1"
     },
     {
       "phase": "derive-preparation",
@@ -597,7 +597,7 @@
     {
       "phase": "settlement",
       "label": "tribulation-1:settlement:breakthrough",
-      "expected": "63671cd449f4aa30c89ad8fc19b9a5461fa4f124673a33078946145c409bf5ee"
+      "expected": "574f5f53dabcd1df0c962d5753a5f3083a679c0624f704ef37ddfbceb1bd95ec"
     },
     {
       "phase": "derive-preparation",
@@ -867,7 +867,7 @@
     {
       "phase": "settlement",
       "label": "tribulation-2:settlement:death",
-      "expected": "aeebae7060d041a495965e8e3f0e45aa26a22be3bf494075890ef330964e7b25"
+      "expected": "c5d1b1b8fbc140ee15e0a4cc7611b001d5a4e60070551e45a92378ac55be3223"
     },
     {
       "phase": "epitaph",
@@ -882,7 +882,7 @@
     {
       "phase": "heir",
       "label": "heir",
-      "expected": "ae3046566505d4904d318b9d1a202d01fc078403fa55b15792bc1b0914672c3a"
+      "expected": "85cbd2a10dd1e884799c14f460dc03c1df020c21adc24d09a31d2fb615935f86"
     }
   ]
 }

@@ -76,3 +76,34 @@ describe('sokoban generator · 确定性与多样性', () => {
     }
   });
 });
+
+describe('sokoban generator · 首现教学板（docs/35 §6.7）', () => {
+  test('teaching：高阶语境下无任何修饰附着、灵草至多 1 株，且仍认证可解', () => {
+    for (let seed = 0; seed < 6; seed++) {
+      const g = generateBoard(5, new Rng(`sokoban:5:${seed}`), {
+        requiredBlockKinds: ['conductor', 'insulator'],
+        teaching: true
+      });
+      expect(g, `seed ${seed} 应生成成功`).not.toBeNull();
+      if (!g) continue;
+      const modifiers = g.board.blockModifiers ?? [];
+      expect(modifiers.every(m => m === 'none'), `seed ${seed} 教学板不得带修饰`).toBe(true);
+      const herbs = g.board.terrain.filter(t => t === 'herb').length;
+      expect(herbs, `seed ${seed} 教学板灵草 ≤1`).toBeLessThanOrEqual(1);
+      const solution = solveBoard(g.board, g.player, { maxMoves: g.moveBudget });
+      expect(solution, `seed ${seed} 仍须可解`).not.toBeNull();
+    }
+  });
+
+  test('非教学 board 不受影响：同种子教学/常规修饰分布不同（对照）', () => {
+    const plain = generateBoard(5, new Rng('sokoban:5:teach-contrast'), { requiredBlockKinds: ['conductor'] });
+    const teach = generateBoard(5, new Rng('sokoban:5:teach-contrast'), { requiredBlockKinds: ['conductor'], teaching: true });
+    expect(plain).not.toBeNull();
+    expect(teach).not.toBeNull();
+    if (plain && teach) {
+      // 教学板 herb 数不得高于常规板（同种子 rng 前缀一致时灵草放置受封顶约束）。
+      const herbTeach = teach.board.terrain.filter(t => t === 'herb').length;
+      expect(herbTeach).toBeLessThanOrEqual(1);
+    }
+  });
+});

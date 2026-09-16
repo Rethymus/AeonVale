@@ -22,6 +22,12 @@ export interface ApplyCultivationTribulationOutcomeRequest {
   readonly outcome: TribulationSessionOutcome;
   /** 只扣除由本世灵田带入棋盘且实际烧毁的灵草，不把生成器自带草算进库存。 */
   readonly preparedHerbsScorched: number;
+  /**
+   * 本劫棋盘实际请求的阵石特性（docs/35 §6.7）：结算时累计
+   * conductor/insulatorBoardsSettled，驱动后续首现教学板判定。
+   * 身死未结算不计数——继承者的首现教学会重新触发。
+   */
+  readonly boardKinds?: readonly ('conductor' | 'insulator')[];
 }
 
 export interface CultivationTribulationSettlement {
@@ -112,6 +118,8 @@ export function applyCultivationTribulationOutcome(
   const bodyFoundationBefore = next.bodyFoundation;
   // 任何已判定的结局（含护持拦下与身死）都算一次“经历过的天劫”，驱动后续基础预见赠予。
   next.tribulationsSettled += 1;
+  if (request.boardKinds?.includes('conductor')) next.conductorBoardsSettled = (next.conductorBoardsSettled ?? 0) + 1;
+  if (request.boardKinds?.includes('insulator')) next.insulatorBoardsSettled = (next.insulatorBoardsSettled ?? 0) + 1;
   next.herbs -= herbsLost;
   next.pills -= pillConsumption;
   next.injury = clampInt(

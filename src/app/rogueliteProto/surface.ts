@@ -1315,8 +1315,15 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     destroyPhaseSurfaces();
     const interpretation = interpretCultivationTribulationTags([...machineState.tribulationTags, ...machineState.insightEffectTags]);
     preparation = deriveTribulationPreparation(machineState.runState, interpretation.preparationModifiers);
+    // docs/35 §6.7 首现教学板：本劫将请求的阵石特性中存在「从未结算过」的类型时，
+    // 生成无修饰、灵草≤1 的教学构造（The Witness 式首现可控）。
+    const runStateForTeaching = machineState.runState;
+    const teaching =
+      (preparation.unlockedBlockKinds.includes('conductor') && (runStateForTeaching.conductorBoardsSettled ?? 0) === 0) ||
+      (preparation.unlockedBlockKinds.includes('insulator') && (runStateForTeaching.insulatorBoardsSettled ?? 0) === 0);
     const basePuzzle = createPuzzle(machineState.runState.stage, seedSalt, undefined, {
-      requiredBlockKinds: preparation.unlockedBlockKinds
+      requiredBlockKinds: preparation.unlockedBlockKinds,
+      teaching
     });
     const prepared = applyPreparationToPuzzle(basePuzzle, preparation, interpretation.boardModifierTags);
     const moveBudgetBonus = preparation.moveBudgetBonus;
@@ -2469,10 +2476,14 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
   function settleTribulationOutcome(): void {
     if (!tribulationOutcome || settlementApplied) return;
     const herbLoss = preparedInventoryHerbsScorched();
+    const boardKinds = (state.challenge?.requiredBlockKinds ?? []).filter(
+      (kind): kind is 'conductor' | 'insulator' => kind === 'conductor' || kind === 'insulator'
+    );
     const result = applyCultivationTribulationOutcome({
       state: machineState.runState,
       outcome: tribulationOutcome,
-      preparedHerbsScorched: herbLoss
+      preparedHerbsScorched: herbLoss,
+      boardKinds
     });
     if (!result.ok) {
       tribulationFeedback = '<b>天劫结算未能回写。</b>请返回标题后重新进入，避免污染此身记录。';
