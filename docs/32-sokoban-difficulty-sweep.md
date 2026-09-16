@@ -652,6 +652,12 @@ chrome-devtools MCP 本会话不可用，等效路径：Playwright + Chromium �
 browser context（无 HTTP 缓存）。阈值依 web.dev：LCP≤2.5s / INP≤200ms /
 CLS≤0.1（good）；TBT<200ms 为 INP 的实验室代理。
 
+**方法已固化为常驻工具（2026-09-16）**：`tools/perf-audit.ts`（`pnpm perf:audit`）。
+参数：`--url=`（默认线上）、`--mobile`（360×800@3x 触控 + Slow 4G 节流 + 4x CPU）、
+`--loads=N`（默认 3，取中位抗网络波动）、`--flow`（真实 UI 流程至天劫棋盘，
+rAF 帧预算 + 24 步移动采样）。输出含 web.dev 阈值判定（✓/✗）与字体时间线
+（resource timing 中 woff2 的 start/end，启动链串行化诊断）。
+
 ### 24.2 优化前（3 次冷加载，2026-09-16 上午）
 
 | 指标 | 冷载(首) | 判定 |
@@ -692,8 +698,8 @@ CLS≤0.1（good）；TBT<200ms 为 INP 的实验室代理。
   代理，交互风险可排除。
 - 帧预算证明天劫棋盘（Pixi 渲染 + sim + HUD + 输入缓冲 + 教学板计数）
   在真实交互负载下 vsync 锁定无掉帧——性能层无进一步工作项。
-- 复测方法：临时 Playwright 审计脚本（已按惯例用后即删），要点见
-  §24.1；后续可按同法重跑。
+- 复测方法：`pnpm perf:audit --url=... [--mobile] [--flow]`（tools/perf-audit.ts，
+  见 §24.1），一条命令可复现本节全部数据。
 
 ### 24.6 移动维度复测与字体加载策略（2026-09-16，commit e4c4d0b）
 
