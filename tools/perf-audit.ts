@@ -308,7 +308,10 @@ async function main(): Promise<void> {
     console.log(`[perf-audit] 已追加记录 → ${options.out}`);
   }
   if (options.bands) {
-    await checkBands(options.bands, options.mobile ? 'mobile-slow4g' : 'desktop', medians);
+    // 桌面无节流样本按环境分簇：CI runner（数据中心）与本地（住宅网络）带宽差一个量级，
+    // 分设 desktop-ci / desktop 带（docs/perf/vertical-bands.json 注）；移动节流归一化不分区。
+    const profile = options.mobile ? 'mobile-slow4g' : process.env.GITHUB_ACTIONS === 'true' ? 'desktop-ci' : 'desktop';
+    await checkBands(options.bands, profile, medians);
   }
 }
 
