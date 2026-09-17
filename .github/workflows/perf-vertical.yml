@@ -33,9 +33,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
       - name: Desktop vertical sample
-        run: pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl
+        run: pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json
       - name: Mobile vertical sample (Slow 4G + 4x CPU)
-        run: pnpm perf:audit --mobile --loads=3 --out=docs/perf/vertical-samples.jsonl
+        run: pnpm perf:audit --mobile --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json
       - name: Commit samples if changed
         run: |
           git config user.name 'github-actions[bot]'

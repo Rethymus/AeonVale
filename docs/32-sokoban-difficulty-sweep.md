@@ -823,5 +823,9 @@ FCP 864ms、CLS 0、TBT 0、字体发现 403ms。两窗口方差带：
 每周一 02:23 UTC 自动执行 `pnpm perf:audit --loads=3` 与 `--mobile --loads=3`，
 经 `--out` 追加 `docs/perf/vertical-samples.jsonl`（逐次+中位 JSON 记录，
 已有 4 条手工会话种子）并自动回提交（模式同 readme-media 工作流）。
-阈值判定只打印不失败——回归判定仍人工对比 §24.6.1/§24.7 方差带；
-docs 叙事章节在里程碑时人工增补，原始数据以 jsonl 为准。
+阈值判定只打印不失败。**方差带自动判定（2026-09-17 起）**：审计步附加
+`--bands=docs/perf/vertical-bands.json`（带值数据文件：移动 5740–6124 /
+桌面 492–1052，窗口增补时人工更新），工具对比 LCP 中位与 CLS/TBT 绝对阈，
+✗ 超带时在 run summary（$GITHUB_STEP_SUMMARY）标注异常——告警不失败，
+仍按 §24.6/§24.7 口径人工区分网络窗口与应用层回归。docs 叙事章节在
+里程碑时人工增补，原始数据以 jsonl 为准。

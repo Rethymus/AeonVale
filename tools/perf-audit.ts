@@ -28,6 +28,8 @@ interface Options {
   readonly flow: boolean;
   /** 追加一行 JSON 记录（时间戳+逐次+中位）到该 jsonl 文件，供纵向采样数据链（docs/32 §24.6.1/§24.7）消费。 */
   readonly out?: string;
+  /** 方差带文件（docs/perf/vertical-bands.json）：采样后对比 LCP 中位带与 CLS/TBT 绝对阈，输出回归判定。 */
+  readonly bands?: string;
 }
 
 interface LoadMetrics {
@@ -53,14 +55,16 @@ function parseOptions(argv: readonly string[]): Options {
   let loads = 3;
   let flow = false;
   let out: string | undefined;
+  let bands: string | undefined;
   for (const arg of argv) {
     if (arg.startsWith('--url=')) url = arg.slice('--url='.length);
     else if (arg === '--mobile') mobile = true;
     else if (arg === '--flow') flow = true;
     else if (arg.startsWith('--loads=')) loads = Math.max(1, Number(arg.slice('--loads='.length)) || 3);
     else if (arg.startsWith('--out=')) out = arg.slice('--out='.length);
+    else if (arg.startsWith('--bands=')) bands = arg.slice('--bands='.length);
   }
-  return { url, mobile, loads, flow, out };
+  return { url, mobile, loads, flow, out, bands };
 }
 
 async function instrument(page: Page): Promise<void> {
@@ -302,6 +306,54 @@ async function main(): Promise<void> {
     appendFileSync(options.out, `${JSON.stringify(record)}
 `, 'utf8');
     console.log(`[perf-audit] 已追加记录 → ${options.out}`);
+  }
+  if (options.bands) {
+    await checkBands(options.bands, options.mobile ? 'mobile-slow4g' : 'desktop', medians);
+  }
+}
+
+interface BandsFile {
+  readonly profiles: Readonly<Record<string, { readonly lcpMin: number; readonly lcpMax: number }>>;
+  readonly absolute: { readonly clsMax: number; readonly tbtMax: number };
+}
+
+/**
+ * 方差带回归判定（docs/32 §24.6.1/§24.7）：LCP 中位出带 = 标注异常（只告警不失败——
+ * 移动维度按「载荷带宽下限」口径持续记录）；CLS/TBT 恒 0 基线为绝对阈校验。
+ * 结论同时写入 $GITHUB_STEP_SUMMARY（存在时），供无人值守工作流 run summary 展示。
+ */
+async function checkBands(bandsFile: string, profile: string, medians: Record<string, number>): Promise<void> {
+  const { readFileSync } = await import('node:fs');
+  const bands = JSON.parse(readFileSync(bandsFile, 'utf8')) as BandsFile;
+  const band = bands.profiles[profile];
+  const rows: string[] = [];
+  if (band) {
+    const lcp = medians.lcp ?? -1;
+    const inBand = lcp >= band.lcpMin && lcp <= band.lcpMax;
+    rows.push(`| LCP | ${lcp}ms | ${band.lcpMin}–${band.lcpMax} | ${inBand ? '✓ 带内' : '**✗ 超带——按 docs/32 §24.6/§24.7 回归口径排查资产/构建变更**'} |`);
+    if (!inBand) console.log(`[bands] ✗ LCP=${lcp}ms 出带 [${band.lcpMin}, ${band.lcpMax}]（profile=${profile}）`);
+    else console.log(`[bands] ✓ LCP=${lcp}ms 带内 [${band.lcpMin}, ${band.lcpMax}]`);
+  } else {
+    rows.push(`| LCP | ${medians.lcp ?? -1}ms | （无带） | ⚠ 带值文件缺少 profile=${profile} |`);
+  }
+  const clsOk = (medians.cls ?? 0) <= bands.absolute.clsMax;
+  const tbtOk = (medians.tbt ?? 0) <= bands.absolute.tbtMax;
+  rows.push(`| CLS | ${medians.cls} | ≤${bands.absolute.clsMax} | ${clsOk ? '✓' : '**✗**'} |`);
+  rows.push(`| TBT | ${medians.tbt}ms | ≤${bands.absolute.tbtMax}ms | ${tbtOk ? '✓' : '**✗**'} |`);
+  const markdown = [
+    '### 性能纵向采样回归判定',
+    '',
+    `profile: \`${profile}\` · 带值来源：\`${bandsFile}\`（docs/32 §24.6.1/§24.7）`,
+    '',
+    '| 指标 | 本次中位 | 带/阈 | 判定 |',
+    '| ---- | -------- | ----- | ---- |',
+    ...rows
+  ].join('\n');
+  console.log(markdown);
+  const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+  if (summaryPath) {
+    const { appendFileSync } = await import('node:fs');
+    appendFileSync(summaryPath, `${markdown}\n`, 'utf8');
   }
 }
 

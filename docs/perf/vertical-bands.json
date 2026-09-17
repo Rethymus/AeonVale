@@ -1,0 +1,8 @@
+{
+  "note": "LCP 方差带源自 docs/32 §24.6.1（移动）/§24.7（桌面）两次纵向采样；窗口增补或载荷变更时人工更新本文件。",
+  "profiles": {
+    "mobile-slow4g": { "lcpMin": 5740, "lcpMax": 6124 },
+    "desktop": { "lcpMin": 492, "lcpMax": 1052 }
+  },
+  "absolute": { "clsMax": 0.1, "tbtMax": 200 }
+}
