@@ -97,6 +97,27 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(pagesWorkflow).toContain('VITE_BUILD_REVISION: ${{ github.sha }}');
   });
 
+  it('keeps the perf vertical monitor weekly, write-enabled, band-checked, and loop-free', () => {
+    const perfWorkflow = readFileSync('.github/workflows/perf-vertical.yml', 'utf8');
+
+    // 触发面：仅周度 cron + 手动 dispatch，无 push 触发（feed 回提交不得自触发循环）。
+    expect(perfWorkflow).toContain("cron: '23 2 * * 1'");
+    expect(perfWorkflow).toContain('workflow_dispatch:');
+    expect(perfWorkflow).not.toContain('on:\n  push:');
+    // 自动回提交需要写权限。
+    expect(perfWorkflow).toContain('permissions:\n  contents: write');
+    // 双剖面 CWV 采样：3 载荷中位 + 带判定 + 数据源入链。
+    expect(perfWorkflow).toContain('pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json');
+    expect(perfWorkflow).toContain('pnpm perf:audit --mobile --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json');
+    // 棋盘帧预算步（docs/32 §24.7.1）。
+    expect(perfWorkflow).toContain('pnpm perf:audit --loads=1 --flow --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json');
+    expect(perfWorkflow).toContain('Desktop tribulation frame budget');
+    // 自动回提交约定。
+    expect(perfWorkflow).toContain("git config user.name 'github-actions[bot]'");
+    expect(perfWorkflow).toContain("git commit -m 'chore(perf): 纵向采样入链'");
+    expect(perfWorkflow).toContain('git diff --cached --quiet');
+  });
+
   it('keeps releases manual, main-only, version-checked, and built from the repository root', () => {
     const releaseWorkflow = readFileSync('.github/workflows/release.yml', 'utf8');
 

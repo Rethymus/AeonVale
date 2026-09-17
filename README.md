@@ -166,6 +166,7 @@ src/io        平台 IO          —— Web Audio 音频引擎
 - `mulberry32` + 命名 RNG 流使逻辑状态可重现；表现层的闪电形状与粒子可以非确定，但不改变结算。
 - Golden Replay 与 `stateHash` 守护存档往返和行为兼容。
 - `pnpm cultivation:metrics` 输出修途四类分布；`pnpm cultivation:check` 是接入 CI 的基线带门；`tools/cultivation-tune.ts` 提供邻域爬山与 33 格穷举全景观（docs/32）。
+- `pnpm perf:audit` 采集线上 Core Web Vitals 与天劫棋盘帧预算（`--mobile` 节流、`--flow` 棋盘流程、`--out` 入链），周度自动采样见 docs/32 §24。
 - 确定性代理（solver 最优 + 四型日程）驱动批量生命周期评估；LLM 可作为只读 playtester 评判回放轨迹，不进入 `src/sim/`。
 
 ### 常用命令
