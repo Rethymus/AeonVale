@@ -329,10 +329,16 @@ async function checkBands(bandsFile: string, profile: string, medians: Record<st
   const rows: string[] = [];
   if (band) {
     const lcp = medians.lcp ?? -1;
+    // 只对向上超带（变慢）告警——低于带下限=网络窗口更优，属利好不报警。
+    const overBand = lcp > band.lcpMax;
     const inBand = lcp >= band.lcpMin && lcp <= band.lcpMax;
-    rows.push(`| LCP | ${lcp}ms | ${band.lcpMin}–${band.lcpMax} | ${inBand ? '✓ 带内' : '**✗ 超带——按 docs/32 §24.6/§24.7 回归口径排查资产/构建变更**'} |`);
-    if (!inBand) console.log(`[bands] ✗ LCP=${lcp}ms 出带 [${band.lcpMin}, ${band.lcpMax}]（profile=${profile}）`);
-    else console.log(`[bands] ✓ LCP=${lcp}ms 带内 [${band.lcpMin}, ${band.lcpMax}]`);
+    const verdict = overBand
+      ? '**✗ 超带上限——按 docs/32 §24.6/§24.7 回归口径排查资产/构建变更**'
+      : inBand ? '✓ 带内' : '✓ 优于带下限（网络窗口有利，无动作）';
+    rows.push(`| LCP | ${lcp}ms | ${band.lcpMin}–${band.lcpMax} | ${verdict} |`);
+    if (overBand) console.log(`[bands] ✗ LCP=${lcp}ms 超带上限 ${band.lcpMax}（profile=${profile}）`);
+    else if (inBand) console.log(`[bands] ✓ LCP=${lcp}ms 带内 [${band.lcpMin}, ${band.lcpMax}]`);
+    else console.log(`[bands] ✓ LCP=${lcp}ms 优于带下限 ${band.lcpMin}（网络窗口有利）`);
   } else {
     rows.push(`| LCP | ${medians.lcp ?? -1}ms | （无带） | ⚠ 带值文件缺少 profile=${profile} |`);
   }
