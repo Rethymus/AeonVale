@@ -1,0 +1,50 @@
+name: Perf vertical sampling
+
+# 性能纵向采样（docs/32 §24.6.1/§24.7/§24.1）：
+# 每周自动对线上站点跑固化工具 pnpm perf:audit（桌面 --loads=3 与移动 --mobile --loads=3），
+# 结果追加 docs/perf/vertical-samples.jsonl 并回提交——无人值守的双维度纵向监测。
+# 阈值判定只打印不失败（LCP 移动维度按「载荷带宽下限」口径记录，见 §24.6）；
+# 回归判定人工对比 §24.6.1/§24.7 的方差带。回提交只动 docs/perf，不在路径过滤内——无自触发循环。
+
+on:
+  schedule:
+    - cron: '23 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: perf-vertical-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Desktop vertical sample
+        run: pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl
+      - name: Mobile vertical sample (Slow 4G + 4x CPU)
+        run: pnpm perf:audit --mobile --loads=3 --out=docs/perf/vertical-samples.jsonl
+      - name: Commit samples if changed
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/perf/vertical-samples.jsonl
+          if git diff --cached --quiet; then
+            echo 'Sampling feed unchanged — no commit.'
+            exit 0
+          fi
+          git commit -m 'chore(perf): 纵向采样入链'
+          git pull --rebase origin main
+          git push

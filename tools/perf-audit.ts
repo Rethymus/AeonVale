@@ -26,6 +26,8 @@ interface Options {
   readonly mobile: boolean;
   readonly loads: number;
   readonly flow: boolean;
+  /** 追加一行 JSON 记录（时间戳+逐次+中位）到该 jsonl 文件，供纵向采样数据链（docs/32 §24.6.1/§24.7）消费。 */
+  readonly out?: string;
 }
 
 interface LoadMetrics {
@@ -50,13 +52,15 @@ function parseOptions(argv: readonly string[]): Options {
   let mobile = false;
   let loads = 3;
   let flow = false;
+  let out: string | undefined;
   for (const arg of argv) {
     if (arg.startsWith('--url=')) url = arg.slice('--url='.length);
     else if (arg === '--mobile') mobile = true;
     else if (arg === '--flow') flow = true;
     else if (arg.startsWith('--loads=')) loads = Math.max(1, Number(arg.slice('--loads='.length)) || 3);
+    else if (arg.startsWith('--out=')) out = arg.slice('--out='.length);
   }
-  return { url, mobile, loads, flow };
+  return { url, mobile, loads, flow, out };
 }
 
 async function instrument(page: Page): Promise<void> {
@@ -242,7 +246,7 @@ async function frameBudget(page: Page): Promise<void> {
   console.log('[frame] 判定:', p95 <= 32 ? '✓ 掉帧受控（p95 ≤ 2 次 vsync）' : '✗ p95 超过 32ms，需排查渲染路径');
 }
 
-function summarize(label: string, loads: readonly LoadMetrics[]): void {
+function summarize(label: string, loads: readonly LoadMetrics[]): Record<string, number> {
   const median = (key: keyof LoadMetrics): number => [...loads.map(l => Number(l[key]))].sort((a, b) => a - b)[Math.floor(loads.length / 2)] ?? 0;
   const lcp = median('lcp');
   const cls = median('cls');
@@ -257,6 +261,11 @@ function summarize(label: string, loads: readonly LoadMetrics[]): void {
   verdict(lcp >= 0 && lcp <= 2500, 'LCP', lcp, '≤2500ms');
   verdict(cls <= 0.1, 'CLS', cls, '≤0.1');
   verdict(tbt <= 200, 'TBT(INP 代理)', tbt, '≤200ms');
+  return {
+    ttfb: median('ttfb'), fcp: median('fcp'), lcp, cls, tbt,
+    fontStart: median('fontStart'), fontEnd: median('fontEnd'),
+    jsKB: median('jsKB'), otherKB: median('otherKB')
+  };
 }
 
 async function main(): Promise<void> {
@@ -279,7 +288,21 @@ async function main(): Promise<void> {
     await context.close();
   }
   await browser.close();
-  summarize(label, loads);
+  const medians = summarize(label, loads);
+  if (options.out) {
+    const record = {
+      timestamp: new Date().toISOString(),
+      profile: options.mobile ? 'mobile-slow4g' : 'desktop',
+      url: options.url,
+      loadsCount: options.loads,
+      medians,
+      loads
+    };
+    const { appendFileSync } = await import('node:fs');
+    appendFileSync(options.out, `${JSON.stringify(record)}
+`, 'utf8');
+    console.log(`[perf-audit] 已追加记录 → ${options.out}`);
+  }
 }
 
 void main();
