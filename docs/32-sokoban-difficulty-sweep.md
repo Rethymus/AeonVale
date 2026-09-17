@@ -834,3 +834,22 @@ FCP 864ms、CLS 0、TBT 0、字体发现 403ms。两窗口方差带：
 ✗ 超带时在 run summary（$GITHUB_STEP_SUMMARY）标注异常——告警不失败，
 仍按 §24.6/§24.7 口径人工区分网络窗口与应用层回归。docs 叙事章节在
 里程碑时人工增补，原始数据以 jsonl 为准。
+
+#### 24.7.1 CI 侧棋盘帧预算首测（2026-09-17，perf-vertical 工作流）
+
+perf-vertical 工作流新增第三步「Desktop tribulation frame budget」
+（`pnpm perf:audit --loads=1 --flow`，真实 UI 流程至天劫棋盘 + 24 步移动
+rAF 采样），帧统计经 `--out` 进 vertical-samples.jsonl（记录带 frame 字段、
+loadsCount=1 与 3 载荷中位记录可区分）。CI runner（无 GPU，软件渲染）首测：
+
+| 指标 | CI 首测 | 本地参照（§24.2） |
+| ---- | ------ | ---------------- |
+| rAF 样本 | 295 | 317–326 |
+| p50 / p95 | 16.7 / 16.7ms | 16.7 / 16.7ms |
+| max | 16.8ms | 16.8ms |
+| 掉帧（>32ms） | 0 | 0 |
+| 平均帧率 | 60fps | 60fps |
+
+**结论**：天劫棋盘 vsync 锁定与渲染环境无关——CI 软件渲染下零掉帧，
+帧预算监测自此纳入周度无人值守（记录含 frame 字段），回归判定阈值
+维持 p95≤32ms。LCP 带判定同轮 ✓（desktop-ci 带，284ms 优于下限）。
