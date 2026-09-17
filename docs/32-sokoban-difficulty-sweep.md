@@ -863,3 +863,22 @@ loadsCount=1 与 3 载荷中位记录可区分）。CI runner（无 GPU，软件
 **结论**：天劫棋盘 vsync 锁定与渲染环境无关——CI 软件渲染下零掉帧，
 帧预算监测自此纳入周度无人值守（记录含 frame 字段），回归判定阈值
 维持 p95≤32ms。LCP 带判定同轮 ✓（desktop-ci 带，284ms 优于下限）。
+
+#### 24.7.2 首个 cron 周期验收（2026-09-21 周一 02:23 UTC 触发后执行）
+
+**触发前已锁死的事实（2026-09-17 核对）**：workflow 注册状态 active
+（gh api）；cron `23 2 * * 1` 在 main 分支文件中（6d4f44b 起）；工作流
+job 已四次 dispatch 实跑全链成功（采样→带判定→summary→自动回提交）——
+cron 与 dispatch 仅触发器不同，steps 完全一致。
+
+**触发后验收清单（逐项勾对）**：
+1. `gh run list --workflow perf-vertical.yml` 出现 event=schedule 的
+   success 运行（应始于 2026-09-21T02:23Z 前后）；
+2. `docs/perf/vertical-samples.jsonl` 自动追加 **2 条**记录（desktop
+   loadsCount=3 与 mobile-slow4g loadsCount=3，带 timestamp）；
+3. run log / run summary 含两剖面的 `[bands]` 判定（CI runner 应选
+   desktop-ci 带；移动带 5740–6124）；
+4. 出现 `chore(perf): 纵向采样入链` 自动回提交（或「feed unchanged—
+   no commit」仅在极端情况下出现）；
+5. 任一项不符 → 按 §24.6/§24.7 口径排查（平台 schedule 停用/凭证/
+   feed 写权限），不得静默跳过。
