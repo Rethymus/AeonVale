@@ -214,7 +214,16 @@ function percentile(values: readonly number[], p: number): number {
   return sorted[Math.min(sorted.length - 1, Math.floor((sorted.length * p) / 100))] ?? 0;
 }
 
-async function frameBudget(page: Page): Promise<void> {
+interface FrameStats {
+  readonly samples: number;
+  readonly p50: number;
+  readonly p95: number;
+  readonly max: number;
+  readonly dropped32: number;
+  readonly avgFps: number;
+}
+
+async function frameBudget(page: Page): Promise<FrameStats> {
   // 以字符串求值：tsx/esbuild 会给具名函数注入 __name helper，浏览器作用域不存在。
   await page.evaluate(`
     (() => {
@@ -240,14 +249,17 @@ async function frameBudget(page: Page): Promise<void> {
   const frames = await page.evaluate(() => (window as unknown as { __frames?: number[] }).__frames ?? []);
   const active = frames.filter(d => d < 250);
   const p95 = percentile(active, 95);
-  console.log('[frame] 样本:', active.length, {
+  const stats: FrameStats = {
+    samples: active.length,
     p50: Math.round(percentile(active, 50) * 10) / 10,
     p95: Math.round(p95 * 10) / 10,
     max: Math.round(Math.max(...active, 0) * 10) / 10,
     dropped32: active.filter(d => d > 32).length,
     avgFps: active.length > 0 ? Math.round(1000 / (active.reduce((a, b) => a + b, 0) / active.length)) : 0
-  });
+  };
+  console.log('[frame] 样本:', active.length, stats);
   console.log('[frame] 判定:', p95 <= 32 ? '✓ 掉帧受控（p95 ≤ 2 次 vsync）' : '✗ p95 超过 32ms，需排查渲染路径');
+  return stats;
 }
 
 function summarize(label: string, loads: readonly LoadMetrics[]): Record<string, number> {
@@ -278,6 +290,7 @@ async function main(): Promise<void> {
   console.log(`[perf-audit] ${label} × ${options.loads} 次冷载 → ${options.url}${options.flow ? '（含棋盘帧预算）' : ''}`);
   const browser = await chromium.launch();
   const loads: LoadMetrics[] = [];
+  let frame: FrameStats | null = null;
   for (let attempt = 1; attempt <= options.loads; attempt++) {
     const { context, page } = await newColdPage(browser, options);
     await page.goto(options.url, { waitUntil: 'load', timeout: 120000 });
@@ -287,7 +300,7 @@ async function main(): Promise<void> {
     console.log(`[cwv] 冷载 ${attempt}:`, JSON.stringify(metrics));
     if (options.flow && attempt === 1) {
       await flowToTribulation(page);
-      await frameBudget(page);
+      frame = await frameBudget(page);
     }
     await context.close();
   }
@@ -300,7 +313,8 @@ async function main(): Promise<void> {
       url: options.url,
       loadsCount: options.loads,
       medians,
-      loads
+      loads,
+      ...(frame ? { frame } : {})
     };
     const { appendFileSync } = await import('node:fs');
     appendFileSync(options.out, `${JSON.stringify(record)}
