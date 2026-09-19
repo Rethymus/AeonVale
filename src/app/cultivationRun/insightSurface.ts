@@ -229,8 +229,10 @@ export function createCultivationInsightSurface(options: CultivationInsightSurfa
       button.dataset.category = node.category;
       button.disabled = !active;
       button.setAttribute('aria-pressed', String(status.availability === 'unlocked'));
-      button.setAttribute('aria-posinset', String(index + 1));
-      button.setAttribute('aria-setsize', String(nodes.length));
+      // aria-posinset/aria-setsize 不允许出现在 button 角色（axe aria-allowed-attr）；
+      // 移到外层 li（listitem 角色）承载在列表中的位置语义。
+      item.setAttribute('aria-posinset', String(index + 1));
+      item.setAttribute('aria-setsize', String(nodes.length));
       const category = appendTextElement(button, 'span', 'cr-insight__node-category', INSIGHT_CATEGORY_LABELS[node.category]);
       category.id = `${instanceId}-node-${index}-category`;
       appendTextElement(button, 'span', 'cr-insight__node-label', node.label);
