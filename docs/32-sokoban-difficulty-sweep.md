@@ -887,3 +887,52 @@ cron 与 dispatch 仅触发器不同，steps 完全一致。
    no commit」仅在极端情况下出现）；
 5. 任一项不符 → 按 §24.6/§24.7 口径排查（平台 schedule 停用/凭证/
    feed 写权限），不得静默跳过。
+
+### 24.8 Lighthouse 交叉验证与 TBT 探针勘误（2026-09-19）
+
+#### 24.8.1 交叉验证方法
+
+用 Google 官方 Lighthouse CLI（`pnpm exec lighthouse`，Chromium 取自
+Playwright 缓存，`--only-categories=performance`）对线上站点独立复测，
+作为自研探针数据链的外部校准器。
+
+#### 24.8.2 Lighthouse 结果
+
+| 剖面 | 得分 | LCP | CLS | TBT | FCP |
+| ---- | ---- | --- | --- | --- | --- |
+| desktop preset（Lantern 模拟节流） | 75 | 2.2s | 0 | 60ms | 1.6s |
+| mobile（4x CPU + Slow4G 模拟） | 36 | 7.3s | 0 | 1450ms | 3.9s |
+
+#### 24.8.3 勘误：历史 TBT=0 全部为假值
+
+移动档 TBT 1450ms（Lighthouse 模拟）与自研探针 0 的量级差触发排查，
+确认**自研 TBT 探针存在测量缺陷**：`longtask` 条目按规范不入全局
+performance entry buffer（`getEntriesByType('longtask')` 恒空，仅
+PerformanceObserver 回调可观察），而 init 观察器是空回调——条目被丢弃。
+**§24.2–§24.7 全部 TBT=0 记录作废**；LCP/CLS/帧预算/字体时间线探针
+路径不受影响（LCP 早已改回调采集，CLS 的 layout-shift 条目可经
+getEntriesByType 取回——本轮经复测确认）。
+
+修复：init 阶段经回调收集 longtask durations（`window.__longtasks`），
+读点改从回调缓冲取。修复后真实值（同日实测）：
+
+| 剖面 | 真实 TBT | 判定 |
+| ---- | -------- | ---- |
+| desktop 未节流 | 158–178ms | ✓ ≤200 good（贴阈值——启动链存在可优化空间，见 §24.8.4） |
+| 移动 Slow4G + 4x CPU | 759–808ms | 与 Lighthouse 模拟 1450ms 同量级（其模型更悲观） |
+
+带值文件相应改为**剖面分设 TBT 阈**：desktop/desktop-ci ≤300ms、
+mobile-slow4g ≤1200ms（观测值加余量，捕捉大幅回归而非贴线抖动）；
+vertical-samples.jsonl 自修复后新记录携带真实 TBT，旧记录 TBT 字段
+视为无效。
+
+#### 24.8.4 交叉验证结论
+
+- **自研探针其余口径经外部工具背书**：CLS=0 双工具一致；LCP 量级
+  一致（Lighthouse 模拟节流插在我们桌面无节流与移动全节流带之间，
+  与「LCP 载荷带宽下限」结论自洽）；TBT 方向一致（移动远高于桌面）。
+- **方法论教训入链**：PerformanceObserver 的条目可见性按类型而异
+  （longtask 仅回调、layout-shift 可缓冲取回）——「跑通不等于测到」，
+  外部标准工具交叉验证是发现此类缺陷的唯一可靠手段。
+- 后续 perf-vertical 周期自动携带修复后的真实 TBT；TBT 若成回归
+  项，启动链优化（Pixi init 分片、delayed Tone 挂载）为候选杠杆。

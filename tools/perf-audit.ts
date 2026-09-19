@@ -69,14 +69,22 @@ function parseOptions(argv: readonly string[]): Options {
 
 async function instrument(page: Page): Promise<void> {
   await page.addInitScript(() => {
-    const w = window as unknown as { __lcp?: number };
+    const w = window as unknown as { __lcp?: number; __longtasks?: number[] };
     try {
       new PerformanceObserver(list => {
         const entries = list.getEntries() as unknown as { startTime: number }[];
         if (entries.length > 0) w.__lcp = entries[entries.length - 1]!.startTime;
       }).observe({ type: 'largest-contentful-paint', buffered: true } as PerformanceObserverInit);
       new PerformanceObserver(() => {}).observe({ type: 'layout-shift', buffered: true } as PerformanceObserverInit);
-      new PerformanceObserver(() => {}).observe({ type: 'longtask', buffered: true } as PerformanceObserverInit);
+      // longtask 条目不入全局 entry buffer（getEntriesByType 取不到，仅回调可观察）：
+      // 必须在回调里收集，否则 TBT 恒为假 0（docs/32 §24.8 勘误，Lighthouse 交叉验证发现）。
+      w.__longtasks = [];
+      const longtasks = w.__longtasks;
+      new PerformanceObserver(list => {
+        for (const e of list.getEntries() as unknown as { duration: number }[]) {
+          longtasks.push(e.duration);
+        }
+      }).observe({ type: 'longtask', buffered: true } as PerformanceObserverInit);
     } catch {
       /* 采集器不可用时指标缺省为 -1/0 */
     }
@@ -118,10 +126,9 @@ async function collectLoad(page: Page, attempt: number): Promise<LoadMetrics> {
       prevTime = entry.startTime;
     }
     cls = Math.max(cls, current);
-    const longtasks = performance.getEntriesByType('longtask') as unknown as Array<{ duration: number; startTime: number }>;
-    const tbt = longtasks
-      .filter(t => t.startTime < (nav?.loadEventEnd ?? 60000))
-      .reduce((sum, t) => sum + Math.max(0, t.duration - 50), 0);
+    // longtask 仅可经回调收集（见 instrument 注释），此处读累计 durations。
+    const longtasks = (window as unknown as { __longtasks?: number[] }).__longtasks ?? [];
+    const tbt = longtasks.reduce((sum, d) => sum + Math.max(0, d - 50), 0);
     const resources = performance.getEntriesByType('resource') as unknown as Array<{ name: string; transferSize: number; encodedBodySize: number; startTime: number; responseEnd: number }>;
     let jsBytes = 0;
     let otherBytes = 0;
@@ -330,8 +337,8 @@ async function main(): Promise<void> {
 }
 
 interface BandsFile {
-  readonly profiles: Readonly<Record<string, { readonly lcpMin: number; readonly lcpMax: number }>>;
-  readonly absolute: { readonly clsMax: number; readonly tbtMax: number };
+  readonly profiles: Readonly<Record<string, { readonly lcpMin: number; readonly lcpMax: number; readonly tbtMax?: number }>>;
+  readonly absolute: { readonly clsMax: number; readonly tbtMax?: number };
 }
 
 /**
@@ -359,10 +366,12 @@ async function checkBands(bandsFile: string, profile: string, medians: Record<st
   } else {
     rows.push(`| LCP | ${medians.lcp ?? -1}ms | （无带） | ⚠ 带值文件缺少 profile=${profile} |`);
   }
+  // TBT 阈按剖面分设（4x CPU 节流剖面天然高）：剖面带优先，回退全局绝对阈。
+  const tbtMax = band?.tbtMax ?? bands.absolute.tbtMax;
   const clsOk = (medians.cls ?? 0) <= bands.absolute.clsMax;
-  const tbtOk = (medians.tbt ?? 0) <= bands.absolute.tbtMax;
+  const tbtOk = tbtMax !== undefined && (medians.tbt ?? 0) <= tbtMax;
   rows.push(`| CLS | ${medians.cls} | ≤${bands.absolute.clsMax} | ${clsOk ? '✓' : '**✗**'} |`);
-  rows.push(`| TBT | ${medians.tbt}ms | ≤${bands.absolute.tbtMax}ms | ${tbtOk ? '✓' : '**✗**'} |`);
+  rows.push(`| TBT | ${medians.tbt}ms | ${tbtMax !== undefined ? `≤${tbtMax}ms（${profile}）` : '（未设阈）'} | ${tbtOk ? '✓' : '**✗**'} |`);
   const markdown = [
     '### 性能纵向采样回归判定',
     '',

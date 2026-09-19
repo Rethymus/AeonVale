@@ -1,9 +1,9 @@
 {
-  "note": "LCP 方差带源自 docs/32 §24.6.1（移动）/§24.7（桌面）纵向采样；窗口增补或载荷变更时人工更新本文件。桌面无节流样本按环境分簇：desktop-ci（CI runner 数据中心，4 窗口观测 272–468ms）与 desktop（本地住宅，3 窗口观测 492–1052ms）；移动 Slow4G 节流归一化环境（5 窗口 5740–6124 全带内，CI 与本地共用）。",
+  "note": "LCP 方差带源自 docs/32 §24.6.1（移动）/§24.7（桌面）纵向采样；窗口增补或载荷变更时人工更新本文件。桌面无节流样本按环境分簇：desktop-ci（CI runner 数据中心，4 窗口观测 272–468ms）与 desktop（本地住宅，3 窗口观测 492–1052ms）；移动 Slow4G 节流归一化环境（5 窗口 5740–6124 全带内，CI 与本地共用）。TBT 阈按剖面分设（§24.8 勘误：探针修复后真实值 desktop ~178ms、mobile ~780ms，旧记录的 0 为假 0）。",
   "profiles": {
-    "mobile-slow4g": { "lcpMin": 5740, "lcpMax": 6124 },
-    "desktop": { "lcpMin": 492, "lcpMax": 1052 },
-    "desktop-ci": { "lcpMin": 260, "lcpMax": 620 }
+    "mobile-slow4g": { "lcpMin": 5740, "lcpMax": 6124, "tbtMax": 1200 },
+    "desktop": { "lcpMin": 492, "lcpMax": 1052, "tbtMax": 300 },
+    "desktop-ci": { "lcpMin": 260, "lcpMax": 620, "tbtMax": 300 }
   },
-  "absolute": { "clsMax": 0.1, "tbtMax": 200 }
+  "absolute": { "clsMax": 0.1 }
 }
