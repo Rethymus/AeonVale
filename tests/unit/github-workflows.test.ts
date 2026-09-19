@@ -50,6 +50,8 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(ciWorkflow).toContain('include-hidden-files: true');
     expect(ciWorkflow).toContain('          path: dist');
     expect(ciWorkflow).toContain('uses: gitleaks/gitleaks-action@v3');
+    // 无障碍回归门必须真跑在 CI（docs/37）：仅本地全量不算门。
+    expect(ciWorkflow).toContain('pnpm test:browser:a11y');
     expect(ciWorkflow).toContain('VITE_BASE_PATH: /AeonVale/');
     expect(ciWorkflow).toContain('VITE_BUILD_REVISION: ${{ github.sha }}');
   });

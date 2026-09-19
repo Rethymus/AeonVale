@@ -53,6 +53,7 @@
     "test:browser:keypoint": "node node_modules/@playwright/test/cli.js test tests/browser/cultivation-keypoint.spec.ts",
     "test:browser:first-loop": "node node_modules/@playwright/test/cli.js test tests/browser/first-loop.regression.spec.ts",
     "test:browser:r1-input": "node node_modules/@playwright/test/cli.js test tests/browser/cultivation-schedule-accessibility.spec.ts",
+    "test:browser:a11y": "node node_modules/@playwright/test/cli.js test tests/browser/a11y-axe.spec.ts",
     "test:browser:pages": "node tools/run-pages-smoke.mjs",
     "test:browser:pages-playable": "node tools/run-pages-smoke.mjs tests/browser/pages-playable.spec.ts",
     "portfolio:capture": "node node_modules/@playwright/test/cli.js test tests/browser/portfolio-capture.spec.ts --reporter=line",

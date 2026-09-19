@@ -110,3 +110,7 @@ jobs:
         env:
           PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
           PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
+      - run: pnpm test:browser:a11y
+        env:
+          PLAYWRIGHT_GAME_BASE_PATH: /AeonVale/
+          PLAYWRIGHT_VITE_BASE_PATH: /AeonVale/
