@@ -110,7 +110,8 @@ describe('GitHub workflow deployment guardrails', () => {
     expect(perfWorkflow).toContain('pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json');
     expect(perfWorkflow).toContain('pnpm perf:audit --mobile --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json');
     // 棋盘帧预算步（docs/32 §24.7.1）。
-    expect(perfWorkflow).toContain('pnpm perf:audit --loads=1 --flow --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json');
+    // 帧预算步不带 --bands：loads=1 的 LCP 对噪声敏感，带判定由 3 载荷步承担（docs/32 §24.8.5）。
+    expect(perfWorkflow).toContain('pnpm perf:audit --loads=1 --flow --out=docs/perf/vertical-samples.jsonl');
     expect(perfWorkflow).toContain('Desktop tribulation frame budget');
     // 自动回提交约定。
     expect(perfWorkflow).toContain("git config user.name 'github-actions[bot]'");

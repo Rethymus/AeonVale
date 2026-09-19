@@ -35,7 +35,7 @@ jobs:
       - name: Desktop vertical sample
         run: pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json
       - name: Desktop tribulation frame budget
-        run: pnpm perf:audit --loads=1 --flow --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json
+        run: pnpm perf:audit --loads=1 --flow --out=docs/perf/vertical-samples.jsonl
       - name: Mobile vertical sample (Slow 4G + 4x CPU)
         run: pnpm perf:audit --mobile --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json
       - name: Commit samples if changed
