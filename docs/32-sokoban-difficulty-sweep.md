@@ -936,3 +936,28 @@ vertical-samples.jsonl 自修复后新记录携带真实 TBT，旧记录 TBT 字
   外部标准工具交叉验证是发现此类缺陷的唯一可靠手段。
 - 后续 perf-vertical 周期自动携带修复后的真实 TBT；TBT 若成回归
   项，启动链优化（Pixi init 分片、delayed Tone 挂载）为候选杠杆。
+
+#### 24.8.5 桌面 TBT 贴线评估：不启动优化实验（2026-09-19）
+
+桌面真实 TBT 158–178ms 贴近 good 阈（200ms），按 §24.8.4 预告做启动链
+归因评估。数据源：§24.8.2 Lighthouse desktop 明细（long-tasks /
+bootup-time / mainthread-work-breakdown 三审计）：
+
+- **主线程构成**：Script Evaluation 411ms 为绝对主导（Style&Layout
+  122ms、其余皆小）；
+- **脚本执行 Top**：index（app 入口，含 main() 启动链）290ms、
+  vendor-pixi 286ms（其中脚本执行仅 79ms，余为编译/解析）；
+- **长任务清单**：仅 **1 个** >50ms 任务——index 120ms（起始于 2057ms，
+  即 app bootstrap 段：字体 await → Pixi init → AudioEngine → 表面装配）。
+
+**判定：不启动优化实验**。依据：
+1. 真实 TBT 在 good 区间（≤200）且带阈 300 有余量——无回归信号；
+2. 全页仅一次 120ms 任务，发生时静态标题/加载 DOM 已完成绘制
+   （FCP 先于任务结束），用户可感知成本 ≈ 首次交互前 0.1s 的一次性延迟；
+3. 唯一有效杠杆（拆分/延后 index 启动链）会冲击 boot-ready 冒烟门
+   （画布早期挂载断言）与启动次序语义，复杂度/风险与 0.1s 一次性
+   收益不成比例。
+
+**留档触发条件**（满足其一即重开评估）：周度采样 desktop TBT 连续
+两窗口超 300ms 带阈；RUM 数据显示加载窗口交互延迟投诉。届时首选杠杆
+即「延后 Pixi init 至首个游戏面」，带 boot-ready 门适配。
