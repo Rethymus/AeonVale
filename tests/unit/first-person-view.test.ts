@@ -522,6 +522,89 @@ describe('firstPersonView · checkRequires', () => {
     expect(checkRequires(initialState(), 'unknownStat>=5')).toBe(false);
     expect(checkRequires(initialState(), 'flag:')).toBe(false);
   });
+
+  // ── 边界输入矩阵（TT-01）：全部钉住 fail-closed 现状，写手误写不会误放行 ──
+
+  it('null requires → true（显式无守卫）；空串与空白已另行覆盖', () => {
+    expect(checkRequires(initialState(), null)).toBe(true);
+  });
+
+  it('括号不闭合 / 多余右括号 → false', () => {
+    expect(checkRequires(withState({ defiance: 60 }), '(defiance>=60')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), '((defiance>=60)')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=60)')).toBe(false);
+  });
+
+  it('悬空操作数 / 双运算符 → false', () => {
+    expect(checkRequires(withState({ defiance: 60 }), '&& defiance>=60')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=60 &&')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60, bond: 49 }), 'defiance>=60 && && bond<50')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), '|| flag:forced')).toBe(false);
+  });
+
+  it('尾部垃圾 token → false（即使表达式本体可满足）', () => {
+    const flagged = applyEffects(initialState(), [{ kind: 'flag', target: 'met-xiao' }]);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=60 非法')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=60abc')).toBe(false);
+    expect(checkRequires(flagged, 'flag:met-xiao extra')).toBe(false);
+  });
+
+  it('阈值数值形态：负数与小数受支持', () => {
+    expect(checkRequires(withState({ tribGrip: -5 }), 'tribGrip>=-10')).toBe(true);
+    expect(checkRequires(withState({ tribGrip: -5 }), 'tribGrip<-1')).toBe(true);
+    expect(checkRequires(withState({ tribGrip: 0 }), 'tribGrip<-1')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=59.5')).toBe(true);
+    expect(checkRequires(withState({ defiance: 59 }), 'defiance>=59.5')).toBe(false);
+  });
+
+  it('阈值数值形态：1.2.3 / 仅符号 / 科学计数法 / 十六进制 → false（fail-closed）', () => {
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=1.2.3')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=-')).toBe(false);
+    // readNumber 只吃 [0-9.]：'6e1' 截断为阈值 6，残留 'e1' 使解析失败。
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=6e1')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=0x3C')).toBe(false);
+  });
+
+  it('前导 + 号阈值受支持（Number(\"+60\") 现状）', () => {
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance>=+60')).toBe(true);
+    expect(checkRequires(withState({ defiance: 59 }), 'defiance>=+60')).toBe(false);
+  });
+
+  it('单等号 = / 缺冒号 !name / 非 ASCII 标识符 / 数字开头 → false', () => {
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance=60')).toBe(false);
+    expect(checkRequires(initialState(), '!met-xiao')).toBe(false);
+    expect(checkRequires(initialState(), 'flag:标志')).toBe(false);
+    expect(checkRequires(withState({ defiance: 60 }), '60>=defiance')).toBe(false);
+  });
+
+  it('运算符与括号周围的空白容忍（写手友好正向路径）', () => {
+    expect(checkRequires(withState({ defiance: 60 }), 'defiance >= 60')).toBe(true);
+    expect(checkRequires(withState({ defiance: 60, bond: 49 }), '( defiance>=60 && bond<50 ) || flag:forced')).toBe(true);
+  });
+
+  it('深嵌套括号（100 层）可解析：闭合 → true、未闭合 → false（现状：递归无深度上限）', () => {
+    const deep = (open: number): string => '('.repeat(open) + 'defiance>=60' + ')'.repeat(open);
+    expect(checkRequires(withState({ defiance: 60 }), deep(100))).toBe(true);
+    expect(checkRequires(withState({ defiance: 60 }), '('.repeat(100) + 'defiance>=60')).toBe(false);
+  });
+
+  it('属性：任意字符串输入不抛错且返回布尔（解析器全函数性，畸形一律 fail-closed）', () => {
+    const s = initialState();
+    fc.assert(
+      fc.property(fc.string({ maxLength: 200 }), expr => {
+        expect(typeof checkRequires(s, expr)).toBe('boolean');
+      })
+    );
+  });
+
+  it('属性：首尾空白不影响判定（入口 trim 不变量）', () => {
+    const s = initialState();
+    fc.assert(
+      fc.property(fc.string({ maxLength: 200 }), expr => {
+        expect(checkRequires(s, `  ${expr}  `)).toBe(checkRequires(s, expr));
+      })
+    );
+  });
 });
 
 // ── bucket / deriveLayerKeys · 边界 ───────────────────────────────────────────
