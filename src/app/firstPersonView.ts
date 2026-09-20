@@ -184,6 +184,8 @@ function withNumericStat(state: NarrationState, key: NumericStatKey, value: numb
  *     `(defiance>=60 && bond<50) || flag:forced_choice`。
  *
  * 解析失败 → false（fail-closed：守卫不明确时选项隐藏，避免误放行）。
+ * 资源边界：无深度上限的递归下降，极深嵌套会栈溢出；输入仅来自经内容
+ * 管线审核的场景数据（属性测试钉任意字符串不抛错，见 tests/unit/first-person-view.test.ts）。
  */
 export function checkRequires(state: NarrationState, requires?: string | null): boolean {
   if (!requires) return true;

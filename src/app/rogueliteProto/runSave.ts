@@ -1,3 +1,11 @@
+/**
+ * 修途旅程存档信封（aeonvale-cultivation-journey-v1，唯一活跃玩家存档持久层）。
+ *
+ * 边界契约：decodeEnvelope 对任何畸形（坏 JSON / 非对象 / version 漂移 /
+ * 缺 payload）一律回落 null，不抛不阻塞启动；数值域为游戏内小整数与有限
+ * 小数，JSON 大整数解析即失真为 double 是接受的边界（无 BigInt 通道）。
+ * 快照形状门见 ./journeySnapshot（restore 前最后一道守卫）。
+ */
 const CULTIVATION_JOURNEY_STORAGE_SLOT = 'aeonvale-cultivation-journey-v1';
 const CULTIVATION_JOURNEY_VERSION = 1;
 
