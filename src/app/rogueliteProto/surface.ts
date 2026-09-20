@@ -47,6 +47,7 @@ import type { CultivationStaticPhaseSurface } from '../cultivationRun/interludeS
 import type { CultivationRunPhaseSurface } from '../cultivationRun/surfaceShared';
 import { isStageUnlocked, loadMeta, recordBreakthrough, recordDeath, recordEncounteredRecipe, saveMeta, SCROLL_TOTAL, tribulationRecipeKey, type ScrollPage, type SokobanMeta } from './meta';
 import { clearCultivationJourney, loadCultivationJourney, saveCultivationJourney } from './runSave';
+import { isJourneySnapshot, type CultivationJourneySnapshot, type RogueliteProtoPhase } from './journeySnapshot';
 
 export interface RogueliteProtoAudio {
   playSfx?(id: string): void;
@@ -81,20 +82,6 @@ const CULTIVATION_STAGE_BACKDROP_IDS = [
   'cg.first-person.tribulation.purple-v2',
   'cg.first-person.ending.ascension-v2'
 ] as const;
-type RogueliteProtoPhase =
-  | 'opening'
-  | 'life-intro'
-  | 'omen'
-  | 'planning'
-  | 'schedule-resolving'
-  | 'event'
-  | 'insight'
-  | 'tribulation-choice'
-  | 'tribulation'
-  | 'aftermath'
-  | 'legacy'
-  | 'ending'
-  | 'lifespan-ended';
 
 const TERRAIN_FILL: Record<string, string> = {
   empty: P.btnBg,
@@ -141,33 +128,6 @@ interface CultivationBrowserTestSnapshot {
   readonly stage: number;
   readonly settlementKind: CultivationTribulationSettlement['kind'] | null;
   readonly solutionMoves: readonly Dir[];
-}
-
-interface CultivationJourneySnapshot {
-  readonly version: 1;
-  readonly phase: RogueliteProtoPhase;
-  readonly openingBeatIndex: number;
-  readonly stage: number;
-  readonly seedSalt: number;
-  readonly state: SokobanState;
-  readonly machineState: CultivationRunMachineState;
-  readonly preparation: TribulationPreparation;
-  readonly preparedPuzzle: PreparedPuzzlePlacement | null;
-  readonly tribulationSession: TribulationSessionState | null;
-  readonly tribulationOutcome: TribulationSessionOutcome | null;
-  readonly agendaDraft: CultivationAgendaDraft;
-  readonly agendaCycleStartIndex: number;
-  readonly agendaTargetIndex: number;
-  readonly pendingEpitaph: CultivationAshEpitaph | null;
-  readonly pendingLegacyCandidates: CultivationLegacyCandidates | null;
-  readonly generation: number;
-  readonly settlementApplied: boolean;
-  readonly lastSettlement: CultivationTribulationSettlement | null;
-  readonly tribulationFeedback: string | null;
-  readonly agendaFeedback: string;
-  readonly agendaFeedbackTone: 'neutral' | 'success' | 'error';
-  readonly lastScroll: ScrollPage | null;
-  readonly deadRun: boolean;
 }
 
 interface CultivationBrowserTestApi {
@@ -781,21 +741,6 @@ export function createRogueliteProtoSurface(opts: RogueliteProtoSurfaceOptions):
     if (tribulationBuilding) return;
     const available = saveCultivationJourney(currentJourneySnapshot());
     opts.onSaveAvailabilityChange?.(available);
-  }
-
-  function isJourneySnapshot(value: unknown): value is CultivationJourneySnapshot {
-    if (!value || typeof value !== 'object') return false;
-    const candidate = value as Partial<CultivationJourneySnapshot>;
-    return candidate.version === 1
-      && typeof candidate.phase === 'string'
-      && typeof candidate.openingBeatIndex === 'number'
-      && typeof candidate.stage === 'number'
-      && typeof candidate.seedSalt === 'number'
-      && typeof candidate.generation === 'number'
-      && Boolean(candidate.state && typeof candidate.state === 'object')
-      && Boolean(candidate.machineState && typeof candidate.machineState === 'object')
-      && Boolean(candidate.preparation && typeof candidate.preparation === 'object')
-      && Boolean(candidate.agendaDraft && typeof candidate.agendaDraft === 'object');
   }
 
   function restoreJourney(snapshot: CultivationJourneySnapshot): void {
