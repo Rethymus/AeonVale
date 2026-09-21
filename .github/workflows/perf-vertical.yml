@@ -8,7 +8,10 @@ name: Perf vertical sampling
 
 on:
   schedule:
+    # 双 cron 互为备份：平台高负载可能丢弃 schedule 事件（2026-09-21 首触发即被丢，
+    # docs/32 §24.7.2 验收）；起始守卫步按「feed 已含今日记录」幂等跳过，双触发安全。
     - cron: '23 2 * * 1'
+    - cron: '43 2 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -32,6 +35,13 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Skip if today's sample already landed (idempotent guard)
+        run: |
+          git fetch origin main --quiet
+          if git show origin/main:docs/perf/vertical-samples.jsonl | grep -q "$(date -u +%Y-%m-%d)"; then
+            echo "今日样本已在链上——跳过本次触发（双 cron 幂等守卫）。"
+            exit 0
+          fi
       - name: Desktop vertical sample
         run: pnpm perf:audit --loads=3 --out=docs/perf/vertical-samples.jsonl --bands=docs/perf/vertical-bands.json
       - name: Desktop tribulation frame budget
