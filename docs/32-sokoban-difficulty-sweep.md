@@ -871,20 +871,24 @@ loadsCount=1 与 3 载荷中位记录可区分）。CI runner（无 GPU，软件
 
 #### 24.7.2 首个 cron 周期验收（2026-09-21 周一 02:23 UTC 触发后执行）
 
-**验收结果（2026-09-21 已执行，逐项）**：
+**验收结果（2026-09-21 已执行，2026-09-22 勘误更正）**：
 
 | 项 | 结果 | 数据/根因 |
 | -- | ---- | --------- |
-| 1. schedule success 运行 | **✗** | 触发时刻后 2 小时内无 event=schedule 运行；workflow state=active、文件在 main 自 09-17、dispatch 路径 4/4 可用均排除应用层缺陷——判定为 **GitHub 平台级 schedule 未投递**（官方文档承认高负载时 scheduled workflow 会被延迟或丢弃） |
+| 1. schedule success 运行 | **✓（延迟 5.6 小时补投递）** | 初判 ✗ 系验收过早——平台于 08:02 UTC 补投递（run 35575814415 success）。教训：GitHub schedule 高负载下延迟以小时计，验收窗口应放宽至触发时刻 +24h；本次延迟运行恰实证了守卫的必要性 |
 | 2. feed 追加记录 | ✓ | 自动回提交 `2b37e10` 落库，feed 13 → 16 条（desktop 3 载荷 LCP 388/TBT 38ms；desktop 帧预算载荷含 frame 字段；mobile 3 载荷 LCP 5820/TBT 357ms）——**修复后真实 TBT 首次入链** |
 | 3. 带判定 | ✓ | run summary 双剖面 ✓：desktop-ci 带 [260,620] 内（412ms，CI runner 自动选带正确）；移动带 [5740,6124] 内（5820ms） |
 | 4. chore(perf) 回提交 | ✓ | `2b37e10`（github-actions[bot]） |
 | 5. 根因排查与处置 | ✓ | 见下 |
 
-**根因与处置**：平台 schedule 投递不可控，改用**双保险**——保留 GitHub cron
-（投递正常时零成本），另建周度兜底自动化（周一本地 11:10 派发
-`gh workflow run perf-vertical.yml`——dispatch 路径已经 5 次实证；若当日
-schedule 已自行触发则跳过派发，避免重复采样）。
+**根因与处置**：平台 schedule 投递不可控（本次即延迟 5.6 小时补投递），
+已设**双 cron 互备**（02:23/02:43 UTC）加**当日幂等守卫**——守卫步检查
+feed 是否已含今日记录。首日部署暴露守卫缺陷并已修复：actions/checkout
+默认浅克隆中 `origin/main` 引用不存在，`git show origin/main:…` 静默
+失败致守卫失效，当日产生重复采样（03:39 dispatch 与 08:03 延迟 schedule
+各一轮，数据不作废但计入冗余样本）；修复改用 `FETCH_HEAD` 取 origin
+主分支内容。TBT 勘误顺带入链：本次延迟运行的记录携带修复后真实 TBT
+（desktop-ci 剖面 TBT 38–50ms，远低于 300 阈）。
 
 
 **触发前已锁死的事实（2026-09-17 核对）**：workflow 注册状态 active

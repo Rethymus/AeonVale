@@ -37,8 +37,10 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
       - name: Skip if today's sample already landed (idempotent guard)
         run: |
-          git fetch origin main --quiet
-          if git show origin/main:docs/perf/vertical-samples.jsonl | grep -q "$(date -u +%Y-%m-%d)"; then
+          # 浅克隆（checkout 默认 fetch-depth=1）中 origin/main 引用不存在，
+          # 须用 FETCH_HEAD（首日部署即因 origin/main 静默失败导致守卫失效、重复采样）。
+          git fetch --depth=1 origin main --quiet
+          if git show FETCH_HEAD:docs/perf/vertical-samples.jsonl | grep -q "$(date -u +%Y-%m-%d)"; then
             echo "今日样本已在链上——跳过本次触发（双 cron 幂等守卫）。"
             exit 0
           fi

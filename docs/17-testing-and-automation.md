@@ -167,7 +167,7 @@ function runMonteCarlo(params, botSet, N, targetMetrics):
 `pnpm m5:check` 使用固定 64 种子对 normal/veteran 运行长周期 **assisted campaign proxy**：它必须走真实的紫雷前兆、突破与 `pill.ascend` 结局路径，并报告 Wilson 95% 区间、紫雷机械死锁、超时和辅助资源使用量。该 proxy 明确记录为合成资源辅助（阶段修为、渡劫准备、stage7 飞升丹），**不是自然内容获取或真实玩家通关率**。
 
 - PR：只阻断结构回归（无飞升、veteran 低于 normal、紫雷死锁或非确定性）。
-- 夜间：`pnpm m5:certify` 以 1,000 个独立 holdout 种子评估 M5 的 normal/veteran 代理通过率区间，`m5-nightly` 仅报告、不阻断。
+- 夜间：旧世界 `m5:certify`/`m5-nightly` 已随阶段 3 退役移除（其替代门 `pnpm cultivation:check` 在每次 push 的 CI 中执行，docs/32）；性能纵向监测由 `perf-vertical.yml` 周度执行（docs/32 §24.7）。
 - M5 工具以**点估计落入目标带**作为 `provisional` 合格；Wilson 95% 区间完整落带才标记 `certified`。前者是当前代理工具的可用门槛，不等于统计学严格认证；严格 Wilson 标准推迟到 M6 人类 playtest 对照完成代理校准后执行（`18` §8）。
 - 时长单位固定为 `game-days`，并以 timeout horizon 计算 restricted mean；18–25 真人小时仍待 M6 人类 playtest 校准，不能由日数直接换算。
 
